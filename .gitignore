@@ -1,2 +1,40 @@
+# ==========================================
+# 1. Environment Variables & Secrets
+# ==========================================
 .env
+.env.*
 *.env
+
+# ==========================================
+# 2. Spec Kit & AI Agents Configuration
+# ==========================================
+.specify/
+.agents/
+.github/
+# ==========================================
+# 3. VS Code & IDE Specific Files
+# ==========================================
+.vscode/
+
+# ==========================================
+# 4. OS Generated Files (Windows & macOS)
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ==========================================
+# 5. Python (AI Models & Scripts)
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+pip-log.txt

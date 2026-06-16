@@ -11,8 +11,6 @@
 .specify/
 .agents/
 .github/
-!.specify/memory/
-!.specify/memory/constitution.md
 !specs/
 # ==========================================
 # 3. VS Code & IDE Specific Files

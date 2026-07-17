@@ -17,7 +17,7 @@
 | `NFR-P-04`: 10,000 registered users, 10 concurrent users | vision.md §6.1 | Small-to-medium scale — a modular monolith is sufficient; true microservices would be over-engineering |
 | `NFR-R-01`: 99.5% availability; `NFR-R-04`: SOS records must never be lost | vision.md §6.3 | SOS write-path needs durable persistence + async, retry-capable notification dispatch, decoupled from the request/response cycle |
 | AI-Powered Donor Assistant (RAG chatbot), SOS Evaluation & Prioritization algorithm | vision.md §5.1.3, §5.4.2; ProjectPlan FG4/FG9/FG10/FG12 | These are Python's strengths (LLM SDKs, ML/vector tooling) — isolate them from the Node.js core as a **dedicated Python AI/ML service** |
-| CCCD QR-code registration (LL-UC-01) — no Passport, no image/OCR scanning | vision.md §5.1.1, UseCaseSpec LL-UC-01 | This is a straightforward QR payload decode, not an AI/ML task — it belongs in the **Node.js Core** (Auth & Account module), not the Python AI service |
+| CCCD QR-code registration (LL-UC-01) | vision.md §5.1.1, UseCaseSpec LL-UC-01 | This is a straightforward QR payload decode, not an AI/ML task — it belongs in the **Node.js Core** (Auth & Account module), not the Python AI service |
 | `NFR-P-01/02/03`: SOS request processed ≤5s, matching ≤30s, notification delivered ≤1min | vision.md §6.1 | Requires an async job/event pipeline for SOS evaluation + broadcast, not a synchronous request chain |
 | Interactive map, geo-radius donor/campaign matching | Proposal §3.1.2, vision §5.1.2, UC LL-UC-06, SYS-UC-04 | Needs geospatial query capability (`$geoNear` / `2dsphere` index) |
 | Multi-turn AI chatbot with knowledge base retrieval | vision §5.1.3, UC CB-UC-01 | Needs a vector index over a curated medical/procedural knowledge base |
@@ -56,7 +56,7 @@ flowchart TB
         SOS[SOS Request Module]
         NEWS[News/CMS Module]
         NOTIF[Notification Engine]
-        GAM[Gamification & Tracking Module]
+        GAM[Impact Tracking Module]
         ADMIN[Admin & RBAC Module]
         AUTOM[System Automations<br/>E-Ticket/QR · Screening Form · Digital Donor Record]
     end
@@ -112,6 +112,7 @@ flowchart TB
 | Layer | Technology | Rationale |
 | :--- | :--- | :--- |
 | Framework | **React** (Vite) | Matches ProjectPlan §3.1/§4.4 team skill set and sprint assignments (all FGs list React) |
+| Language | **TypeScript** (`.tsx` components) | Consistent with the Node.js core's TypeScript choice below — shared types (e.g., API response shapes) can be reused between frontend and backend, reducing drift as 5 people build screens against evolving API contracts |
 | Styling | **Tailwind CSS** | Explicit in ProjectPlan §4.3 ("React + Tailwind CSS project scaffold"); utility-first speeds up a 5-person team building many screens in parallel |
 | Markup | **HTML5**, semantic + responsive (mobile/tablet/desktop) | Required by `NFR-U-01` |
 | State/data fetching | React Query (or SWR) + Context/Zustand for local UI state | Keeps server-state caching (campaign lists, inventory) separate from local UI state (map filters, chat session) |
@@ -122,8 +123,8 @@ flowchart TB
 ### 3.2 Backend — Node.js Core Service
 | Layer | Technology | Rationale |
 | :--- | :--- | :--- |
-| Runtime/Framework | **Node.js + Express** | Matches ProjectPlan's explicit "Node.js" assignment across all 13 FGs |
-| Language | JavaScript | Reduces integration bugs across 5 contributors working on different modules concurrently |
+| Runtime/Framework | **Node.js + Express** | Matches ProjectPlan's explicit "Node.js" assignment across all 14 FGs |
+| Language | **TypeScript** (`strict: true`) | Reduces integration bugs across 5 contributors working on different modules concurrently — compile-time type checking catches cross-module contract mismatches (e.g., wrong field name/type passed between `sos-request` and `notification-engine`) before runtime |
 | ORM/ODM | Mongoose | Schema validation, hooks (e.g., auto-set `Available` status on Stock In), and population for relational-style queries over MongoDB |
 | Auth | JWT (access + refresh tokens), bcrypt for password hashing | Matches LL-UC-01/02 special requirements (bcrypt, HTTPS, 30-min session expiry `NFR-S-05`) |
 | Job queue | BullMQ + Redis (free tier, e.g., Upstash) | Decouples SOS evaluation/broadcast from the request thread to satisfy `NFR-P-01/02/03` |
@@ -174,15 +175,15 @@ Each module maps 1:1 to a Functional Group from `ProjectPlan.md §4.4`, owns its
 | Module | Owns Entities | Key Use Cases |
 | :--- | :--- | :--- |
 | `auth-account` (incl. CCCD QR decode) | User, DonorProfile | LL-UC-01…05 |
-| `booking-location` | Appointment, DonationPoint (Campaign subset) | LL-UC-06…10 |
-| `campaign-mgmt` | Campaign, DonorRegistration | BC-UC-01…07 |
-| `content-news` | Article, Notification (CMS side) | NF-UC-01/02, BC-UC-08…11 |
-| `blood-inventory` | BloodBag, InventoryAuditEntry | BC-UC-12…17 |
+| `booking-location` | Appointment | LL-UC-06…10 |
+| `campaign-mgmt` | Campaign | BC-UC-01…07 |
+| `content-news` | Article | NF-UC-01/02, BC-UC-08…11 |
+| `blood-inventory` | BloodBag | BC-UC-12…17 |
 | `sos-request` | SOSRequest, SOSEvaluationLog | HS-UC-01…03, SYS-UC-04 (orchestration only; scoring delegated to AI service) |
 | `notification-engine` | Notification, NotificationPreference | NT-UC-01/02, SOS-UC-01/02, SYS-UC-05 |
 | `impact-tracking` | DonationTimelineEntry, Badge, DonorLevel | DN-UC-01…03 |
 | `automation` | ScreeningForm, ETicket, DigitalDonorRecord | SYS-UC-01…03 |
-| `admin` | Role, Permission, AuditLog, SystemConfig | AD-UC-01…06 |
+| `admin` | Role, Permission, AuditLog, SystemConfiguration | AD-UC-01…06 |
 | `ai-gateway` (thin proxy in Node) | — | Forwards CB-UC-01 chatbot calls to the Python AI service |
 
 ---

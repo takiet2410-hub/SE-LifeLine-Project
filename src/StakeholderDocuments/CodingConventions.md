@@ -22,16 +22,17 @@ Because Sanguine is a **5-person, full-stack team** working across **two runtime
 ### 2.1 General Rules
 | Element | Convention | Example |
 | :--- | :--- | :--- |
-| Variables, function names (JavaScript) | `camelCase` | `getDonorEligibility()`, `campaignCapacity` |
+| Variables, function names (JavaScript/TypeScript) | `camelCase` | `getDonorEligibility()`, `campaignCapacity` |
 | Variables, function names (Python) | `snake_case` | `get_ranked_donors()`, `search_radius_km` |
-| Classes / React Components | `PascalCase` | `CampaignCard.jsx`, `SOSEvaluationService` |
+| Classes / React Components | `PascalCase` | `CampaignCard.tsx`, `SOSEvaluationService` |
+| Types / Interfaces (TypeScript) | `PascalCase`, interfaces not prefixed with `I` | `DonorProfile`, `SOSRequestPayload` |
 | Constants (immutable, config-level) | `UPPER_SNAKE_CASE` | `DONATION_INTERVAL_DAYS`, `MAX_LOGIN_ATTEMPTS` |
 | MongoDB collections | `snake_case`, plural | `donor_profiles`, `sos_evaluation_logs` |
 | Mongoose model names | `PascalCase`, singular | `DonorProfile`, `SOSEvaluationLog` |
 | REST endpoints | `kebab-case`, plural nouns, versioned | `/api/v1/sos-requests`, `/api/v1/blood-bags` |
 | Environment variables | `UPPER_SNAKE_CASE` | `MONGODB_URI`, `CLOUDINARY_API_KEY` |
-| Files (React components) | `PascalCase.jsx` | `AppointmentDetail.jsx` |
-| Files (non-component JavaScript) | `camelCase.js` | `sosEvaluationService.js` |
+| Files (React components) | `PascalCase.tsx` | `AppointmentDetail.tsx` |
+| Files (non-component TypeScript) | `camelCase.ts` | `sosEvaluationService.ts` |
 | Files (Python) | `snake_case.py` | `sos_matching_engine.py` |
 | Boolean variables/fields | prefixed `is`/`has`/`can` | `isEligible`, `hasConsent`, `canBroadcast` |
 | Git branches | see §4 | `feature/LL-UC-07-schedule-appointment` |
@@ -110,18 +111,18 @@ lifeline/
 │   │   │   │   └── lib/
 │   │   │   ├── routes/                 # route definitions per role (Donor/Staff/Hospital/Admin)
 │   │   │   ├── i18n/                   # en.json, vi.json
-│   │   │   └── App.jsx
+│   │   │   └── App.tsx
 │   │   └── package.json
 │   │
 │   ├── backend-core/                   # Node.js modular monolith
 │   │   ├── src/
 │   │   │   ├── modules/                # 1 folder per Functional Group
 │   │   │   │   ├── auth-account/
-│   │   │   │   │   ├── auth-account.routes.js
-│   │   │   │   │   ├── auth-account.controller.js
-│   │   │   │   │   ├── auth-account.service.js
-│   │   │   │   │   ├── auth-account.model.js
-│   │   │   │   │   └── auth-account.test.js
+│   │   │   │   │   ├── auth-account.routes.ts
+│   │   │   │   │   ├── auth-account.controller.ts
+│   │   │   │   │   ├── auth-account.service.ts
+│   │   │   │   │   ├── auth-account.model.ts
+│   │   │   │   │   └── auth-account.test.ts
 │   │   │   │   ├── booking-location/
 │   │   │   │   ├── campaign-mgmt/
 │   │   │   │   ├── blood-inventory/
@@ -134,14 +135,13 @@ lifeline/
 │   │   │   │   └── ai-gateway/         # thin proxy to Python AI service
 │   │   │   ├── shared/                 # middleware, error handlers, validators, constants
 │   │   │   ├── config/                 # env loading, DB connection, queue setup
-│   │   │   └── app.js
+│   │   │   └── app.ts
 │   │   ├── tests/                      # integration tests (module-crossing flows, e.g. SOS end-to-end)
 │   │   └── package.json
 │   │
 │   ├── ai-service/                     # Python FastAPI AI/ML service
 │   │   ├── app/
 │   │   │   ├── chatbot/                # RAG pipeline (CB-UC-01)
-│   │   │   ├── ocr/                    # CCCD/Passport extraction (LL-UC-01)
 │   │   │   ├── sos_matching/           # scoring & prioritization (SYS-UC-04)
 │   │   │   ├── shared/                 # embeddings client, LLM client, config
 │   │   │   └── main.py
@@ -232,11 +232,11 @@ gitGraph
 
 | Concern | Tooling / Rule |
 | :--- | :--- |
-| JavaScript linting | ESLint (Airbnb or Standard config) + Prettier, enforced via pre-commit hook (Husky) |
+| TypeScript linting | ESLint (Airbnb or Standard config) + `@typescript-eslint` plugin + Prettier, enforced via pre-commit hook (Husky) |
 | Python linting | Ruff or Flake8 + Black formatter |
-| Type safety | Plain JavaScript on the Node.js core and React frontend, per standard MERN convention; runtime input validation is done via Zod/Joi schemas (see "API contracts" below) rather than compile-time types. JSDoc comments (`@param`, `@returns`) are encouraged on service/controller functions to document expected shapes for editor autocomplete, without requiring a build step. Pydantic models are still used on the FastAPI (Python) AI service, since Python type hints there are idiomatic and add no extra tooling. |
-| Testing | Jest (Node.js core, ≥1 test per module's core business rule, e.g. 84-day validation, duplicate booking check); Pytest (AI service) |
-| API contracts | Every module exposes its Express routes + Zod/Joi schemas as the single source of truth for request/response validation (this is what replaces compile-time typing on the JS side); Spec-Kit `Tasks.md` generation should reference these schemas rather than duplicating them |
+| Type safety | **TypeScript** (`strict: true`) on both the Node.js core and the React frontend — this is the team's confirmed choice (MERN + TypeScript), reversing the earlier "plain JavaScript" draft. Shared types (e.g., `SOSRequestPayload`, `DonorProfile`) live in a common `types/` package so frontend and backend stay in sync at compile time. Runtime input validation is still done via Zod/Joi at every route boundary — TypeScript catches shape mismatches at build time, Zod/Joi catches bad data arriving at runtime (the two are complementary, not a replacement for one another). `tsc --noEmit` runs as a required CI check before merge. Pydantic models are still used on the FastAPI (Python) AI service, since Python type hints there are idiomatic and add no extra tooling. |
+| Testing | Jest + `ts-jest` (Node.js core, ≥1 test per module's core business rule, e.g. 84-day validation, duplicate booking check); Pytest (AI service) |
+| API contracts | Every module exposes its Express routes + Zod/Joi schemas as the runtime source of truth for request/response validation; TypeScript types are derived from these schemas via `z.infer<...>` (Zod) so the compile-time type and the runtime validator never drift apart. Spec-Kit `Tasks.md` generation should reference these schemas/types rather than duplicating them |
 | Secrets | Never committed; `.env.example` checked in, real `.env` gitignored; secrets managed via hosting provider's environment variable UI (Render/Vercel) given the no-budget constraint (no dedicated secrets manager) |
 | Error handling | Centralized error middleware (Node core) returning a consistent JSON error shape `{ code, message, details }`; no silent catch blocks |
 | Logging | Structured (JSON) logs via `pino` (Node) / standard `logging` (Python); never log passwords, full CCCD numbers, or raw QR payloads (`NFR-S-03`) |
@@ -257,5 +257,5 @@ A Functional Group's use case is considered "done" for a sprint only when:
 
 ## 7. Open Items for Team Confirmation
 
-- **Decided**: the team uses **plain JavaScript** (ES2022+, CommonJS or ESM — pick one and apply consistently) across `frontend` and `backend-core`, matching standard MERN convention and `ProjectPlan.md` risk R4 (team still learning React/MongoDB/JavaScript). Type-related bugs across modules are mitigated instead via: (1) Zod/Joi request/response validation at every route boundary, (2) JSDoc annotations on shared service functions, and (3) the module-boundary rule in §3 that limits how much cross-module surface area any one contributor touches.
+- **Decided**: the team uses **TypeScript** across `frontend` and `backend-core` — i.e. **MERN + TypeScript**, not plain JavaScript. Type-related bugs are now caught in two complementary layers: (1) **TypeScript** at compile time (`strict: true`, shared `types/` package, checked via `tsc --noEmit` in CI) for shape/contract mismatches between modules and between frontend↔backend, and (2) **Zod/Joi** at runtime for data arriving from outside the compiler's view (HTTP request bodies, third-party API responses, MongoDB documents). The module-boundary rule in §3 still applies on top of both.
 -  **Decided** : the team uses a single monorepo . `frontend/`, `backend-core/`, and `ai-service/` all live inside the same Git repository (as laid out in §3), sharing one main/ develop history and one set of Pull Requests. This is the right fit given the team's size (5 people) and the semester timeline: a single PR can span a backend change and its matching frontend/AI-service consumer without coordinating across multiple repos, and there is only one clone/checkout to keep in sync. GitHub Actions workflows under `.github/workflows/` should still use `paths:` filters (eg, only run the Python test job when files under `src/ai-service/**` change) so CI stays fast despite the shared repo.

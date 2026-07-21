@@ -21,7 +21,8 @@ const donorProfileSchema = new Schema<IDonorProfile>({
   address: { type: String },
   bloodType: { type: String, enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] }
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'donor_profiles'
 });
 
 export const DonorProfile = model<IDonorProfile>('DonorProfile', donorProfileSchema);

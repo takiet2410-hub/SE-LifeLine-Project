@@ -14,6 +14,8 @@ const ETicketSchema: Schema = new Schema({
   qrPayloadSigned: { type: String, required: true },
   fileUrl: { type: String },
   issuedAt: { type: Date, default: Date.now }
+}, {
+  collection: 'e_tickets'
 });
 
 export const ETicket = mongoose.model<IETicket>('ETicket', ETicketSchema);

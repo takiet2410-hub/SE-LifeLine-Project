@@ -28,6 +28,8 @@ const ScreeningFormSchema: Schema = new Schema({
   consentGiven: { type: Boolean, required: true },
   eligibilityFlag: { type: String, enum: Object.values(EligibilityFlag), required: true },
   submittedAt: { type: Date, default: Date.now }
+}, {
+  collection: 'screening_forms'
 });
 
 export const ScreeningForm = mongoose.model<IScreeningForm>('ScreeningForm', ScreeningFormSchema);

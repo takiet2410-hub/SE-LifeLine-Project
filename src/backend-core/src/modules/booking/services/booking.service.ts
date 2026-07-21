@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import QRCode from 'qrcode';
+import { uploadImageToCloudinary } from '../../../utils/cloudinary.util';
 import { Appointment, AppointmentStatus } from '../models/appointment.model';
 import { ScreeningForm } from '../models/screening-form.model';
 import { ETicket } from '../models/eticket.model';
@@ -132,13 +134,23 @@ export class BookingService {
 
       // 5. Create ETicket
       const ticketCode = `TK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const qrPayloadSigned = `SIGNED-${ticketCode}`; // mock signed payload
+      
+      let fileUrl = undefined;
+      try {
+        const qrBuffer = await QRCode.toBuffer(qrPayloadSigned);
+        fileUrl = await uploadImageToCloudinary(qrBuffer, 'etickets');
+      } catch (error) {
+        console.error('Failed to generate or upload QR Code:', error);
+      }
       
       const newAppointmentId = new mongoose.Types.ObjectId();
 
       const newETicket = new ETicket({
         appointmentId: newAppointmentId,
         ticketCode,
-        qrPayloadSigned: `SIGNED-${ticketCode}`, // mock signed payload
+        qrPayloadSigned,
+        fileUrl,
         issuedAt: new Date()
       });
       await newETicket.save({ session });
@@ -178,7 +190,7 @@ export class BookingService {
       await session.commitTransaction();
       session.endSession();
 
-      return newAppointment;
+      return await Appointment.findById(newAppointmentId).populate('eTicketId').lean();
     } catch (error) {
       await session.abortTransaction();
       session.endSession();

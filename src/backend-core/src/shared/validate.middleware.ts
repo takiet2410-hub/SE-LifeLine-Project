@@ -10,9 +10,15 @@ export const validate = (schema: ZodSchema) => {
         params: req.params,
       }) as any;
 
-      req.body = validatedData.body;
-      req.query = validatedData.query;
-      req.params = validatedData.params;
+      if (validatedData.body !== undefined) {
+        req.body = validatedData.body;
+      }
+      if (validatedData.query !== undefined && typeof validatedData.query === 'object') {
+        Object.assign(req.query, validatedData.query);
+      }
+      if (validatedData.params !== undefined && typeof validatedData.params === 'object') {
+        Object.assign(req.params, validatedData.params);
+      }
       
       next();
     } catch (error) {
@@ -20,3 +26,5 @@ export const validate = (schema: ZodSchema) => {
     }
   };
 };
+
+export const validateRequest = validate;

@@ -38,9 +38,27 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
-export const resetPasswordRequest = async (req: Request, res: Response, next: NextFunction) => {
+export const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await AuthAccountService.resetPasswordRequest(req.body);
+    const result = await AuthAccountService.forgotPassword(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resendForgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await AuthAccountService.resendForgotPassword(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const verifyResetOtp = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await AuthAccountService.verifyResetOtp(req.body);
     res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -59,6 +77,16 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
 export const updateProfile = async (req: any, res: Response, next: NextFunction) => {
   try {
     const result = await AuthAccountService.updateProfile(req.user._id, req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMyProfile = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    // Vì route này có authenticateJWT, req.user._id đã được lấy từ Token
+    const result = await AuthAccountService.getProfile(req.user._id);
     res.status(200).json(result);
   } catch (error) {
     next(error);

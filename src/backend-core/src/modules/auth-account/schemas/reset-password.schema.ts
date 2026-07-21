@@ -1,19 +1,26 @@
+// src/modules/auth-account/schemas/reset-password.schema.ts
 import { z } from 'zod';
 
-export const resetPasswordRequestSchema = z.object({
+// Schema cho /forgot-password và /resend-forgot-password
+export const forgotPasswordSchema = z.object({
   body: z.object({
+    idDocumentNumber: z.string().min(1, "ID Document Number is required"),
     email: z.string().email("Invalid email format")
   })
 });
 
+// Schema cho /reset-password
 export const resetPasswordSchema = z.object({
   body: z.object({
-    email: z.string().email("Invalid email format"),
-    otp: z.string().min(6, "OTP must be 6 characters").max(6, "OTP must be 6 characters"),
+    token: z.string().min(1, "Token is required"),
     newPassword: z.string().min(8, "Password must be at least 8 characters")
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/, "Password must include uppercase, lowercase, number, and special character")
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/, "Password must include uppercase, lowercase, number, and special character"),
+    confirmPassword: z.string().min(1, "Please confirm your password")
+  }).refine(data => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"], // Trỏ lỗi về trường confirmPassword
   })
 });
 
-export type ResetPasswordRequestInput = z.infer<typeof resetPasswordRequestSchema>['body'];
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>['body'];
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>['body'];

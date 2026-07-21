@@ -22,7 +22,7 @@ export const sendEmailViaBrevo = async (toEmail: string, subject: string, htmlCo
       method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'api-key': env.BREVO_API_KEY,
+        'api-key': env.BREVO_API_KEY || '',
         'Content-Type': 'application/json'
       }, // Headers từ Python[cite: 32]
       body: JSON.stringify(payload)

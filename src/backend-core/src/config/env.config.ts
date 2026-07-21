@@ -8,6 +8,9 @@ const envSchema = z.object({
   PORT: z.string().default('3000').transform((val) => parseInt(val, 10)),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
   JWT_SECRET: z.string().min(10, 'JWT_SECRET is required and must be at least 10 characters'),
+  CLOUDINARY_CLOUD_NAME: z.string().optional().default('demo'),
+  CLOUDINARY_API_KEY: z.string().optional().default('1234567890'),
+  CLOUDINARY_API_SECRET: z.string().optional().default('secret'),
 });
 
 const parseEnv = () => {

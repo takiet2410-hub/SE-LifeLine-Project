@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from 'express';
 import { setupSwagger } from './config/swagger.config';
 import { errorMiddleware } from './shared/error.middleware';
 import { campaignRoutes } from './modules/campaign-mgmt';
+import { articleRoutes } from './modules/content-news';
 
 const app: Express = express();
 
@@ -20,6 +21,7 @@ setupSwagger(app);
  * Routes
  */
 app.use('/api/v1/campaigns', campaignRoutes);
+app.use('/api/v1/articles', articleRoutes);
 
 /**
  * Health check endpoint

@@ -1,5 +1,6 @@
+// src/middleware/validate.middleware.ts
 import { Request, Response, NextFunction } from 'express';
-import { ZodError, ZodSchema } from 'zod';
+import { ZodSchema } from 'zod';
 
 export const validate = (schema: ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -10,9 +11,16 @@ export const validate = (schema: ZodSchema) => {
         params: req.params,
       }) as any;
 
+      // req.body có thể gán đè trực tiếp
       req.body = validatedData.body;
-      req.query = validatedData.query;
-      req.params = validatedData.params;
+      
+      // Sử dụng Object.assign để thay đổi các thuộc tính bên trong thay vì gán đè object
+      if (validatedData.query) {
+        Object.assign(req.query, validatedData.query);
+      }
+      if (validatedData.params) {
+        Object.assign(req.params, validatedData.params);
+      }
       
       next();
     } catch (error) {

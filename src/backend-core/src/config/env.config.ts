@@ -8,7 +8,7 @@ const envSchema = z.object({
   PORT: z.string().default('3000').transform(Number),
   MONGODB_URI: z.string().url(),
   JWT_SECRET: z.string().min(10),
-  BREVO_API_KEY: z.string().min(10),
+  BREVO_API_KEY: z.string().min(10).optional(),
   SENDER_EMAIL: z.string().email().default('noreply.lifeline@gmail.com'),
   FRONTEND_URL: z.string().url().default('http://localhost:3000'), // Đổi thành URL frontend của bạn
 

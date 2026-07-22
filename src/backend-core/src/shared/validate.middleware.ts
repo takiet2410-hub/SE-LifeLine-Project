@@ -12,13 +12,15 @@ export const validate = (schema: ZodSchema) => {
       }) as any;
 
       // req.body có thể gán đè trực tiếp
-      req.body = validatedData.body;
+      if (validatedData.body !== undefined) {
+        req.body = validatedData.body;
+      }
       
       // Sử dụng Object.assign để thay đổi các thuộc tính bên trong thay vì gán đè object
-      if (validatedData.query) {
+      if (validatedData.query !== undefined && typeof validatedData.query === 'object') {
         Object.assign(req.query, validatedData.query);
       }
-      if (validatedData.params) {
+      if (validatedData.params !== undefined && typeof validatedData.params === 'object') {
         Object.assign(req.params, validatedData.params);
       }
       
@@ -28,3 +30,5 @@ export const validate = (schema: ZodSchema) => {
     }
   };
 };
+
+export const validateRequest = validate;

@@ -17,11 +17,16 @@ export const errorHandler = (
     });
   }
 
-  // Handle mongoose errors, jwt errors, etc. here if needed
-  
+  let details = null;
+  if (err && (err as any).errInfo) {
+    details = (err as any).errInfo;
+  } else if (err && (err as any).errors) {
+    details = (err as any).errors;
+  }
+
   return res.status(500).json({
     code: 'INTERNAL_SERVER_ERROR',
     message: err.message || 'Internal Server Error',
-    details: null,
+    details,
   });
 };

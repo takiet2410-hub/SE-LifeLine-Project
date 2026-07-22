@@ -83,6 +83,7 @@ export class AuthAccountService {
       permanentAddress: addressString, 
       bloodType: 'Unknown', 
       gender: mappedGender,
+      email: data.email,
 
       // --- CÁC TRƯỜNG KHỞI TẠO MẶC ĐỊNH ---
       totalDonations: 0,
@@ -260,9 +261,60 @@ export class AuthAccountService {
     const profile = await DonorProfile.findOne({ userId });
     if (!profile) throw new Error('Profile not found');
 
-    if (data.phoneNumber) profile.phoneNumber = data.phoneNumber;
-    if (data.permanentAddress) profile.permanentAddress = data.permanentAddress;
-    
+    // --- XỬ LÝ CẬP NHẬT EMAIL ---
+    if (data.email) {
+      // 1. Kiểm tra xem email mới này đã có ai dùng chưa (tránh trùng lặp)
+      const existingUser = await User.findOne({ email: data.email, _id: { $ne: userId } });
+      if (existingUser) {
+        throw new Error('Email này đã được sử dụng bởi một tài khoản khác');
+      }
+
+      // 2. Cập nhật vào DonorProfile
+      profile.email = data.email;
+
+      // 3. Đồng bộ cập nhật sang collection User (quan trọng để hàm forgotPassword chạy đúng)
+      await User.findByIdAndUpdate(userId, { email: data.email });
+    }
+
+    // Cập nhật Số điện thoại
+    if (data.phoneNumber) {
+      // 1. Kiểm tra xem số điện thoại mới này đã có ai dùng chưa (tránh trùng lặp)
+      // Lưu ý: Trường lưu số điện thoại trong collection User là 'phone'
+      const existingUserByPhone = await User.findOne({ phone: data.phoneNumber, _id: { $ne: userId } });
+      
+      if (existingUserByPhone) {
+        throw new Error('Số điện thoại này đã được sử dụng bởi một tài khoản khác');
+      }
+
+      // 2. Cập nhật vào DonorProfile
+      profile.phoneNumber = data.phoneNumber;
+
+      // 3. Đồng bộ cập nhật sang collection User
+      await User.findByIdAndUpdate(userId, { phone: data.phoneNumber });
+    }
+
+    // Cập nhật Địa chỉ thường trú (Nối chuỗi để lưu vào string theo schema)
+    if (data.permanentAddress) {
+      const { province, ward, street } = data.permanentAddress;
+      // Tạo chuỗi VD: "12/18 Trịnh Đình Trọng, Phường Tân Phú, Thành phố Hồ Chí Minh"
+      profile.permanentAddress = `${street}, ${ward}, ${province}`;
+    }
+
+    // Cập nhật Địa chỉ hiện nay (Lưu dạng Object phân cấp theo schema bsonType: 'object')
+    if (data.currentAddress) {
+      profile.currentAddress = {
+        province: data.currentAddress.province,
+        ward: data.currentAddress.ward,
+        street: data.currentAddress.street,
+        fullAddress: `${data.currentAddress.street}, ${data.currentAddress.ward}, ${data.currentAddress.province}`
+      };
+    }
+
+    // Nếu có gửi link avatarUrl trực tiếp thông qua API này
+    if (data.avatarUrl) {
+      profile.avatarUrl = data.avatarUrl;
+    }
+
     await profile.save();
     return profile;
   }
@@ -310,7 +362,7 @@ export class AuthAccountService {
         avatarUrl: profile.avatarUrl,
         fullName: profile.fullName,
         memberSince: user.createdAt,
-        location: profile.permanentAddress,
+        currentAddress: profile.currentAddress?.fullAddress || profile.permanentAddress,
         bloodType: profile.bloodType
       },
       donationImpact: {

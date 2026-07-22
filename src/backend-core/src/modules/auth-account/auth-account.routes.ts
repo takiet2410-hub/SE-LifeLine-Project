@@ -218,10 +218,32 @@ router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
  *           schema:
  *             type: object
  *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "newemail@example.com"
  *               phoneNumber:
  *                 type: string
- *               address:
+ *               avatarUrl:
  *                 type: string
+ *                 description: "URL ảnh đại diện sau khi Frontend upload lên Cloudinary"
+ *               permanentAddress:
+ *                 type: object
+ *                 properties:
+ *                   province:
+ *                     type: string
+ *                   ward:
+ *                     type: string
+ *                   street:
+ *                     type: string
+ *               currentAddress:
+ *                 type: object
+ *                 properties:
+ *                   province:
+ *                     type: string
+ *                   ward:
+ *                     type: string
+ *                   street:
+ *                     type: string
  *     responses:
  *       200:
  *         description: Profile updated successfully

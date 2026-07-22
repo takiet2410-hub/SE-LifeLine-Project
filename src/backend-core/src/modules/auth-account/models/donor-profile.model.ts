@@ -8,6 +8,7 @@ export interface IDonorProfile extends Document {
   idDocumentNumber: string;
   phoneNumber: string;
   permanentAddress: string;
+  currentAddress?: Record<string, any>; // THÊM TRƯỜNG NÀY
   location?: Record<string, any>;
   bloodType: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'Unknown';
   lastDonationDate?: Date;
@@ -29,6 +30,7 @@ const donorProfileSchema = new Schema<IDonorProfile>({
   idDocumentNumber: { type: String, required: true }, 
   phoneNumber: { type: String, required: true },
   permanentAddress: { type: String, required: true },
+  currentAddress: { type: Schema.Types.Mixed },
   location: { type: Schema.Types.Mixed },
   bloodType: { 
     type: String, 

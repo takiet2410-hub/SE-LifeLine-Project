@@ -26,14 +26,18 @@ export const DashboardLayout: React.FC = () => {
                   ? 'Schedule Appointment' 
                   : location.pathname.includes('/my-appointments') 
                     ? 'My Appointments' 
-                    : 'Dashboard'}
+                    : location.pathname.includes('/profile')
+                      ? 'My Profile & Donation Impact'
+                      : 'Dashboard'}
               </h1>
               <p className="text-[12px] font-medium text-[#6c757d] uppercase tracking-wide">
                 {location.pathname.includes('/schedule') 
                   ? 'BOOK A NEW DONATION OR SCREENING'
                   : location.pathname.includes('/my-appointments') 
                     ? 'MANAGE YOUR LIFE-SAVING SCHEDULE' 
-                    : 'OVERVIEW'}
+                    : location.pathname.includes('/profile')
+                      ? 'Track your life-saving journey and achievements'
+                      : 'OVERVIEW'}
               </p>
             </div>
           </div>

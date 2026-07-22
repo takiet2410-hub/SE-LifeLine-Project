@@ -6,10 +6,19 @@
   --color-brand-text-main: #271816;
   --color-brand-text-secondary: #5b403d;
   --color-brand-text-muted: #6c757d;
+  --color-brand-text-light: #a3a3a3;
+  --color-brand-text-dark: #152a43;
   --color-brand-bg-page: #fff8f7;
   --color-brand-bg-card: #ffffff;
+  --color-brand-bg-muted: #f8f9fa;
+  --color-brand-bg-error: #fee2e2;
   --color-brand-border: #f1f3f5;
+  --color-brand-border-dark: #dee2e6;
   --color-brand-success: #16a34a;
+  --color-brand-info: #3b82f6;
+  --color-brand-warning: #f59e0b;
+  --color-brand-error: #b91c1c;
+  --color-brand-error-light: #ef4444;
 }
 :root {
   color-scheme: light;

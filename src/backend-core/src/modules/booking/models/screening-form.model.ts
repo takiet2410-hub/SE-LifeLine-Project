@@ -1,32 +1,36 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export enum EligibilityFlag {
-  Eligible = 'Eligible',
-  RequiresReview = 'RequiresReview',
-  Ineligible = 'Ineligible'
+export enum ScreeningOutcome {
+  PASS = 'PASS',
+  REVIEW = 'REVIEW',
+  REJECT = 'REJECT'
+}
+
+export interface IQuestionAnswer {
+  questionId: string;
+  selectedOptions: string[];
+  description?: string;
 }
 
 export interface IScreeningForm extends Document {
   appointmentId: mongoose.Types.ObjectId;
   templateId?: mongoose.Types.ObjectId;
-  medicalHistory: Record<string, any>;
-  currentHealthStatus: string;
-  recentTravel: string;
-  medicationHistory: string;
-  consentGiven: boolean;
-  eligibilityFlag: EligibilityFlag;
+  responses: IQuestionAnswer[];
+  outcome: ScreeningOutcome;
   submittedAt: Date;
 }
+
+const QuestionAnswerSchema: Schema = new Schema({
+  questionId: { type: String, required: true },
+  selectedOptions: { type: [String], required: true },
+  description: { type: String }
+}, { _id: false });
 
 const ScreeningFormSchema: Schema = new Schema({
   appointmentId: { type: Schema.Types.ObjectId, ref: 'Appointment', required: true },
   templateId: { type: Schema.Types.ObjectId },
-  medicalHistory: { type: Schema.Types.Mixed, default: {} },
-  currentHealthStatus: { type: String, required: true },
-  recentTravel: { type: String, required: true },
-  medicationHistory: { type: String, required: true },
-  consentGiven: { type: Boolean, required: true },
-  eligibilityFlag: { type: String, enum: Object.values(EligibilityFlag), required: true },
+  responses: { type: [QuestionAnswerSchema], required: true },
+  outcome: { type: String, enum: Object.values(ScreeningOutcome), required: true },
   submittedAt: { type: Date, default: Date.now }
 }, {
   collection: 'screening_forms'

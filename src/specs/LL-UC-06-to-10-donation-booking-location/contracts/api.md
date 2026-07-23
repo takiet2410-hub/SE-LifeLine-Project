@@ -38,17 +38,12 @@ Retrieve nearby active donation campaigns and permanent donation locations.
 ```json
 [
   {
-  "campaignId": "...",
-  "appointmentDate": "...",
-  "timeSlot": "...",
-  "screeningForm": {
-    "medicalHistory": {},
-    "currentHealthStatus": "...",
-    "recentTravel": "...",
-    "medicationHistory": "...",
-    "consentGiven": true
+    "id": "...",
+    "name": "...",
+    "location": { "lat": 10.0, "lng": 106.0 },
+    "startDateTime": "...",
+    "endDateTime": "..."
   }
-}
 ]
 ```
 
@@ -75,7 +70,15 @@ Create a new donation appointment.
 {
   "campaignId": "...",
   "appointmentDate": "2026-08-01",
-  "timeSlot": "09:00-09:30"
+  "timeSlot": "09:00-09:30",
+  "answers": {
+    "responses": [
+      {
+        "questionId": "1",
+        "selectedOptions": ["Không"]
+      }
+    ]
+  }
 }
 ```
 

@@ -56,6 +56,12 @@ jest.mock('../models/screening-form.model', () => ({
   }
 }));
 
+jest.mock('../models/screening-form-template.model', () => ({
+  ScreeningFormTemplate: {
+    findOne: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
+  }
+}));
+
 jest.mock('../models/eticket.model', () => ({
   ETicket: {
     init: jest.fn().mockResolvedValue({}),

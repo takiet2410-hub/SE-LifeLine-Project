@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { uploadImageToCloudinary } from '../../../utils/cloudinary.util';
 import { Appointment, AppointmentStatus } from '../models/appointment.model';
 import { ScreeningForm } from '../models/screening-form.model';
+import { ScreeningFormTemplate } from '../models/screening-form-template.model';
 import { ETicket } from '../models/eticket.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 
@@ -126,10 +127,85 @@ export class BookingService {
       // 4. Validate Screening Form
       const donorProfile = await DonorProfile.findOne({ userId: donorId });
       
-      // Basic mock evaluation based on answers
-      let eligibilityFlag = 'Eligible';
-      if (answers && answers.currentHealthStatus !== 'Healthy') {
-        eligibilityFlag = 'RequiresReview';
+      let outcome = 'PASS';
+      let usedTemplateId = undefined;
+      
+      if (!answers || !Array.isArray(answers.responses)) {
+        throw new Error('INVALID_SCREENING_FORM');
+      }
+
+      const activeTemplate = await ScreeningFormTemplate.findOne({ isActive: true }).session(session);
+      
+      if (activeTemplate) {
+        usedTemplateId = activeTemplate._id;
+        for (const response of answers.responses) {
+          const questionDef = activeTemplate.questions.find((q: any) => 
+            q.questionId === response.questionId || q.questionId === `Q${response.questionId}`
+          );
+          if (!questionDef) continue;
+          
+          for (const option of response.selectedOptions) {
+            const optionDef = questionDef.options.find((o: any) => 
+              o.label === option || 
+              o.optionId === option || 
+              option.startsWith(o.label)
+            );
+            if (optionDef) {
+              if (optionDef.outcomeFlag === 'REJECT') {
+                outcome = 'REJECT';
+              } else if (optionDef.outcomeFlag === 'REVIEW' && outcome !== 'REJECT') {
+                outcome = 'REVIEW';
+              }
+            }
+          }
+          if (outcome === 'REJECT') break;
+        }
+      } else {
+        // Fallback to hardcoded logic if no template seeded yet
+        const rejectOptions = [
+          'Viêm gan siêu vi B', 'Viêm gan siêu vi C', 'HIV', 'Vảy nến', 'Phì đại tiền liệt tuyến',
+          'Sốc phản vệ', 'Tai biến mạch máu não', 'Nhồi máu cơ tim', 'Lupus ban đỏ',
+          'Động kinh', 'Ung thư', 'Hen', 'Được cấy ghép mô tạng',
+          'Khỏi bệnh sau khi mắc một trong các bệnh: sốt rét, giang mai, lao, viêm não - màng não, uốn ván',
+          'Phẫu thuật ngoại khoa', 'Được truyền máu hoặc các chế phẩm máu',
+          'Khỏi bệnh sau khi mắc một trong các bệnh: thương hàn, nhiễm trùng máu, bị rắn cắn, viêm tắc động mạch, viêm tắc tĩnh mạch, viêm tụy, viêm tủy xương',
+          'Sút cân nhanh không rõ nguyên nhân', 'Nổi hạch kéo dài',
+          'Thực hiện thủ thuật y tế xâm lấn (chữa răng, châm cứu, lăn kim, nội soi,...)',
+          'Xăm, xỏ lỗ tai, lỗ mũi hoặc các vị trí khác trên cơ thể', 'Sử dụng ma túy',
+          'Tiếp xúc trực tiếp với máu, dịch tiết của người khác hoặc bị thương bởi kim tiêm',
+          'Sinh sống chung với người nhiễm viêm gan siêu vi B',
+          'Quan hệ tình dục với người nhiễm viêm gan siêu vi B, C, HIV, giang mai hoặc người có nguy cơ nhiễm',
+          'Quan hệ tình dục với người cùng giới',
+          'Khỏi bệnh sau khi mắc bệnh viêm đường tiết niệu, viêm da nhiễm trùng, viêm phế quản, viêm phổi, sởi, ho gà, quai bị, sốt xuất huyết, kiết lỵ, tả, Rubella',
+          'Đi vào vùng có dịch bệnh lưu hành (sốt rét, sốt xuất huyết, Zika,...)',
+          'Bị cúm, cảm lạnh, ho, nhức đầu, sốt, đau họng',
+          'Dùng thuốc kháng sinh, kháng viêm, Aspirin, Corticoid'
+        ];
+        
+        const reviewOptions = [
+          'Có (nhập mô tả)', 'Bệnh khác (nhập mô tả)', 'Tiêm vắc xin (nhập tên vắc xin)', 'Khác (nhập mô tả)'
+        ];
+
+        for (const response of answers.responses) {
+          for (const option of response.selectedOptions) {
+            if (option === 'Không') continue;
+            if (option === 'Có' && response.questionId === '1') continue;
+
+            if (rejectOptions.includes(option)) {
+              outcome = 'REJECT';
+              break;
+            }
+
+            if (reviewOptions.includes(option) || response.description) {
+              if (outcome !== 'REJECT') outcome = 'REVIEW';
+            }
+          }
+          if (outcome === 'REJECT') break;
+        }
+      }
+
+      if (outcome === 'REJECT') {
+        throw new Error('ELIGIBILITY_FAILED_SCREENING');
       }
 
       // 5. Create ETicket
@@ -158,12 +234,9 @@ export class BookingService {
       // 6. Create ScreeningForm
       const newScreening = new ScreeningForm({
         appointmentId: newAppointmentId,
-        medicalHistory: answers?.medicalHistory || {},
-        currentHealthStatus: answers?.currentHealthStatus || 'Healthy',
-        recentTravel: answers?.recentTravel || 'None',
-        medicationHistory: answers?.medicationHistory || 'None',
-        consentGiven: answers?.consentGiven || true,
-        eligibilityFlag
+        templateId: usedTemplateId,
+        responses: answers.responses,
+        outcome
       });
       await newScreening.save({ session });
 
@@ -232,11 +305,24 @@ export class BookingService {
       }
 
       const now = new Date();
-      const diffTime = appointment.appointmentDate.getTime() - now.getTime();
+      
+      // Calculate exact appointment time using timeSlot safely
+      const exactAppointmentTime = new Date(appointment.appointmentDate);
+      if (appointment.timeSlot) {
+        const [startHour, startMinute] = appointment.timeSlot.split('-')[0].split(':').map(Number);
+        exactAppointmentTime.setHours(startHour || 0, startMinute || 0, 0, 0);
+      }
+      
+      const diffTime = exactAppointmentTime.getTime() - now.getTime();
       const diffHours = diffTime / (1000 * 60 * 60);
+      
+      // Allow a 30-minute grace period if they JUST booked it and made a mistake
+      const createdDiffMinutes = appointment.createdAt 
+        ? (now.getTime() - appointment.createdAt.getTime()) / (1000 * 60)
+        : 999; // If no createdAt, assume it's an old appointment
 
-      // deadline is 24 hours
-      if (diffHours < 24) {
+      // deadline is 24 hours prior
+      if (diffHours < 24 && createdDiffMinutes > 30) {
         throw new Error('CANCELLATION_DEADLINE_PASSED');
       }
 
@@ -253,7 +339,7 @@ export class BookingService {
       if (appointment.eTicketId) {
         await ETicket.updateOne(
           { _id: appointment.eTicketId },
-          { $unset: { qrPayloadSigned: 1 } },
+          { $set: { qrPayloadSigned: 'INVALIDATED' } },
           { session }
         );
       }

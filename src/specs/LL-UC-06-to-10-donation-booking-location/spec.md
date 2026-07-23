@@ -138,7 +138,11 @@ The system MUST validate all required screening questions.
 
 #### FR-009d
 
-The system MUST block appointment confirmation if the screening form is incomplete or indicates donor ineligibility.
+The system MUST evaluate the screening form answers to determine the outcome:
+- **PASS**: Only "Không" selected.
+- **REVIEW**: Manual medical judgement needed (e.g. "Khác", "Bệnh khác").
+- **REJECT**: Indicates temporary or permanent deferral according to Vietnamese blood donation guidelines.
+The system MUST block appointment confirmation if the outcome is REJECT or the form is incomplete.
 
 #### FR-009e
 

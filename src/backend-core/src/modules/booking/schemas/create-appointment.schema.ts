@@ -8,11 +8,11 @@ export const CreateAppointmentSchema = z.object({
     }),
     timeSlot: z.string().min(1, 'Time slot is required'),
     answers: z.object({
-      medicalHistory: z.record(z.string(), z.any()).optional(),
-      currentHealthStatus: z.string().optional(),
-      recentTravel: z.string().optional(),
-      medicationHistory: z.string().optional(),
-      consentGiven: z.boolean().optional()
-    }).optional()
+      responses: z.array(z.object({
+        questionId: z.string(),
+        selectedOptions: z.array(z.string()).min(1, 'Phải chọn ít nhất 1 đáp án'),
+        description: z.string().optional()
+      })).min(8, 'Phải trả lời đầy đủ 8 câu hỏi sàng lọc')
+    })
   })
 });

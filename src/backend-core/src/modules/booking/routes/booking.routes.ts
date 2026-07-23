@@ -53,17 +53,19 @@ router.get('/locations', validateRequest(SearchLocationSchema), BookingControlle
  *               answers:
  *                 type: object
  *                 properties:
- *                   medicalHistory:
- *                     type: object
- *                     additionalProperties: true
- *                   currentHealthStatus:
- *                     type: string
- *                   recentTravel:
- *                     type: string
- *                   medicationHistory:
- *                     type: string
- *                   consentGiven:
- *                     type: boolean
+ *                   responses:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         questionId:
+ *                           type: string
+ *                         selectedOptions:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                         description:
+ *                           type: string
  *     responses:
  *       201:
  *         description: Tạo lịch hẹn thành công

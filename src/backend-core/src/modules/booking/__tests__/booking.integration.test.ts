@@ -45,7 +45,18 @@ describe('Booking API Integration Tests', () => {
         campaignId: 'c1',
         appointmentDate: new Date().toISOString(),
         timeSlot: '08:00-09:00',
-        answers: {}
+        answers: {
+          responses: [
+            { questionId: '1', selectedOptions: ['Không'] },
+            { questionId: '2', selectedOptions: ['Không'] },
+            { questionId: '3', selectedOptions: ['Không'] },
+            { questionId: '4', selectedOptions: ['Không'] },
+            { questionId: '5', selectedOptions: ['Không'] },
+            { questionId: '6', selectedOptions: ['Không'] },
+            { questionId: '7', selectedOptions: ['Không'] },
+            { questionId: '8', selectedOptions: ['Không'] }
+          ]
+        }
       });
       
     expect(response.status).toBe(201);

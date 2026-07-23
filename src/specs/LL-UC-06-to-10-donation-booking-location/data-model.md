@@ -23,17 +23,31 @@
 - `status`: Enum (`Draft`, `Active`, `Full`, `Closed`, `Cancelled`)
 - `targetBloodGroups`: Array<String>
 
+## ScreeningFormTemplate Entity (`screening_form_templates` collection)
+- `_id`: ObjectId
+- `versionName`: String (unique)
+- `isActive`: Boolean
+- `questions`: Array of `Question`
+  - `questionId`: String
+  - `questionText`: String
+  - `isMultiSelect`: Boolean
+  - `options`: Array of `QuestionOption`
+    - `label`: String
+    - `requiresDescription`: Boolean
+    - `outcomeFlag`: Enum (`PASS`, `REVIEW`, `REJECT`)
+- `createdAt`: Date
+- `updatedAt`: Date
+
 ## ScreeningForm Entity (`screening_forms` collection)
 
 - `_id`: ObjectId
 - `appointmentId`: ObjectId (ref `appointments`)
 - `templateId`: ObjectId (optional)
-- `medicalHistory`: Object
-- `currentHealthStatus`: String
-- `recentTravel`: String
-- `medicationHistory`: String
-- `consentGiven`: Boolean
-- `eligibilityFlag`: Enum (`Eligible`, `RequiresReview`, `Ineligible`)
+- `responses`: Array of `QuestionAnswer`
+  - `questionId`: String
+  - `selectedOptions`: Array of String
+  - `description`: String (optional)
+- `outcome`: Enum (`PASS`, `REVIEW`, `REJECT`)
 - `submittedAt`: Date
 
 

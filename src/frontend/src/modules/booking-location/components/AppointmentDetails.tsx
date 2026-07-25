@@ -1,19 +1,23 @@
 import React from 'react';
-import { CalendarDays, Clock, MapPin, Download, XCircle, Droplet, Activity, Heart, Scale } from 'lucide-react';
+import { CalendarDays, Clock, MapPin, Download, XCircle, Droplet, Activity, Heart, Scale, RefreshCw } from 'lucide-react';
 import type { Appointment } from '../types';
 
 interface AppointmentDetailsProps {
   appointment: Appointment;
   onCancel: (id: string) => void;
   onDownload: (id: string) => void;
+  onSync?: (id: string) => void;
   isCancelling?: boolean;
+  isSyncing?: boolean;
 }
 
 export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   appointment,
   onCancel,
   onDownload,
-  isCancelling = false
+  onSync,
+  isCancelling = false,
+  isSyncing = false
 }) => {
   const isUpcoming = appointment.status === 'upcoming';
   const isCancelled = appointment.status === 'cancelled';
@@ -49,7 +53,7 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                   CANCELLED
                 </span>
               )}
-              
+
               {appointment.bloodType && (
                 <span className="flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-bold bg-[#fff8f7] text-[#93000b] border border-[#93000b]/20">
                   <Droplet className="w-3 h-3 fill-current" />
@@ -81,7 +85,7 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
             </div>
             <p className="text-[15px] font-semibold text-[#271816]">{appointment.location.name}</p>
             <p className="text-[13px] text-[#6c757d] mt-1 leading-snug">
-              {appointment.location.address}
+              {appointment.location.address || 'Address will be provided by the blood center.'}
             </p>
           </div>
         </div>
@@ -154,6 +158,16 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                   <Download className="w-4 h-4" />
                   Download E-Ticket
                 </button>
+                {onSync && (
+                  <button
+                    onClick={() => onSync(appointment.id)}
+                    disabled={isSyncing}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-[#455F87] hover:bg-[#344866] text-white text-[14px] font-semibold rounded-lg transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                    {isSyncing ? 'Đang gửi...' : 'Gửi hồ sơ sang BV'}
+                  </button>
+                )}
                 <button
                   onClick={() => onCancel(appointment.id)}
                   disabled={isCancelling}

@@ -1,39 +1,76 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useScheduleContext } from '../../context/ScheduleContext';
-import { CalendarDays, Clock, MapPin, CheckCircle2, ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
-
-const mockLocations = {
-  'L-1': { name: 'Cho Ray Hospital', address: '201B Nguyen Chi Thanh, Ward 12' },
-  'L-2': { name: 'Blood Transfusion Hematology Hospital', address: '118 Hong Bang, Ward 12' },
-  'L-3': { name: 'Tu Du Hospital', address: '284 Cong Quynh, District 1' },
-};
+import { CalendarDays, Clock, MapPin, CheckCircle2, ArrowLeft, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { createAppointment, mapHealthAnswersToBackend, type HealthAnswers } from '../../api/bookingApi';
+import { toast } from 'sonner';
 
 export const Step3_Summary: React.FC = () => {
   const navigate = useNavigate();
   const { data, resetData } = useScheduleContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const loc = data.locationId ? mockLocations[data.locationId as keyof typeof mockLocations] : null;
+  // Get location data from context (set in Step1)
+  const loc = data.locationData;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    if (!data.date || !data.locationId || !data.timeSlot) {
+      toast.error('Thiếu thông tin đặt lịch. Vui lòng thử lại.');
+      return;
+    }
+
     setIsSubmitting(true);
-    // Mock API Call
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const healthAnswers = data.healthAnswers as HealthAnswers;
+      const screeningAnswers = mapHealthAnswersToBackend(healthAnswers);
+
+      const payload = {
+        campaignId: data.locationId,
+        appointmentDate: data.date,
+        timeSlot: data.timeSlot,
+        answers: screeningAnswers,
+      };
+
+      const res = await createAppointment(payload);
+
+      if (res.success) {
+        resetData();
+        toast.success('Tạo lịch hẹn hiến máu thành công!');
+        navigate('/my-appointments/schedule/success');
+      } else {
+        setError(res.message || 'Lỗi đặt lịch hẹn. Vui lòng thử lại.');
+        toast.error(res.message || 'Lỗi đặt lịch hẹn. Vui lòng thử lại.');
+      }
+    } catch (err) {
+      const msg = 'Lỗi hệ thống. Vui lòng thử lại sau.';
+      setError(msg);
+      toast.error(msg);
+    } finally {
       setIsSubmitting(false);
-      resetData();
-      navigate('/my-appointments/schedule/success');
-    }, 1500);
+    }
   };
 
-  // Check if they answered YES to any risky questions
-  const hasRiskyAnswers = data.healthAnswers && Object.values(data.healthAnswers).some(val => val === true);
+  // Check if they answered YES to any risky questions (works with new HealthAnswers structure)
+  const hasRiskyAnswers = data.healthAnswers && checkRiskyAnswers(data.healthAnswers);
+
+  function checkRiskyAnswers(answers: HealthAnswers): boolean {
+    const riskyKeys: (keyof HealthAnswers)[] = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'];
+    return riskyKeys.some(key => {
+      const val = answers[key];
+      if (val === 'yes') return true;
+      if (Array.isArray(val) && val.length > 0 && !val.includes('none')) return true;
+      return false;
+    });
+  }
 
   if (!data.date || !data.locationId) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <p className="text-[14px] text-[#6c757d] mb-4">Incomplete information. Please start over.</p>
-        <button 
+        <button
           onClick={() => navigate('/my-appointments/schedule')}
           className="px-6 py-2 bg-[#93000b] text-white rounded-lg text-[14px] font-semibold"
         >
@@ -54,7 +91,6 @@ export const Step3_Summary: React.FC = () => {
 
       {/* Main Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
         {/* Left Col: Date & Time */}
         <div className="bg-white border border-[#f1f3f5] rounded-xl shadow-sm overflow-hidden">
           <div className="bg-[#f8f9fa] border-b border-[#f1f3f5] px-5 py-4">
@@ -101,7 +137,11 @@ export const Step3_Summary: React.FC = () => {
 
       {/* Health Review Section */}
       <div className="bg-white border border-[#f1f3f5] rounded-xl shadow-sm p-6 flex items-start gap-4">
-        <ShieldCheck className="w-8 h-8 text-[#93000b] shrink-0" />
+        {hasRiskyAnswers ? (
+          <AlertTriangle className="w-8 h-8 text-amber-500 shrink-0" />
+        ) : (
+          <ShieldCheck className="w-8 h-8 text-[#93000b] shrink-0" />
+        )}
         <div>
           <h3 className="text-[15px] font-bold text-[#271816] mb-1">Health Screening Review</h3>
           {hasRiskyAnswers ? (
@@ -115,6 +155,13 @@ export const Step3_Summary: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center justify-between mt-4">

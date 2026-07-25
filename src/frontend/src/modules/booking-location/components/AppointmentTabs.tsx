@@ -12,6 +12,7 @@ export const AppointmentTabs: React.FC<AppointmentTabsProps> = ({ activeTab, onC
     { id: 'upcoming', label: 'Upcoming' },
     { id: 'completed', label: 'Completed' },
     { id: 'cancelled', label: 'Cancelled' },
+    { id: 'no-show', label: 'No Show' },
   ];
 
   return (

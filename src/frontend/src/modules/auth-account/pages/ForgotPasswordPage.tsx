@@ -11,15 +11,15 @@ export const ForgotPasswordPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleForgotPassword = async (email: string) => {
+  const handleForgotPassword = async (data: { idDocumentNumber: string; email: string }) => {
     setIsLoading(true);
     setErrorMessage(null);
 
     try {
-      const response = await sendOTP({ email });
+      const response = await sendOTP(data);
       if (response.success) {
         // Navigate to OTP page, pass email in state
-        navigate('/auth/verify-otp', { state: { email } });
+        navigate('/verify-otp', { state: { email: data.email, idDocumentNumber: data.idDocumentNumber } });
       } else {
         setErrorMessage(response.message || 'Failed to send OTP.');
       }

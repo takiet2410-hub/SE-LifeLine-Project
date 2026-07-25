@@ -23,9 +23,9 @@ export const ResetSuccessPage: React.FC = () => {
             Your password has been successfully updated. You can now login with your new credentials.
           </p>
 
-          <Link
-            to="/auth/login"
-            className="w-full h-[48px] bg-[#93000b] hover:bg-[#7a0009] text-white font-semibold text-[14px] rounded-lg transition-all shadow-sm hover:shadow active:scale-[0.99] flex items-center justify-center"
+          <Link 
+            to="/login"
+            className="flex h-12 w-full max-w-[200px] items-center justify-center gap-2 rounded-lg bg-[#93000B] text-sm font-semibold leading-[14px] text-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10),0_2px_4px_-2px_rgba(0,0,0,0.10)]"
           >
             Back to Login
           </Link>

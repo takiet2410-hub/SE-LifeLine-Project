@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 
 interface ResetPasswordFormProps {
-  onSubmit: (password: string) => Promise<void>;
+  onSubmit: (password: string, confirmPassword: string) => Promise<void>;
   isLoading: boolean;
   errorMessage: string | null;
 }
@@ -32,7 +32,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
       return;
     }
 
-    await onSubmit(password);
+    await onSubmit(password, confirmPassword);
   };
 
   const displayError = validationError || errorMessage;

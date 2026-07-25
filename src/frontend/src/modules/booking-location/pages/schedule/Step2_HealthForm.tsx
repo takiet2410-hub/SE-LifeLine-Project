@@ -7,6 +7,7 @@ export const Step2_HealthForm: React.FC = () => {
   const navigate = useNavigate();
   const { data, updateData } = useScheduleContext();
   
+  const [missingSections, setMissingSections] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, any>>(data.healthAnswers || {
     s1: null,
     s2: null, s2_note: '',
@@ -84,7 +85,7 @@ export const Step2_HealthForm: React.FC = () => {
     <div className="flex flex-col gap-6 w-full max-w-[956px] mx-auto">
       
       {/* SECTION 1 */}
-      <div className="flex pb-6 flex-col items-center gap-6 rounded-xl border border-[#F1F3F5] bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden">
+      <div className={`flex pb-6 flex-col items-center gap-6 rounded-xl border ${missingSections.some(m => m.startsWith('Section 1')) ? 'border-[#DC3545] shadow-[0_0_0_1px_#DC3545]' : 'border-[#F1F3F5]'} bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden transition-colors`}>
         <div className="flex py-3 px-6 flex-col items-start bg-[#3B82F6] w-full">
           <p className="text-[#FFF] font-inter text-sm font-bold leading-5 w-full tracking-[0.025em]">SECTION 1: HAVE YOU EVER DONATED BLOOD BEFORE?</p>
         </div>
@@ -101,7 +102,7 @@ export const Step2_HealthForm: React.FC = () => {
       </div>
 
       {/* SECTION 2 */}
-      <div className="flex flex-col items-start rounded-xl border border-[#F1F3F5] bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden">
+      <div className={`flex flex-col items-start rounded-xl border ${missingSections.some(m => m.startsWith('Section 2')) ? 'border-[#DC3545] shadow-[0_0_0_1px_#DC3545]' : 'border-[#F1F3F5]'} bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden transition-colors`}>
         <div className="flex py-3 px-6 flex-col items-start bg-[#3B82F6] w-full">
           <p className="text-[#FFF] font-inter text-sm font-bold leading-5 w-full tracking-[0.025em]">SECTION 2: DO YOU CURRENTLY HAVE ANY MEDICAL CONDITIONS?</p>
         </div>
@@ -126,7 +127,7 @@ export const Step2_HealthForm: React.FC = () => {
       </div>
 
       {/* SECTION 3 */}
-      <div className="flex flex-col items-start rounded-xl border border-[#F1F3F5] bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden">
+      <div className={`flex flex-col items-start rounded-xl border ${missingSections.some(m => m.startsWith('Section 3')) ? 'border-[#DC3545] shadow-[0_0_0_1px_#DC3545]' : 'border-[#F1F3F5]'} bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden transition-colors`}>
         <div className="flex py-3 px-6 flex-col items-start bg-[#3B82F6] w-full">
           <p className="text-[#FFF] font-inter text-sm font-bold leading-5 w-full tracking-[0.025em]">SECTION 3: HAVE YOU EVER HAD ANY OF THE FOLLOWING: HEPATITIS B, C, HIV, ETC.</p>
         </div>
@@ -152,7 +153,7 @@ export const Step2_HealthForm: React.FC = () => {
       </div>
 
       {/* SECTION 4 */}
-      <div className="flex flex-col items-start rounded-xl border border-[#F1F3F5] bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden">
+      <div className={`flex flex-col items-start rounded-xl border ${missingSections.some(m => m.startsWith('Section 4')) ? 'border-[#DC3545] shadow-[0_0_0_1px_#DC3545]' : 'border-[#F1F3F5]'} bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden transition-colors`}>
         <div className="flex py-3 px-6 flex-col items-start bg-[#3B82F6] w-full">
           <p className="text-[#FFF] font-inter text-sm font-bold leading-5 w-full tracking-[0.025em]">SECTION 4: IN THE LAST 12 MONTHS, HAVE YOU:</p>
         </div>
@@ -183,7 +184,7 @@ export const Step2_HealthForm: React.FC = () => {
       </div>
 
       {/* SECTION 5 */}
-      <div className="flex flex-col items-start rounded-xl border border-[#F1F3F5] bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden">
+      <div className={`flex flex-col items-start rounded-xl border ${missingSections.some(m => m.startsWith('Section 5')) ? 'border-[#DC3545] shadow-[0_0_0_1px_#DC3545]' : 'border-[#F1F3F5]'} bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden transition-colors`}>
         <div className="flex py-3 px-6 flex-col items-start bg-[#3B82F6] w-full">
           <p className="text-[#FFF] font-inter text-sm font-bold leading-5 w-full tracking-[0.025em]">SECTION 5: IN THE LAST 6 MONTHS, HAVE YOU:</p>
         </div>
@@ -213,7 +214,7 @@ export const Step2_HealthForm: React.FC = () => {
       </div>
 
       {/* SECTION 6 */}
-      <div className="flex flex-col items-start rounded-xl border border-[#F1F3F5] bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden">
+      <div className={`flex flex-col items-start rounded-xl border ${missingSections.some(m => m.startsWith('Section 6')) ? 'border-[#DC3545] shadow-[0_0_0_1px_#DC3545]' : 'border-[#F1F3F5]'} bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden transition-colors`}>
         <div className="flex py-3 px-6 flex-col items-start bg-[#3B82F6] w-full">
           <p className="text-[#FFF] font-inter text-sm font-bold leading-5 w-full tracking-[0.025em]">SECTION 6: IN THE LAST 1 MONTH, HAVE YOU:</p>
         </div>
@@ -234,7 +235,7 @@ export const Step2_HealthForm: React.FC = () => {
       </div>
 
       {/* SECTION 7 */}
-      <div className="flex flex-col items-start rounded-xl border border-[#F1F3F5] bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden">
+      <div className={`flex flex-col items-start rounded-xl border ${missingSections.some(m => m.startsWith('Section 7')) ? 'border-[#DC3545] shadow-[0_0_0_1px_#DC3545]' : 'border-[#F1F3F5]'} bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden transition-colors`}>
         <div className="flex py-3 px-6 flex-col items-start bg-[#3B82F6] w-full">
           <p className="text-[#FFF] font-inter text-sm font-bold leading-5 w-full tracking-[0.025em]">SECTION 7: IN THE LAST 14 DAYS, HAVE YOU:</p>
         </div>
@@ -262,7 +263,7 @@ export const Step2_HealthForm: React.FC = () => {
       </div>
 
       {/* SECTION 8 */}
-      <div className="flex flex-col items-start rounded-xl border border-[#F1F3F5] bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden">
+      <div className={`flex flex-col items-start rounded-xl border ${missingSections.some(m => m.startsWith('Section 8')) ? 'border-[#DC3545] shadow-[0_0_0_1px_#DC3545]' : 'border-[#F1F3F5]'} bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden transition-colors`}>
         <div className="flex py-3 px-6 flex-col items-start bg-[#3B82F6] w-full">
           <p className="text-[#FFF] font-inter text-sm font-bold leading-5 w-full tracking-[0.025em]">SECTION 8: IN THE LAST 7 DAYS, HAVE YOU:</p>
         </div>
@@ -300,7 +301,6 @@ export const Step2_HealthForm: React.FC = () => {
         </button>
         <button
           onClick={handleNext}
-          disabled={!isFormComplete()}
           className="cursor-pointer flex py-4 px-12 justify-center items-center gap-2 rounded-xl bg-[#93000B] hover:bg-[#7a0009] transition-colors w-fit text-white font-inter text-sm font-semibold shadow-[0_4px_6px_-1px_rgba(147,0,11,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Review Summary

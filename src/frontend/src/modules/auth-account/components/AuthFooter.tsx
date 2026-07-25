@@ -31,17 +31,17 @@ export const AuthFooter: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-[13px] font-medium text-[#5b403d]">
               <li>
-                <Link to="/about" className="hover:text-[#93000b] transition-colors">
+                <Link to="#" className="hover:text-[#93000b] transition-colors">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/how-it-works" className="hover:text-[#93000b] transition-colors">
+                <Link to="#" className="hover:text-[#93000b] transition-colors">
                   How It Works
                 </Link>
               </li>
               <li>
-                <Link to="/locations" className="hover:text-[#93000b] transition-colors">
+                <Link to="#" className="hover:text-[#93000b] transition-colors">
                   Find Locations
                 </Link>
               </li>
@@ -55,17 +55,17 @@ export const AuthFooter: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-[13px] font-medium text-[#5b403d]">
               <li>
-                <Link to="/health-tips" className="hover:text-[#93000b] transition-colors">
+                <Link to="#" className="hover:text-[#93000b] transition-colors">
                   Health Tips
                 </Link>
               </li>
               <li>
-                <Link to="/eligibility" className="hover:text-[#93000b] transition-colors">
+                <Link to="#" className="hover:text-[#93000b] transition-colors">
                   Donor Eligibility
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className="hover:text-[#93000b] transition-colors">
+                <Link to="#" className="hover:text-[#93000b] transition-colors">
                   Frequently Asked Questions
                 </Link>
               </li>

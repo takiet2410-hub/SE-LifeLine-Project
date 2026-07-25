@@ -1,13 +1,126 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface ContactInfoProps {
   isEditing?: boolean;
   onEdit?: () => void;
   onCancel?: () => void;
-  onSave?: () => void;
+  onSave?: (data: any) => void;
+  user?: any;
 }
 
-export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onCancel, onSave }) => {
+import vnProvinces from '../../../data/vietnam_provinces.json';
+
+export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onCancel, onSave, user }) => {
+  // Parse address string into components if it's a string
+  const parseAddress = (addressStr: string) => {
+    if (!addressStr) return { province: '', district: '', ward: '', street: '' };
+    const parts = addressStr.split(',').map(p => p.trim());
+    if (parts.length >= 3) {
+      const province = parts[parts.length - 1];
+      const districtAndWard = parts[parts.length - 2];
+      const wardParts = districtAndWard.split('-').map(p => p.trim());
+      
+      let district = '';
+      let ward = '';
+      
+      if (parts.length >= 4) {
+        // e.g. Street, Ward, District, Province
+        district = parts[parts.length - 2];
+        ward = parts[parts.length - 3];
+        return {
+          province,
+          district,
+          ward,
+          street: parts.slice(0, parts.length - 3).join(', ')
+        };
+      } else {
+        // Fallback for 3 parts: Street, Ward/District, Province
+        return {
+          province,
+          district: '',
+          ward: districtAndWard,
+          street: parts.slice(0, parts.length - 2).join(', ')
+        };
+      }
+    }
+    return { province: '', district: '', ward: '', street: addressStr };
+  };
+
+  const addrVal = user?.address || user?.permanentAddress;
+  const parsedAddr = typeof addrVal === 'string' ? parseAddress(addrVal) : {
+    province: addrVal?.province || '',
+    district: '',
+    ward: addrVal?.ward || '',
+    street: addrVal?.street || ''
+  };
+
+  const [formData, setFormData] = useState({
+    phoneNumber: user?.phoneNumber || '',
+    email: user?.email || '',
+    occupation: user?.occupation || 'Sinh viên',
+    permanentAddress: {
+      province: parsedAddr.province,
+      district: parsedAddr.district,
+      ward: parsedAddr.ward,
+      street: parsedAddr.street
+    }
+  });
+
+  useEffect(() => {
+    setFormData({
+      phoneNumber: user?.phoneNumber || '',
+      email: user?.email || '',
+      occupation: user?.occupation || 'Sinh viên',
+      permanentAddress: {
+        province: parsedAddr.province,
+        district: parsedAddr.district,
+        ward: parsedAddr.ward,
+        street: parsedAddr.street
+      }
+    });
+  }, [user]);
+
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddressChange = (field: string, value: string) => {
+    setFormData(prev => {
+      const newAddr = { ...prev.permanentAddress, [field]: value };
+      if (field === 'province') {
+        newAddr.district = '';
+        newAddr.ward = '';
+      }
+      if (field === 'district') {
+        newAddr.ward = '';
+      }
+      return { ...prev, permanentAddress: newAddr };
+    });
+  };
+
+  const selectedProvince = vnProvinces.find((p: any) => p.name === formData.permanentAddress.province);
+  const selectedDistrict = selectedProvince?.districts.find((d: any) => d.name === formData.permanentAddress.district);
+
+  const availableProvinces = vnProvinces;
+  const availableDistricts = selectedProvince ? selectedProvince.districts : [];
+  const availableWards = selectedDistrict ? selectedDistrict.wards : [];
+
+  const handleSave = () => {
+    if (onSave) {
+      // Map back to BE schema
+      const payload = {
+        phoneNumber: formData.phoneNumber,
+        email: formData.email,
+        permanentAddress: {
+          province: formData.permanentAddress.province || 'Chưa cập nhật',
+          ward: (formData.permanentAddress.district ? formData.permanentAddress.district + ', ' : '') + formData.permanentAddress.ward || 'Chưa cập nhật',
+          street: formData.permanentAddress.street || 'Chưa cập nhật'
+        }
+      };
+      onSave(payload);
+    }
+  };
+
   if (isEditing) {
     return (
       <div className="flex p-6 flex-col items-start gap-4 rounded-lg border border-[#F1F3F5] bg-[#F8F9FA] w-full">
@@ -24,58 +137,86 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
           </button>
         </div>
         <div className="flex flex-col items-start gap-4 w-full">
+          
           <div className="flex flex-col items-start gap-1 w-full">
-            <div className="flex flex-col items-start w-full">
-              <p className="text-[#6C757D] font-inter text-xs leading-4 w-full">Địa chỉ thường trú:</p>
+            <p className="text-[#6C757D] font-inter text-xs leading-4 w-full">Địa chỉ thường trú:</p>
+            
+            <div className="flex gap-2 w-full">
+              <div className="flex py-2 px-3 justify-center items-start rounded-lg border border-[#CED4DA] bg-[#FFF] w-1/3">
+                <select 
+                  className="w-full text-sm outline-none bg-transparent"
+                  value={formData.permanentAddress.province}
+                  onChange={(e) => handleAddressChange('province', e.target.value)}
+                >
+                  <option value="">Chọn Tỉnh/TP</option>
+                  {availableProvinces.map((p: any) => <option key={p.code} value={p.name}>{p.name}</option>)}
+                </select>
+              </div>
+              <div className="flex py-2 px-3 justify-center items-start rounded-lg border border-[#CED4DA] bg-[#FFF] w-1/3">
+                <select 
+                  className="w-full text-sm outline-none bg-transparent"
+                  value={formData.permanentAddress.district}
+                  onChange={(e) => handleAddressChange('district', e.target.value)}
+                  disabled={!formData.permanentAddress.province}
+                >
+                  <option value="">Chọn Quận/Huyện</option>
+                  {availableDistricts.map((d: any) => <option key={d.code} value={d.name}>{d.name}</option>)}
+                </select>
+              </div>
+              <div className="flex py-2 px-3 justify-center items-start rounded-lg border border-[#CED4DA] bg-[#FFF] w-1/3">
+                <select 
+                  className="w-full text-sm outline-none bg-transparent"
+                  value={formData.permanentAddress.ward}
+                  onChange={(e) => handleAddressChange('ward', e.target.value)}
+                  disabled={!formData.permanentAddress.district}
+                >
+                  <option value="">Chọn Phường/Xã</option>
+                  {availableWards.map((w: any) => <option key={w.code} value={w.name}>{w.name}</option>)}
+                </select>
+              </div>
             </div>
-            <div className="flex py-2 px-3 justify-center items-start rounded-lg border border-[#CED4DA] bg-[#FFF] w-full overflow-hidden">
-              <input type="text" defaultValue="12/18 Trịnh Định Trọng, Phường Tân Phú, Thành phố Hồ Chí Minh" className="text-[#271816] font-inter text-sm leading-[21px] w-full outline-none" />
+            
+            <div className="flex mt-1 py-2 px-3 justify-center items-start rounded-lg border border-[#CED4DA] bg-[#FFF] w-full overflow-hidden">
+              <input 
+                type="text" 
+                placeholder="Số nhà, tên đường..." 
+                value={formData.permanentAddress.street}
+                onChange={(e) => handleAddressChange('street', e.target.value)}
+                className="text-[#271816] font-inter text-sm leading-[21px] w-full outline-none" 
+              />
             </div>
           </div>
           
-          <div className="flex flex-col items-start gap-1 w-full">
-            <div className="flex flex-col items-start w-full">
-              <p className="text-[#6C757D] font-inter text-xs leading-4 w-full">Địa chỉ hiện nay:</p>
-            </div>
-            <div className="flex py-2.5 px-3 justify-center items-start rounded-lg border border-[#CED4DA] bg-[#FFF] w-full overflow-hidden">
-              <input type="text" placeholder="Nhập địa chỉ hiện nay" className="text-[#271816] font-inter text-sm w-full outline-none placeholder:text-[#6B7280]" />
-            </div>
-          </div>
-          
-          <div className="flex justify-center items-start gap-4 w-full">
+          <div className="flex justify-center items-start gap-4 w-full mt-2">
             <div className="flex flex-col items-start gap-1 w-1/2">
               <div className="flex flex-col items-start w-full">
                 <p className="text-[#6C757D] font-inter text-xs leading-4 w-full">Điện thoại di động:</p>
               </div>
               <div className="flex py-2 px-3 justify-center items-start rounded-lg border border-[#CED4DA] bg-[#FFF] w-full overflow-hidden">
-                <input type="text" defaultValue="0395670040" className="text-[#271816] font-inter text-sm leading-[21px] w-full outline-none" />
+                <input 
+                  type="text" 
+                  value={formData.phoneNumber} 
+                  onChange={(e) => handleChange('phoneNumber', e.target.value)}
+                  className="text-[#271816] font-inter text-sm leading-[21px] w-full outline-none" 
+                />
               </div>
             </div>
             <div className="flex flex-col items-start gap-1 w-1/2">
               <div className="flex flex-col items-start w-full">
                 <p className="text-[#6C757D] font-inter text-xs leading-4 w-full">Điện thoại bàn:</p>
               </div>
-              <div className="flex py-2.5 px-3 justify-center items-start rounded-lg border border-[#CED4DA] bg-[#FFF] w-full overflow-hidden">
-                <input type="text" placeholder="Nhập số điện thoại bàn" className="text-[#271816] font-inter text-sm w-full outline-none placeholder:text-[#6B7280]" />
+              <div className="flex py-2 px-3 justify-center items-start rounded-lg border border-[#CED4DA] bg-[#FFF] w-full overflow-hidden bg-gray-100">
+                <input type="text" disabled placeholder="Không hỗ trợ đổi" className="text-[#271816] font-inter text-sm w-full outline-none bg-transparent" />
               </div>
             </div>
           </div>
           
-          <div className="flex flex-col items-start gap-1 w-full">
+          <div className="flex flex-col items-start gap-1 w-full mt-2">
             <div className="flex flex-col items-start w-full">
               <p className="text-[#6C757D] font-inter text-xs leading-4 w-full">Email:</p>
             </div>
-            <div className="flex py-2 px-3 justify-center items-start rounded-lg border border-[#CED4DA] bg-[#FFF] w-full overflow-hidden">
-              <input type="email" defaultValue="tanhkiet.2006@gmail.com" className="text-[#271816] font-inter text-sm leading-[21px] w-full outline-none" />
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-start gap-1 w-full">
-            <div className="flex flex-col items-start w-full">
-              <p className="text-[#6C757D] font-inter text-xs leading-4 w-full">Nghề nghiệp:</p>
-            </div>
-            <div className="flex py-2 px-3 justify-center items-start rounded-lg border border-[#CED4DA] bg-[#FFF] w-full overflow-hidden">
-              <input type="text" defaultValue="Sinh viên" className="text-[#271816] font-inter text-sm leading-[21px] w-full outline-none" />
+            <div className="flex py-2 px-3 justify-center items-start rounded-lg border border-[#CED4DA] bg-[#FFF] w-full overflow-hidden bg-gray-100">
+              <input type="email" disabled value={formData.email} className="text-[#271816] font-inter text-sm leading-[21px] w-full outline-none bg-transparent" />
             </div>
           </div>
           
@@ -87,7 +228,7 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
               Hủy
             </button>
             <button 
-              onClick={onSave}
+              onClick={handleSave}
               className="flex py-2 px-8 justify-center items-center rounded-lg bg-[#93000B] text-white font-medium shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10)]"
             >
               Lưu thay đổi
@@ -114,22 +255,20 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
       
       <div className="grid grid-cols-[135px_1fr] gap-y-4 w-full text-sm">
         <span className="text-[#6C757D]">Địa chỉ thường trú:</span>
-        <span className="text-[#271816] font-medium">12/16 Trịnh Đình Trọng, Phường Tân Phú, Thành phố Hồ Chí Minh</span>
-        
-        <span className="text-[#6C757D]">Địa chỉ hiện nay:</span>
-        <span className="text-[#271816] font-medium">-</span>
+        <span className="text-[#271816] font-medium">{
+          (() => {
+            const addr = user?.address || user?.permanentAddress;
+            if (!addr) return '-';
+            if (typeof addr === 'string') return addr;
+            return `${addr.street || ''}, ${addr.ward || ''}, ${addr.province || ''}`.replace(/^[,\s]+|[,\s]+$/g, '');
+          })()
+        }</span>
         
         <span className="text-[#6C757D]">Điện thoại di động:</span>
-        <span className="text-[#271816] font-medium">0395670040</span>
-        
-        <span className="text-[#6C757D]">Điện thoại bàn:</span>
-        <span className="text-[#271816] font-medium">-</span>
+        <span className="text-[#271816] font-medium">{user?.phoneNumber || '-'}</span>
         
         <span className="text-[#6C757D]">Email:</span>
-        <span className="text-[#271816] font-medium">tanhkiet.2006@gmail.com</span>
-        
-        <span className="text-[#6C757D]">Nghề nghiệp:</span>
-        <span className="text-[#271816] font-medium">Sinh viên</span>
+        <span className="text-[#271816] font-medium">{user?.email || '-'}</span>
       </div>
     </div>
   );

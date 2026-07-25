@@ -3,9 +3,10 @@ import React from 'react';
 interface PersonalInfoProps {
   isEditing?: boolean;
   onEdit?: () => void;
+  user?: any;
 }
 
-export const PersonalInfo: React.FC<PersonalInfoProps> = ({ isEditing, onEdit }) => {
+export const PersonalInfo: React.FC<PersonalInfoProps> = ({ isEditing, onEdit, user }) => {
   return (
     <div className="flex p-6 flex-col items-start gap-4 rounded-lg border border-[#F1F3F5] bg-[#F8F9FA] w-full">
       <div className="flex justify-between items-center w-full">
@@ -23,32 +24,43 @@ export const PersonalInfo: React.FC<PersonalInfoProps> = ({ isEditing, onEdit })
       <div className="grid grid-cols-[120px_1fr] gap-y-4 w-full text-sm">
         <span className="text-[#6C757D] flex items-center h-full">Số CMND:</span>
         <span className="text-[#271816] font-medium flex items-center gap-1 h-full">
-          049206001105 {isEditing && <LockIcon />}
+          {user?.idDocumentNumber || '-'} {isEditing && <LockIcon />}
         </span>
         
         <span className="text-[#6C757D] flex items-center h-full">Số hộ chiếu:</span>
         <span className="text-[#271816] font-medium flex items-center gap-1 h-full">
-          - {isEditing && <LockIcon />}
+          {user?.passportNumber || '-'} {isEditing && <LockIcon />}
         </span>
         
         <span className="text-[#6C757D] flex items-center h-full pt-1">Họ và tên:</span>
         <span className="text-[#271816] font-medium uppercase flex items-center gap-1 h-full">
-          NGUYỄN VĂN AN {isEditing && <LockIcon />}
+          {user?.fullName || '-'} {isEditing && <LockIcon />}
         </span>
         
         <span className="text-[#6C757D] flex items-center h-full">Ngày sinh:</span>
         <span className="text-[#271816] font-medium flex items-center gap-1 h-full">
-          01/01/1990 {isEditing && <LockIcon />}
+          {(() => {
+            const dob = user?.dateOfBirth;
+            if (!dob) return '-';
+            if (dob.includes('/')) return dob;
+            try {
+              const date = new Date(dob);
+              if (isNaN(date.getTime())) return dob;
+              return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+            } catch {
+              return dob;
+            }
+          })()} {isEditing && <LockIcon />}
         </span>
         
         <span className="text-[#6C757D] flex items-center h-full">Giới tính:</span>
         <span className="text-[#271816] font-medium flex items-center gap-1 h-full">
-          Nam {isEditing && <LockIcon />}
+          {user?.gender || '-'} {isEditing && <LockIcon />}
         </span>
         
         <span className="text-[#6C757D] flex items-center h-full">Nhóm máu:</span>
         <span className="text-[#271816] font-medium flex items-center gap-1 h-full">
-          O+ {isEditing && <LockIcon />}
+          {user?.bloodType || 'Unknown'} {isEditing && <LockIcon />}
         </span>
       </div>
     </div>

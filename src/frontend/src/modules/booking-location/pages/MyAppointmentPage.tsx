@@ -8,6 +8,7 @@ import { fetchAppointments, cancelAppointment, downloadETicket } from '../api/bo
 import type { Appointment, AppointmentStatus } from '../types';
 import { CalendarX2, Loader2, FileText, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export const MyAppointmentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -107,12 +108,36 @@ export const MyAppointmentPage: React.FC = () => {
     try {
       const res = await downloadETicket(id);
       if (res.success) {
-        setToastData({ isVisible: true, message: 'E-Ticket downloaded successfully' });
+        if (res.data && res.data.fileUrl) {
+          window.open(res.data.fileUrl, '_blank');
+          toast.success('Đang mở E-Ticket của bạn...');
+        } else {
+          toast.info('E-Ticket chưa có tệp đính kèm. Bạn có thể đưa trực tiếp mã QR trên màn hình cho nhân viên y tế.');
+        }
       } else {
-        alert(res.message); 
+        toast.error(res.message || 'Không thể tải E-Ticket');
       }
     } catch (err) {
-      alert('Network error');
+      toast.error('Lỗi kết nối, vui lòng thử lại');
+    }
+  };
+
+  const [isSyncing, setIsSyncing] = useState<Record<string, boolean>>({});
+
+  const handleSync = async (id: string) => {
+    try {
+      setIsSyncing(prev => ({ ...prev, [id]: true }));
+      const { syncAppointmentToBloodCenter } = await import('../api/bookingApi');
+      const res = await syncAppointmentToBloodCenter(id);
+      if (res.success) {
+        toast.success(res.message);
+      } else {
+        toast.error(res.message);
+      }
+    } catch (err) {
+      toast.error('Lỗi kết nối khi đồng bộ');
+    } finally {
+      setIsSyncing(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -174,7 +199,9 @@ export const MyAppointmentPage: React.FC = () => {
               appointment={selectedAppointment}
               onCancel={handleOpenCancelModal}
               onDownload={handleDownload}
-              isCancelling={cancelModalData.appointmentId === selectedAppointment.id && cancelModalData.isProcessing}
+              onSync={handleSync}
+              isCancelling={cancelModalData.isProcessing && cancelModalData.appointmentId === selectedAppointment.id}
+              isSyncing={isSyncing[selectedAppointment.id]}
             />
           ) : (
             <div className="h-full border border-dashed border-[#dee2e6] rounded-xl flex flex-col items-center justify-center bg-white/50 text-[#a3a3a3]">

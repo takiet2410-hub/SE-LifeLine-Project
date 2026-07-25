@@ -19,25 +19,25 @@ export const AuthHeader: React.FC = () => {
         {/* Navigation Links */}
         <nav className="hidden md:flex items-center gap-8">
           <Link
-            to="/about"
+            to="#"
             className="text-[14px] font-semibold text-[#5b403d] hover:text-[#93000b] transition-colors"
           >
             About Us
           </Link>
           <Link
-            to="/how-it-works"
+            to="#"
             className="text-[14px] font-semibold text-[#5b403d] hover:text-[#93000b] transition-colors"
           >
             How It Works
           </Link>
           <Link
-            to="/locations"
+            to="#"
             className="text-[14px] font-semibold text-[#5b403d] hover:text-[#93000b] transition-colors"
           >
             Find Locations
           </Link>
           <Link
-            to="/health-tips"
+            to="#"
             className="text-[14px] font-semibold text-[#5b403d] hover:text-[#93000b] transition-colors"
           >
             Health Tips
@@ -47,7 +47,7 @@ export const AuthHeader: React.FC = () => {
         {/* Action Buttons */}
         <div className="flex items-center gap-4">
           <Link
-            to="/auth/register"
+            to="/register"
             className="text-[14px] font-semibold text-[#93000b] hover:text-[#7a0009] px-3 py-2 rounded-md transition-colors"
           >
             Sign Up

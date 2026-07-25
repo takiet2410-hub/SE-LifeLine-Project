@@ -7,9 +7,11 @@ import { SuccessToast } from '../components/SuccessToast';
 import { AuthFooter } from '../components/AuthFooter';
 import type { LoginCredentials } from '../types';
 import { loginUser } from '../api/authApi';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
@@ -23,6 +25,19 @@ export const LoginPage: React.FC = () => {
       const response = await loginUser(credentials);
 
       if (response.success) {
+        // BUG-07 FIX: Populate AuthContext.user ngay sau login
+        // login() nhận token + user object để setState trong context
+        if (response.token) {
+          login(response.token, response.user);
+        }
+
+        // Xử lý Remember Me
+        if (credentials.rememberMe) {
+          localStorage.setItem('rememberedId', credentials.idDocumentNumber);
+        } else {
+          localStorage.removeItem('rememberedId');
+        }
+
         setToastMessage('Login successful! Redirecting...');
         setShowToast(true);
         setTimeout(() => {

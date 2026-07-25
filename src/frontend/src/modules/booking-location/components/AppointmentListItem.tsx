@@ -66,7 +66,7 @@ export const AppointmentListItem: React.FC<AppointmentListItemProps> = ({
         <div className="flex items-start gap-1.5 text-[#6c757d]">
           <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <p className="text-[12px] line-clamp-1">
-            {appointment.location.address}
+            {appointment.location.address || 'Blood center location'}
           </p>
         </div>
       </div>

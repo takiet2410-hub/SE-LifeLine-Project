@@ -14,9 +14,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   isLoading = false,
   errorMessage = null,
 }) => {
-  const [email, setEmail] = useState('');
+  const [idDocumentNumber, setIdDocumentNumber] = useState(() => localStorage.getItem('rememberedId') || '');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('rememberedId') ? true : false);
   const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -24,8 +24,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     e.preventDefault();
     setValidationError(null);
 
-    if (!email.trim()) {
-      setValidationError('Please enter your email or username.');
+    if (!idDocumentNumber.trim()) {
+      setValidationError('Please enter your Citizen ID number.');
       return;
     }
     if (!password) {
@@ -34,7 +34,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     }
 
     if (onSubmit) {
-      await onSubmit({ email, password, rememberMe });
+      await onSubmit({ idDocumentNumber, password, rememberMe });
     }
   };
 
@@ -64,24 +64,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
       {/* Main Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email Input */}
+        {/* ID Document Number Input */}
         <div className="space-y-1.5 text-left">
           <label
-            htmlFor="email"
+            htmlFor="idDocumentNumber"
             className="block text-[13px] font-semibold text-[#271816]"
           >
-            Email or Username
+            Citizen ID Number (CCCD)
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#a3a3a3]">
               <Mail className="w-4 h-4" />
             </div>
             <input
-              id="email"
+              id="idDocumentNumber"
               type="text"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@domain.com"
+              value={idDocumentNumber}
+              onChange={(e) => setIdDocumentNumber(e.target.value)}
+              placeholder="Enter 12-digit ID number"
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-lg text-[14px] text-[#271816] placeholder-[#a3a3a3] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10"
               disabled={isLoading}
             />
@@ -168,7 +168,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <p className="text-[13px] text-[#6c757d]">
           Don't have an account?{' '}
           <Link
-            to="/auth/register"
+            to="/register"
             className="font-semibold text-[#93000b] hover:text-[#7a0009] transition-colors"
           >
             Sign up now

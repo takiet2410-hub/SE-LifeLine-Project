@@ -6,6 +6,7 @@ import { AuthFooter } from '../components/AuthFooter';
 import { OTPInputGroup } from '../components/OTPInputGroup';
 import type { OTPStatus } from '../components/OTPInputGroup';
 import { verifyOTP, sendOTP } from '../api/authApi';
+import { toast } from 'sonner';
 
 export const VerifyOTPPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,11 +16,12 @@ export const VerifyOTPPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const email = location.state?.email || '';
+  const idDocumentNumber = location.state?.idDocumentNumber || '';
 
   useEffect(() => {
     if (!email) {
       // If no email in state, redirect back to forgot password
-      navigate('/auth/forgot-password', { replace: true });
+      navigate('/forgot-password', { replace: true });
     }
   }, [email, navigate]);
 
@@ -32,8 +34,9 @@ export const VerifyOTPPage: React.FC = () => {
       const response = await verifyOTP({ email, code });
       
       if (response.success) {
+        toast.success('Xác thực mã OTP thành công');
         // Success: Navigate to Reset Password
-        navigate('/auth/reset-password', { state: { email, code } });
+        navigate('/reset-password', { state: { email, code } });
       } else {
         // Handle mock responses for AF states
         if (response.message?.includes('Expired')) {
@@ -42,10 +45,12 @@ export const VerifyOTPPage: React.FC = () => {
           setOtpStatus('invalid');
           setErrorMessage(response.message || 'Invalid OTP code.');
         }
+        toast.error(response.message || 'Mã OTP không hợp lệ');
       }
     } catch (err) {
       setOtpStatus('invalid');
       setErrorMessage('An unexpected error occurred. Please try again.');
+      toast.error('Lỗi hệ thống, vui lòng thử lại');
     } finally {
       setIsLoading(false);
     }
@@ -57,12 +62,16 @@ export const VerifyOTPPage: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      const response = await sendOTP({ email });
+      const response = await sendOTP({ email, idDocumentNumber });
       if (!response.success) {
         setOtpStatus('not-received');
+        toast.error(response.message || 'Không thể gửi lại mã OTP');
+      } else {
+        toast.success('Đã gửi lại mã OTP');
       }
     } catch (err) {
       setOtpStatus('not-received');
+      toast.error('Lỗi hệ thống, vui lòng thử lại');
     } finally {
       setIsLoading(false);
     }

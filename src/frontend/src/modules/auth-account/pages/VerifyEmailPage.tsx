@@ -85,7 +85,7 @@ export function VerifyEmailPage() {
 
             <div className="flex w-full flex-col gap-3">
               <a
-                href="/auth/register"
+                href="/register"
                 className="flex h-12 w-full items-center justify-center rounded-lg bg-[#93000B] text-sm font-semibold leading-[14px] text-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10),0_2px_4px_-2px_rgba(0,0,0,0.10)]"
               >
                 {state === 'success' ? 'Continue to sign in' : 'Back to registration'}

@@ -17,19 +17,19 @@ export const ResetPasswordPage: React.FC = () => {
 
   useEffect(() => {
     if (!email || !code) {
-      navigate('/auth/login', { replace: true });
+      navigate('/login', { replace: true });
     }
   }, [email, code, navigate]);
 
-  const handleResetPassword = async (newPassword: string) => {
+  const handleResetPassword = async (newPassword: string, confirmPassword: string) => {
     setIsLoading(true);
     setErrorMessage(null);
 
     try {
-      const response = await resetPassword({ email, code, newPassword });
+      const response = await resetPassword({ email, code, newPassword, confirmPassword });
       
       if (response.success) {
-        navigate('/auth/reset-success', { replace: true });
+        navigate('/reset-success', { replace: true });
       } else {
         setErrorMessage(response.message || 'Failed to reset password.');
       }

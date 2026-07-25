@@ -1,11 +1,18 @@
 import React, { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
+import type { HealthAnswers } from '../api/bookingApi';
 
 export interface ScheduleData {
   locationId?: string;
   date?: string;
   timeSlot?: string;
-  healthAnswers?: Record<string, boolean>;
+  healthAnswers?: HealthAnswers;
+  // For storing location data from Step 1 to use in Step 3
+  locationData?: {
+    id: string;
+    name: string;
+    address: string;
+  };
 }
 
 interface ScheduleContextType {

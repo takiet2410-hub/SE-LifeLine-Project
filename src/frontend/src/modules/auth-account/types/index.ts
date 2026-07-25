@@ -1,5 +1,6 @@
 export interface LoginCredentials {
-  email: string;
+  idDocumentNumber: string;
+  email?: string;
   password: string;
   rememberMe?: boolean;
 }
@@ -40,4 +41,5 @@ export interface ResetPasswordPayload {
   email: string;
   code: string;
   newPassword: string;
+  confirmPassword?: string;
 }

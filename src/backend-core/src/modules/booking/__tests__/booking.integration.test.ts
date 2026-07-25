@@ -37,7 +37,7 @@ describe('Booking API Integration Tests', () => {
   });
 
   it('POST /api/v1/bookings/appointments should call BookingService.createAppointment', async () => {
-    (BookingService.createAppointment as jest.Mock).mockResolvedValue({ id: 'a1', status: 'Scheduled' });
+    (BookingService.createAppointment as jest.Mock).mockResolvedValue({ id: 'a1', status: 'Pending' });
     
     const response = await request(app)
       .post('/api/v1/bookings/appointments')
@@ -60,17 +60,27 @@ describe('Booking API Integration Tests', () => {
       });
       
     expect(response.status).toBe(201);
-    expect(response.body).toEqual({ id: 'a1', status: 'Scheduled' });
+    expect(response.body).toEqual({ id: 'a1', status: 'Pending' });
     expect(BookingService.createAppointment).toHaveBeenCalled();
   });
 
+  it('POST /api/v1/bookings/appointments/:id/confirm should call BookingService.confirmAppointmentByBloodCenter', async () => {
+    (BookingService.confirmAppointmentByBloodCenter as jest.Mock).mockResolvedValue({ id: 'a1', status: 'Confirmed', eTicketId: { ticketCode: 'TK-123' } });
+    
+    const response = await request(app).post('/api/v1/bookings/appointments/a1/confirm');
+    
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ id: 'a1', status: 'Confirmed', eTicketId: { ticketCode: 'TK-123' } });
+    expect(BookingService.confirmAppointmentByBloodCenter).toHaveBeenCalledWith('a1');
+  });
+
   it('GET /api/v1/bookings/appointments/:id should call BookingService.getAppointmentById', async () => {
-    (BookingService.getAppointmentById as jest.Mock).mockResolvedValue({ id: 'a1', status: 'Scheduled' });
+    (BookingService.getAppointmentById as jest.Mock).mockResolvedValue({ id: 'a1', status: 'Pending' });
     
     const response = await request(app).get('/api/v1/bookings/appointments/a1');
     
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ id: 'a1', status: 'Scheduled' });
+    expect(response.body).toEqual({ id: 'a1', status: 'Pending' });
     expect(BookingService.getAppointmentById).toHaveBeenCalled();
   });
 

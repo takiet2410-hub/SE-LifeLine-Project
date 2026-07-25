@@ -1,7 +1,10 @@
 import mongoose from 'mongoose';
+import QRCode from 'qrcode';
+import { uploadImageToCloudinary } from '../../../utils/cloudinary.util';
 import { Campaign } from '../../campaign/models/campaign.model';
 import { Appointment, AppointmentStatus } from '../../booking/models/appointment.model';
 import { ScreeningForm } from '../../booking/models/screening-form.model';
+import { ETicket } from '../../booking/models/eticket.model';
 import { User } from '../../auth-account/models/user.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { DigitalDonorRecord } from '../models/digital-donor-record.model';
@@ -344,10 +347,34 @@ export class RegistrationService {
         targetAppointmentStatus = AppointmentStatus.Completed;
       } else if (payload.status === 'Ineligible for Donation' || payload.status === 'Ineligible' || payload.status === 'Rejected') {
         targetAppointmentStatus = AppointmentStatus.Cancelled;
-      } else if (payload.status === 'Confirmed' || payload.status === 'Pending') {
-        targetAppointmentStatus = AppointmentStatus.Scheduled;
+      } else if (payload.status === 'Confirmed' || payload.status === 'Eligible' || payload.status === 'Eligible for Donation') {
+        targetAppointmentStatus = AppointmentStatus.Confirmed;
+      } else if (payload.status === 'Pending') {
+        targetAppointmentStatus = AppointmentStatus.Pending;
       } else {
         targetAppointmentStatus = AppointmentStatus.CheckedIn;
+      }
+
+      // Generate E-Ticket if appointment is confirmed/scheduled and does not have an ETicket yet
+      if ((targetAppointmentStatus === AppointmentStatus.Confirmed || (targetAppointmentStatus as any) === AppointmentStatus.Scheduled) && !appointment.eTicketId) {
+        const ticketCode = `TK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const qrPayloadSigned = `SIGNED-${ticketCode}`;
+        let fileUrl = `https://res.cloudinary.com/lifeline/etickets/${ticketCode}.png`;
+        try {
+          const qrBuffer = await QRCode.toBuffer(qrPayloadSigned);
+          const uploadedUrl = await uploadImageToCloudinary(qrBuffer, 'etickets');
+          if (uploadedUrl) fileUrl = uploadedUrl;
+        } catch (e) {}
+
+        const newETicket = new ETicket({
+          appointmentId: registrationId,
+          ticketCode,
+          qrPayloadSigned,
+          fileUrl,
+          issuedAt: new Date()
+        });
+        await newETicket.save(opts);
+        appointment.eTicketId = newETicket._id as any;
       }
 
       appointment.status = targetAppointmentStatus;

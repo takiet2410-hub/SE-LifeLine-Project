@@ -64,6 +64,7 @@ export class BookingController {
       res.status(200).json(eTicket);
     } catch (error: any) {
       if (error.message.includes('NOT_FOUND')) res.status(404).json({ message: error.message });
+      else if (error.message.includes('ETICKET_NOT_READY')) res.status(400).json({ message: error.message });
       else next(error);
     }
   }
@@ -75,6 +76,18 @@ export class BookingController {
       res.status(200).json(result);
     } catch (error: any) {
       if (error.message.includes('NOT_FOUND')) res.status(404).json({ message: error.message });
+      else next(error);
+    }
+  }
+
+  public static async confirmAppointment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const appointmentId = req.params.id as string;
+      const appointment = await BookingService.confirmAppointmentByBloodCenter(appointmentId);
+      res.status(200).json(appointment);
+    } catch (error: any) {
+      if (error.message.includes('NOT_FOUND')) res.status(404).json({ message: error.message });
+      else if (error.message.includes('INVALID')) res.status(403).json({ message: error.message });
       else next(error);
     }
   }

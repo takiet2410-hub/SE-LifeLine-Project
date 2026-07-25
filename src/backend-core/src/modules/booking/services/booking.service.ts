@@ -120,7 +120,7 @@ export class BookingService {
       }
 
       // 3. Prevent Duplicate Appointments (overlapping dates)
-      const existing = await Appointment.findOne({ donorId, status: { $in: [AppointmentStatus.Scheduled, AppointmentStatus.CheckedIn] } });
+      const existing = await Appointment.findOne({ donorId, status: { $in: [AppointmentStatus.Pending, AppointmentStatus.Confirmed, AppointmentStatus.Scheduled, AppointmentStatus.CheckedIn] } });
       if (existing) {
         throw new Error('DUPLICATE_APPOINTMENT');
       }
@@ -209,33 +209,9 @@ export class BookingService {
         throw new Error('ELIGIBILITY_FAILED_SCREENING');
       }
 
-      // 5. Create ETicket
-      const ticketCode = `TK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      const qrPayloadSigned = `SIGNED-${ticketCode}`; // mock signed payload
-      
-      let fileUrl = undefined;
-      try {
-        const qrBuffer = await QRCode.toBuffer(qrPayloadSigned);
-        fileUrl = await uploadImageToCloudinary(qrBuffer, 'etickets');
-      } catch (error) {
-        console.error('Failed to generate or upload QR Code:', error);
-      }
-      if (!fileUrl) {
-        fileUrl = `https://res.cloudinary.com/lifeline/etickets/${ticketCode}.png`;
-      }
-      
       const newAppointmentId = new mongoose.Types.ObjectId();
 
-      const newETicket = new ETicket({
-        appointmentId: newAppointmentId,
-        ticketCode,
-        qrPayloadSigned,
-        fileUrl,
-        issuedAt: new Date()
-      });
-      await newETicket.save({ session });
-
-      // 6. Create ScreeningForm
+      // 5. Create ScreeningForm
       const newScreening = new ScreeningForm({
         appointmentId: newAppointmentId,
         templateId: usedTemplateId,
@@ -244,20 +220,19 @@ export class BookingService {
       });
       await newScreening.save({ session });
 
-      // 7. Create Appointment
+      // 6. Create Appointment in Pending status without eTicket
       const newAppointment = new Appointment({
         _id: newAppointmentId,
         donorId,
         campaignId,
         appointmentDate,
         timeSlot,
-        status: AppointmentStatus.Scheduled,
-        screeningFormId: newScreening._id,
-        eTicketId: newETicket._id
+        status: AppointmentStatus.Pending,
+        screeningFormId: newScreening._id
       });
       await newAppointment.save({ session });
 
-      // 8. Create initial DigitalDonorRecord with Pending status and donorSubmitted questionnaire answers
+      // 7. Create initial DigitalDonorRecord with Pending status
       const newDigitalRecord = new DigitalDonorRecord({
         appointmentId: newAppointmentId,
         donorId: new mongoose.Types.ObjectId(donorId),
@@ -269,7 +244,7 @@ export class BookingService {
             recentTravel: answers?.recentTravel || 'None',
             medicationHistory: answers?.medicationHistory || 'None',
             consentGiven: answers?.consentGiven || true,
-            eligibilityFlag
+            eligibilityFlag: outcome === 'PASS' ? 'Eligible' : 'RequiresReview'
           }
         },
         clinicalNotes: '',
@@ -287,13 +262,92 @@ export class BookingService {
       await session.commitTransaction();
       session.endSession();
 
-      return await Appointment.findById(newAppointmentId).populate('eTicketId').lean();
+      return await Appointment.findById(newAppointmentId).populate('screeningFormId').lean();
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
       throw error;
     }
   }
+
+  public static async confirmAppointmentByBloodCenter(id: string, donorId?: string) {
+    await Promise.all([
+      Appointment.init(),
+      ETicket.init(),
+      DigitalDonorRecord.init()
+    ]);
+
+    await Promise.all([
+      Appointment.createCollection().catch(() => {}),
+      ETicket.createCollection().catch(() => {}),
+      DigitalDonorRecord.createCollection().catch(() => {})
+    ]);
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const query: any = { _id: id };
+      if (donorId) query.donorId = donorId;
+
+      const appointment = await Appointment.findOne(query).session(session);
+      if (!appointment) {
+        throw new Error('APPOINTMENT_NOT_FOUND');
+      }
+
+      if (appointment.status === AppointmentStatus.Cancelled || appointment.status === AppointmentStatus.NoShow) {
+        throw new Error('INVALID_STATUS_TRANSITION');
+      }
+
+      // Generate E-Ticket if not already present
+      let eTicketId = appointment.eTicketId;
+      if (!eTicketId) {
+        const ticketCode = `TK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const qrPayloadSigned = `SIGNED-${ticketCode}`;
+        
+        let fileUrl = undefined;
+        try {
+          const qrBuffer = await QRCode.toBuffer(qrPayloadSigned);
+          fileUrl = await uploadImageToCloudinary(qrBuffer, 'etickets');
+        } catch (error) {
+          console.error('Failed to generate or upload QR Code:', error);
+        }
+        if (!fileUrl) {
+          fileUrl = `https://res.cloudinary.com/lifeline/etickets/${ticketCode}.png`;
+        }
+
+        const newETicket = new ETicket({
+          appointmentId: appointment._id,
+          ticketCode,
+          qrPayloadSigned,
+          fileUrl,
+          issuedAt: new Date()
+        });
+        await newETicket.save({ session });
+        eTicketId = newETicket._id as mongoose.Types.ObjectId;
+      }
+
+      appointment.status = AppointmentStatus.Confirmed;
+      appointment.eTicketId = eTicketId;
+      await appointment.save({ session });
+
+      await DigitalDonorRecord.updateOne(
+        { appointmentId: appointment._id },
+        { $set: { donationStatus: 'Confirmed', lastUpdatedAt: new Date() } },
+        { session }
+      );
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return await Appointment.findById(id).populate('eTicketId').populate('campaignId').lean();
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
+
   public static async getAppointmentById(id: string, donorId: string) {
     const appointment = await Appointment.findOne({ _id: id, donorId })
       .populate('screeningFormId')
@@ -381,8 +435,12 @@ export class BookingService {
 
   public static async downloadETicket(id: string, donorId: string) {
     const appointment = await Appointment.findOne({ _id: id, donorId });
-    if (!appointment || !appointment.eTicketId) {
-      throw new Error('ETICKET_NOT_FOUND');
+    if (!appointment) {
+      throw new Error('APPOINTMENT_NOT_FOUND');
+    }
+
+    if (appointment.status === AppointmentStatus.Pending || !appointment.eTicketId) {
+      throw new Error('ETICKET_NOT_READY');
     }
 
     const eTicket = await ETicket.findById(appointment.eTicketId)
@@ -424,17 +482,16 @@ export class BookingService {
       },
       campaign: appointment.campaignId,
       timeSlot: appointment.timeSlot,
+      status: appointment.status,
       screeningResponses: appointment.screeningFormId
     };
 
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // In a real scenario, we would use axios.post('https://bloodcenter-api.local/sync', payload)
-    
     return {
       success: true,
-      message: 'Information successfully sent to BloodCenter',
+      message: 'Information successfully sent to BloodCenter for review and confirmation',
       syncedAt: new Date(),
       payload
     };

@@ -49,8 +49,6 @@ export const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({ user, onSaveProf
     <div className="flex flex-col gap-6 w-full relative pb-20">
       <div className="flex flex-col gap-6 md:flex-row w-full">
         <PersonalInfo 
-          isEditing={isEditing} 
-          onEdit={() => setIsEditing(true)}
           user={currentUser}
         />
         <ContactInfo 

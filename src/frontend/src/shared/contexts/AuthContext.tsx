@@ -1,11 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  fullName: string;
-  role: string;
-}
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import type { AuthUser } from '../../modules/auth-account/types';
 
 interface AuthContextType {
   isAuthenticated: boolean;

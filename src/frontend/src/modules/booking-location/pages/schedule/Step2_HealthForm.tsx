@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useScheduleContext } from '../../context/ScheduleContext';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
@@ -7,7 +7,7 @@ export const Step2_HealthForm: React.FC = () => {
   const navigate = useNavigate();
   const { data, updateData } = useScheduleContext();
   
-  const [missingSections, setMissingSections] = useState<string[]>([]);
+  const [missingSections] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, any>>(data.healthAnswers || {
     s1: null,
     s2: null, s2_note: '',
@@ -59,27 +59,6 @@ export const Step2_HealthForm: React.FC = () => {
     });
   };
 
-  const isFormComplete = () => {
-    if (!answers.s1) return false;
-    
-    if (!answers.s2) return false;
-    if (answers.s2 === 'yes' && (!answers.s2_note || answers.s2_note.trim() === '')) return false;
-
-    if (!answers.s3) return false;
-    if (answers.s3 === 'other' && (!answers.s3_note || answers.s3_note.trim() === '')) return false;
-
-    if (!answers.s4 || answers.s4.length === 0) return false;
-    if (!answers.s5 || answers.s5.length === 0) return false;
-    if (!answers.s6 || answers.s6.length === 0) return false;
-    
-    if (!answers.s7 || answers.s7.length === 0) return false;
-    if (answers.s7.includes('other') && (!answers.s7_note || answers.s7_note.trim() === '')) return false;
-
-    if (!answers.s8 || answers.s8.length === 0) return false;
-    if (answers.s8.includes('other') && (!answers.s8_note || answers.s8_note.trim() === '')) return false;
-
-    return true;
-  };
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-[956px] mx-auto">

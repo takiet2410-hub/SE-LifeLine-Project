@@ -18,7 +18,7 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
     if (parts.length >= 3) {
       const province = parts[parts.length - 1];
       const districtAndWard = parts[parts.length - 2];
-      const wardParts = districtAndWard.split('-').map(p => p.trim());
+
       
       let district = '';
       let ward = '';
@@ -69,22 +69,30 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
   const [formData, setFormData] = useState(initialFormData);
   const [originalData, setOriginalData] = useState(initialFormData);
 
-  // Update form data when user prop changes (e.g., after profile refresh)
+  // Update form data when user prop changes
   useEffect(() => {
+    const currentAddrVal = user?.address || user?.permanentAddress;
+    const currentParsedAddr = typeof currentAddrVal === 'string' ? parseAddress(currentAddrVal) : {
+      province: currentAddrVal?.province || '',
+      district: '',
+      ward: currentAddrVal?.ward || '',
+      street: currentAddrVal?.street || ''
+    };
+
     const newData = {
       phoneNumber: user?.phoneNumber || '',
       email: user?.email || '',
       occupation: user?.occupation || 'Sinh viên',
       permanentAddress: {
-        province: parsedAddr.province,
-        district: parsedAddr.district,
-        ward: parsedAddr.ward,
-        street: parsedAddr.street
+        province: currentParsedAddr.province,
+        district: currentParsedAddr.district,
+        ward: currentParsedAddr.ward,
+        street: currentParsedAddr.street
       }
     };
     setFormData(newData);
     setOriginalData(newData);
-  }, [user, parsedAddr]);
+  }, [user]);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -137,6 +145,8 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
       // Only call onSave if there are actual changes
       if (Object.keys(payload).length > 0) {
         onSave(payload);
+      } else {
+        if (onCancel) onCancel();
       }
     }
   };

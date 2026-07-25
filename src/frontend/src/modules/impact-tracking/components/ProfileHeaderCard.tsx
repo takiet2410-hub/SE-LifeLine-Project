@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../../shared/contexts/AuthContext';
-import { uploadToCloudinary } from '../../../../services/cloudinaryService';
+import { uploadToCloudinary } from '../../../services/cloudinaryService';
 import { updateUserProfile } from '../../auth-account/api/authApi';
 import { toast } from 'sonner';
 
@@ -12,6 +12,30 @@ export interface ProfileData {
     memberSince?: string;
     currentAddress?: string;
     bloodType?: string;
+  };
+  personalInfo?: {
+    fullName?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    bloodType?: string;
+    idDocumentNumber?: string;
+    passportNumber?: string;
+  };
+  contactInfo?: {
+    phoneNumber?: string;
+    email?: string;
+    permanentAddress?: {
+      province?: string;
+      district?: string;
+      ward?: string;
+      street?: string;
+    };
+    currentAddress?: {
+      province?: string;
+      district?: string;
+      ward?: string;
+      street?: string;
+    };
   };
   donationImpact?: {
     totalDonations?: number;
@@ -123,7 +147,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({ profileDat
                 onMouseEnter={() => setHoveringAvatar(true)}
                 onMouseLeave={() => setHoveringAvatar(false)}
               >
-                <label className="cursor-pointer p-3 bg-white/90 rounded-full shadow-lg hover:bg-white transition-colors">
+                <label htmlFor="avatar-upload" className="cursor-pointer p-3 bg-white/90 rounded-full shadow-lg hover:bg-white transition-colors">
                   <svg className="w-6 h-6 text-[#93000B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />

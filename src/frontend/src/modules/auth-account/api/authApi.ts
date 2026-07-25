@@ -1,20 +1,6 @@
 import { apiClient } from '../../../shared/api/apiClient';
-import type { LoginCredentials, AuthResponse, ResetPasswordPayload } from '../types';
-import type { AuthUser } from '../../../shared/contexts/AuthContext';
+import type { LoginCredentials, AuthResponse, ResetPasswordPayload, AuthUser } from '../types';
 
-// Add the AuthResponse type to include user info if not already there
-export interface AuthResponse {
-  success: boolean;
-  message?: string;
-  token?: string;
-  user?: AuthUser;
-}
-
-// BUG-06 FIX: BE /users/profile trả vờ cấu trúc lồng nhau, cần map đúng
-// BE response shape:
-//   { profileInfo: { fullName, avatarUrl, memberSince, ... }, personalInfo: { ... }, ... }
-// BE /users/login trả vờ:
-//   { accessToken, user: { id, email, idDocumentNumber } }
 const mapProfileResponseToAuthUser = (
   loginData: any,
   profileData: any
@@ -22,14 +8,11 @@ const mapProfileResponseToAuthUser = (
   return {
     id: loginData.user?.id || loginData.user?._id || '',
     email: loginData.user?.email || '',
-    // fullName nằm trong profileInfo.fullName của GET /users/profile
     fullName: profileData?.profileInfo?.fullName
       || profileData?.fullName
       || loginData.user?.fullName
       || 'Donor User',
-    // role nằm trong User collection, BE không trả vờ trong profile response
-    // Fallback vờ 'donor' vì đây là Donor portal
-    role: profileData?.role || loginData.user?.role || 'donor',
+    role: (profileData?.role || loginData.user?.role || 'donor') as any,
   };
 };
 
@@ -41,17 +24,16 @@ export const loginUser = async (
       idDocumentNumber: credentials.idDocumentNumber,
       password: credentials.password,
     });
-    
+
     if (response.data?.accessToken) {
       localStorage.setItem('accessToken', response.data.accessToken);
-      
-      // Fetch user profile để lấy fullName và thông tin đầy đủ
+
       try {
         const profileResponse = await apiClient.get('/users/profile');
         if (profileResponse.data) {
           const user = mapProfileResponseToAuthUser(response.data, profileResponse.data);
           localStorage.setItem('user', JSON.stringify(user));
-          
+
           return {
             success: true,
             message: response.data.message || 'Login successful',
@@ -60,17 +42,15 @@ export const loginUser = async (
           };
         }
       } catch (profileErr) {
-        // Profile fetch thất bại → vẫn login thành công, dùng fallback
         console.warn('[authApi] Profile fetch after login failed:', profileErr);
       }
     }
-    
-    // Fallback nếu profile fetch thất bại hoặc không có accessToken
+
     const fallbackUser: AuthUser = {
       id: response.data.user?.id || response.data.userId || '',
       email: response.data.user?.email || credentials.idDocumentNumber,
       fullName: response.data.user?.fullName || 'Donor User',
-      role: response.data.user?.role || 'donor',
+      role: (response.data.user?.role || 'donor') as any,
     };
     localStorage.setItem('user', JSON.stringify(fallbackUser));
     return {
@@ -78,7 +58,7 @@ export const loginUser = async (
       message: response.data.message || 'Login successful',
       token: response.data.accessToken,
       user: fallbackUser,
-    };
+    } as any;
   } catch (error: any) {
     if (error.response && error.response.data) {
       return {
@@ -108,7 +88,6 @@ export const getProfile = async (): Promise<{ success: boolean; message?: string
   }
 };
 
-// Keep the rest of the file unchanged
 export const sendOTP = async (
   payload: { idDocumentNumber: string; email: string }
 ): Promise<AuthResponse> => {
@@ -214,19 +193,17 @@ export const updateUserProfile = async (payload: {
   }
 };
 
-
 export const updateProfile = async (data: any): Promise<AuthResponse> => {
   try {
     const response = await apiClient.patch('/users/profile', data);
     return {
       success: true,
-      message: response.data?.message || 'C?p nh?t th�nh c�ng'
+      message: response.data?.message || 'Cap nhat thanh cong'
     };
   } catch (error: any) {
     return {
       success: false,
-      message: error.response?.data?.message || 'C?p nh?t th?t b?i'
+      message: error.response?.data?.message || 'Cap nhat that bai'
     };
   }
 };
-

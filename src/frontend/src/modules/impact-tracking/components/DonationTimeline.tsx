@@ -54,7 +54,7 @@ export const DonationTimeline: React.FC<DonationTimelineProps> = ({ userId }) =>
                   <div className="flex justify-between items-start w-full">
                     <div className="flex flex-col items-start">
                       <p className="text-[#271816] font-inter text-base leading-6">Regular Whole Blood Donation</p>
-                      <p className="text-[#6C757D] font-inter text-sm leading-[21px]">{evt.locationName}</p>
+                      <p className="text-[#6C757D] font-inter text-sm leading-[21px]">{(evt as any).locationName || (evt as any).location?.name || 'Blood Center'}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <p className="text-[#271816] font-inter text-base font-bold leading-6">{formattedDate}</p>

@@ -104,7 +104,7 @@ export const MyProfilePage: React.FC = () => {
                 ...profileData.contactInfo,
                 address: profileData.contactInfo?.permanentAddress,
                 id: user?.id || ''
-              } : undefined
+              } as any : undefined
             } />
           )}
           
@@ -127,7 +127,7 @@ export const MyProfilePage: React.FC = () => {
         <div className="flex flex-col gap-6 w-full lg:sticky lg:top-8">
           <CurrentProgress profileData={profileData} />
           <AchievementsWidget profileData={profileData} />
-          <CallToAction userId={user?.id} />
+          <CallToAction />
         </div>
       </div>
     </div>

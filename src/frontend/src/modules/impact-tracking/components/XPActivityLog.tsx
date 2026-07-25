@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAppointments, type Appointment } from '../../booking-location/api/bookingApi';
+import { fetchAppointments } from '../../booking-location/api/bookingApi';
 
 interface XPActivityLogProps {
   userId?: string;

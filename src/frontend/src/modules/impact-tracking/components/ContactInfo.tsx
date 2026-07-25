@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { getDirtyPayload } from '../../../shared/utils/formUtils';
+import vnProvinces from '../../../data/vietnam_provinces.json';
 
 interface ContactInfoProps {
   isEditing?: boolean;
@@ -7,8 +9,6 @@ interface ContactInfoProps {
   onSave?: (data: any) => void;
   user?: any;
 }
-
-import vnProvinces from '../../../data/vietnam_provinces.json';
 
 export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onCancel, onSave, user }) => {
   // Parse address string into components if it's a string
@@ -54,7 +54,7 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
     street: addrVal?.street || ''
   };
 
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     phoneNumber: user?.phoneNumber || '',
     email: user?.email || '',
     occupation: user?.occupation || 'Sinh viên',
@@ -64,10 +64,14 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
       ward: parsedAddr.ward,
       street: parsedAddr.street
     }
-  });
+  };
 
+  const [formData, setFormData] = useState(initialFormData);
+  const [originalData, setOriginalData] = useState(initialFormData);
+
+  // Update form data when user prop changes (e.g., after profile refresh)
   useEffect(() => {
-    setFormData({
+    const newData = {
       phoneNumber: user?.phoneNumber || '',
       email: user?.email || '',
       occupation: user?.occupation || 'Sinh viên',
@@ -77,8 +81,10 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
         ward: parsedAddr.ward,
         street: parsedAddr.street
       }
-    });
-  }, [user]);
+    };
+    setFormData(newData);
+    setOriginalData(newData);
+  }, [user, parsedAddr]);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -107,17 +113,31 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
 
   const handleSave = () => {
     if (onSave) {
-      // Map back to BE schema
-      const payload = {
-        phoneNumber: formData.phoneNumber,
-        email: formData.email,
-        permanentAddress: {
-          province: formData.permanentAddress.province || 'Chưa cập nhật',
-          ward: (formData.permanentAddress.district ? formData.permanentAddress.district + ', ' : '') + formData.permanentAddress.ward || 'Chưa cập nhật',
-          street: formData.permanentAddress.street || 'Chưa cập nhật'
-        }
-      };
-      onSave(payload);
+      // Use getDirtyPayload to only send changed fields (Dynamic Payload pattern)
+      const dirtyPayload = getDirtyPayload({}, formData, originalData);
+      
+      // Map back to BE schema - only include changed fields
+      const payload: any = {};
+      
+      if (dirtyPayload.phoneNumber !== undefined) {
+        payload.phoneNumber = dirtyPayload.phoneNumber;
+      }
+      if (dirtyPayload.email !== undefined) {
+        payload.email = dirtyPayload.email;
+      }
+      if (dirtyPayload.permanentAddress !== undefined) {
+        const addr = dirtyPayload.permanentAddress;
+        payload.permanentAddress = {
+          province: addr.province || 'Chưa cập nhật',
+          ward: (addr.district ? addr.district + ', ' : '') + (addr.ward || 'Chưa cập nhật'),
+          street: addr.street || 'Chưa cập nhật'
+        };
+      }
+      
+      // Only call onSave if there are actual changes
+      if (Object.keys(payload).length > 0) {
+        onSave(payload);
+      }
     }
   };
 

@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../../shared/contexts/AuthContext';
+import { uploadToCloudinary } from '../../../../services/cloudinaryService';
+import { updateUserProfile } from '../../auth-account/api/authApi';
+import { toast } from 'sonner';
 
 // BE /users/profile response shape (donationImpact section)
 export interface ProfileData {
@@ -22,10 +25,13 @@ export interface ProfileData {
 
 interface ProfileHeaderCardProps {
   profileData?: ProfileData | null;
+  onAvatarUpdate?: (newAvatarUrl: string) => void;
 }
 
-export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({ profileData }) => {
+export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({ profileData, onAvatarUpdate }) => {
   const { user, logout } = useAuth();
+  const [isUploading, setIsUploading] = useState(false);
+  const [hoveringAvatar, setHoveringAvatar] = useState(false);
 
   // Ưu tiên data từ API, fallback về AuthContext user nếu chưa load xong
   const fullName =
@@ -54,15 +60,88 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({ profileDat
   // Xác định màu status
   const isEligible = eligibilityStatus === 'Eligible Now';
 
+  const handleAvatarUpload = async (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file ảnh');
+      return;
+    }
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Kích thước ảnh không được vượt quá 5MB');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // Upload to Cloudinary directly from browser
+      const imageUrl = await uploadToCloudinary(file);
+      
+      // Update profile on backend with new avatar URL
+      const res = await updateUserProfile({ avatarUrl: imageUrl });
+      
+      if (res.success) {
+        toast.success('Cập nhật ảnh đại diện thành công');
+        // Notify parent to refresh profile data
+        if (onAvatarUpdate) {
+          onAvatarUpdate(imageUrl);
+        }
+      } else {
+        toast.error(res.message || 'Cập nhật ảnh thất bại');
+      }
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      toast.error('Lỗi khi tải ảnh lên');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleAvatarUpload(file);
+    }
+  };
+
   return (
     <div className="flex p-8 flex-col items-start rounded-xl border border-[#F1F3F5] bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden relative">
       <div className="absolute -right-[79px] -top-[79px] rounded-full bg-[rgba(147,0,11,0.05)] w-64 h-64"></div>
       <div className="flex items-start gap-8 w-full">
         {/* Avatar */}
         <div className="flex flex-col items-start w-fit relative">
-          <div className="rounded-2xl border-4 border-[#FFF] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.10),0_4px_6px_-4px_rgba(0,0,0,0.10)] w-32 h-32 overflow-hidden bg-gray-200">
+          <div className="rounded-2xl border-4 border-[#FFF] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.10),0_4px_6px_-4px_rgba(0,0,0,0.10)] w-32 h-32 overflow-hidden bg-gray-200 relative">
             {avatarUrl && (
               <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+            )}
+            {/* Upload overlay on hover */}
+            {!isUploading && (
+              <div 
+                className={`absolute inset-0 bg-black/50 flex items-center justify-center transition-opacity duration-200 ${
+                  hoveringAvatar ? 'opacity-100' : 'opacity-0'
+                }`}
+                onMouseEnter={() => setHoveringAvatar(true)}
+                onMouseLeave={() => setHoveringAvatar(false)}
+              >
+                <label className="cursor-pointer p-3 bg-white/90 rounded-full shadow-lg hover:bg-white transition-colors">
+                  <svg className="w-6 h-6 text-[#93000B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="avatar-upload"
+                />
+              </div>
+            )}
+            {isUploading && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+              </div>
             )}
           </div>
           <div className="flex py-1 px-3 flex-col items-start absolute -right-2 -bottom-2 rounded-full bg-[#93000B] w-fit shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10)]">

@@ -76,7 +76,17 @@ export const MyProfilePage: React.FC = () => {
   return (
     <div className="flex flex-col items-start gap-8 w-full p-8 min-h-[calc(100vh-72px)] bg-[#fff8f7]">
       {/* Header Block — nhận real data từ API */}
-      <ProfileHeaderCard profileData={profileData} />
+      <ProfileHeaderCard 
+        profileData={profileData} 
+        onAvatarUpdate={() => {
+          // Refresh profile data after avatar update
+          getProfile().then(profileRes => {
+            if (profileRes.success && profileRes.user) {
+              setProfileData(profileRes.user as ProfileData);
+            }
+          });
+        }}
+      />
       
       {/* Tabs */}
       <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />

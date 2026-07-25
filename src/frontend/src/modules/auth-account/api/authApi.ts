@@ -10,10 +10,10 @@ export interface AuthResponse {
   user?: AuthUser;
 }
 
-// BUG-06 FIX: BE /users/profile trả về cấu trúc lồng nhau, cần map đúng
+// BUG-06 FIX: BE /users/profile trả vờ cấu trúc lồng nhau, cần map đúng
 // BE response shape:
 //   { profileInfo: { fullName, avatarUrl, memberSince, ... }, personalInfo: { ... }, ... }
-// BE /users/login trả về:
+// BE /users/login trả vờ:
 //   { accessToken, user: { id, email, idDocumentNumber } }
 const mapProfileResponseToAuthUser = (
   loginData: any,
@@ -27,8 +27,8 @@ const mapProfileResponseToAuthUser = (
       || profileData?.fullName
       || loginData.user?.fullName
       || 'Donor User',
-    // role nằm trong User collection, BE không trả về trong profile response
-    // Fallback về 'donor' vì đây là Donor portal
+    // role nằm trong User collection, BE không trả vờ trong profile response
+    // Fallback vờ 'donor' vì đây là Donor portal
     role: profileData?.role || loginData.user?.role || 'donor',
   };
 };
@@ -125,6 +125,26 @@ export const sendOTP = async (
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to send OTP.',
+    };
+  }
+};
+
+export const resendOTP = async (
+  payload: { idDocumentNumber: string; email: string }
+): Promise<AuthResponse> => {
+  try {
+    const response = await apiClient.post('/users/resend-forgot-password', {
+      idDocumentNumber: payload.idDocumentNumber,
+      email: payload.email,
+    });
+    return {
+      success: true,
+      message: response.data.message || 'OTP has been resent to your email.',
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to resend OTP.',
     };
   }
 };

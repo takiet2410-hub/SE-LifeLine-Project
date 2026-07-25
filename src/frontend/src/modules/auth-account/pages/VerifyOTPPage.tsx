@@ -5,7 +5,7 @@ import { AuthHeader } from '../components/AuthHeader';
 import { AuthFooter } from '../components/AuthFooter';
 import { OTPInputGroup } from '../components/OTPInputGroup';
 import type { OTPStatus } from '../components/OTPInputGroup';
-import { verifyOTP, sendOTP } from '../api/authApi';
+import { verifyOTP, resendOTP } from '../api/authApi';
 import { toast } from 'sonner';
 
 export const VerifyOTPPage: React.FC = () => {
@@ -62,7 +62,7 @@ export const VerifyOTPPage: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      const response = await sendOTP({ email, idDocumentNumber });
+      const response = await resendOTP({ email, idDocumentNumber });
       if (!response.success) {
         setOtpStatus('not-received');
         toast.error(response.message || 'Không thể gửi lại mã OTP');

@@ -5,6 +5,7 @@ import { Appointment, AppointmentStatus } from '../models/appointment.model';
 import { ScreeningForm } from '../models/screening-form.model';
 import { ETicket } from '../models/eticket.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
+import { DigitalDonorRecord } from '../../registration/models/digital-donor-record.model';
 
 const Campaign = mongoose.models.Campaign || mongoose.model('Campaign', new mongoose.Schema({
   name: String,
@@ -143,6 +144,9 @@ export class BookingService {
       } catch (error) {
         console.error('Failed to generate or upload QR Code:', error);
       }
+      if (!fileUrl) {
+        fileUrl = `https://res.cloudinary.com/lifeline/etickets/${ticketCode}.png`;
+      }
       
       const newAppointmentId = new mongoose.Types.ObjectId();
 
@@ -179,6 +183,26 @@ export class BookingService {
         eTicketId: newETicket._id
       });
       await newAppointment.save({ session });
+
+      // 8. Create initial DigitalDonorRecord with Pending status and donorSubmitted questionnaire answers
+      const newDigitalRecord = new DigitalDonorRecord({
+        appointmentId: newAppointmentId,
+        donorId: new mongoose.Types.ObjectId(donorId),
+        donationStatus: 'Pending',
+        screeningSummary: {
+          donorSubmitted: {
+            medicalHistory: answers?.medicalHistory || {},
+            currentHealthStatus: answers?.currentHealthStatus || 'Healthy',
+            recentTravel: answers?.recentTravel || 'None',
+            medicationHistory: answers?.medicationHistory || 'None',
+            consentGiven: answers?.consentGiven || true,
+            eligibilityFlag
+          }
+        },
+        clinicalNotes: '',
+        lastUpdatedAt: new Date()
+      });
+      await newDigitalRecord.save({ session });
 
       // 8. Update Campaign capacity
       await Campaign.updateOne(

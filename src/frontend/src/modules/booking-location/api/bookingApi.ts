@@ -1,0 +1,402 @@
+import { apiClient } from '../../../shared/api/apiClient';
+
+// Backend AppointmentStatus enum values
+export type BackendAppointmentStatus = 'Scheduled' | 'CheckedIn' | 'Completed' | 'Cancelled' | 'NoShow';
+
+// Backend Campaign (when populated in appointment)
+export interface BackendCampaign {
+  _id: string;
+  name: string;
+  location: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
+  startDateTime: string;
+  endDateTime: string;
+  capacity: number;
+  registeredCount: number;
+  status: string;
+  targetBloodGroups: string[];
+  timeSlots: Array<{
+    startTime: string;
+    endTime: string;
+    capacity: number;
+    registeredCount: number;
+  }>;
+}
+
+// Backend ETicket (when populated)
+export interface BackendETicket {
+  _id: string;
+  appointmentId: string;
+  ticketCode: string;
+  qrPayloadSigned: string;
+  fileUrl?: string;
+  issuedAt: string;
+}
+
+// Raw backend appointment shape (as returned by API before mapping)
+export interface BackendAppointment {
+  _id: string;
+  donorId: string;
+  campaignId: BackendCampaign | string;
+  appointmentDate: string;
+  timeSlot: string;
+  status: BackendAppointmentStatus;
+  screeningFormId?: string | { responses: Array<{ response: any }> };
+  eTicketId?: BackendETicket | string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Mapped frontend appointment shape (used by UI components)
+export type AppointmentStatus = 'upcoming' | 'completed' | 'cancelled' | 'no-show';
+
+export interface Appointment {
+  id: string;
+  date: string;
+  time: string;
+  location: {
+    id: string;
+    name: string;
+    address: string;
+  };
+  bloodType?: string;
+  status: AppointmentStatus;
+  healthSummary?: {
+    bloodPressure?: string;
+    heartRate?: string;
+    weight?: string;
+    hemoglobin?: string;
+  };
+  qrCodeUrl?: string;
+  // Raw backend fields (accessible when needed)
+  _raw?: BackendAppointment;
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}
+
+// Map backend status to frontend status
+const mapStatus = (backendStatus: BackendAppointmentStatus): AppointmentStatus => {
+  switch (backendStatus) {
+    case 'Scheduled':
+      return 'upcoming';
+    case 'CheckedIn':
+      return 'upcoming';
+    case 'Completed':
+      return 'completed';
+    case 'Cancelled':
+      return 'cancelled';
+    case 'NoShow':
+      return 'no-show';
+    default:
+      return 'upcoming';
+  }
+};
+
+// Map backend appointment to frontend appointment
+export const mapBackendAppointment = (raw: BackendAppointment): Appointment => {
+  const campaign = typeof raw.campaignId === 'object' ? raw.campaignId : null;
+
+  return {
+    id: raw._id,
+    date: new Date(raw.appointmentDate).toLocaleDateString('vi-VN'),
+    time: raw.timeSlot,
+    location: {
+      id: campaign?._id || 'unknown',
+      name: campaign?.name || 'Unknown Location',
+      address: '', // Backend campaign doesn't have a formatted address
+    },
+    status: mapStatus(raw.status),
+    qrCodeUrl: typeof raw.eTicketId === 'object' ? raw.eTicketId.fileUrl : undefined,
+    _raw: raw,
+    // Note: bloodType is not in the backend appointment model.
+    // It would need to come from the populated donor profile.
+  };
+};
+
+// Map backend location/campaign to frontend location for step-1
+export const mapBackendCampaignToLocation = (campaign: BackendCampaign) => ({
+  id: campaign._id,
+  name: campaign.name,
+  address: campaign.location.coordinates
+    ? `Lat: ${campaign.location.coordinates[1]}, Lng: ${campaign.location.coordinates[0]}`
+    : 'Address not available',
+  _raw: campaign,
+});
+
+export const fetchAppointments = async (): Promise<ApiResponse<Appointment[]>> => {
+  try {
+    const response = await apiClient.get('/bookings/appointments');
+    // Backend returns array directly: res.status(200).json(appointments)
+    const rawAppointments: BackendAppointment[] = response.data;
+    const mapped = rawAppointments.map(mapBackendAppointment);
+    return {
+      success: true,
+      data: mapped,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to fetch appointments.',
+    };
+  }
+};
+
+export const createAppointment = async (payload: {
+  campaignId: string;
+  appointmentDate: string;
+  timeSlot: string;
+  answers: any;
+}): Promise<ApiResponse<any>> => {
+  try {
+    const response = await apiClient.post('/bookings/appointments', payload);
+    // Backend returns the created appointment directly
+    const rawAppointment: BackendAppointment = response.data;
+    const mapped = mapBackendAppointment(rawAppointment);
+    return {
+      success: true,
+      data: mapped,
+      message: 'Tạo lịch hẹn hiến máu thành công!',
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Lỗi đặt lịch hẹn.',
+    };
+  }
+};
+
+export const searchLocations = async (filters?: {
+  lat?: number;
+  lng?: number;
+  radius?: number;
+  date?: string;
+  bloodType?: string;
+  crowdingLevel?: 'Low' | 'Medium' | 'High';
+}): Promise<ApiResponse<any[]>> => {
+  try {
+    const params = new URLSearchParams();
+    if (filters?.lat !== undefined) params.append('lat', String(filters.lat));
+    if (filters?.lng !== undefined) params.append('lng', String(filters.lng));
+    if (filters?.radius !== undefined) params.append('radius', String(filters.radius));
+    if (filters?.date) params.append('date', filters.date);
+    if (filters?.bloodType) params.append('bloodType', filters.bloodType);
+    if (filters?.crowdingLevel) params.append('crowdingLevel', filters.crowdingLevel);
+
+    const response = await apiClient.get(`/bookings/locations?${params.toString()}`);
+    const campaigns: BackendCampaign[] = response.data;
+    return {
+      success: true,
+      data: campaigns.map(mapBackendCampaignToLocation),
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to search locations.',
+    };
+  }
+};
+
+export const cancelAppointment = async (id: string, reason?: string): Promise<ApiResponse> => {
+  try {
+    const response = await apiClient.patch(`/bookings/appointments/${id}/cancel`, { reason });
+    // BUG-04 FIX: lưu message TRƯỚC khi destructure — response.data là object Appointment
+    // Backend cancelAppointment trả về Mongoose document, không có field 'message'
+    // nên ta dùng message cứng sau khi confirm success
+    const successMessage = 'Hủy lịch hẹn thành công.';
+    const rawAppointment: BackendAppointment = response.data;
+    const mapped = mapBackendAppointment(rawAppointment);
+    return {
+      success: true,
+      data: mapped,
+      message: successMessage,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Lỗi hệ thống. Vui lòng thử lại sau.',
+    };
+  }
+};
+
+export const downloadETicket = async (id: string): Promise<ApiResponse> => {
+  try {
+    const response = await apiClient.get(`/bookings/appointments/${id}/e-ticket`);
+    return {
+      success: true,
+      data: response.data,
+      message: response.data.message || 'Tải E-Ticket thành công.',
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Không thể tạo E-Ticket.',
+    };
+  }
+};
+
+export interface HealthAnswers {
+  s1?: 'yes' | 'no';
+  s2?: 'yes' | 'no';
+  s2_note?: string;
+  s3?: 'yes' | 'no' | 'other';
+  s3_note?: string;
+  s4?: string[];
+  s4_note?: string;
+  s5?: string[];
+  s6?: string[];
+  s7?: string[];
+  s7_note?: string;
+  s8?: string[];
+  s8_note?: string;
+}
+
+const mapHealthAnswersToBackend = (answers: HealthAnswers): { responses: Array<{ questionId: string; selectedOptions: string[] }> } => {
+  const responses: Array<{ questionId: string; selectedOptions: string[] }> = [];
+
+  const addResponse = (questionId: string, selectedOptions: string[]) => {
+    if (selectedOptions.length > 0) {
+      responses.push({ questionId, selectedOptions });
+    }
+  };
+
+  const getLabel = (key: string): string => {
+    const labels: Record<string, string> = {
+      s1_yes: 'Có',
+      s1_no: 'Không',
+      s2_yes: 'Có',
+      s2_no: 'Không',
+      s3_yes: 'Có',
+      s3_no: 'Không',
+      s3_other: 'Bệnh khác',
+      s4_recovered: 'Khỏi bệnh sau khi mắc một trong các bệnh: sốt rét, giang mai, lao, viêm não - màng não, uốn ván',
+      s4_blood: 'Được truyền máu hoặc các chế phẩm máu',
+      s4_vaccine: 'Tiêm vắc xin',
+      s4_none: 'Không có',
+      s5_recovered: 'Khỏi bệnh sau khi mắc một trong các bệnh: thương hàn, nhiễm trùng máu, bị rắn cắn, viêm tắc động mạch, viêm tắc tĩnh mạch, viêm tụy, viêm tủy xương',
+      s5_weightloss: 'Sút cân nhanh không rõ nguyên nhân',
+      s5_lymph: 'Nổi hạch kéo dài',
+      s5_invasive: 'Thực hiện thủ thuật y tế xâm lấn (chữa răng, châm cứu, lăn kim, nội soi,...)',
+      s5_tattoo: 'Xăm, xỏ lỗ tai, lỗ mũi hoặc các vị trí khác trên cơ thể',
+      s5_drugs: 'Sử dụng ma túy',
+      s5_contact: 'Tiếp xúc trực tiếp với máu, dịch tiết của người khác hoặc bị thương bởi kim tiêm',
+      s5_livewith: 'Sinh sống chung với người nhiễm viêm gan siêu vi B',
+      s5_sex: 'Quan hệ tình dục với người nhiễm viêm gan siêu vi B, C, HIV, giang mai hoặc người có nguy cơ nhiễm',
+      s5_samesex: 'Quan hệ tình dục với người cùng giới',
+      s5_none: 'Không có',
+      s6_recovered: 'Khỏi bệnh sau khi mắc bệnh viêm đường tiết niệu, viêm da nhiễm trùng, viêm phế quản, viêm phổi, sởi, ho gà, quai bị, sốt xuất huyết, kiết lỵ, tả, Rubella',
+      s6_epidemic: 'Đi vào vùng có dịch bệnh lưu hành (sốt rét, sốt xuất huyết, Zika,...)',
+      s6_none: 'Không có',
+      s7_flu: 'Bị cúm, cảm lạnh, ho, nhức đầu, sốt, đau họng',
+      s7_other: 'Khác',
+      s7_none: 'Không có',
+      s8_meds: 'Dùng thuốc kháng sinh, kháng viêm, Aspirin, Corticoid',
+      s8_other: 'Khác',
+      s8_none: 'Không có',
+    };
+    return labels[key] || key;
+  };
+
+  if (answers.s1) {
+    addResponse('1', [getLabel(`s1_${answers.s1}`)]);
+  }
+
+  if (answers.s2) {
+    const opts: string[] = [getLabel(`s2_${answers.s2}`)];
+    if (answers.s2 === 'yes' && answers.s2_note?.trim()) {
+      opts.push(`Mô tả: ${answers.s2_note.trim()}`);
+    }
+    addResponse('2', opts);
+  }
+
+  if (answers.s3) {
+    const opts: string[] = [getLabel(`s3_${answers.s3}`)];
+    if (answers.s3 === 'other' && answers.s3_note?.trim()) {
+      opts.push(`Mô tả: ${answers.s3_note.trim()}`);
+    }
+    addResponse('3', opts);
+  }
+
+  if (answers.s4?.length) {
+    const opts = answers.s4
+      .filter((v) => v !== 'none')
+      .map((v) => getLabel(`s4_${v}`));
+    if (answers.s4.includes('none')) {
+      opts.push(getLabel('s4_none'));
+    }
+    if (answers.s4_note?.trim()) {
+      opts.push(`Ghi chú: ${answers.s4_note.trim()}`);
+    }
+    addResponse('4', opts);
+  }
+
+  if (answers.s5?.length) {
+    const opts = answers.s5
+      .filter((v) => v !== 'none')
+      .map((v) => getLabel(`s5_${v}`));
+    if (answers.s5.includes('none')) {
+      opts.push(getLabel('s5_none'));
+    }
+    addResponse('5', opts);
+  }
+
+  if (answers.s6?.length) {
+    const opts = answers.s6
+      .filter((v) => v !== 'none')
+      .map((v) => getLabel(`s6_${v}`));
+    if (answers.s6.includes('none')) {
+      opts.push(getLabel('s6_none'));
+    }
+    addResponse('6', opts);
+  }
+
+  if (answers.s7?.length) {
+    const opts = answers.s7
+      .filter((v) => v !== 'none')
+      .map((v) => getLabel(`s7_${v}`));
+    if (answers.s7.includes('none')) {
+      opts.push(getLabel('s7_none'));
+    }
+    if (answers.s7_note?.trim()) {
+      opts.push(`Mô tả: ${answers.s7_note.trim()}`);
+    }
+    addResponse('7', opts);
+  }
+
+  if (answers.s8?.length) {
+    const opts = answers.s8
+      .filter((v) => v !== 'none')
+      .map((v) => getLabel(`s8_${v}`));
+    if (answers.s8.includes('none')) {
+      opts.push(getLabel('s8_none'));
+    }
+    if (answers.s8_note?.trim()) {
+      opts.push(`Mô tả: ${answers.s8_note.trim()}`);
+    }
+    addResponse('8', opts);
+  }
+
+  return { responses };
+};
+
+export { mapHealthAnswersToBackend };
+
+export const syncAppointmentToBloodCenter = async (id: string): Promise<ApiResponse> => {
+  try {
+    const response = await apiClient.post(`/bookings/appointments/${id}/sync-bloodcenter`);
+    return {
+      success: true,
+      message: response.data?.message || 'Đồng bộ hồ sơ thành công.'
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Đồng bộ thất bại.'
+    };
+  }
+};

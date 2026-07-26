@@ -40,3 +40,11 @@ venv/
 env/
 .venv/
 pip-log.txt
+
+# ==========================================
+# 6. Node.js & Build Outputs
+# ==========================================
+node_modules/
+dist/
+build/
+*.log

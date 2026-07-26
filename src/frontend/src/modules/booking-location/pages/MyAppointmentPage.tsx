@@ -103,16 +103,87 @@ export const MyAppointmentPage: React.FC = () => {
     }
   };
 
+  // Helper to force browser file download
+  const triggerDownload = async (fileUrl: string, fileName: string) => {
+    try {
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      // Fallback to direct link download if fetch blob is blocked
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   // Download Flow
   const handleDownload = async (id: string) => {
     try {
       const res = await downloadETicket(id);
       if (res.success) {
-        if (res.data && res.data.fileUrl) {
-          window.open(res.data.fileUrl, '_blank');
-          toast.success('Đang mở E-Ticket của bạn...');
-        } else {
-          toast.info('E-Ticket chưa có tệp đính kèm. Bạn có thể đưa trực tiếp mã QR trên màn hình cho nhân viên y tế.');
+        const toastId = toast.loading('Đang khởi tạo Thẻ Hẹn Hiến Máu (E-Ticket Pass)...');
+        
+        // Find appointment details
+        const apt = appointments.find(a => a.id === id);
+        
+        // Retrieve donor user info from localStorage if available
+        let donorName = 'Người hiến máu LifeLine';
+        try {
+          const rawUser = localStorage.getItem('user');
+          if (rawUser) {
+            const parsed = JSON.parse(rawUser);
+            donorName = parsed.fullName || parsed.name || donorName;
+          }
+        } catch (e) {}
+
+        const ticketCode = res.data?.ticketCode || `TK-${id.slice(-6).toUpperCase()}`;
+        const qrCodeUrl = res.data?.fileUrl || apt?.qrCodeUrl;
+
+        try {
+          const { generateETicketPassImage } = await import('../utils/eTicketGenerator');
+          const passBlob = await generateETicketPassImage({
+            ticketCode,
+            donorName,
+            bloodType: apt?.bloodType,
+            campaignName: apt?.location.name || 'Chiến Dịch Hiến Máu Nhân Đạo LifeLine',
+            locationAddress: apt?.location.address,
+            date: apt?.date || new Date().toLocaleDateString('vi-VN'),
+            timeSlot: apt?.time || '08:00 - 11:30',
+            qrCodeUrl
+          });
+
+          const blobUrl = URL.createObjectURL(passBlob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = `ETicket-Pass-${ticketCode}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+
+          toast.dismiss(toastId);
+          toast.success('Tải thành công Thẻ Hẹn Hiến Máu về máy!');
+        } catch (genErr) {
+          console.error('Error generating pass image:', genErr);
+          toast.dismiss(toastId);
+          if (res.data && res.data.fileUrl) {
+            await triggerDownload(res.data.fileUrl, `ETicket-${ticketCode}.png`);
+          } else {
+            toast.info('Bạn có thể đưa trực tiếp mã QR trên màn hình cho nhân viên y tế.');
+          }
         }
       } else {
         toast.error(res.message || 'Không thể tải E-Ticket');

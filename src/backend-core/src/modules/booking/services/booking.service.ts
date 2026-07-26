@@ -5,8 +5,10 @@ import { Appointment, AppointmentStatus } from '../models/appointment.model';
 import { ScreeningForm } from '../models/screening-form.model';
 import { ScreeningFormTemplate } from '../models/screening-form-template.model';
 import { ETicket } from '../models/eticket.model';
+import { User } from '../../auth-account/models/user.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { DigitalDonorRecord } from '../../registration/models/digital-donor-record.model';
+import { sendBookingConfirmationEmail } from '../../../utils/email.util';
 
 const Campaign = mongoose.models.Campaign || mongoose.model('Campaign', new mongoose.Schema({
   name: String,
@@ -340,7 +342,34 @@ export class BookingService {
       await session.commitTransaction();
       session.endSession();
 
-      return await Appointment.findById(id).populate('eTicketId').populate('campaignId').lean();
+      const fullAppointment: any = await Appointment.findById(id).populate('eTicketId').populate('campaignId').lean();
+
+      // Trigger Email Notification with attached E-ticket asynchronously
+      try {
+        if (fullAppointment) {
+          const donorUser = await User.findById(fullAppointment.donorId).lean();
+          const donorProfile = await DonorProfile.findOne({ userId: fullAppointment.donorId }).lean();
+          const recipientEmail = donorUser?.email || donorProfile?.email;
+
+          if (recipientEmail && fullAppointment.eTicketId) {
+            const eTicket: any = fullAppointment.eTicketId;
+            const campaign: any = fullAppointment.campaignId;
+            sendBookingConfirmationEmail(
+              recipientEmail,
+              donorProfile?.fullName || 'Người hiến máu',
+              campaign?.name || 'Chiến dịch hiến máu',
+              fullAppointment.appointmentDate,
+              fullAppointment.timeSlot,
+              eTicket.ticketCode || '',
+              eTicket.fileUrl || ''
+            ).catch(err => console.error('Failed to send confirmation email:', err));
+          }
+        }
+      } catch (emailErr) {
+        console.error('Error fetching details for confirmation email:', emailErr);
+      }
+
+      return fullAppointment;
     } catch (error) {
       await session.abortTransaction();
       session.endSession();

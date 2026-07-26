@@ -9,6 +9,7 @@ import { User } from '../../auth-account/models/user.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { DigitalDonorRecord } from '../models/digital-donor-record.model';
 import { AuditLog } from '../models/audit-log.model';
+import { sendBookingConfirmationEmail } from '../../../utils/email.util';
 
 const toObjectId = (idStr: string) => {
   return mongoose.Types.ObjectId.isValid(idStr) ? new mongoose.Types.ObjectId(idStr) : new mongoose.Types.ObjectId();
@@ -446,6 +447,32 @@ export class RegistrationService {
       if (session) {
         session.endSession();
       }
+    }
+
+    // Trigger Email Notification with attached E-ticket asynchronously if appointment status was set to Confirmed
+    try {
+      const fullApp: any = await Appointment.findById(registrationId).populate('eTicketId').populate('campaignId').lean();
+      if (fullApp && fullApp.status === AppointmentStatus.Confirmed && fullApp.eTicketId) {
+        const donorUser = await User.findById(fullApp.donorId).lean();
+        const donorProfile = await DonorProfile.findOne({ userId: fullApp.donorId }).lean();
+        const recipientEmail = donorUser?.email || donorProfile?.email;
+
+        if (recipientEmail) {
+          const eTicket: any = fullApp.eTicketId;
+          const campaign: any = fullApp.campaignId;
+          sendBookingConfirmationEmail(
+            recipientEmail,
+            donorProfile?.fullName || 'Người hiến máu',
+            campaign?.name || 'Chiến dịch hiến máu',
+            fullApp.appointmentDate,
+            fullApp.timeSlot,
+            eTicket.ticketCode || '',
+            eTicket.fileUrl || ''
+          ).catch(err => console.error('Failed to send confirmation email on screening update:', err));
+        }
+      }
+    } catch (emailErr) {
+      console.error('Error sending confirmation email after screening update:', emailErr);
     }
 
     return await RegistrationService.getRegistrationById(registrationIdStr);

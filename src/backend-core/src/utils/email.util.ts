@@ -83,3 +83,57 @@ export const sendResetEmail = async (email: string, otp: string) => {
   
   return await sendEmailViaBrevo(email, subject, htmlContent);
 };
+
+/**
+ * Hàm gửi email xác nhận lịch hẹn hiến máu kèm E-ticket cho người hiến máu
+ */
+export const sendBookingConfirmationEmail = async (
+  email: string,
+  donorName: string,
+  campaignName: string,
+  appointmentDate: string | Date,
+  timeSlot: string,
+  ticketCode: string,
+  eTicketUrl: string
+) => {
+  const formattedDate = appointmentDate instanceof Date 
+    ? appointmentDate.toLocaleDateString('vi-VN') 
+    : new Date(appointmentDate).toLocaleDateString('vi-VN');
+
+  const subject = `[LifeLine] Xác nhận lịch hẹn hiến máu thành công - Mã vé: ${ticketCode}`;
+  const htmlContent = `
+  <html>
+      <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #be123c; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+              <h1 style="margin: 0; font-size: 24px;">LifeLine - Đặt Lịch Hiến Máu</h1>
+          </div>
+          <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; padding: 24px;">
+              <h2 style="color: #be123c; margin-top: 0;">Xin chào ${donorName},</h2>
+              <p>Lịch hẹn hiến máu của bạn đã được Trung tâm Máu xác nhận thành công!</p>
+              
+              <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                  <h3 style="margin-top: 0; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Thông Tin Lịch Hẹn</h3>
+                  <p style="margin: 8px 0;"><strong>Chiến dịch:</strong> ${campaignName}</p>
+                  <p style="margin: 8px 0;"><strong>Ngày hiến máu:</strong> ${formattedDate}</p>
+                  <p style="margin: 8px 0;"><strong>Khung giờ:</strong> ${timeSlot}</p>
+                  <p style="margin: 8px 0;"><strong>Mã E-Ticket:</strong> <span style="font-size: 18px; font-weight: bold; color: #be123c;">${ticketCode}</span></p>
+              </div>
+
+              ${eTicketUrl ? `
+              <div style="text-align: center; margin: 24px 0;">
+                  <p style="font-weight: bold; color: #334155;">Vui lòng xuất trình mã QR / E-ticket bên dưới khi đến điểm hiến máu:</p>
+                  <img src="${eTicketUrl}" alt="E-Ticket QR Code" style="max-width: 250px; height: auto; border: 2px dashed #be123c; padding: 12px; border-radius: 8px; background-color: #ffffff;" />
+                  <p style="margin-top: 8px;"><a href="${eTicketUrl}" target="_blank" style="color: #2563eb; text-decoration: underline;">Xem E-Ticket</a></p>
+              </div>
+              ` : ''}
+
+              <p style="color: #64748b; font-size: 14px;">Cảm ơn bạn đã sẵn sàng chia sẻ giọt máu hồng vì cộng đồng.</p>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+              <p style="margin: 0; text-align: center; color: #94a3b8; font-size: 13px;">Trân trọng,<br/><strong>Đội ngũ Trợ lý Hiến máu LifeLine</strong></p>
+          </div>
+      </body>
+  </html>
+  `;
+
+  return await sendEmailViaBrevo(email, subject, htmlContent);
+};

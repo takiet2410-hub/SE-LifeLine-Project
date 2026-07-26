@@ -2,6 +2,9 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 
+import dns from 'node:dns';
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 import { BookingService } from '../src/modules/booking/services/booking.service';
@@ -77,11 +80,16 @@ async function run() {
     appointmentDate: new Date(Date.now() + 86400000 * 5).toISOString(),
     timeSlot: '08:00 - 09:00',
     answers: {
-      medicalHistory: { chronicIllness: false, recentSurgery: false },
-      currentHealthStatus: 'Healthy',
-      recentTravel: 'None',
-      medicationHistory: 'None',
-      consentGiven: true
+      responses: [
+        { questionId: '1', selectedOptions: ['Không'] },
+        { questionId: '2', selectedOptions: ['Không'] },
+        { questionId: '3', selectedOptions: ['Không'] },
+        { questionId: '4', selectedOptions: ['Không'] },
+        { questionId: '5', selectedOptions: ['Không'] },
+        { questionId: '6', selectedOptions: ['Không'] },
+        { questionId: '7', selectedOptions: ['Không'] },
+        { questionId: '8', selectedOptions: ['Không'] }
+      ]
     }
   };
 
@@ -116,6 +124,23 @@ async function run() {
   const detailResult = await RegistrationService.getRegistrationById(createdAppointment._id.toString());
   console.log('>>> REGISTRATION DETAIL RESPONSE:');
   console.log(JSON.stringify(detailResult, null, 2));
+
+  // 7. Confirm Appointment by Staff & Verify Status Update without Entity Duplication
+  console.log('\n[7] Staff confirms appointment via BookingService.confirmAppointmentByBloodCenter...');
+  const countBefore = await mongoose.model('Appointment').countDocuments({ donorId: donorUser._id });
+  const confirmedAppointment: any = await BookingService.confirmAppointmentByBloodCenter(createdAppointment._id.toString());
+  const countAfter = await mongoose.model('Appointment').countDocuments({ donorId: donorUser._id });
+
+  console.log('>>> CONFIRMED APPOINTMENT RESPONSE:');
+  console.log(`    Appointment ID: ${confirmedAppointment._id}`);
+  console.log(`    Updated Status: ${confirmedAppointment.status}`);
+  console.log(`    ETicket Code: ${confirmedAppointment.eTicketId?.ticketCode || 'N/A'}`);
+  console.log(`    ETicket File URL: ${confirmedAppointment.eTicketId?.fileUrl || 'N/A'}`);
+  console.log(`    Appointment Entity Count Before: ${countBefore}, After: ${countAfter} (No entity duplication verified!)`);
+
+  if (countBefore !== countAfter) {
+    throw new Error('FAILED: Entity was duplicated instead of updating existing entity!');
+  }
 
   await mongoose.disconnect();
   console.log('\nAll tests completed successfully!');

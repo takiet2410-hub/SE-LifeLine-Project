@@ -1,0 +1,245 @@
+<!DOCTYPE html><html lang="vi"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>LifeLine - Yêu cầu truy cập vị trí</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#fff8f7",
+                    "neutral-100": "#F1F3F5",
+                    "secondary": "#455f87",
+                    "primary-container": "#b91c1c",
+                    "neutral-900": "#121212",
+                    "on-secondary-container": "#3e5980",
+                    "inverse-on-surface": "#ffedea",
+                    "on-secondary-fixed": "#001c3b",
+                    "on-secondary-fixed-variant": "#2d486d",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#ffdad6",
+                    "on-surface-variant": "#5b403d",
+                    "surface-dim": "#f1d3d0",
+                    "surface-container": "#ffe9e6",
+                    "dark-border": "#2C2C44",
+                    "on-primary-fixed-variant": "#93000b",
+                    "secondary-fixed": "#d5e3ff",
+                    "dark-surface-alt": "#0F3460",
+                    "secondary-dark": "#152A43",
+                    "secondary-fixed-dim": "#adc8f5",
+                    "warning": "#F59E0B",
+                    "error": "#ba1a1a",
+                    "dark-text-muted": "#8E8EA0",
+                    "on-primary-container": "#ffcdc7",
+                    "on-secondary": "#ffffff",
+                    "neutral-200": "#DEE2E6",
+                    "inverse-surface": "#3e2c2a",
+                    "surface-container-low": "#fff0ee",
+                    "on-tertiary-container": "#c1dbff",
+                    "on-surface": "#271816",
+                    "secondary-container": "#b5d0fd",
+                    "on-tertiary-fixed": "#001c37",
+                    "on-primary": "#ffffff",
+                    "surface-container-high": "#ffe2de",
+                    "neutral-50": "#F8F9FA",
+                    "on-error-container": "#93000a",
+                    "primary-light": "#FEE2E2",
+                    "dark-text-primary": "#EAEAEA",
+                    "on-tertiary-fixed-variant": "#00497e",
+                    "tertiary-fixed-dim": "#a0caff",
+                    "info": "#3B82F6",
+                    "surface": "#fff8f7",
+                    "tertiary-container": "#0061a6",
+                    "surface-variant": "#f9dcd8",
+                    "error-container": "#ffdad6",
+                    "surface-container-lowest": "#ffffff",
+                    "outline": "#8f6f6c",
+                    "inverse-primary": "#ffb4ab",
+                    "on-background": "#271816",
+                    "dark-surface": "#16213E",
+                    "surface-tint": "#b91c1c",
+                    "neutral-700": "#343A40",
+                    "secondary-light": "#D6E4F0",
+                    "danger": "#EF4444",
+                    "outline-variant": "#e4beb9",
+                    "success": "#16A34A",
+                    "background": "#fff8f7",
+                    "neutral-500": "#6C757D",
+                    "dark-bg": "#1A1A2E",
+                    "primary": "#93000b",
+                    "surface-container-highest": "#f9dcd8",
+                    "primary-dark": "#7F1D1D",
+                    "on-error": "#ffffff",
+                    "primary-fixed-dim": "#ffb4ab",
+                    "on-primary-fixed": "#410002",
+                    "neutral-300": "#CED4DA",
+                    "tertiary-fixed": "#d2e4ff",
+                    "tertiary": "#00497f"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "lg": "24px",
+                    "2xl": "48px",
+                    "gutter-desktop": "24px",
+                    "sm": "8px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                    "display": ["Inter"],
+                    "caption": ["Inter"],
+                    "h3": ["Inter"],
+                    "code": ["JetBrains Mono"],
+                    "h2": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "h1": ["Inter"],
+                    "button": ["Inter"],
+                    "body": ["Inter"]
+            },
+            "fontSize": {
+                    "display": ["36px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                    "h3": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "code": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "h2": ["22px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "h1": ["28px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                    "button": ["14px", {"lineHeight": "1.0", "fontWeight": "600"}],
+                    "body": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Glassmorphism effect for the modal */
+        .glass-panel {
+            background: rgba(255, 248, 247, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        /* Micro-interactions */
+        .btn-hover-scale {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-hover-scale:hover {
+            transform: scale(1.02);
+        }
+        .btn-hover-scale:active {
+            transform: scale(0.98);
+        }
+
+        /* Map fade animation */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fadeIn 1s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-background overflow-hidden h-screen w-screen flex items-center justify-center">
+<!-- Blurred Background Map Area -->
+<div class="absolute inset-0 z-0 overflow-hidden">
+<div class="w-full h-full scale-110 blur-xl brightness-75 grayscale-[0.2]" data-alt="A cinematic, high-angle aerial view of Ho Chi Minh City at dusk. The urban landscape is a dense tapestry of glowing streetlights, modern skyscrapers, and winding rivers. The color palette is dominated by deep blues and warm amber lights, creating a soft, blurred bokeh effect that emphasizes the scale of the city while maintaining a professional, medical-grade clean aesthetic. Subtle red accents from vehicle tail lights hint at the LifeLine brand colors." data-location="Ho Chi Minh City" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAJNrg5_EQ1KDOQcQfwtjWTo7MLeBLMR0WIHweryMorSljOyya3bW6rukHrai9jQrBxzXoQd3eYniye1lpH2ItfinStZGI4OjIQOPeTRMWi0fwGT6h4eYnAbnDSmlcWM8Zq4sdcTCRN_wPZx33ACxzD4DcS3kBm_vgkde-crs0bZ7ZWoNIWp5VjhZB3FREvNY76Zs2V0hgA1ai9j6g3Z6GirObB0EmX2dBMRRJcOjP7lEhIP3Ak_KtnnT8XJPfFsIjwPEwAwvJkc2tR'); background-size: cover; background-position: center;"></div>
+<div class="absolute inset-0 bg-primary/5"></div>
+</div>
+<!-- Main Modal Container -->
+<main class="relative z-10 w-full max-w-[440px] px-margin-mobile">
+<!-- Permission Card -->
+<div class="glass-panel border border-white/40 shadow-2xl rounded-xl p-xl flex flex-col items-center text-center animate-fade-in">
+<!-- Brand Identity Anchor -->
+<div class="flex items-center gap-2 mb-lg">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-white text-[24px]" style="font-variation-settings: 'FILL' 1;">bloodtype</span>
+</div>
+<div class="text-left">
+<span class="font-h1 text-h2 block leading-none text-primary-dark tracking-tight">LifeLine</span>
+<span class="font-caption text-caption text-on-surface-variant tracking-wider uppercase">Every Drop Counts</span>
+</div>
+</div>
+<!-- Icon/Visual -->
+<div class="w-20 h-20 bg-primary-light rounded-full flex items-center justify-center mb-lg relative">
+<div class="absolute inset-0 bg-primary/10 rounded-full animate-ping opacity-20"></div>
+<span class="material-symbols-outlined text-primary text-[40px]">location_on</span>
+</div>
+<!-- Content -->
+<h1 class="font-h1 text-h1 text-on-surface mb-md">Cho phép truy cập vị trí?</h1>
+<p class="font-body text-body text-on-surface-variant mb-xl leading-relaxed">
+                LifeLine cần vị trí của bạn để hiển thị các điểm hiến máu gần nhất và thông báo các trường hợp khẩn cấp trong khu vực của bạn.
+            </p>
+<!-- Action Cluster -->
+<div class="w-full flex flex-col gap-sm">
+<!-- Primary Action -->
+<button class="w-full h-[48px] bg-primary text-white font-button text-button rounded-lg shadow-sm btn-hover-scale flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">near_me</span>
+                    Cho phép
+                </button>
+<!-- Secondary Action -->
+<button class="w-full h-[48px] bg-transparent text-neutral-500 font-button text-button rounded-lg btn-hover-scale hover:bg-neutral-100 transition-colors">
+                    Để sau
+                </button>
+</div>
+<!-- Trust Indicator -->
+<div class="mt-xl flex items-center gap-2 px-md py-sm bg-neutral-100/50 rounded-full">
+<span class="material-symbols-outlined text-[16px] text-success" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span class="font-caption text-caption text-neutral-700">Dữ liệu của bạn được bảo mật tuyệt đối</span>
+</div>
+</div>
+<!-- Minimalist Floating Context Indicator (Desktop only) -->
+<div class="hidden md:flex absolute -bottom-16 left-1/2 -translate-x-1/2 items-center gap-2 text-white/80">
+<span class="material-symbols-outlined text-[20px]">info</span>
+<p class="font-caption text-caption">Chúng tôi sử dụng định vị để cứu sống nhiều người hơn.</p>
+</div>
+</main>
+<!-- Decorative Corner Element -->
+<div class="absolute top-0 right-0 p-lg hidden md:block">
+<div class="glass-panel border border-white/20 px-md py-sm rounded-lg flex items-center gap-3">
+<div class="w-2 h-2 bg-success rounded-full animate-pulse"></div>
+<span class="font-caption text-caption text-on-surface">Đang tìm 12 trạm hiến máu gần bạn...</span>
+</div>
+</div>
+<!-- JavaScript for micro-interactions -->
+<script>
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                // Ripple effect logic or navigation simulation
+                console.log('Action triggered:', this.innerText);
+                
+                // Add a temporary "clicked" state visually
+                this.classList.add('opacity-80');
+                setTimeout(() => {
+                    this.classList.remove('opacity-80');
+                }, 150);
+            });
+        });
+
+        // Subtle parallax effect on the map background
+        window.addEventListener('mousemove', (e) => {
+            const map = document.querySelector('[data-location="Ho Chi Minh City"]');
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            map.style.transform = `scale(1.1) translate(${x}px, ${y}px)`;
+        });
+    </script>
+</body></html>

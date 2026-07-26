@@ -4,12 +4,33 @@ import { useScheduleContext } from '../../context/ScheduleContext';
 import { CalendarDays, Clock, MapPin, CheckCircle2, ArrowLeft, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { createAppointment, mapHealthAnswersToBackend, type HealthAnswers } from '../../api/bookingApi';
 import { toast } from 'sonner';
+import { EligibilityOverlay, DuplicateBookingOverlay, SlotTakenOverlay } from '../../components/BookingOverlays';
 
 export const Step3_Summary: React.FC = () => {
   const navigate = useNavigate();
   const { data, resetData } = useScheduleContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Overlay states
+  const [showEligibilityModal, setShowEligibilityModal] = useState(false);
+  const [eligibilityData, setEligibilityData] = useState<{
+    title?: string;
+    message?: string;
+    lastDonationDate?: string;
+    nextEligibleDate?: string;
+  }>({});
+
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateData, setDuplicateData] = useState<{
+    title?: string;
+    message?: string;
+    activeLocationName?: string;
+    activeDate?: string;
+    activeTime?: string;
+  }>({});
+
+  const [showSlotTakenModal, setShowSlotTakenModal] = useState(false);
 
   // Get location data from context (set in Step1)
   const loc = data.locationData;
@@ -41,8 +62,37 @@ export const Step3_Summary: React.FC = () => {
         toast.success('Tạo lịch hẹn hiến máu thành công!');
         navigate('/my-appointments/schedule/success');
       } else {
-        setError(res.message || 'Lỗi đặt lịch hẹn. Vui lòng thử lại.');
-        toast.error(res.message || 'Lỗi đặt lịch hẹn. Vui lòng thử lại.');
+        const msg = res.message || '';
+        setError(msg || 'Lỗi đặt lịch hẹn. Vui lòng thử lại.');
+
+        if (msg.includes('ELIGIBILITY_FAILED_SCREENING')) {
+          setEligibilityData({
+            title: 'Không đủ điều kiện hiến máu',
+            message: 'Kết quả phiếu khảo sát sức khỏe của bạn chưa đáp ứng đủ tiêu chuẩn y tế để hiến máu trong đợt này.',
+          });
+          setShowEligibilityModal(true);
+        } else if (msg.includes('ELIGIBILITY_FAILED_84_DAYS') || msg.includes('84') || msg.includes('khoảng cách')) {
+          setEligibilityData({
+            title: 'Chưa đủ thời gian giãn cách',
+            message: 'Bạn chưa đủ khoảng cách tối thiểu 84 ngày kể từ lần hiến máu gần nhất.',
+            lastDonationDate: '15/06/2025',
+            nextEligibleDate: '27/09/2025',
+          });
+          setShowEligibilityModal(true);
+        } else if (msg.includes('DUPLICATE') || msg.includes('trùng') || msg.includes('đã có')) {
+          setDuplicateData({
+            title: 'Phát hiện đặt lịch trùng lặp',
+            message: 'Bạn đã có một lịch hẹn hiến máu khác đã được xác nhận trong thời gian này.',
+            activeLocationName: loc?.name || 'Bệnh viện Chợ Rẫy',
+            activeDate: data.date,
+            activeTime: data.timeSlot,
+          });
+          setShowDuplicateModal(true);
+        } else if (msg.includes('FULL') || msg.includes('đầy') || msg.includes('hết chỗ') || msg.includes('SLOT')) {
+          setShowSlotTakenModal(true);
+        } else {
+          toast.error(msg || 'Lỗi đặt lịch hẹn. Vui lòng thử lại.');
+        }
       }
     } catch (err) {
       const msg = 'Lỗi hệ thống. Vui lòng thử lại sau.';
@@ -188,6 +238,29 @@ export const Step3_Summary: React.FC = () => {
           )}
         </button>
       </div>
+
+      {/* Backend Validation Error Overlays */}
+      <EligibilityOverlay
+        isOpen={showEligibilityModal}
+        onClose={() => setShowEligibilityModal(false)}
+        title={eligibilityData.title}
+        message={eligibilityData.message}
+        lastDonationDate={eligibilityData.lastDonationDate}
+        nextEligibleDate={eligibilityData.nextEligibleDate}
+      />
+      <DuplicateBookingOverlay
+        isOpen={showDuplicateModal}
+        onClose={() => setShowDuplicateModal(false)}
+        title={duplicateData.title}
+        message={duplicateData.message}
+        activeLocationName={duplicateData.activeLocationName}
+        activeDate={duplicateData.activeDate}
+        activeTime={duplicateData.activeTime}
+      />
+      <SlotTakenOverlay
+        isOpen={showSlotTakenModal}
+        onClose={() => setShowSlotTakenModal(false)}
+      />
     </div>
   );
 };

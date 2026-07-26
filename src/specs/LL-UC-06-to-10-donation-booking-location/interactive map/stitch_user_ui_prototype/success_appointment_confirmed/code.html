@@ -1,0 +1,342 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Booking Confirmed | LifeLine</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-dark": "#7F1D1D",
+                    "neutral-500": "#6C757D",
+                    "on-primary-fixed-variant": "#93000b",
+                    "surface": "#fff8f7",
+                    "primary-fixed-dim": "#ffb4ab",
+                    "primary-light": "#FEE2E2",
+                    "on-primary-container": "#ffcdc7",
+                    "neutral-50": "#F8F9FA",
+                    "background": "#fff8f7",
+                    "on-secondary-fixed-variant": "#2d486d",
+                    "secondary-fixed": "#d5e3ff",
+                    "on-surface-variant": "#5b403d",
+                    "inverse-surface": "#3e2c2a",
+                    "neutral-700": "#343A40",
+                    "inverse-primary": "#ffb4ab",
+                    "tertiary-container": "#0061a6",
+                    "dark-bg": "#1A1A2E",
+                    "danger": "#EF4444",
+                    "surface-container-highest": "#f9dcd8",
+                    "error-container": "#ffdad6",
+                    "neutral-100": "#F1F3F5",
+                    "surface-container-low": "#fff0ee",
+                    "on-tertiary-fixed": "#001c37",
+                    "primary-container": "#b91c1c",
+                    "outline-variant": "#e4beb9",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#ffe9e6",
+                    "dark-surface-alt": "#0F3460",
+                    "on-secondary-container": "#3e5980",
+                    "surface-variant": "#f9dcd8",
+                    "surface-container-lowest": "#ffffff",
+                    "info": "#3B82F6",
+                    "secondary-dark": "#152A43",
+                    "warning": "#F59E0B",
+                    "primary": "#93000b",
+                    "surface-dim": "#f1d3d0",
+                    "tertiary": "#00497f",
+                    "on-tertiary-container": "#c1dbff",
+                    "on-background": "#271816",
+                    "dark-text-primary": "#EAEAEA",
+                    "surface-container-high": "#ffe2de",
+                    "outline": "#8f6f6c",
+                    "tertiary-fixed": "#d2e4ff",
+                    "on-secondary-fixed": "#001c3b",
+                    "neutral-300": "#CED4DA",
+                    "inverse-on-surface": "#ffedea",
+                    "primary-fixed": "#ffdad6",
+                    "dark-border": "#2C2C44",
+                    "tertiary-fixed-dim": "#a0caff",
+                    "secondary-light": "#D6E4F0",
+                    "neutral-900": "#121212",
+                    "secondary": "#455f87",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed": "#410002",
+                    "on-surface": "#271816",
+                    "on-error": "#ffffff",
+                    "dark-text-muted": "#8E8EA0",
+                    "success": "#16A34A",
+                    "error": "#ba1a1a",
+                    "dark-surface": "#16213E",
+                    "on-error-container": "#93000a",
+                    "secondary-container": "#b5d0fd",
+                    "on-secondary": "#ffffff",
+                    "surface-tint": "#b91c1c",
+                    "neutral-200": "#DEE2E6",
+                    "secondary-fixed-dim": "#adc8f5",
+                    "surface-bright": "#fff8f7",
+                    "on-tertiary-fixed-variant": "#00497e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "2xl": "48px",
+                    "gutter-desktop": "24px",
+                    "xs": "4px",
+                    "xl": "32px",
+                    "margin-mobile": "16px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "caption": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "button": ["Inter"],
+                    "h1-mobile": ["Inter"],
+                    "h3": ["Inter"],
+                    "h1": ["Inter"],
+                    "display": ["Inter"],
+                    "h2": ["Inter"],
+                    "code": ["JetBrains Mono"],
+                    "body": ["Inter"]
+            },
+            "fontSize": {
+                    "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                    "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "button": ["14px", {"lineHeight": "1.0", "fontWeight": "600"}],
+                    "h1-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                    "h3": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "h1": ["28px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                    "display": ["36px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "h2": ["22px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "code": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "body": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scale-102:hover { transform: scale(1.02); }
+        .shrink-98:active { transform: scale(0.98); }
+        .transition-standard { transition: all 200ms ease-in-out; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen">
+<!-- Sidebar (Predicted: SideNavBar) -->
+<aside class="fixed left-0 top-0 bottom-0 flex flex-col z-40 bg-dark-bg w-[260px] h-full shadow-lg hidden md:flex">
+<div class="px-6 py-8 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">bloodtype</span>
+</div>
+<div>
+<h1 class="font-h1 text-h1 font-bold text-white leading-none">LifeLine</h1>
+<p class="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1">Every Drop Counts</p>
+</div>
+</div>
+<nav class="flex-1 mt-md"><div class="flex items-center text-dark-text-muted hover:text-white px-4 py-3 cursor-pointer transition-all hover:bg-dark-surface">
+<span class="material-symbols-outlined mr-md">dashboard</span>
+<span class="font-body text-body-sm">Dashboard</span>
+</div>
+<div class="flex items-center text-dark-text-muted hover:text-white px-4 py-3 cursor-pointer transition-all hover:bg-dark-surface">
+<span class="material-symbols-outlined mr-md">map</span>
+<span class="font-body text-body-sm">Map</span>
+</div>
+<div class="flex items-center bg-dark-surface-alt text-white border-l-4 border-primary px-4 py-3 cursor-pointer">
+<span class="material-symbols-outlined mr-md">calendar_month</span>
+<span class="font-body text-body-sm">My Appointments</span>
+</div>
+<div class="flex items-center text-dark-text-muted hover:text-white px-4 py-3 cursor-pointer transition-all hover:bg-dark-surface">
+<span class="material-symbols-outlined mr-md">notifications</span>
+<span class="font-body text-body-sm">Notifications</span>
+</div>
+<div class="flex items-center text-dark-text-muted hover:text-white px-4 py-3 cursor-pointer transition-all hover:bg-dark-surface">
+<span class="material-symbols-outlined mr-md">newspaper</span>
+<span class="font-body text-body-sm">News Feed</span>
+</div>
+<div class="flex items-center text-dark-text-muted hover:text-white px-4 py-3 cursor-pointer transition-all hover:bg-dark-surface">
+<span class="material-symbols-outlined mr-md">smart_toy</span>
+<span class="font-body text-body-sm">AI Chatbot</span>
+</div>
+<div class="flex items-center text-dark-text-muted hover:text-white px-4 py-3 cursor-pointer transition-all hover:bg-dark-surface">
+<span class="material-symbols-outlined mr-md">person</span>
+<span class="font-body text-body-sm">My Profile</span>
+</div></nav>
+<div class="p-lg mb-xl"><div class="space-y-sm">
+
+
+</div></div>
+<div class="p-6 border-t border-dark-border mt-auto"><div class="flex items-center gap-3">
+<img alt="Nguyen Van An" class="w-10 h-10 rounded-full border-2 border-primary-light object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJD7LQUt-ef0fz2N7Kq914lOMm_5z1_BAZOxoDCG3pU_Maf3tvkVSuudwok3YHqXdvTwD2izCG0uQZfnAdhu-76kW4yzNIxZsKjC5cyrjssgF3CUKQ5rK5bgyA8FW9RePQqRrOj4A5ubtcpXBLCm97VI9fvvVYV_0iG2lyz5wQzRUVg-2pHwpy0h2zo8AsmZNcj2D0QKAUZxgw-J-gPsoHLulrSukvW-tkCrv-uoW37hCxLxFHfi1r7Mzo9YiM_37X1GjCeQA93GRD">
+<div class="overflow-hidden">
+<p class="text-sm font-semibold truncate text-white">Nguyen Van An</p>
+<p class="text-xs text-dark-text-muted truncate">Silver Donor</p>
+</div>
+</div></div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-[260px] min-h-screen flex flex-col items-center"><header class="w-full bg-white border-b border-neutral-200 px-gutter-desktop py-4 flex items-center justify-between sticky top-0 z-40">
+  <div class="flex flex-col">
+    <h1 class="font-h1 text-h1 font-bold text-on-background">Schedule Appointment</h1>
+    <p class="text-body-sm text-neutral-500">Book your next life-saving donation</p>
+  </div>
+  <div class="flex items-center gap-lg">
+    <div class="hidden lg:flex items-center bg-neutral-100 rounded-lg px-4 py-2 w-[300px]">
+      <span class="material-symbols-outlined text-neutral-500 mr-2">search</span>
+      <input type="text" placeholder="Search clinics, events..." class="bg-transparent border-none focus:ring-0 text-body-sm w-full">
+    </div>
+    <div class="flex items-center gap-md">
+      <button class="p-2 hover:bg-neutral-100 rounded-full transition-standard">
+        <span class="material-symbols-outlined text-neutral-700">notifications</span>
+      </button>
+      <button class="p-2 hover:bg-neutral-100 rounded-full transition-standard">
+        <span class="material-symbols-outlined text-neutral-700">settings</span>
+      </button>
+      
+    </div>
+  </div>
+</header>
+<!-- Success Banner -->
+<div class="w-full bg-success/10 border-b border-success/20 py-4 px-gutter-desktop flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined text-success" style="font-variation-settings: &quot;FILL&quot; 1;">check_circle</span>
+<span class="text-success font-h3">Booking Confirmed!</span>
+</div>
+<!-- Scrollable Area -->
+<div class="max-w-[1200px] w-full px-gutter-desktop py-2xl flex flex-col items-center gap-xl">
+<!-- E-Ticket Card -->
+<div class="bg-white border-2 border-primary-container rounded-xl shadow-lg w-full max-w-[480px] overflow-hidden animate-fade-in-up" style="opacity: 1; transform: translateY(0px); transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
+<!-- Header -->
+<div class="bg-surface-container-low px-xl py-lg text-center border-b border-outline-variant">
+<h2 class="font-display text-h2 text-secondary-dark uppercase tracking-tight">Your E-Ticket</h2>
+<p class="text-neutral-500 font-caption mt-1">Please present this at the check-in desk</p>
+</div>
+<!-- Ticket Details -->
+<div class="p-xl space-y-lg text-center">
+<div class="space-y-sm">
+<h3 class="font-h3 text-primary">Central City Hospital</h3>
+<p class="text-on-surface-variant font-body">Blood Donation Center, Wing B</p>
+</div>
+<div class="grid grid-cols-2 gap-md border-y border-outline-variant py-md">
+<div class="text-left">
+<p class="text-neutral-500 font-caption">DATE</p>
+<p class="font-h3 text-on-surface">Aug 15, 2025</p>
+</div>
+<div class="text-right">
+<p class="text-neutral-500 font-caption">TIME</p>
+<p class="font-h3 text-on-surface">11:00 AM</p>
+</div>
+<div class="text-left">
+<p class="text-neutral-500 font-caption">BLOOD TYPE</p>
+<p class="font-h3 text-primary">O+</p>
+</div>
+<div class="text-right">
+<p class="text-neutral-500 font-caption">ID NUMBER</p>
+<p class="font-code text-on-surface">#APT-2025-001</p>
+</div>
+</div>
+<!-- QR Code Section -->
+<div class="flex flex-col items-center py-md">
+<div class="p-md bg-white border border-neutral-200 rounded-lg shadow-sm"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuABbhRp36oyNm7IVl4QWnGiZzrkaLDXkcvFOFr_NnozV8Zjh5dobuVfniAseGHFWJV4gwrnwiQ7O83GbmiE0XzGgQMcuxagvKoqVZHI3nhW1ll_6dGynDZgE2_uVXA_9ApixVI1fDwdrI0zq3UHR0dicL7uQSRvdB7H80lBnc9Elv-wc2x3o1jsDBdbKM_eJmnTZFbr05Z2QzUybEOHlKsBLmZxPxvYQZco3nL3yQfG72pxnfdQjK1q6XdBdE3zUIXLKIRdi06qQYe0" alt="Appointment QR Code" class="w-[200px] h-[200px] object-contain mx-auto"></div>
+<p class="mt-md text-neutral-500 font-caption italic">Scan for instant check-in</p>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="bg-neutral-50 p-lg flex flex-col gap-sm">
+<button class="w-full bg-primary text-white font-button py-md rounded-lg shadow-sm scale-102 shrink-98 transition-standard flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined text-[20px]">download</span>
+                        Download E-Ticket
+                    </button>
+<button class="w-full border-2 border-secondary-dark text-secondary-dark font-button py-md rounded-lg scale-102 shrink-98 transition-standard flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined text-[20px]">share</span>
+                        Share
+                    </button>
+</div>
+</div>
+<!-- Email Notification Info Box -->
+<div class="w-full max-w-[480px] bg-tertiary-fixed/30 border-l-4 border-tertiary rounded-lg p-lg flex items-start gap-md">
+<span class="material-symbols-outlined text-tertiary">mark_email_read</span>
+<div class="space-y-xs">
+<p class="font-body text-body text-on-tertiary-fixed-variant">A confirmation email has been sent to your registered address with your appointment preparation guide.</p>
+</div>
+</div>
+<!-- Secondary Navigation -->
+<div class="flex flex-col items-center gap-sm">
+<a class="text-secondary-dark font-button underline hover:text-primary transition-standard" href="#">View My Appointments</a>
+<p class="text-neutral-500 font-caption">Need to reschedule? Call us at 1-800-LIFELINE</p>
+</div>
+</div>
+</main>
+<!-- Footer (Predicted: Footer) -->
+
+<!-- Mobile Bottom Navigation (Visible on mobile only) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-white border-t border-neutral-200 flex items-center justify-around z-50">
+<div class="flex flex-col items-center text-neutral-500">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px]">Home</span>
+</div>
+<div class="flex flex-col items-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">calendar_month</span>
+<span class="text-[10px]">Appts</span>
+</div>
+<div class="flex flex-col items-center text-neutral-500">
+<div class="bg-primary -mt-8 w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg border-4 border-background">
+<span class="material-symbols-outlined">add</span>
+</div>
+</div>
+<div class="flex flex-col items-center text-neutral-500">
+<span class="material-symbols-outlined">monitor_heart</span>
+<span class="text-[10px]">Health</span>
+</div>
+<div class="flex flex-col items-center text-neutral-500">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px]">Profile</span>
+</div>
+</nav>
+<script>
+        // Micro-interaction: Ripple effect simulation or simple console log for success
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("LifeLine Booking Confirmed — ID: #APT-2025-001");
+            
+            // Add entry animation to ticket card
+            const ticket = document.querySelector('.animate-fade-in-up');
+            if (ticket) {
+                ticket.style.opacity = '0';
+                ticket.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    ticket.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+                    ticket.style.opacity = '1';
+                    ticket.style.transform = 'translateY(0)';
+                }, 100);
+            }
+        });
+    </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body></html>

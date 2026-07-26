@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { SideNavBar } from './SideNavBar';
 import { Bell, Menu } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { ScheduleProvider } from '../../../modules/booking-location/context/ScheduleContext';
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
@@ -19,7 +20,8 @@ export const DashboardLayout: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#fff8f7] overflow-hidden selection:bg-[#93000b]/20">
+    <ScheduleProvider>
+      <div className="flex h-screen w-full bg-[#fff8f7] overflow-hidden selection:bg-[#93000b]/20">
       {/* Sidebar - Hidden on mobile, handled by media queries if needed later */}
       <div className="hidden md:flex">
         <SideNavBar />
@@ -34,22 +36,26 @@ export const DashboardLayout: React.FC = () => {
             </button>
             <div className="hidden sm:flex flex-col">
               <h1 className="text-[20px] font-bold text-[#271816] leading-tight">
-                {location.pathname.includes('/schedule') 
-                  ? 'Schedule Appointment' 
-                  : location.pathname.includes('/my-appointments') 
-                    ? 'My Appointments' 
-                    : location.pathname.includes('/profile')
-                      ? 'My Profile & Donation Impact'
-                      : 'Dashboard'}
+                {location.pathname.includes('/map')
+                  ? 'Map'
+                  : location.pathname.includes('/schedule') 
+                    ? 'Schedule Appointment' 
+                    : location.pathname.includes('/my-appointments') 
+                      ? 'My Appointments' 
+                      : location.pathname.includes('/profile')
+                        ? 'My Profile & Donation Impact'
+                        : 'Dashboard'}
               </h1>
               <p className="text-[12px] font-medium text-[#6c757d] uppercase tracking-wide">
-                {location.pathname.includes('/schedule') 
-                  ? 'BOOK A NEW DONATION OR SCREENING'
-                  : location.pathname.includes('/my-appointments') 
-                    ? 'MANAGE YOUR LIFE-SAVING SCHEDULE' 
-                    : location.pathname.includes('/profile')
-                      ? 'Track your life-saving journey and achievements'
-                      : 'OVERVIEW'}
+                {location.pathname.includes('/map')
+                  ? 'FIND DONATION CENTERS AND ACTIVE CAMPAIGNS NEAR YOU'
+                  : location.pathname.includes('/schedule') 
+                    ? 'BOOK A NEW DONATION OR SCREENING'
+                    : location.pathname.includes('/my-appointments') 
+                      ? 'MANAGE YOUR LIFE-SAVING SCHEDULE' 
+                      : location.pathname.includes('/profile')
+                        ? 'Track your life-saving journey and achievements'
+                        : 'OVERVIEW'}
               </p>
             </div>
           </div>
@@ -73,5 +79,6 @@ export const DashboardLayout: React.FC = () => {
         </main>
       </div>
     </div>
+    </ScheduleProvider>
   );
 };

@@ -1,0 +1,302 @@
+<!DOCTYPE html><html lang="vi" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>LifeLine | Bệnh viện Chợ Rẫy Details</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+        .glass-panel {
+            background: rgba(255, 248, 247, 0.95);
+            backdrop-filter: blur(12px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #DEE2E6;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#fff8f7",
+                        "neutral-100": "#F1F3F5",
+                        "secondary": "#455f87",
+                        "primary-container": "#b91c1c",
+                        "neutral-900": "#121212",
+                        "on-secondary-container": "#3e5980",
+                        "inverse-on-surface": "#ffedea",
+                        "on-secondary-fixed": "#001c3b",
+                        "on-secondary-fixed-variant": "#2d486d",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#ffdad6",
+                        "on-surface-variant": "#5b403d",
+                        "surface-dim": "#f1d3d0",
+                        "surface-container": "#ffe9e6",
+                        "dark-border": "#2C2C44",
+                        "on-primary-fixed-variant": "#93000b",
+                        "secondary-fixed": "#d5e3ff",
+                        "dark-surface-alt": "#0F3460",
+                        "secondary-dark": "#152A43",
+                        "secondary-fixed-dim": "#adc8f5",
+                        "warning": "#F59E0B",
+                        "error": "#ba1a1a",
+                        "dark-text-muted": "#8E8EA0",
+                        "on-primary-container": "#ffcdc7",
+                        "on-secondary": "#ffffff",
+                        "neutral-200": "#DEE2E6",
+                        "inverse-surface": "#3e2c2a",
+                        "surface-container-low": "#fff0ee",
+                        "on-tertiary-container": "#c1dbff",
+                        "on-surface": "#271816",
+                        "secondary-container": "#b5d0fd",
+                        "on-tertiary-fixed": "#001c37",
+                        "on-primary": "#ffffff",
+                        "surface-container-high": "#ffe2de",
+                        "neutral-50": "#F8F9FA",
+                        "on-error-container": "#93000a",
+                        "primary-light": "#FEE2E2",
+                        "dark-text-primary": "#EAEAEA",
+                        "on-tertiary-fixed-variant": "#00497e",
+                        "tertiary-fixed-dim": "#a0caff",
+                        "info": "#3B82F6",
+                        "surface": "#fff8f7",
+                        "tertiary-container": "#0061a6",
+                        "surface-variant": "#f9dcd8",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#8f6f6c",
+                        "inverse-primary": "#ffb4ab",
+                        "on-background": "#271816",
+                        "dark-surface": "#16213E",
+                        "surface-tint": "#b91c1c",
+                        "neutral-700": "#343A40",
+                        "secondary-light": "#D6E4F0",
+                        "danger": "#EF4444",
+                        "outline-variant": "#e4beb9",
+                        "success": "#16A34A",
+                        "background": "#fff8f7",
+                        "neutral-500": "#6C757D",
+                        "dark-bg": "#1A1A2E",
+                        "primary": "#93000b",
+                        "surface-container-highest": "#f9dcd8",
+                        "primary-dark": "#7F1D1D",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#ffb4ab",
+                        "on-primary-fixed": "#410002",
+                        "neutral-300": "#CED4DA",
+                        "tertiary-fixed": "#d2e4ff",
+                        "tertiary": "#00497f"
+                    },
+                    "fontFamily": {
+                        "display": ["Inter"],
+                        "h1": ["Inter"],
+                        "h2": ["Inter"],
+                        "h3": ["Inter"],
+                        "body": ["Inter"],
+                        "button": ["Inter"],
+                        "caption": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body h-screen overflow-hidden">
+<!-- Sidebar Navigation (Predicted Component) -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-dark-bg flex flex-col h-full overflow-y-auto shadow-md z-50">
+<div class="p-6 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: &quot;FILL&quot; 1;">water_drop</span>
+</div>
+<div>
+<h1 class="font-h1 text-h1 font-bold text-on-primary text-xl leading-none">LifeLine</h1>
+<p class="text-[10px] text-dark-text-muted uppercase tracking-widest mt-1">Every Drop Counts</p>
+</div>
+</div>
+<nav class="mt-4 flex-1">
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface hover:scale-[1.02] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body text-body">Dashboard</span>
+</a>
+<!-- ACTIVE TAB: Map -->
+<a class="flex items-center gap-3 px-4 py-3 border-l-4 border-primary bg-dark-surface-alt text-on-primary transition-all duration-200" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-body text-body">Map</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface hover:scale-[1.02] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="font-body text-body">My Appointments</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface hover:scale-[1.02] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-body text-body">Notifications</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface hover:scale-[1.02] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">newspaper</span>
+<span class="font-body text-body">News Feed</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface hover:scale-[1.02] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-body text-body">AI Chatbot</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface hover:scale-[1.02] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-body text-body">My Profile</span>
+</a>
+</nav>
+<div class="p-4 border-t border-dark-border">
+<div class="flex items-center gap-3 p-2 rounded-lg bg-dark-surface">
+<img class="w-10 h-10 rounded-full border-2 border-primary" data-alt="A professional portrait of a medical staff member or user in a modern healthcare setting, high-key lighting, soft clean aesthetic with a palette of deep reds and light whites, high-end corporate photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHXXH-dmhDzNpR2kHeZGSH9kow16aMHqoWOyIA8BJoVzOTRRvOFNJJJZ8ALTt3OBftHL9e75BVjOkAHS2jbLcIYcRsiG_yb8CzE0zEj17SEzgItdkLXJb8jFUdyt1yWSp96Rq3PTzLnl_K7LI-Db8ZyiO9GFhu4kfMGOE6C4RFltesAhX3YOI1-S7YYnawYx3iWguu79VGWlT6x5H36A0M6Zj1jTnOFENvB02yFuB2cwwWSqeflhqO2FIFhl5bU_04t8RdApq8UoHa">
+<div class="flex-1 overflow-hidden">
+<p class="text-dark-text-primary font-bold truncate">Dr. Nguyen An</p>
+<p class="text-[10px] text-dark-text-muted">Verified Donor</p>
+</div>
+<span class="material-symbols-outlined text-dark-text-muted cursor-pointer hover:text-white transition-colors">settings</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-[260px] h-full relative flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="flex justify-between items-center h-16 px-6 bg-surface border-b border-neutral-200 shadow-sm z-40">
+<div class="flex items-center gap-4">
+<h2 class="font-h2 text-h2 font-bold text-on-surface">Map Services</h2>
+
+</div>
+<div class="flex items-center gap-4"><div class="flex items-center gap-6"><div class="relative hidden lg:block"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span><input class="pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-full text-body-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all w-64" placeholder="Search donation points..." type="text"></div><div class="flex items-center gap-4"><span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">notifications</span><span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">settings</span><div class="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center cursor-pointer overflow-hidden border border-neutral-200"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHXXH-dmhDzNpR2kHeZGSH9kow16aMHqoWOyIA8BJoVzOTRRvOFNJJJZ8ALTt3OBftHL9e75BVjOkAHS2jbLcIYcRsiG_yb8CzE0zEj17SEzgItdkLXJb8jFUdyt1yWSp96Rq3PTzLnl_K7LI-Db8ZyiO9GFhu4kfMGOE6C4RFltesAhX3YOI1-S7YYnawYx3iWguu79VGWlT6x5H36A0M6Zj1jTnOFENvB02yFuB2cwwWSqeflhqO2FIFhl5bU_04t8RdApq8UoHa" class="w-full h-full object-cover"></div></div></div></div>
+</header>
+<!-- Map Area -->
+<div class="flex-1 relative bg-neutral-100 overflow-hidden">
+<!-- Simulated Map Background -->
+<div class="absolute inset-0 z-0 bg-cover bg-center grayscale-[20%]" data-alt="A clean, modern high-fidelity digital map of Ho Chi Minh City's District 5, showing stylized streets, buildings, and parks in a neutral light-mode color palette. The map features several subtle red circular pulse indicators representing active blood donation centers in a corporate medical aesthetic." data-location="Ho Chi Minh City" style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuAJNrg5_EQ1KDOQcQfwtjWTo7MLeBLMR0WIHweryMorSljOyya3bW6rukHrai9jQrBxzXoQd3eYniye1lpH2ItfinStZGI4OjIQOPeTRMWi0fwGT6h4eYnAbnDSmlcWM8Zq4sdcTCRN_wPZx33ACxzD4DcS3kBm_vgkde-crs0bZ7ZWoNIWp5VjhZB3FREvNY76Zs2V0hgA1ai9j6g3Z6GirObB0EmX2dBMRRJcOjP7lEhIP3Ak_KtnnT8XJPfFsIjwPEwAwvJkc2tR&quot;);">
+</div>
+<!-- Overlay Detail Panel (Right Third) -->
+<div class="absolute right-0 top-0 h-full w-[420px] glass-panel shadow-2xl z-30 transform transition-transform duration-500 flex flex-col border-l border-neutral-200/50">
+<!-- Cover Image -->
+<div class="h-48 relative overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="A grand cinematic wide shot of the Bệnh viện Chợ Rẫy entrance, illuminated by warm sunset light that contrasts beautifully with its clean, white architectural lines. The scene conveys reliability and medical excellence with a sophisticated light-mode UI color scheme, featuring high-end professional lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVjwnalkNmzunOqYqYA6SWM8nAcHAwDVaklyWQ1gS99Sj96-6doSnKfVtQ0AaBUSY4czHpl62onpx8MSd0cdX13YrphB5gTurNUPqluODT85OuRHnKfFczEZ3Mb44OS7geckP4ysNK4lmp52PhymHYRdy8vgcdElK7vU9r0FLoYQ-vqTYLGhRkmWkz6DfqnRkJcYG9ZYBENqIOk3yXTafkpKCkmMA4osqlf5TlmGkluUqYrq5xXtvFvgRLK6wB_hxakVbTiQ0x8KC9">
+<button class="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center hover:bg-white active:scale-95 transition-all shadow-md">
+<span class="material-symbols-outlined text-on-surface">close</span>
+</button>
+<div class="absolute bottom-4 left-6">
+<span class="inline-flex items-center px-3 py-1 bg-success text-white text-xs font-bold rounded-full shadow-lg">
+<span class="material-symbols-outlined text-[14px] mr-1" style="font-variation-settings: &quot;FILL&quot; 1;">check_circle</span>
+                            Opening Now
+                        </span>
+</div>
+</div>
+<!-- Panel Content -->
+<div class="flex-1 p-6 overflow-y-auto custom-scrollbar">
+<div class="mb-6">
+<h3 class="font-h1 text-h1 font-bold text-on-surface mb-2">Bệnh viện Chợ Rẫy<span class="ml-2 inline-flex items-center px-2 py-0.5 bg-error text-white text-[10px] font-bold rounded uppercase tracking-wider">ĐÃ ĐẦY</span></h3>
+<div class="flex items-start gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px] mt-0.5">location_on</span>
+<p class="font-body text-body-sm">201B Nguyễn Chí Thanh, P.12, Q.5, TP.HCM</p>
+</div>
+</div>
+<!-- Stats / Progress Section -->
+<div class="bg-surface-container-low rounded-xl p-4 border border-outline-variant mb-8">
+<div class="flex justify-between items-center mb-3">
+<span class="text-sm font-semibold text-on-surface">Today's Capacity</span>
+<span class="text-sm font-bold text-primary">150 / 150 <span class="text-on-surface-variant font-medium">Slots</span></span>
+</div>
+<div class="w-full h-2.5 bg-neutral-200 rounded-full overflow-hidden">
+<div class="h-full rounded-full transition-all duration-1000 bg-error" style="width: 100%"></div>
+</div>
+<p class="text-[11px] text-error mt-2 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span>Địa điểm hiến máu đã đầy - Đã đóng đăng ký</p>
+</div>
+<!-- Details Grid -->
+<div class="space-y-6">
+<!-- Operating Hours -->
+<div>
+<h4 class="text-xs uppercase tracking-widest font-bold text-on-surface-variant mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                                Operating Hours
+                            </h4>
+<div class="flex items-center justify-between p-3 bg-white border border-neutral-100 rounded-lg shadow-sm">
+<span class="font-medium">Daily</span>
+<span class="text-primary font-bold">08:00 - 17:00</span>
+</div>
+</div>
+<!-- Target Blood Groups -->
+<div>
+<h4 class="text-xs uppercase tracking-widest font-bold text-on-surface-variant mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">bloodtype</span>
+                                Target Blood Groups
+                            </h4>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 bg-primary-container text-on-primary-container font-bold rounded-lg shadow-sm border border-primary-dark">O+</span>
+<span class="px-4 py-2 bg-primary-container text-on-primary-container font-bold rounded-lg shadow-sm border border-primary-dark">O-</span>
+<span class="px-4 py-2 bg-primary-container text-on-primary-container font-bold rounded-lg shadow-sm border border-primary-dark">A+</span>
+<span class="px-4 py-2 bg-white text-on-surface-variant border border-neutral-200 font-bold rounded-lg opacity-50">B+</span>
+</div>
+</div>
+<!-- Available Time Slots -->
+<div>
+<h4 class="text-xs uppercase tracking-widest font-bold text-on-surface-variant mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">event_available</span>
+                                Available Time Slots
+                            </h4>
+<div class="grid grid-cols-3 gap-3"><button class="p-3 bg-neutral-100 border-2 border-transparent rounded-xl shadow-sm text-center opacity-60 cursor-not-allowed"><span class="block text-lg font-bold text-neutral-500">09:00</span><span class="text-[10px] text-neutral-500">0 left</span></button><button class="p-3 bg-neutral-100 border-2 border-transparent rounded-xl shadow-sm text-center opacity-60 cursor-not-allowed"><span class="block text-lg font-bold text-neutral-500">10:00</span><span class="text-[10px] text-neutral-500">0 left</span></button><button class="p-3 bg-neutral-100 border-2 border-transparent rounded-xl shadow-sm text-center opacity-60 cursor-not-allowed"><span class="block text-lg font-bold text-neutral-500">14:00</span><span class="text-[10px] text-neutral-500">0 left</span></button></div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="p-6 border-t border-neutral-200 bg-white/50 space-y-3 shrink-0">
+<button class="w-full py-4 bg-neutral-200 text-neutral-500 font-bold rounded-xl flex items-center justify-center gap-2 cursor-not-allowed shadow-none" disabled=""><span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">calendar_add_on</span>Đặt lịch ngay</button>
+<button class="w-full py-4 bg-neutral-200 font-bold rounded-xl flex items-center justify-center gap-2 cursor-not-allowed shadow-none text-error" disabled="">Đóng</button>
+</div>
+</div>
+<!-- Floating Map Controls -->
+<div class="absolute left-6 bottom-6 flex flex-col gap-2 z-20">
+<button class="w-12 h-12 bg-white rounded-xl shadow-xl flex items-center justify-center hover:bg-neutral-50 transition-colors">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+<button class="w-12 h-12 bg-white rounded-xl shadow-xl flex items-center justify-center hover:bg-neutral-50 transition-colors">
+<span class="material-symbols-outlined text-on-surface">remove</span>
+</button>
+<button class="w-12 h-12 bg-primary text-white rounded-xl shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all mt-4">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">my_location</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Interactions Script -->
+<script>
+        // Simple micro-interaction for closing/opening panel (visual only)
+        const closeBtn = document.querySelector('button .material-symbols-outlined:contains("close")');
+        if (closeBtn) {
+            closeBtn.parentElement.addEventListener('click', () => {
+                document.querySelector('.glass-panel').classList.add('translate-x-full');
+            });
+        }
+
+        // Search highlight effect
+        const searchInput = document.querySelector('input');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-4', 'ring-primary/10');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-4', 'ring-primary/10');
+        });
+    </script>
+
+
+
+
+</body></html>

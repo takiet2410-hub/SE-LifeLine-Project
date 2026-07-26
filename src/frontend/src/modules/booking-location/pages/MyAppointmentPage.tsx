@@ -4,6 +4,7 @@ import { AppointmentListItem } from '../components/AppointmentListItem';
 import { AppointmentDetails } from '../components/AppointmentDetails';
 import { CancelAppointmentModal } from '../components/CancelAppointmentModal';
 import { DownloadToast } from '../components/DownloadToast';
+import { ETicketModal } from '../components/ETicketModal';
 import { fetchAppointments, cancelAppointment, downloadETicket } from '../api/bookingApi';
 import type { Appointment, AppointmentStatus } from '../types';
 import { CalendarX2, Loader2, FileText, Plus } from 'lucide-react';
@@ -31,31 +32,42 @@ export const MyAppointmentPage: React.FC = () => {
     message: ''
   });
 
+  const [isETicketModalOpen, setIsETicketModalOpen] = useState(false);
+
   useEffect(() => {
-    loadAppointments();
+    loadAppointments(true);
+
+    // Auto-poll status every 5 seconds to automatically detect BloodCenter approval
+    const pollInterval = setInterval(() => {
+      loadAppointments(false);
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
   }, []);
 
-  const loadAppointments = async () => {
-    setIsLoading(true);
+  const loadAppointments = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     setError(null);
     try {
       const res = await fetchAppointments();
       if (res.success && res.data) {
         setAppointments(res.data);
-        // Default select first item if upcoming
-        const upcomings = res.data.filter(a => a.status === 'upcoming');
-        if (upcomings.length > 0) {
-          setSelectedId(upcomings[0].id);
-        } else if (res.data.length > 0) {
-          setSelectedId(res.data[0].id);
+        // Default select first item if not set
+        if (!selectedId) {
+          const upcomings = res.data.filter(a => a.status === 'upcoming' || a.status === 'pending');
+          if (upcomings.length > 0) {
+            setSelectedId(upcomings[0].id);
+          } else if (res.data.length > 0) {
+            setSelectedId(res.data[0].id);
+          }
         }
       } else {
-        setError(res.message || 'Failed to load appointments');
+        if (showLoading) setError(res.message || 'Failed to load appointments');
       }
     } catch (err) {
-      setError('System error occurred.');
+      if (showLoading) setError('System error occurred.');
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   };
 
@@ -194,6 +206,7 @@ export const MyAppointmentPage: React.FC = () => {
   };
 
   const [isSyncing, setIsSyncing] = useState<Record<string, boolean>>({});
+  const [isConfirming, setIsConfirming] = useState<Record<string, boolean>>({});
 
   const handleSync = async (id: string) => {
     try {
@@ -209,6 +222,24 @@ export const MyAppointmentPage: React.FC = () => {
       toast.error('Lỗi kết nối khi đồng bộ');
     } finally {
       setIsSyncing(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleConfirmByBloodCenter = async (id: string) => {
+    try {
+      setIsConfirming(prev => ({ ...prev, [id]: true }));
+      const { confirmAppointmentByBloodCenterApi } = await import('../api/bookingApi');
+      const res = await confirmAppointmentByBloodCenterApi(id);
+      if (res.success) {
+        toast.success(res.message);
+        await loadAppointments();
+      } else {
+        toast.error(res.message);
+      }
+    } catch (err) {
+      toast.error('Lỗi kết nối khi xác nhận lịch hẹn');
+    } finally {
+      setIsConfirming(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -271,6 +302,7 @@ export const MyAppointmentPage: React.FC = () => {
               onCancel={handleOpenCancelModal}
               onDownload={handleDownload}
               onSync={handleSync}
+              onViewETicket={() => setIsETicketModalOpen(true)}
               isCancelling={cancelModalData.isProcessing && cancelModalData.appointmentId === selectedAppointment.id}
               isSyncing={isSyncing[selectedAppointment.id]}
             />
@@ -284,6 +316,13 @@ export const MyAppointmentPage: React.FC = () => {
       </div>
 
       {/* Overlays */}
+      <ETicketModal
+        isOpen={isETicketModalOpen}
+        onClose={() => setIsETicketModalOpen(false)}
+        appointment={selectedAppointment || null}
+        onDownload={handleDownload}
+      />
+
       <CancelAppointmentModal
         isOpen={cancelModalData.isOpen}
         onClose={() => setCancelModalData(prev => ({ ...prev, isOpen: false, error: null }))}

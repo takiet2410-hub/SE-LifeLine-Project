@@ -25,7 +25,7 @@ Tài liệu này hướng dẫn cách khởi chạy toàn bộ hệ thống (Fro
    - Tạo file `.env` ngang hàng với `package.json` trong thư mục `backend-core`.
    - Các thông số bắt buộc cơ bản (tham khảo `.env.example` nếu có):
      ```env
-     PORT=5000
+     PORT=3000
      MONGODB_URI=mongodb://localhost:27017/lifeline_db  # Hoặc link MongoDB Atlas của bạn
      JWT_SECRET=your_super_secret_key_here
      ```
@@ -33,7 +33,7 @@ Tài liệu này hướng dẫn cách khởi chạy toàn bộ hệ thống (Fro
    ```bash
    npm run dev
    ```
-   *Terminal báo `Server is running on port 5000` và `Connected to MongoDB` là thành công.*
+   *Terminal báo `Server is running on port 3000` và `Connected to MongoDB` là thành công.*
 
 ---
 
@@ -51,7 +51,7 @@ Tài liệu này hướng dẫn cách khởi chạy toàn bộ hệ thống (Fro
    - Tạo file `.env` ngang hàng với `package.json` trong thư mục `frontend`.
    - **Quan trọng:** Phải thiết lập Cloudinary để chức năng Upload Ảnh Profile hoạt động.
      ```env
-     VITE_API_BASE_URL=http://localhost:5000/api/v1
+     VITE_API_BASE_URL=http://localhost:3000/api/v1
      VITE_CLOUDINARY_CLOUD_NAME=tên_cloud_của_bạn
      VITE_CLOUDINARY_UPLOAD_PRESET=tên_preset_unsigned_của_bạn
      ```

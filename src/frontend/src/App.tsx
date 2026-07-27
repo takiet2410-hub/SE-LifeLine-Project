@@ -18,6 +18,7 @@ import { ProtectedRoute } from './shared/components/ProtectedRoute';
 // Citizen / Booking & Profile
 import { DashboardLayout } from './shared/components/layout/DashboardLayout';
 import { MyAppointmentPage } from './modules/booking-location/pages/MyAppointmentPage';
+import { InteractiveMapPage } from './modules/booking-location/pages/InteractiveMapPage';
 import { ScheduleLayout } from './modules/booking-location/pages/schedule/ScheduleLayout';
 import { Step1_LocationTime } from './modules/booking-location/pages/schedule/Step1_LocationTime';
 import { Step2_HealthForm } from './modules/booking-location/pages/schedule/Step2_HealthForm';
@@ -71,6 +72,7 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Navigate to="/my-appointments" replace />} />
+          <Route path="/map" element={<InteractiveMapPage />} />
           <Route path="/my-appointments" element={<MyAppointmentPage />} />
           <Route path="/profile" element={<MyProfilePage />} />
 

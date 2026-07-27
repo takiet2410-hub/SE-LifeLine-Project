@@ -1,0 +1,290 @@
+<!DOCTYPE html><html class="light" lang="vi"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#c1dbff",
+                        "on-primary-container": "#ffcdc7",
+                        "on-primary-fixed": "#410002",
+                        "surface-tint": "#b91c1c",
+                        "primary-dark": "#7F1D1D",
+                        "warning": "#F59E0B",
+                        "primary-fixed-dim": "#ffb4ab",
+                        "inverse-surface": "#3e2c2a",
+                        "dark-surface-alt": "#0F3460",
+                        "error": "#ba1a1a",
+                        "dark-surface": "#16213E",
+                        "on-tertiary-fixed": "#001c37",
+                        "success": "#16A34A",
+                        "dark-text-muted": "#8E8EA0",
+                        "surface-container": "#ffe9e6",
+                        "primary-container": "#b91c1c",
+                        "tertiary-container": "#0061a6",
+                        "neutral-100": "#F1F3F5",
+                        "surface": "#fff8f7",
+                        "tertiary-fixed-dim": "#a0caff",
+                        "surface-container-highest": "#f9dcd8",
+                        "danger": "#EF4444",
+                        "surface-variant": "#f9dcd8",
+                        "neutral-500": "#6C757D",
+                        "dark-bg": "#1A1A2E",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#ffedea",
+                        "secondary-container": "#b5d0fd",
+                        "secondary-fixed": "#d5e3ff",
+                        "on-error": "#ffffff",
+                        "outline": "#8f6f6c",
+                        "neutral-300": "#CED4DA",
+                        "secondary-light": "#D6E4F0",
+                        "neutral-900": "#121212",
+                        "surface-dim": "#f1d3d0",
+                        "primary": "#93000b",
+                        "neutral-700": "#343A40",
+                        "surface-container-low": "#fff0ee",
+                        "on-background": "#271816",
+                        "secondary-fixed-dim": "#adc8f5",
+                        "neutral-50": "#F8F9FA",
+                        "on-primary-fixed-variant": "#93000b",
+                        "secondary-dark": "#152A43",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#00497f",
+                        "primary-light": "#FEE2E2",
+                        "on-surface-variant": "#5b403d",
+                        "on-secondary-fixed-variant": "#2d486d",
+                        "background": "#fff8f7",
+                        "tertiary-fixed": "#d2e4ff",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#ffb4ab",
+                        "surface-container-high": "#ffe2de",
+                        "outline-variant": "#e4beb9",
+                        "surface-bright": "#fff8f7",
+                        "primary-fixed": "#ffdad6",
+                        "on-secondary-container": "#3e5980",
+                        "on-surface": "#271816",
+                        "on-secondary": "#ffffff",
+                        "neutral-200": "#DEE2E6",
+                        "info": "#3B82F6",
+                        "on-secondary-fixed": "#001c3b",
+                        "on-error-container": "#93000a",
+                        "dark-text-primary": "#EAEAEA",
+                        "on-tertiary-fixed-variant": "#00497e",
+                        "dark-border": "#2C2C44",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#455f87"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "4px",
+                        "lg": "8px",
+                        "xl": "12px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "2xl": "48px",
+                        "gutter-desktop": "24px",
+                        "lg": "24px",
+                        "xl": "32px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "base": "4px"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- Global Layout Shell -->
+<div class="flex h-screen overflow-hidden">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-dark-bg shadow-md flex flex-col z-50">
+<div class="p-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">bloodtype</span>
+</div>
+<div>
+<h1 class="font-h1 text-h1 font-bold text-on-primary leading-tight">LifeLine</h1>
+<p class="text-xs text-dark-text-muted uppercase tracking-widest">Every Drop Counts</p>
+</div>
+</div>
+</div>
+<nav class="mt-4 flex-grow px-2">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface hover:scale-[1.02] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body text-body">Dashboard</span>
+</a>
+<!-- Map (ACTIVE) -->
+<a class="flex items-center gap-3 px-4 py-3 border-l-4 border-primary bg-dark-surface-alt text-on-primary transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">map</span>
+<span class="font-body text-body">Map</span>
+</a>
+<!-- My Appointments -->
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface hover:scale-[1.02] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="font-body text-body">My Appointments</span>
+</a>
+<!-- Notifications -->
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface hover:scale-[1.02] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-body text-body">Notifications</span>
+</a>
+<!-- News Feed -->
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface hover:scale-[1.02] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">newspaper</span>
+<span class="font-body text-body">News Feed</span>
+</a>
+<!-- AI Chatbot -->
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface hover:scale-[1.02] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-body text-body">AI Chatbot</span>
+</a>
+<!-- My Profile -->
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface hover:scale-[1.02] transition-all duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-body text-body">My Profile</span>
+</a>
+</nav>
+<div class="p-6 border-t border-dark-border">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full border-2 border-primary-container shadow-sm" data-alt="A professional headshot of a medical professional with a warm smile, wearing a clean white lab coat with a small red cross emblem on the pocket. The background is a soft-focus modern clinic interior with warm lighting, reinforcing a sense of trust and reliability. High-end portrait photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA82CqIRsUiA48uJPdrdZMUyIVDfspquWf0BR8cZN7CmQKar8qQCmkw4TxbfxC63uC0EKwUxXqWg1qLgcK4DRBlLlbiAEZ8DwLlGKVJ7RsIAnzgFj0AB9vrsHpHddGFt99O_Hi5uprS1JQSyNFZ2uM9bR-GKjVOJ-DESG2fSZ2NKX7Gm_WzwwFHqu2hamoZndj9k0vGH0YeN606y75w-WgU_pv246iAmK9AUTBTXOM4do2yqnsgpLIjm2dQybr71zCYacruUTRG8hCa">
+<div class="overflow-hidden">
+<p class="text-sm font-semibold text-dark-text-primary truncate">Bs. Minh Quân</p>
+<p class="text-xs text-dark-text-muted">Donor Specialist</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-grow flex flex-col ml-[260px] relative h-screen">
+<!-- TopNavBar (Authority: JSON) -->
+<header class="flex justify-between items-center h-16 px-6 w-full bg-surface border-b border-neutral-200 shadow-sm z-40">
+<div class="flex items-center gap-4">
+<h2 class="font-h2 text-h2 font-bold text-on-surface">Tìm kiếm điểm hiến máu</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-neutral-100 border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-body-sm transition-all" placeholder="Tìm kiếm cơ sở, bệnh viện..." type="text">
+</div>
+<button class="relative w-10 h-10 flex items-center justify-center hover:bg-neutral-100 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+<div class="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+</div>
+</header>
+<!-- Map View (The Background) -->
+<div class="absolute inset-0 z-0 pt-16">
+<!-- Blurred Map Background -->
+<div class="w-full h-full filter blur-md grayscale-[0.2] opacity-80" data-alt="A detailed cartographic map of a major metropolitan area with complex street grids, rivers, and green parks. The style is modern and clean with a muted color palette of soft grays, pale blues, and subtle greens. Professional architectural map rendering, high resolution, top-down perspective showing urban density." data-location="Ho Chi Minh City" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCk6PUmKlR-4XD3dDYwfjIH6Bss7sYKczv6h_JEYYE3Z50j1yBAG66FvAobYnwPKWB-zo027lkyoUZmmZrgPOXwCs00ijo35sMHfFmW3TNXWcGo7b6VLRzYR7W_UxqGSgCbPRJ0c9qe2BibE3UawPi9kksqJ_P0cE_sgVOJoST3elj_-WtWtNbSJUu_u6EtIkuKt3Td0LRhZPGhN4z-4gSgGz5vKX5PVissj6YW6gIuxupLcFUDyxtXk1gABgRUUh2AHG-kok5tFXVH')">
+</div>
+</div>
+<!-- Permission Denied Overlay & Manual Search Modal -->
+<div class="absolute inset-0 z-10 flex items-center justify-center bg-on-background/10 backdrop-blur-[2px]">
+<div class="w-full max-w-xl glass-panel p-8 rounded-xl shadow-2xl animate-[fadeIn_0.4s_ease-out] border border-white/50">
+<div class="flex flex-col items-center text-center">
+<!-- Icon State -->
+<div class="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary text-[32px]">location_off</span>
+</div>
+<h3 class="font-h1 text-h1 font-bold text-on-surface mb-2">Tìm kiếm vị trí thủ công</h3>
+<p class="font-body text-body text-on-surface-variant max-w-md mb-8">
+                            Vui lòng nhập thành phố, quận hoặc địa chỉ của bạn để tìm các điểm hiến máu gần đó.
+                        </p>
+<!-- Search Input Group -->
+<div class="w-full relative group mb-6">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 group-focus-within:text-primary transition-colors">location_on</span>
+<input class="w-full pl-12 pr-32 py-4 bg-white border border-neutral-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary text-body shadow-sm transition-all outline-none" placeholder="Nhập địa chỉ của bạn..." type="text">
+<div class="absolute right-2 top-2 bottom-2">
+<button class="h-full px-6 bg-[#B91C1C] text-white font-button text-button rounded-lg hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-md">
+                                    Tìm kiếm
+                                </button>
+</div>
+</div>
+<!-- Suggestions -->
+<div class="w-full">
+<div class="flex items-center gap-2 mb-4">
+<span class="h-px flex-grow bg-neutral-200"></span>
+<span class="text-caption text-neutral-500 font-medium uppercase tracking-wider">Gợi ý nhanh</span>
+<span class="h-px flex-grow bg-neutral-200"></span>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<button class="flex flex-col items-center p-3 rounded-lg border border-neutral-100 hover:border-primary/30 hover:bg-white transition-all hover:shadow-md group">
+<div class="w-10 h-10 rounded-full bg-neutral-50 flex items-center justify-center mb-2 group-hover:bg-primary-light transition-colors">
+<span class="material-symbols-outlined text-neutral-400 group-hover:text-primary text-xl">location_city</span>
+</div>
+<span class="font-body-sm font-semibold text-on-surface">Hà Nội</span>
+</button>
+<button class="flex flex-col items-center p-3 rounded-lg border border-neutral-100 hover:border-primary/30 hover:bg-white transition-all hover:shadow-md group">
+<div class="w-10 h-10 rounded-full bg-neutral-50 flex items-center justify-center mb-2 group-hover:bg-primary-light transition-colors">
+<span class="material-symbols-outlined text-neutral-400 group-hover:text-primary text-xl">apartment</span>
+</div>
+<span class="font-body-sm font-semibold text-on-surface text-center">TP. Hồ Chí Minh</span>
+</button>
+<button class="flex flex-col items-center p-3 rounded-lg border border-neutral-100 hover:border-primary/30 hover:bg-white transition-all hover:shadow-md group">
+<div class="w-10 h-10 rounded-full bg-neutral-50 flex items-center justify-center mb-2 group-hover:bg-primary-light transition-colors">
+<span class="material-symbols-outlined text-neutral-400 group-hover:text-primary text-xl">foundation</span>
+</div>
+<span class="font-body-sm font-semibold text-on-surface">Đà Nẵng</span>
+</button>
+</div>
+</div>
+<button class="mt-8 text-neutral-500 hover:text-primary font-button flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-sm">settings</span>
+<span>Thử cấp lại quyền truy cập vị trí</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Emergency Floating Action Button (FAB) -->
+<!-- Supressed on Details/Transactional screens, but shown here as it is the main dashboard map context -->
+<button class="fixed bottom-8 right-8 w-16 h-16 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 z-30 group">
+<span class="material-symbols-outlined text-3xl group-hover:rotate-12 transition-transform">emergency</span>
+<div class="absolute -top-12 right-0 bg-dark-bg text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg">
+                    Cần hỗ trợ khẩn cấp?
+                </div>
+</button>
+</main>
+</div>
+<style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+<script>
+        // Simple micro-interaction for chips
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple');
+                this.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+    </script>
+</body></html>

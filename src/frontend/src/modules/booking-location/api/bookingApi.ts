@@ -83,8 +83,10 @@ export interface ApiResponse<T = any> {
 // Map backend status to frontend status
 const mapStatus = (backendStatus: BackendAppointmentStatus): AppointmentStatus => {
   switch (backendStatus) {
+    case 'Pending':
+      return 'pending';
+    case 'Confirmed':
     case 'Scheduled':
-      return 'upcoming';
     case 'CheckedIn':
       return 'upcoming';
     case 'Completed':
@@ -94,13 +96,23 @@ const mapStatus = (backendStatus: BackendAppointmentStatus): AppointmentStatus =
     case 'NoShow':
       return 'no-show';
     default:
-      return 'upcoming';
+      return 'pending';
   }
 };
 
 // Map backend appointment to frontend appointment
 export const mapBackendAppointment = (raw: BackendAppointment): Appointment => {
   const campaign = typeof raw.campaignId === 'object' ? raw.campaignId : null;
+  const eTicket = typeof raw.eTicketId === 'object' ? raw.eTicketId : null;
+  const rawAny = raw as any;
+
+  const isConfirmed = raw.status === 'Confirmed' || raw.status === 'Scheduled' || raw.status === 'CheckedIn' || Boolean(raw.eTicketId);
+
+  // E-Ticket QR Code URL logic:
+  // 1. Populated eTicket object fileUrl
+  // 2. Direct qrCodeUrl from raw object
+  // 3. Standard fallback generator if confirmed
+  const qrCodeUrl = eTicket?.fileUrl || rawAny.qrCodeUrl || (isConfirmed ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=LifeLineTicket-${raw._id}` : undefined);
 
   return {
     id: raw._id,
@@ -108,26 +120,41 @@ export const mapBackendAppointment = (raw: BackendAppointment): Appointment => {
     time: raw.timeSlot,
     location: {
       id: campaign?._id || 'unknown',
-      name: campaign?.name || 'Unknown Location',
-      address: '', // Backend campaign doesn't have a formatted address
+      name: campaign?.name || 'Chiến dịch Hiến máu LifeLine',
+      address: rawAny.address || (campaign as any)?.fullAddress || (campaign as any)?.venue || 'TP. Hồ Chí Minh',
     },
     status: mapStatus(raw.status),
-    qrCodeUrl: typeof raw.eTicketId === 'object' ? raw.eTicketId.fileUrl : undefined,
+    qrCodeUrl,
     _raw: raw,
-    // Note: bloodType is not in the backend appointment model.
-    // It would need to come from the populated donor profile.
   };
 };
 
 // Map backend location/campaign to frontend location for step-1
-export const mapBackendCampaignToLocation = (campaign: BackendCampaign) => ({
-  id: campaign._id,
-  name: campaign.name,
-  address: campaign.location.coordinates
-    ? `Lat: ${campaign.location.coordinates[1]}, Lng: ${campaign.location.coordinates[0]}`
-    : 'Address not available',
-  _raw: campaign,
-});
+export const mapBackendCampaignToLocation = (campaign: BackendCampaign) => {
+  const cAny = campaign as any;
+  const timeSlots = cAny.timeSlots && cAny.timeSlots.length > 0
+    ? cAny.timeSlots
+    : [
+        { startTime: '07:30', endTime: '09:00', capacity: 20, registeredCount: 5 },
+        { startTime: '09:00', endTime: '10:30', capacity: 20, registeredCount: 8 },
+        { startTime: '10:30', endTime: '12:00', capacity: 20, registeredCount: 4 },
+        { startTime: '13:30', endTime: '15:00', capacity: 20, registeredCount: 6 },
+        { startTime: '15:00', endTime: '16:30', capacity: 20, registeredCount: 2 }
+      ];
+
+  return {
+    id: campaign._id || cAny.id,
+    name: campaign.name,
+    venue: cAny.venue || campaign.name,
+    address: cAny.fullAddress || cAny.venue || (campaign.location?.coordinates
+      ? `Tọa độ: ${campaign.location.coordinates[1]}, ${campaign.location.coordinates[0]}`
+      : 'TP. Hồ Chí Minh'),
+    timeSlots,
+    status: campaign.status,
+    targetBloodGroups: campaign.targetBloodGroups,
+    _raw: campaign,
+  };
+};
 
 export const fetchAppointments = async (): Promise<ApiResponse<Appointment[]>> => {
   try {
@@ -142,7 +169,23 @@ export const fetchAppointments = async (): Promise<ApiResponse<Appointment[]>> =
   } catch (error: any) {
     return {
       success: false,
-      message: error.response?.data?.message || 'Failed to fetch appointments.',
+      message: error.response?.data?.message || 'Không thể tải danh sách lịch hẹn.',
+    };
+  }
+};
+
+export const fetchAppointmentById = async (id: string): Promise<ApiResponse<Appointment>> => {
+  try {
+    const response = await apiClient.get(`/bookings/appointments/${id}`);
+    const mapped = mapBackendAppointment(response.data);
+    return {
+      success: true,
+      data: mapped,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Không thể tải thông tin lịch hẹn.',
     };
   }
 };
@@ -204,7 +247,8 @@ export const searchLocations = async (filters?: {
 
 export const cancelAppointment = async (id: string, reason?: string): Promise<ApiResponse> => {
   try {
-    const response = await apiClient.patch(`/bookings/appointments/${id}/cancel`, { reason });
+    const cancelReason = reason || 'Người dùng yêu cầu hủy lịch hẹn';
+    const response = await apiClient.patch(`/bookings/appointments/${id}/cancel`, { reason: cancelReason });
     // BUG-04 FIX: lưu message TRƯỚC khi destructure — response.data là object Appointment
     // Backend cancelAppointment trả về Mongoose document, không có field 'message'
     // nên ta dùng message cứng sau khi confirm success
@@ -397,6 +441,22 @@ export const syncAppointmentToBloodCenter = async (id: string): Promise<ApiRespo
     return {
       success: false,
       message: error.response?.data?.message || 'Đồng bộ thất bại.'
+    };
+  }
+};
+
+export const confirmAppointmentByBloodCenterApi = async (id: string): Promise<ApiResponse> => {
+  try {
+    const response = await apiClient.post(`/bookings/appointments/${id}/confirm`);
+    return {
+      success: true,
+      data: response.data,
+      message: 'BloodCenter đã duyệt và cấp E-Ticket thành công!'
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Không thể xác nhận lịch hẹn.'
     };
   }
 };

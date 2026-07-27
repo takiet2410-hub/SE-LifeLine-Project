@@ -1,141 +1,132 @@
-# Tasks: BC-UC-12 → BC-UC-17 — Blood Inventory Management (Frontend)
+# Tasks: Blood Inventory Management (BC-UC-12 → BC-UC-17)
 
-> **Reference**: [spec.md](file:///c:/HOCTAP/Project/INTRO2SE/LIFELINE/SE-LifeLine-Project/src/specs/BC-UC-12-17-blood-inventory/spec.md) | [plan.md](file:///c:/HOCTAP/Project/INTRO2SE/LIFELINE/SE-LifeLine-Project/src/specs/BC-UC-12-17-blood-inventory/plan.md)
-> **Branch**: `feature/BC-UC-12-17-blood-inventory`
+**Input**: Design documents from `specs/BC-UC-12-17-blood-inventory/` (`spec.md`, `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`)
 
----
-
-## Phase 0: Setup
-
-- [ ] **T-0.1**: Install chart library — `recharts`
-- [ ] **T-0.2**: Create i18n files — `inventory.vi.json`, `inventory.en.json`
-- [ ] **T-0.3**: Create Zod schemas — `stockInSchema.ts`, `stockOutSchema.ts`, `statusUpdateSchema.ts`
-- [ ] **T-0.4**: Create TypeScript types — `inventory.types.ts`
+**Module Paths**:
+- Backend: `src/backend-core/src/modules/blood-inventory/`
+- Frontend: `src/frontend/src/modules/blood-inventory/`
 
 ---
 
-## Phase 1: Inventory List & Search (BC-UC-12, BC-UC-13)
+## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] **T-1.1**: Create hooks — `useInventory.ts`, `useBloodBagSearch.ts`
-- [ ] **T-1.2**: Build `BloodBagStatusBadge.tsx` — Available/Reserved/Used/Expired/Discarded
-- [ ] **T-1.3**: Build `BloodTypeBadge.tsx` — color-coded blood type chips
-- [ ] **T-1.4**: Build `InventorySummaryCards.tsx` — total bags, available, near-expiry, low-stock
-- [ ] **T-1.5**: Build `BloodBagSearchFilter.tsx` — search + multi-filter (type, status, date range)
-- [ ] **T-1.6**: Build `BloodBagTable.tsx` — columns: ID, type, volume, dates, status, location, actions
-  - Highlight near-expiry rows (≤ 7 days) with amber/red row background
-- [ ] **T-1.7**: Build `InventoryListPage.tsx` (BC-UC-12 / BC-UC-13)
-  - Action buttons: Stock In, Stock Out, Statistics
-  - Summary cards + search/filter + table + pagination
-  - Empty state
+**Purpose**: Module structure initialization for backend and frontend
+
+- [x] T001 [P] Create backend module directory structure at `src/backend-core/src/modules/blood-inventory/`
+- [x] T002 [P] Create frontend module directory structure at `src/frontend/src/modules/blood-inventory/`
 
 ---
 
-## Phase 2: Blood Bag Detail & Status Edit (BC-UC-14)
+## Phase 2: Foundational (Backend Model & Core Infrastructure)
 
-- [ ] **T-2.1**: Create hooks — `useBloodBag.ts`, `useUpdateBloodBagStatus.ts`
-- [ ] **T-2.2**: Build `BloodBagInfoCard.tsx` — read-only detail card
-- [ ] **T-2.3**: Build `StatusHistoryTimeline.tsx` — chronological status changes
-- [ ] **T-2.4**: Build `StatusEditForm.tsx`
-  - Dropdown shows only valid transitions from current status
-  - Reason text input
-  - Save/Cancel buttons
-  - Disabled state for Expired bags (AF-02)
-- [ ] **T-2.5**: Build `BloodBagDetailPage.tsx` (BC-UC-14)
-  - View mode: info card + status badge + history timeline
-  - Edit mode: StatusEditForm
-  - Loading/NotFound/Error states
-  - Success/Error toast on update
+**Purpose**: Data schemas, types, and API infrastructure that ALL user stories depend on
+
+- [x] T003 [P] Create Mongoose model and schema for `BloodBag` in `src/backend-core/src/modules/blood-inventory/models/blood-bag.model.ts`
+- [x] T004 [P] Create TypeScript interfaces & Zod validation schemas in `src/backend-core/src/modules/blood-inventory/schemas/inventory.schema.ts`
+- [x] T005 [P] Create frontend inventory types in `src/frontend/src/modules/blood-inventory/types/inventory.types.ts`
+- [x] T006 [P] Create Axios frontend API service client in `src/frontend/src/modules/blood-inventory/services/inventoryApi.ts`
+- [x] T007 [P] Create reusable status badge component `BloodBagStatusBadge.tsx` in `src/frontend/src/modules/blood-inventory/components/BloodBagStatusBadge.tsx`
+- [x] T008 [P] Create reusable blood type badge component `BloodTypeBadge.tsx` in `src/frontend/src/modules/blood-inventory/components/BloodTypeBadge.tsx`
+- [x] T009 [P] Create days remaining progress bar component `DaysRemainingProgressBar.tsx` in `src/frontend/src/modules/blood-inventory/components/DaysRemainingProgressBar.tsx`
 
 ---
 
-## Phase 3: Stock In (BC-UC-15)
+## Phase 3: User Story 1 - View Blood Inventory Dashboard (BC-UC-12) 🎯 MVP
 
-- [ ] **T-3.1**: Create hook — `useStockIn.ts`
-- [ ] **T-3.2**: Build `StockInEntryRow.tsx`
-  - Fields: Blood Type, Volume, Collection Date, Expiry Date, Storage Location
-  - Remove button (if > 1 entry)
-  - Inline validation
-- [ ] **T-3.3**: Build `StockInForm.tsx`
-  - Dynamic list of `StockInEntryRow` components
-  - "Add Another Blood Bag" button
-  - React Hook Form + Zod with `useFieldArray`
-- [ ] **T-3.4**: Build `StockInPage.tsx` (BC-UC-15)
-  - StockInForm wrapper
-  - "Stock In" submit button → mutation (all-or-nothing)
-  - "Cancel" → discard confirmation dialog
-  - Success toast with count of bags added
-  - Redirect to inventory list on success
+**Goal**: Allow Blood Center Staff to view real-time inventory summary cards and browse paginated blood bag table.
+
+**Independent Test**: Navigate to `/bc/inventory` and verify summary stats, table rows, and status badges.
+
+- [x] T010 [US1] Implement backend service method `getInventoryList` with pagination & summary calculation in `src/backend-core/src/modules/blood-inventory/inventory.service.ts`
+- [x] T011 [US1] Implement backend controller & route handler `GET /api/v1/bc/inventory` in `src/backend-core/src/modules/blood-inventory/inventory.controller.ts` & `src/backend-core/src/modules/blood-inventory/inventory.routes.ts`
+- [x] T012 [P] [US1] Create React Query hook `useInventory` in `src/frontend/src/modules/blood-inventory/hooks/useInventory.ts`
+- [x] T013 [P] [US1] Create summary cards component `InventorySummaryCards.tsx` in `src/frontend/src/modules/blood-inventory/components/InventorySummaryCards.tsx`
+- [x] T014 [US1] Implement main inventory list page `InventoryListPage.tsx` in `src/frontend/src/modules/blood-inventory/pages/InventoryListPage.tsx`
 
 ---
 
-## Phase 4: Stock Out (BC-UC-16)
+## Phase 4: User Story 2 - View / Update Blood Bag Status (BC-UC-13)
 
-- [ ] **T-4.1**: Create hook — `useStockOut.ts`
-- [ ] **T-4.2**: Build `StockOutSelectionList.tsx`
-  - Blood bag list with checkboxes (only "Available" status bags)
-  - Search/filter integration (reuse `BloodBagSearchFilter`)
-  - Selected count indicator
-  - Default sort: FEFO (First Expired, First Out)
-- [ ] **T-4.3**: Build `StockOutReasonForm.tsx`
-  - Reason dropdown: Dispatch, Disposal, Transfer, Other
-  - Additional notes textarea
-- [ ] **T-4.4**: Build `StockOutPage.tsx` (BC-UC-16)
-  - Left: Selection list with search/filter
-  - Right/Bottom: Selected summary + reason form
-  - "Confirm Stock Out" button → mutation
-  - "Cancel" → discard
-  - Success toast + redirect
+**Goal**: Display comprehensive details of a blood bag (medical screening, storage, donor ref) and allow status updates with audit trail.
+
+**Independent Test**: Click a bag row, view screening results, and update status to `Reserved` with a mandatory reason.
+
+- [x] T015 [US2] Implement backend service methods `getBloodBagById` and `updateBagStatus` in `src/backend-core/src/modules/blood-inventory/inventory.service.ts`
+- [x] T016 [US2] Implement backend controllers & routes for `GET /:bagId` and `PUT /:bagId/status` in `inventory.controller.ts` & `inventory.routes.ts`
+- [x] T017 [P] [US2] Create status update modal `StatusEditModal.tsx` in `src/frontend/src/modules/blood-inventory/components/StatusEditModal.tsx`
+- [x] T018 [US2] Implement blood bag detail page `BloodBagDetailPage.tsx` in `src/frontend/src/modules/blood-inventory/pages/BloodBagDetailPage.tsx`
 
 ---
 
-## Phase 5: Inventory Statistics Dashboard (BC-UC-17)
+## Phase 5: User Story 3 - Stock In Blood Bags (BC-UC-14)
 
-- [ ] **T-5.1**: Create hook — `useInventoryStats.ts`
-- [ ] **T-5.2**: Build `InventoryBarChart.tsx`
-  - recharts `<BarChart>` — blood units by type
-  - Responsive wrapper
-- [ ] **T-5.3**: Build `InventoryDoughnutChart.tsx`
-  - recharts `<PieChart>` — blood type distribution
-- [ ] **T-5.4**: Build `ChartModeToggle.tsx`
-  - Toggle between: Units, Volume, Near-Expiry (AF-03)
-- [ ] **T-5.5**: Build `InventoryStatsTable.tsx`
-  - Columns: Blood Type, Total Units, Volume (ml), Near-Expiry, Stock Status
-  - Low-stock rows: amber background, "Low Stock" badge
-  - Critical rows: red background, "Critical" badge
-- [ ] **T-5.6**: Build `LowStockWarning.tsx` + `NearExpiryWarning.tsx`
-  - Amber/red alert banners at top of dashboard
-- [ ] **T-5.7**: Build `InventoryStatsPage.tsx` (BC-UC-17)
-  - Summary cards + warning indicators
-  - Charts section (bar + doughnut side-by-side) + mode toggle
-  - Stats table below charts
-  - Loading skeleton state
+**Goal**: Enable staff to batch receive new blood bags into active inventory with collection & expiry validation.
+
+**Independent Test**: Open `/bc/inventory/stock-in`, fill multi-row form, and submit to verify new bags are saved.
+
+- [x] T019 [US3] Implement backend service method `stockInBatch` with validation & unique `bagCode` generation in `src/backend-core/src/modules/blood-inventory/inventory.service.ts`
+- [x] T020 [US3] Implement backend controller & route `POST /api/v1/bc/inventory/stock-in` in `inventory.controller.ts` & `inventory.routes.ts`
+- [x] T021 [US3] Implement Stock In multi-row form page `StockInPage.tsx` in `src/frontend/src/modules/blood-inventory/pages/StockInPage.tsx`
 
 ---
 
-## Phase 6: Integration & Polish
+## Phase 6: User Story 4 - Stock Out Blood Bags with FEFO (BC-UC-15)
 
-- [ ] **T-6.1**: Wire up navigation flows
-  - Inventory List → Stock In / Stock Out / Statistics / Blood Bag Detail
-  - Stock In/Out success → redirect to Inventory List
-  - Breadcrumb navigation on all pages
-- [ ] **T-6.2**: Add i18n translations
-- [ ] **T-6.3**: Responsive design pass (table → card on mobile)
-- [ ] **T-6.4**: Accessibility pass (ARIA labels, keyboard nav, color contrast)
+**Goal**: Dispatch or discard selected blood bags with FEFO recommendation panel (highlighting bags expiring in ≤ 7 days).
+
+**Independent Test**: Open `/bc/inventory/stock-out`, check FEFO recommendations, select reason, and confirm stock out.
+
+- [x] T022 [US4] Implement backend service method `stockOutBatch` in `src/backend-core/src/modules/blood-inventory/inventory.service.ts`
+- [x] T023 [US4] Implement backend controller & route `POST /api/v1/bc/inventory/stock-out` in `inventory.controller.ts` & `inventory.routes.ts`
+- [x] T024 [P] [US4] Create FEFO recommendation panel component `FefoRecommendationPanel.tsx` in `src/frontend/src/modules/blood-inventory/components/FefoRecommendationPanel.tsx`
+- [x] T025 [US4] Implement Stock Out selection page `StockOutPage.tsx` in `src/frontend/src/modules/blood-inventory/pages/StockOutPage.tsx`
 
 ---
 
-## Phase 7: Verification
+## Phase 7: User Story 5 - View Blood Inventory Statistics (BC-UC-16)
 
-- [ ] **T-7.1**: Type check — `npx tsc --noEmit`
-- [ ] **T-7.2**: Lint — `npm run lint`
-- [ ] **T-7.3**: Visual QC vs Figma reference
-  - Verify inventory table matches Figma layout
-  - Verify charts match Figma dashboard design
-  - Verify dark navy header in inventory table (if intentional)
-- [ ] **T-7.4**: Functional tests
-  - Inventory list + search + filter
-  - Blood bag detail + edit status (valid transitions only)
-  - Stock In: add multiple, validate, submit, verify auto-generated ID
-  - Stock Out: select, set reason, confirm
-  - Statistics: chart render, mode toggle, warning indicators
-- [ ] **T-7.5**: Update Spec-Kit artifacts
+**Goal**: Provide Chief Hematologists with visual analytics charts and stock threshold indicators.
+
+**Independent Test**: Navigate to `/bc/inventory/stats` and verify Recharts bar chart, donut chart, and summary status table.
+
+- [x] T026 [US5] Implement backend service method `getInventoryStatistics` in `src/backend-core/src/modules/blood-inventory/inventory.service.ts`
+- [x] T027 [US5] Implement backend controller & route `GET /api/v1/bc/inventory/statistics` in `inventory.controller.ts` & `inventory.routes.ts`
+- [x] T028 [P] [US5] Create Recharts analytics component `InventoryAnalyticsChart.tsx` in `src/frontend/src/modules/blood-inventory/components/InventoryAnalyticsChart.tsx`
+- [x] T029 [US5] Implement Statistics dashboard page `InventoryStatsPage.tsx` in `src/frontend/src/modules/blood-inventory/pages/InventoryStatsPage.tsx`
+
+---
+
+## Phase 8: User Story 6 - Filter & Search Inventory Records (BC-UC-17)
+
+**Goal**: Provide a reusable filter and search component across inventory screens.
+
+**Independent Test**: Enter Bag ID in search bar, select blood type dropdown, and verify filtered results update instantly.
+
+- [x] T030 [P] [US6] Create reusable filter bar component `BloodBagSearchFilter.tsx` in `src/frontend/src/modules/blood-inventory/components/BloodBagSearchFilter.tsx`
+- [x] T031 [US6] Wire search and filter params into `InventoryListPage.tsx` and `StockOutPage.tsx`
+
+---
+
+## Phase 9: Polish & App Integration
+
+**Purpose**: Mount routes into application router and perform quickstart validation
+
+- [x] T032 Mount backend inventory routes into `src/backend-core/src/app.ts` (`app.use('/api/v1/bc/inventory', inventoryRoutes)`)
+- [x] T033 Mount frontend page routes into `src/frontend/src/App.tsx` under `/bc/inventory/*`
+- [x] T034 Execute end-to-end quickstart validation scenarios defined in `quickstart.md`
+
+---
+
+## Dependencies & Execution Order
+
+```mermaid
+graph TD
+    Phase1[Phase 1: Setup] --> Phase2[Phase 2: Foundational]
+    Phase2 --> US1[Phase 3: US1 Inventory Dashboard - MVP]
+    Phase2 --> US2[Phase 4: US2 Bag Detail & Edit Status]
+    Phase2 --> US3[Phase 5: US3 Stock In]
+    Phase2 --> US4[Phase 6: US4 Stock Out FEFO]
+    Phase2 --> US5[Phase 7: US5 Statistics]
+    Phase2 --> US6[Phase 8: US6 Search & Filter]
+    US1 & US2 & US3 & US4 & US5 & US6 --> Phase9[Phase 9: Polish & App Integration]
+```

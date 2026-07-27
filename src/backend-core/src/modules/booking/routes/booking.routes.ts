@@ -181,7 +181,26 @@ router.get('/appointments/:id/e-ticket', authenticateJWT, validateRequest(Downlo
  */
 router.post('/appointments/:id/sync-bloodcenter', authenticateJWT, BookingController.syncToBloodCenter);
 
-// Temporary endpoint for testing: Seed 3 dummy campaigns
-router.post('/seed-campaigns', BookingController.seedCampaigns);
+/**
+ * @openapi
+ * /api/v1/bookings/appointments/{id}/confirm:
+ *   post:
+ *     summary: BloodCenter xác nhận lịch hẹn và tạo e-ticket cho người dùng
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Xác nhận thành công và tạo e-ticket
+ *       404:
+ *         description: Không tìm thấy lịch hẹn
+ */
+router.post('/appointments/:id/confirm', authenticateJWT, BookingController.confirmAppointment);
 
 export default router;

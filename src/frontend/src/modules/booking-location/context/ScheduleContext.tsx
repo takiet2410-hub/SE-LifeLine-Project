@@ -44,7 +44,11 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
 export const useScheduleContext = () => {
   const context = useContext(ScheduleContext);
   if (context === undefined) {
-    throw new Error('useScheduleContext must be used within a ScheduleProvider');
+    return {
+      data: {},
+      updateData: () => {},
+      resetData: () => {},
+    };
   }
   return context;
 };

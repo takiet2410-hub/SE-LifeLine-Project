@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDays, Clock, MapPin, Download, XCircle, Droplet, Activity, Heart, Scale, RefreshCw } from 'lucide-react';
+import { CalendarDays, Clock, MapPin, Download, XCircle, Droplet, Activity, Heart, Scale, RefreshCw, QrCode, AlertCircle, CheckCircle2 } from 'lucide-react';
 import type { Appointment } from '../types';
 
 interface AppointmentDetailsProps {
@@ -7,6 +7,7 @@ interface AppointmentDetailsProps {
   onCancel: (id: string) => void;
   onDownload: (id: string) => void;
   onSync?: (id: string) => void;
+  onViewETicket?: () => void;
   isCancelling?: boolean;
   isSyncing?: boolean;
 }
@@ -16,10 +17,12 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   onCancel,
   onDownload,
   onSync,
+  onViewETicket,
   isCancelling = false,
   isSyncing = false
 }) => {
-  const isUpcoming = appointment.status === 'upcoming';
+  const isPending = appointment.status === 'pending' || (!appointment.qrCodeUrl && appointment.status !== 'completed' && appointment.status !== 'cancelled');
+  const isUpcoming = appointment.status === 'upcoming' || (Boolean(appointment.qrCodeUrl) && appointment.status !== 'completed' && appointment.status !== 'cancelled');
   const isCancelled = appointment.status === 'cancelled';
   const isCompleted = appointment.status === 'completed';
 
@@ -35,22 +38,27 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
         <div className="flex justify-between items-start mb-6">
           <div>
             <h2 className="text-[20px] font-bold text-[#271816] mb-1">
-              Donation Details
+              Chi Tiết Lịch Hẹn Hiến Máu
             </h2>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {isPending && (
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                  <Clock className="w-3.5 h-3.5" /> CHỜ BLOODCENTER XÁC NHẬN
+                </span>
+              )}
               {isUpcoming && (
-                <span className="px-3 py-1 rounded-full text-[12px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                  UPCOMING
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" /> ĐÃ XÁC NHẬN & E-TICKET READY
                 </span>
               )}
               {isCompleted && (
-                <span className="px-3 py-1 rounded-full text-[12px] font-bold bg-green-50 text-green-700 border border-green-200">
-                  COMPLETED
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-green-50 text-green-700 border border-green-200">
+                  HOÀN THÀNH
                 </span>
               )}
               {isCancelled && (
-                <span className="px-3 py-1 rounded-full text-[12px] font-bold bg-gray-100 text-gray-600 border border-gray-200">
-                  CANCELLED
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-gray-100 text-gray-600 border border-gray-200">
+                  ĐÃ HỦY
                 </span>
               )}
 
@@ -64,12 +72,25 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
           </div>
         </div>
 
+        {/* Pending Status Notice Banner */}
+        {isPending && (
+          <div className="mb-6 p-4 bg-amber-50/90 border border-amber-200 rounded-xl flex items-start gap-3 text-amber-900">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[13px] font-bold">Lịch hẹn đang chờ Ngân hàng máu / Bệnh viện phê duyệt</p>
+              <p className="text-[12px] text-amber-800 leading-snug mt-0.5">
+                Hồ sơ đăng ký của bạn đang được Bệnh viện rà soát. Ngay khi Bệnh viện xác nhận, hệ thống sẽ tự động gửi Email kèm Thẻ E-Ticket và mở quyền xem/tải về ngay trên ứng dụng.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Detail Grid: Location & Time */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div className="p-4 bg-[#f8f9fa] rounded-xl border border-[#f1f3f5]">
             <div className="flex items-center gap-2 text-[#93000b] mb-2">
               <CalendarDays className="w-5 h-5" />
-              <span className="font-bold text-[14px]">Date & Time</span>
+              <span className="font-bold text-[14px]">Ngày & Giờ Hiến Máu</span>
             </div>
             <p className="text-[15px] font-semibold text-[#271816]">{appointment.date}</p>
             <p className="text-[13px] text-[#6c757d] flex items-center gap-1.5 mt-1">
@@ -81,11 +102,11 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
           <div className="p-4 bg-[#f8f9fa] rounded-xl border border-[#f1f3f5]">
             <div className="flex items-center gap-2 text-[#93000b] mb-2">
               <MapPin className="w-5 h-5" />
-              <span className="font-bold text-[14px]">Location</span>
+              <span className="font-bold text-[14px]">Địa Điểm Tiếp Nhận</span>
             </div>
             <p className="text-[15px] font-semibold text-[#271816]">{appointment.location.name}</p>
             <p className="text-[13px] text-[#6c757d] mt-1 leading-snug">
-              {appointment.location.address || 'Address will be provided by the blood center.'}
+              {appointment.location.address || 'Địa điểm bệnh viện/ngân hàng máu'}
             </p>
           </div>
         </div>
@@ -93,12 +114,12 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
         {/* Health Screening Summary (If applicable) */}
         {appointment.healthSummary && Object.keys(appointment.healthSummary).length > 0 && (
           <div className="mb-8 border-t border-[#f1f3f5] pt-6">
-            <h3 className="text-[16px] font-bold text-[#271816] mb-4">Health Screening Summary</h3>
+            <h3 className="text-[16px] font-bold text-[#271816] mb-4">Tóm Tắt Khảo Sát Sức Khỏe</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {appointment.healthSummary.bloodPressure && (
                 <div className="flex flex-col gap-1">
                   <span className="text-[12px] text-[#6c757d] flex items-center gap-1">
-                    <Activity className="w-3.5 h-3.5" /> BP
+                    <Activity className="w-3.5 h-3.5" /> Huyết áp
                   </span>
                   <span className="font-semibold text-[14px] text-[#271816]">{appointment.healthSummary.bloodPressure}</span>
                 </div>
@@ -106,7 +127,7 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
               {appointment.healthSummary.heartRate && (
                 <div className="flex flex-col gap-1">
                   <span className="text-[12px] text-[#6c757d] flex items-center gap-1">
-                    <Heart className="w-3.5 h-3.5" /> Heart Rate
+                    <Heart className="w-3.5 h-3.5" /> Nhịp tim
                   </span>
                   <span className="font-semibold text-[14px] text-[#271816]">{appointment.healthSummary.heartRate}</span>
                 </div>
@@ -114,7 +135,7 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
               {appointment.healthSummary.weight && (
                 <div className="flex flex-col gap-1">
                   <span className="text-[12px] text-[#6c757d] flex items-center gap-1">
-                    <Scale className="w-3.5 h-3.5" /> Weight
+                    <Scale className="w-3.5 h-3.5" /> Cân nặng
                   </span>
                   <span className="font-semibold text-[14px] text-[#271816]">{appointment.healthSummary.weight}</span>
                 </div>
@@ -133,24 +154,79 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
 
         {/* QR Code & Actions Section */}
         <div className="mt-auto border-t border-[#f1f3f5] pt-6 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
-          {/* QR Code */}
-          {(isUpcoming || isCompleted) && (
-            <div className="flex items-center gap-4 bg-[#f8f9fa] p-3 rounded-xl border border-[#dee2e6]">
-              <div className="w-20 h-20 bg-white border border-[#dee2e6] rounded-lg flex items-center justify-center">
-                {/* Mock QR Code Image */}
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=LifeLineAppt" alt="QR Code" className="w-16 h-16 opacity-80" />
+          {/* QR Code Card */}
+          {isPending ? (
+            <div className="flex items-center gap-4 bg-gray-50 p-3.5 rounded-xl border border-gray-200 opacity-85">
+              <div className="w-20 h-20 bg-white border border-gray-300 rounded-lg flex items-center justify-center p-1">
+                <QrCode className="w-10 h-10 text-gray-400" />
               </div>
               <div>
-                <p className="text-[12px] font-bold text-[#93000b] mb-1">E-TICKET READY</p>
-                <p className="text-[11px] text-[#6c757d] max-w-[120px]">Scan at the reception counter.</p>
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full mb-1">
+                  <Clock className="w-3 h-3" /> E-TICKET CHỜ DUYỆT
+                </span>
+                <p className="text-[12px] font-bold text-gray-700">Đang chờ Bệnh viện xác nhận</p>
+                <p className="text-[11px] text-gray-500 max-w-[160px] leading-tight mt-0.5">
+                  Thẻ E-Ticket sẽ tự động cập nhật & gửi Email sau khi duyệt
+                </p>
               </div>
             </div>
-          )}
+          ) : (isUpcoming || isCompleted) ? (
+            <div
+              onClick={() => onViewETicket && onViewETicket()}
+              className="flex items-center gap-4 bg-[#fff8f7] hover:bg-[#ffe9e6] p-3 rounded-xl border border-[#f9dcd8] hover:border-[#93000b] cursor-pointer transition-all shadow-xs hover:shadow-md group"
+              title="Bấm để mở giao diện Thẻ E-Ticket"
+            >
+              <div className="w-20 h-20 bg-white border border-[#dee2e6] rounded-lg flex items-center justify-center p-1 group-hover:scale-105 transition-transform">
+                <img
+                  src={
+                    appointment.qrCodeUrl ||
+                    (appointment as any)._raw?.eTicketId?.fileUrl ||
+                    'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=LifeLineAppt'
+                  }
+                  alt="QR Code"
+                  className="w-16 h-16 object-contain opacity-90"
+                />
+              </div>
+              <div>
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#93000b] bg-red-100/80 px-2 py-0.5 rounded-full mb-1">
+                  <QrCode className="w-3 h-3" /> E-TICKET READY
+                </span>
+                <p className="text-[12px] font-bold text-[#271816] group-hover:text-[#93000b] transition-colors">
+                  Xem Thẻ E-Ticket →
+                </p>
+                <p className="text-[11px] text-[#6c757d] max-w-[130px] leading-tight mt-0.5">
+                  Bấm vào đây để mở vé và quét tại quầy
+                </p>
+              </div>
+            </div>
+          ) : null}
 
           {/* Actions */}
-          <div className="flex flex-col gap-3 w-full sm:w-auto">
+          <div className="flex flex-col gap-2.5 w-full sm:w-auto">
+            {isPending && (
+              <>
+                <button
+                  onClick={() => onCancel(appointment.id)}
+                  disabled={isCancelling}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 border border-[#dee2e6] text-[#271816] hover:bg-red-50 hover:text-[#93000b] hover:border-[#93000b]/30 text-[13px] font-semibold rounded-lg transition-all disabled:opacity-50"
+                >
+                  <XCircle className="w-4 h-4" />
+                  Hủy Lịch Hẹn
+                </button>
+              </>
+            )}
+
             {isUpcoming && (
               <>
+                {onViewETicket && (
+                  <button
+                    onClick={onViewETicket}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-[#152a43] hover:bg-[#0f1d2e] text-white text-[14px] font-semibold rounded-lg transition-all shadow-sm active:scale-[0.98]"
+                  >
+                    <QrCode className="w-4 h-4" />
+                    Xem E-Ticket
+                  </button>
+                )}
                 <button
                   onClick={() => onDownload(appointment.id)}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[14px] font-semibold rounded-lg transition-all shadow-sm active:scale-[0.98]"
@@ -158,16 +234,6 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                   <Download className="w-4 h-4" />
                   Download E-Ticket
                 </button>
-                {onSync && (
-                  <button
-                    onClick={() => onSync(appointment.id)}
-                    disabled={isSyncing}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-[#455F87] hover:bg-[#344866] text-white text-[14px] font-semibold rounded-lg transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                    {isSyncing ? 'Đang gửi...' : 'Gửi hồ sơ sang BV'}
-                  </button>
-                )}
                 <button
                   onClick={() => onCancel(appointment.id)}
                   disabled={isCancelling}
@@ -178,7 +244,7 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 </button>
               </>
             )}
-            
+
             {isCompleted && (
               <button
                 onClick={() => onDownload(appointment.id)}

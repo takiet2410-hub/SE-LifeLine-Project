@@ -13,6 +13,7 @@ export const AppointmentListItem: React.FC<AppointmentListItemProps> = ({
   isSelected,
   onClick
 }) => {
+  const isPending = appointment.status === 'pending';
   const isUpcoming = appointment.status === 'upcoming';
   const isCancelled = appointment.status === 'cancelled';
   const isCompleted = appointment.status === 'completed';
@@ -33,9 +34,14 @@ export const AppointmentListItem: React.FC<AppointmentListItemProps> = ({
         
         {/* Status Badge */}
         <div className="shrink-0">
+          {isPending && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-300">
+              Chờ duyệt
+            </span>
+          )}
           {isUpcoming && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-              Upcoming
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+              Đã xác nhận
             </span>
           )}
           {isCompleted && (

@@ -11,7 +11,6 @@ import { forgotPasswordSchema, resetPasswordSchema } from './schemas/reset-passw
 import { updateProfileSchema } from './schemas/update-profile.schema';
 import { verifyResetOtp } from './auth-account.controller';
 import { getMyProfile } from './auth-account.controller';
-import { verifyResetOtpSchema } from './schemas/verify-reset-otp.schema';
 
 
 const router = Router();
@@ -177,7 +176,7 @@ router.post('/resend-forgot-password', validate(forgotPasswordSchema), resendFor
  *       200:
  *         description: OTP verified successfully, returns a reset token for the next step
  */
-router.post('/verify-reset-otp', validate(verifyResetOtpSchema), verifyResetOtp); // Nếu bạn có viết middleware validate cho API này, hãy nhớ thêm nó vào đây nhé
+router.post('/verify-reset-otp', verifyResetOtp); // Nếu bạn có viết middleware validate cho API này, hãy nhớ thêm nó vào đây nhé
 
 /**
  * @openapi

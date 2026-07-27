@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Calendar, LayoutDashboard, Bell, Heart, LogOut } from 'lucide-react';
+import { Calendar, LayoutDashboard, Bell, Heart, LogOut, Map } from 'lucide-react';
 import { LifeLineLogo } from '../../../modules/auth-account/components/LifeLineLogo';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
@@ -18,6 +18,7 @@ export const SideNavBar: React.FC = () => {
   }
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Map', path: '/map', icon: Map },
     { name: 'My Appointments', path: '/my-appointments', icon: Calendar },
     { name: 'Notifications', path: '/notifications', icon: Bell },
     { name: 'My Profile', path: '/profile', icon: Heart },

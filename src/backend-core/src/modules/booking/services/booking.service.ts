@@ -5,30 +5,153 @@ import { Appointment, AppointmentStatus } from '../models/appointment.model';
 import { ScreeningForm } from '../models/screening-form.model';
 import { ScreeningFormTemplate } from '../models/screening-form-template.model';
 import { ETicket } from '../models/eticket.model';
+import { User } from '../../auth-account/models/user.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
+import { DigitalDonorRecord } from '../../registration/models/digital-donor-record.model';
+import { sendBookingConfirmationEmail } from '../../../utils/email.util';
+import { Campaign } from '../../campaign/models/campaign.model';
 
-const Campaign = mongoose.models.Campaign || mongoose.model('Campaign', new mongoose.Schema({
-  name: String,
-  location: {
-    type: { type: String, enum: ['Point'] },
-    coordinates: { type: [Number] }
-  },
-  startDateTime: Date,
-  endDateTime: Date,
-  capacity: Number,
-  registeredCount: Number,
-  status: String,
-  targetBloodGroups: [String],
-  timeSlots: [{
-    startTime: String,
-    endTime: String,
-    capacity: Number,
-    registeredCount: Number
-  }]
-}, { collection: 'campaigns' }));
+const ensureHcmcCampaigns = async () => {
+  try {
+    const timeSlots = [
+      { startTime: '07:30', endTime: '09:00', capacity: 20, registeredCount: 5 },
+      { startTime: '09:00', endTime: '10:30', capacity: 20, registeredCount: 8 },
+      { startTime: '10:30', endTime: '12:00', capacity: 20, registeredCount: 4 },
+      { startTime: '13:30', endTime: '15:00', capacity: 20, registeredCount: 6 },
+      { startTime: '15:00', endTime: '16:30', capacity: 20, registeredCount: 2 }
+    ];
+
+    const hcmcCampaignList = [
+      {
+        campaignCode: 'CMP-CR-2026',
+        name: 'Bệnh viện Chợ Rẫy - Đợt Hiến Máu Nhân Đạo Q5',
+        description: 'Chiến dịch hiến máu nhân đạo hỗ trợ cấp cứu và điều trị tại Bệnh viện Chợ Rẫy.',
+        venue: 'Bệnh viện Chợ Rẫy',
+        fullAddress: '201B Nguyễn Chí Thanh, Phường 12, Quận 5, TP. Hồ Chí Minh',
+        location: { type: 'Point', coordinates: [106.660172, 10.755498] },
+        status: 'Active',
+        targetBloodGroups: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+        capacity: 100,
+        registeredCount: 25,
+        targetUnitsGoal: 80,
+        contactPerson: { name: 'Đội Tình Nguyện Chợ Rẫy', phone: '02838554137' }
+      },
+      {
+        campaignCode: 'CMP-TMHH-2026',
+        name: 'Bệnh viện Truyền Máu Huyết Học - Đợt Tiếp Nhận Máu',
+        description: 'Đợt tiếp nhận máu lưu động chuẩn quốc tế tại Bệnh viện Truyền máu Huyết học.',
+        venue: 'Bệnh viện Truyền máu Huyết học',
+        fullAddress: '118 Hồng Bàng, Phường 12, Quận 5, TP. Hồ Chí Minh',
+        location: { type: 'Point', coordinates: [106.666133, 10.756247] },
+        status: 'Active',
+        targetBloodGroups: ['A+', 'B+', 'O+', 'O-'],
+        capacity: 150,
+        registeredCount: 40,
+        targetUnitsGoal: 120,
+        contactPerson: { name: 'Khoa Tiếp Nhận Máu', phone: '02839571342' }
+      },
+      {
+        campaignCode: 'CMP-TD-2026',
+        name: 'Bệnh viện Từ Dũ - Ngày Hội Hiến Máu Mẹ & Bé',
+        description: 'Chương trình hiến máu tình nguyện dành cho sản phụ và nhi khoa.',
+        venue: 'Bệnh viện Từ Dũ',
+        fullAddress: '284 Cống Quỳnh, Phường Phạm Ngũ Lão, Quận 1, TP. Hồ Chí Minh',
+        location: { type: 'Point', coordinates: [106.683610, 10.763428] },
+        status: 'Active',
+        targetBloodGroups: ['O-', 'AB-', 'A+', 'B+'],
+        capacity: 90,
+        registeredCount: 15,
+        targetUnitsGoal: 70,
+        contactPerson: { name: 'Đoàn Thanh Niên Từ Dũ', phone: '02854042829' }
+      },
+      {
+        campaignCode: 'CMP-115-2026',
+        name: 'Bệnh viện Nhân Dân 115 - Giọt Máu Hồng Cấp Cứu',
+        description: 'Chiến dịch bổ sung dự trữ máu cấp cứu đột quỵ và tim mạch tại Bệnh viện 115.',
+        venue: 'Bệnh viện Nhân dân 115',
+        fullAddress: '520 Lý Thường Kiệt, Phường 14, Quận 10, TP. Hồ Chí Minh',
+        location: { type: 'Point', coordinates: [106.660812, 10.771945] },
+        status: 'Active',
+        targetBloodGroups: ['O+', 'A+', 'B+'],
+        capacity: 120,
+        registeredCount: 30,
+        targetUnitsGoal: 100,
+        contactPerson: { name: 'BS. Trần Văn Nam', phone: '02838652368' }
+      },
+      {
+        campaignCode: 'CMP-GD-2026',
+        name: 'Bệnh viện Nhân Dân Gia Định - Ngày Hiến Máu Bình Thạnh',
+        description: 'Điểm hiến máu nhân đạo phục vụ khu vực Bình Thạnh và Phú Nhuận.',
+        venue: 'Bệnh viện Nhân dân Gia Định',
+        fullAddress: '1 Nơ Trang Long, Phường 7, Bình Thạnh, TP. Hồ Chí Minh',
+        location: { type: 'Point', coordinates: [106.696120, 10.803510] },
+        status: 'Active',
+        targetBloodGroups: ['O-', 'AB-', 'A+'],
+        capacity: 100,
+        registeredCount: 18,
+        targetUnitsGoal: 85,
+        contactPerson: { name: 'Phòng Công Tác Xã Hội', phone: '02838412697' }
+      },
+      {
+        campaignCode: 'CMP-175-2026',
+        name: 'Bệnh viện Quân Y 175 - Giọt Máu Chiến Sĩ Gò Vấp',
+        description: 'Ngày hội hiến máu quân dân y tại Bệnh viện Quân Y 175.',
+        venue: 'Bệnh viện Quân Y 175',
+        fullAddress: '786 Nguyễn Kiệm, Phường 3, Gò Vấp, TP. Hồ Chí Minh',
+        location: { type: 'Point', coordinates: [106.678240, 10.817530] },
+        status: 'Active',
+        targetBloodGroups: ['O+', 'B+', 'A+'],
+        capacity: 130,
+        registeredCount: 22,
+        targetUnitsGoal: 100,
+        contactPerson: { name: 'Ban Thanh Niên BV 175', phone: '02838942438' }
+      },
+      {
+        campaignCode: 'CMP-TD-CITY-2026',
+        name: 'Bệnh viện TP. Thủ Đức - Kết Nối Yêu Thương',
+        description: 'Điểm tiếp nhận máu tình nguyện TP. Thủ Đức.',
+        venue: 'Bệnh viện Thành phố Thủ Đức',
+        fullAddress: '29 Phú Châu, Tam Phú, Thủ Đức, TP. Hồ Chí Minh',
+        location: { type: 'Point', coordinates: [106.758410, 10.852530] },
+        status: 'Active',
+        targetBloodGroups: ['A+', 'O+', 'B+'],
+        capacity: 110,
+        registeredCount: 14,
+        targetUnitsGoal: 90,
+        contactPerson: { name: 'Đoàn Thanh Niên Thủ Đức', phone: '02837206000' }
+      }
+    ];
+
+    const now = new Date();
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 2);
+
+    const existingCampaigns = await Campaign.find({}).lean();
+    if (existingCampaigns.length === 0 || existingCampaigns.some(c => c.venue === 'Hoa Lu Stadium' || !c.fullAddress)) {
+      await Campaign.deleteMany({ venue: 'Hoa Lu Stadium' });
+      for (const item of hcmcCampaignList) {
+        await Campaign.updateOne(
+          { campaignCode: item.campaignCode },
+          {
+            $set: {
+              ...item,
+              startDateTime: now,
+              endDateTime: nextMonth,
+              timeSlots
+            }
+          },
+          { upsert: true }
+        );
+      }
+    }
+  } catch (err) {
+    console.error('Error ensuring HCMC campaigns:', err);
+  }
+};
 
 export class BookingService {
   public static async searchLocations(filters: any) {
+    await ensureHcmcCampaigns();
     let query: any = { status: 'Active' };
 
     if (filters.lat !== undefined && filters.lng !== undefined) {
@@ -49,54 +172,26 @@ export class BookingService {
     }
 
     if (filters.date) {
-      const searchDate = new Date(filters.date);
-      const nextDate = new Date(searchDate);
-      nextDate.setDate(nextDate.getDate() + 1);
-      
-      query.startDateTime = { $lte: nextDate };
-      query.endDateTime = { $gte: searchDate };
+      const dateParts = String(filters.date).split('-').map(Number);
+      if (dateParts.length === 3 && !dateParts.some(isNaN)) {
+        const [year, month, day] = dateParts;
+        const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+        const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+
+        query.startDateTime = { $lte: endOfDay };
+        query.endDateTime = { $gte: startOfDay };
+      } else {
+        const targetDate = new Date(filters.date);
+        if (!isNaN(targetDate.getTime())) {
+          const startOfDay = new Date(targetDate.setUTCHours(0, 0, 0, 0));
+          const endOfDay = new Date(targetDate.setUTCHours(23, 59, 59, 999));
+          query.startDateTime = { $lte: endOfDay };
+          query.endDateTime = { $gte: startOfDay };
+        }
+      }
     }
 
     let campaigns = await Campaign.find(query).lean();
-
-    // TODO (BE Dev): XÓA MẢNG MOCK DATA NÀY KHI CHỨC NĂNG TẠO CAMPAIGN ĐÃ HOÀN THIỆN
-    // Mảng này tạm thời dùng để Frontend có dữ liệu hiển thị trên giao diện Đặt lịch.
-    // Mock campaigns with valid MongoDB ObjectId format
-    const mockCampaigns = [
-      {
-        _id: '60d5ec49e49a8f4c4c23c21a',
-        name: 'Cho Ray Hospital - Regular Blood Drive',
-        location: { type: 'Point', coordinates: [106.660172, 10.755498] },
-        startDateTime: new Date(),
-        endDateTime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        capacity: 100,
-        registeredCount: 0,
-        status: 'Active',
-        targetBloodGroups: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
-        timeSlots: [
-          { startTime: '08:00', endTime: '09:00', capacity: 10, registeredCount: 0 },
-          { startTime: '09:00', endTime: '10:00', capacity: 10, registeredCount: 0 },
-          { startTime: '10:00', endTime: '11:00', capacity: 10, registeredCount: 0 }
-        ]
-      },
-      {
-        _id: '60d5ec49e49a8f4c4c23c21b',
-        name: 'Blood Transfusion Hematology Hospital',
-        location: { type: 'Point', coordinates: [106.666133, 10.756247] },
-        startDateTime: new Date(),
-        endDateTime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        capacity: 150,
-        registeredCount: 0,
-        status: 'Active',
-        targetBloodGroups: ['A+', 'B+', 'O+', 'O-'],
-        timeSlots: [
-          { startTime: '13:00', endTime: '14:00', capacity: 10, registeredCount: 0 },
-          { startTime: '14:00', endTime: '15:00', capacity: 10, registeredCount: 0 }
-        ]
-      }
-    ];
-
-    campaigns = [...mockCampaigns, ...campaigns];
 
     if (filters.crowdingLevel) {
       campaigns = campaigns.filter(c => {
@@ -135,24 +230,7 @@ export class BookingService {
 
     try {
       // 1. Validate Campaign
-      let campaign;
-      const mockIds = ['60d5ec49e49a8f4c4c23c21a', '60d5ec49e49a8f4c4c23c21b'];
-      const cid = campaignId.toString();
-
-      // TODO (BE Dev): XÓA ĐOẠN IF NÀY KHI MÀ CÁC CHIẾN DỊCH (CAMPAIGN) ĐÃ ĐƯỢC LƯU THẬT VÀO DATABASE
-      // Đoạn này dùng để chặn lỗi văng app khi Frontend gửi lên một cái campaignId giả (L-1 hoặc Mock ID).
-      // Khi xóa đi, chỉ cần giữ lại phần "campaign = await Campaign.findById(campaignId).session(session);" là đủ.
-      if (cid.startsWith('L-') || mockIds.includes(cid)) {
-        campaign = {
-          _id: new mongoose.Types.ObjectId(), // Generate real ObjectId so it can be saved in Appointment
-          status: 'Active',
-          capacity: 100,
-          registeredCount: 0
-        };
-      } else {
-        campaign = await Campaign.findById(campaignId).session(session);
-      }
-
+      const campaign = await Campaign.findById(campaignId).session(session);
       if (!campaign) {
         throw new Error('NOT_FOUND_CAMPAIGN');
       }
@@ -175,7 +253,7 @@ export class BookingService {
       }
 
       // 3. Prevent Duplicate Appointments (overlapping dates)
-      const existing = await Appointment.findOne({ donorId, status: { $in: [AppointmentStatus.Scheduled, AppointmentStatus.CheckedIn] } });
+      const existing = await Appointment.findOne({ donorId, status: { $in: [AppointmentStatus.Pending, AppointmentStatus.Confirmed, AppointmentStatus.Scheduled, AppointmentStatus.CheckedIn] } });
       if (existing) {
         throw new Error('DUPLICATE_APPOINTMENT');
       }
@@ -264,30 +342,9 @@ export class BookingService {
         throw new Error('ELIGIBILITY_FAILED_SCREENING');
       }
 
-      // 5. Create ETicket
-      const ticketCode = `TK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      const qrPayloadSigned = `SIGNED-${ticketCode}`; // mock signed payload
-      
-      let fileUrl = undefined;
-      try {
-        const qrBuffer = await QRCode.toBuffer(qrPayloadSigned);
-        fileUrl = await uploadImageToCloudinary(qrBuffer, 'etickets');
-      } catch (error) {
-        console.error('Failed to generate or upload QR Code:', error);
-      }
-      
       const newAppointmentId = new mongoose.Types.ObjectId();
 
-      const newETicket = new ETicket({
-        appointmentId: newAppointmentId,
-        ticketCode,
-        qrPayloadSigned,
-        fileUrl,
-        issuedAt: new Date()
-      });
-      await newETicket.save({ session });
-
-      // 6. Create ScreeningForm
+      // 5. Create ScreeningForm
       const newScreening = new ScreeningForm({
         appointmentId: newAppointmentId,
         templateId: usedTemplateId,
@@ -296,22 +353,41 @@ export class BookingService {
       });
       await newScreening.save({ session });
 
-      // 7. Create Appointment
+      // 6. Create Appointment in Pending status without eTicket
       const newAppointment = new Appointment({
         _id: newAppointmentId,
         donorId,
-        campaignId: campaign._id,
+        campaignId,
         appointmentDate,
         timeSlot,
-        status: AppointmentStatus.Scheduled,
-        screeningFormId: newScreening._id,
-        eTicketId: newETicket._id
+        status: AppointmentStatus.Pending,
+        screeningFormId: newScreening._id
       });
       await newAppointment.save({ session });
 
+      // 7. Create initial DigitalDonorRecord with Pending status
+      const newDigitalRecord = new DigitalDonorRecord({
+        appointmentId: newAppointmentId,
+        donorId: new mongoose.Types.ObjectId(donorId),
+        donationStatus: 'Pending',
+        screeningSummary: {
+          donorSubmitted: {
+            medicalHistory: answers?.medicalHistory || {},
+            currentHealthStatus: answers?.currentHealthStatus || 'Healthy',
+            recentTravel: answers?.recentTravel || 'None',
+            medicationHistory: answers?.medicationHistory || 'None',
+            consentGiven: answers?.consentGiven || true,
+            eligibilityFlag: outcome === 'PASS' ? 'Eligible' : 'RequiresReview'
+          }
+        },
+        clinicalNotes: '',
+        lastUpdatedAt: new Date()
+      });
+      await newDigitalRecord.save({ session });
+
       // 8. Update Campaign capacity
       await Campaign.updateOne(
-        { _id: campaign._id },
+        { _id: campaignId },
         { $inc: { registeredCount: 1 } },
         { session }
       );
@@ -319,13 +395,119 @@ export class BookingService {
       await session.commitTransaction();
       session.endSession();
 
-      return await Appointment.findById(newAppointmentId).populate('eTicketId').lean();
+      return await Appointment.findById(newAppointmentId).populate('screeningFormId').lean();
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
       throw error;
     }
   }
+
+  public static async confirmAppointmentByBloodCenter(id: string, donorId?: string) {
+    await Promise.all([
+      Appointment.init(),
+      ETicket.init(),
+      DigitalDonorRecord.init()
+    ]);
+
+    await Promise.all([
+      Appointment.createCollection().catch(() => {}),
+      ETicket.createCollection().catch(() => {}),
+      DigitalDonorRecord.createCollection().catch(() => {})
+    ]);
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const query: any = { _id: id };
+      if (donorId) query.donorId = donorId;
+
+      const appointment = await Appointment.findOne(query).session(session);
+      if (!appointment) {
+        throw new Error('APPOINTMENT_NOT_FOUND');
+      }
+
+      if (appointment.status === AppointmentStatus.Cancelled || appointment.status === AppointmentStatus.NoShow) {
+        throw new Error('INVALID_STATUS_TRANSITION');
+      }
+
+      // Generate E-Ticket if not already present
+      let eTicketId = appointment.eTicketId;
+      if (!eTicketId) {
+        const ticketCode = `TK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const qrPayloadSigned = `SIGNED-${ticketCode}`;
+        
+        let fileUrl = undefined;
+        try {
+          const qrBuffer = await QRCode.toBuffer(qrPayloadSigned);
+          fileUrl = await uploadImageToCloudinary(qrBuffer, 'etickets');
+        } catch (error) {
+          console.error('Failed to generate or upload QR Code:', error);
+        }
+        if (!fileUrl) {
+          fileUrl = `https://res.cloudinary.com/lifeline/etickets/${ticketCode}.png`;
+        }
+
+        const newETicket = new ETicket({
+          appointmentId: appointment._id,
+          ticketCode,
+          qrPayloadSigned,
+          fileUrl,
+          issuedAt: new Date()
+        });
+        await newETicket.save({ session });
+        eTicketId = newETicket._id as mongoose.Types.ObjectId;
+      }
+
+      appointment.status = AppointmentStatus.Confirmed;
+      appointment.eTicketId = eTicketId;
+      await appointment.save({ session });
+
+      await DigitalDonorRecord.updateOne(
+        { appointmentId: appointment._id },
+        { $set: { donationStatus: 'Confirmed', lastUpdatedAt: new Date() } },
+        { session }
+      );
+
+      await session.commitTransaction();
+      session.endSession();
+
+      const fullAppointment: any = await Appointment.findById(id).populate('eTicketId').populate('campaignId').lean();
+
+      // Trigger Email Notification with attached E-ticket asynchronously
+      try {
+        if (fullAppointment) {
+          const donorUser = await User.findById(fullAppointment.donorId).lean();
+          const donorProfile = await DonorProfile.findOne({ userId: fullAppointment.donorId }).lean();
+          const recipientEmail = donorUser?.email || donorProfile?.email;
+
+          if (recipientEmail && fullAppointment.eTicketId) {
+            const eTicket: any = fullAppointment.eTicketId;
+            const campaign: any = fullAppointment.campaignId;
+            sendBookingConfirmationEmail(
+              recipientEmail,
+              donorProfile?.fullName || 'Người hiến máu',
+              campaign?.name || 'Chiến dịch hiến máu',
+              fullAppointment.appointmentDate,
+              fullAppointment.timeSlot,
+              eTicket.ticketCode || '',
+              eTicket.fileUrl || ''
+            ).catch(err => console.error('Failed to send confirmation email:', err));
+          }
+        }
+      } catch (emailErr) {
+        console.error('Error fetching details for confirmation email:', emailErr);
+      }
+
+      return fullAppointment;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
+
   public static async getAppointmentById(id: string, donorId: string) {
     const appointment = await Appointment.findOne({ _id: id, donorId })
       .populate('screeningFormId')
@@ -341,6 +523,7 @@ export class BookingService {
   public static async listAppointments(donorId: string) {
     return await Appointment.find({ donorId })
       .populate('campaignId')
+      .populate('eTicketId')
       .sort({ appointmentDate: -1 })
       .lean();
   }
@@ -413,8 +596,12 @@ export class BookingService {
 
   public static async downloadETicket(id: string, donorId: string) {
     const appointment = await Appointment.findOne({ _id: id, donorId });
-    if (!appointment || !appointment.eTicketId) {
-      throw new Error('ETICKET_NOT_FOUND');
+    if (!appointment) {
+      throw new Error('APPOINTMENT_NOT_FOUND');
+    }
+
+    if (appointment.status === AppointmentStatus.Pending || !appointment.eTicketId) {
+      throw new Error('ETICKET_NOT_READY');
     }
 
     const eTicket = await ETicket.findById(appointment.eTicketId)
@@ -456,17 +643,16 @@ export class BookingService {
       },
       campaign: appointment.campaignId,
       timeSlot: appointment.timeSlot,
+      status: appointment.status,
       screeningResponses: appointment.screeningFormId
     };
 
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // In a real scenario, we would use axios.post('https://bloodcenter-api.local/sync', payload)
-    
     return {
       success: true,
-      message: 'Information successfully sent to BloodCenter',
+      message: 'Information successfully sent to BloodCenter for review and confirmation',
       syncedAt: new Date(),
       payload
     };

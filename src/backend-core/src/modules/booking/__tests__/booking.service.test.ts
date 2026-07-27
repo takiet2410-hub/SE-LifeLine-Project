@@ -41,6 +41,8 @@ jest.mock('../models/appointment.model', () => ({
     findById: jest.fn(),
   },
   AppointmentStatus: {
+    Pending: 'Pending',
+    Confirmed: 'Confirmed',
     Scheduled: 'Scheduled',
     CheckedIn: 'CheckedIn',
     Completed: 'Completed',

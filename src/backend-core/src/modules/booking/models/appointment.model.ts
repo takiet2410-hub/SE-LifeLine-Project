@@ -1,6 +1,8 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export enum AppointmentStatus {
+  Pending = 'Pending',
+  Confirmed = 'Confirmed',
   Scheduled = 'Scheduled',
   CheckedIn = 'CheckedIn',
   Completed = 'Completed',
@@ -25,7 +27,7 @@ const AppointmentSchema: Schema = new Schema({
   campaignId: { type: Schema.Types.ObjectId, ref: 'Campaign', required: true },
   appointmentDate: { type: Date, required: true },
   timeSlot: { type: String, required: true },
-  status: { type: String, enum: Object.values(AppointmentStatus), default: AppointmentStatus.Scheduled },
+  status: { type: String, enum: Object.values(AppointmentStatus), default: AppointmentStatus.Pending },
   screeningFormId: { type: Schema.Types.ObjectId, ref: 'ScreeningForm' },
   eTicketId: { type: Schema.Types.ObjectId, ref: 'ETicket' }
 }, {

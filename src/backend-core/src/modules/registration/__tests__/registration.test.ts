@@ -271,5 +271,71 @@ describe('Donor Registration & Health Screening Module (BC-UC-04, BC-UC-05)', ()
         RegistrationService.getRegistrationById('65f1a2b3c4d5e6f7a8b9c0d1')
       ).rejects.toThrow('Donor registration record not found');
     });
+
+    it('should accept partial update payload (e.g. only bloodType or only status)', () => {
+      const result = UpdateScreeningSchema.safeParse({
+        params: { registrationId: '65f1a2b3c4d5e6f7a8b9c0d1' },
+        body: {
+          bloodType: 'AB+'
+        }
+      });
+      expect(result.success).toBe(true);
+
+      const resultUnknown = UpdateScreeningSchema.safeParse({
+        params: { registrationId: '65f1a2b3c4d5e6f7a8b9c0d1' },
+        body: {
+          bloodType: 'Unknown'
+        }
+      });
+      expect(resultUnknown.success).toBe(true);
+    });
+
+    it('should sync bloodType to DonorProfile when bloodType is provided in updateRegistrationScreening', async () => {
+      const mockDonorProfileUpdate = jest.spyOn(DonorProfile, 'findOneAndUpdate').mockResolvedValue({} as any);
+      jest.spyOn(DonorProfile, 'findOne').mockImplementation(() => ({ lean: jest.fn().mockResolvedValue({ fullName: 'Test Donor', bloodType: 'B+' }) }) as any);
+      jest.spyOn(User, 'findOne').mockImplementation(() => ({ lean: jest.fn().mockResolvedValue({ idDocumentNumber: '123456789' }) }) as any);
+
+      const mockAppointmentObj = {
+        _id: '65f1a2b3c4d5e6f7a8b9c0d1',
+        donorId: '65f1a2b3c4d5e6f7a8b9c000',
+        campaignId: '65f1a2b3c4d5e6f7a8b9c999',
+        appointmentDate: new Date(),
+        timeSlot: '09:00 - 10:00',
+        status: 'Scheduled',
+        save: jest.fn().mockResolvedValue({})
+      };
+      jest.spyOn(Appointment, 'findById').mockImplementation(() => {
+        const queryObj: any = Promise.resolve(mockAppointmentObj);
+        queryObj.lean = jest.fn().mockResolvedValue(mockAppointmentObj);
+        queryObj.populate = jest.fn().mockReturnValue(queryObj);
+        return queryObj;
+      });
+
+      const mockForm = {
+        save: jest.fn().mockResolvedValue({}),
+        lean: jest.fn().mockResolvedValue(null)
+      };
+      jest.spyOn(ScreeningForm, 'findOne').mockImplementation(() => mockForm as any);
+
+      const mockRecord = {
+        save: jest.fn().mockResolvedValue({}),
+        lean: jest.fn().mockResolvedValue(null)
+      };
+      jest.spyOn(DigitalDonorRecord, 'findOne').mockImplementation(() => mockRecord as any);
+
+      jest.spyOn(AuditLog, 'create').mockResolvedValue([] as any);
+
+      await RegistrationService.updateRegistrationScreening(
+        '65f1a2b3c4d5e6f7a8b9c0d1',
+        { bloodType: 'B+' },
+        'staff-123'
+      );
+
+      expect(mockDonorProfileUpdate).toHaveBeenCalledWith(
+        { userId: '65f1a2b3c4d5e6f7a8b9c000' },
+        { bloodType: 'B+' },
+        expect.any(Object)
+      );
+    });
   });
 });

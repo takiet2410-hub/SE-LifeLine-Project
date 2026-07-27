@@ -31,6 +31,19 @@ export const UpdateScreeningSchema = z.object({
     registrationId: z.string().refine(isValidObjectId, { message: 'Invalid registrationId format' })
   }),
   body: z.object({
+    bloodType: z.enum([
+      'A+',
+      'A-',
+      'B+',
+      'B-',
+      'AB+',
+      'AB-',
+      'O+',
+      'O-',
+      'Unknown'
+    ], {
+      message: "Blood type must be one of: 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'"
+    }).optional(),
     vitals: z.object({
       bloodPressure: z.string().regex(/^\d{2,3}\/\d{2,3}$/, {
         message: 'bloodPressure must match pattern SYS/DIA (e.g. 120/80)'
@@ -38,7 +51,7 @@ export const UpdateScreeningSchema = z.object({
       weight: z.number().positive({ message: 'weight must be greater than 0' }),
       bodyTemperature: z.number().positive({ message: 'bodyTemperature must be greater than 0' }),
       hemoglobinLevel: z.number().positive({ message: 'hemoglobinLevel must be greater than 0' })
-    }),
+    }).optional(),
     screeningNotes: z.string().max(1000).optional(),
     status: z.enum([
       'Pending',
@@ -53,6 +66,13 @@ export const UpdateScreeningSchema = z.object({
       'Donation Completed'
     ], {
       message: "Status must be one of: 'Pending', 'Confirmed', 'Rejected', 'CheckedIn', 'Eligible', 'Ineligible', 'Completed', 'Eligible for Donation', 'Ineligible for Donation', 'Donation Completed'"
-    })
+    }).optional(),
+    responses: z.array(
+      z.object({
+        questionId: z.string(),
+        selectedOptions: z.array(z.string()),
+        description: z.string().optional()
+      })
+    ).optional()
   })
 });

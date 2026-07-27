@@ -1,162 +1,90 @@
-# Plan: BC-UC-12 → BC-UC-17 — Blood Inventory Management (Frontend)
+# Implementation Plan: Blood Inventory Management (BC-UC-12 → BC-UC-17)
 
-> **Module**: `src/frontend/src/modules/blood-inventory/`
-> **Stack**: React + TypeScript (strict) + Tailwind CSS + React Query + recharts + i18next
-> **Reference**: [spec.md](file:///c:/HOCTAP/Project/INTRO2SE/LIFELINE/SE-LifeLine-Project/src/specs/BC-UC-12-17-blood-inventory/spec.md)
-
----
-
-## 1. Component Architecture
-
-```
-src/frontend/src/modules/blood-inventory/
-├── pages/
-│   ├── InventoryListPage.tsx          # BC-UC-12 main page (table + summary cards)
-│   ├── BloodBagDetailPage.tsx         # BC-UC-14 view/edit blood bag status
-│   ├── StockInPage.tsx                # BC-UC-15 multi-entry form
-│   ├── StockOutPage.tsx               # BC-UC-16 selection + reason form
-│   └── InventoryStatsPage.tsx         # BC-UC-17 charts + dashboard
-│
-├── components/
-│   ├── InventorySummaryCards.tsx       # Stat cards (total, available, near-expiry, low-stock)
-│   ├── BloodBagTable.tsx              # Paginated, sortable inventory table
-│   ├── BloodBagSearchFilter.tsx       # Search bar + multi-filter (type, status, date)
-│   ├── BloodBagStatusBadge.tsx        # Available/Reserved/Used/Expired/Discarded
-│   ├── BloodTypeBadge.tsx             # A+, A-, B+, etc. color-coded
-│   ├── BloodBagInfoCard.tsx           # Read-only detail card
-│   ├── StatusHistoryTimeline.tsx      # Chronological status change log
-│   ├── StatusEditForm.tsx             # Dropdown + reason + save/cancel
-│   ├── StockInEntryRow.tsx            # Single blood bag entry in Stock In form
-│   ├── StockInForm.tsx                # Dynamic multi-entry form
-│   ├── StockOutSelectionList.tsx      # Checkbox selection list for stock out
-│   ├── StockOutReasonForm.tsx         # Reason dropdown + notes
-│   ├── InventoryBarChart.tsx          # Units by blood type bar chart (recharts)
-│   ├── InventoryDoughnutChart.tsx     # Blood type distribution pie/doughnut (recharts)
-│   ├── InventoryStatsTable.tsx        # Summary table per blood type
-│   ├── ChartModeToggle.tsx            # Toggle: Units / Volume / Near-Expiry
-│   ├── LowStockWarning.tsx            # Warning indicator for low-stock blood types
-│   └── NearExpiryWarning.tsx          # Warning indicator for near-expiry units
-│
-├── hooks/
-│   ├── useInventory.ts                # React Query: GET /api/v1/bc/inventory
-│   ├── useBloodBag.ts                 # React Query: GET /api/v1/bc/inventory/:id
-│   ├── useUpdateBloodBagStatus.ts     # React Query mutation: PUT status
-│   ├── useStockIn.ts                  # React Query mutation: POST stock-in
-│   ├── useStockOut.ts                 # React Query mutation: POST stock-out
-│   ├── useInventoryStats.ts           # React Query: GET /api/v1/bc/inventory/statistics
-│   └── useBloodBagSearch.ts           # Debounced search within inventory
-│
-├── schemas/
-│   ├── stockInSchema.ts               # Zod schema for stock-in entries
-│   ├── stockOutSchema.ts              # Zod schema for stock-out
-│   └── statusUpdateSchema.ts          # Zod schema for status change
-│
-├── types/
-│   └── inventory.types.ts             # BloodBag, StockInEntry, InventoryStats, etc.
-│
-└── i18n/
-    ├── inventory.vi.json
-    └── inventory.en.json
-```
+> **Feature Directory**: `specs/BC-UC-12-17-blood-inventory`
+> **Module Paths**:
+> - Frontend: `src/frontend/src/modules/blood-inventory/`
+> - Backend: `src/backend-core/src/modules/blood-inventory/`
+> **Constraint**: Strict **ADDITIVE-ONLY**. No existing code, routes, or schemas altered or deleted.
 
 ---
 
-## 2. Routing Plan
+## 1. Technical Context & Stack
 
-```typescript
-const inventoryRoutes = [
-  { path: '/bc/inventory',                  element: <InventoryListPage /> },      // BC-UC-12, BC-UC-13
-  { path: '/bc/inventory/stats',            element: <InventoryStatsPage /> },     // BC-UC-17
-  { path: '/bc/inventory/stock-in',         element: <StockInPage /> },            // BC-UC-15
-  { path: '/bc/inventory/stock-out',        element: <StockOutPage /> },           // BC-UC-16
-  { path: '/bc/inventory/:bagId',           element: <BloodBagDetailPage /> },     // BC-UC-14
-];
-```
+- **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS 4 + `@tanstack/react-query` + Axios + Recharts
+- **Backend**: Node.js + Express 5 + TypeScript (`tsx watch`) + Mongoose ODM
+- **Database**: MongoDB Atlas (`blood_bags` collection)
 
 ---
 
-## 3. API Integration
+## 2. Design Artifacts & Specifications Summary
 
-| Method | Path | UC | Purpose |
-| :--- | :--- | :--- | :--- |
-| GET | `/bc/inventory` | BC-UC-12/13 | List blood bags (paginated, filterable) |
-| GET | `/bc/inventory/statistics` | BC-UC-17 | Get inventory statistics |
-| GET | `/bc/inventory/:bagId` | BC-UC-14 | Get blood bag detail |
-| PUT | `/bc/inventory/:bagId/status` | BC-UC-14 | Update blood bag status |
-| POST | `/bc/inventory/stock-in` | BC-UC-15 | Stock in (batch) |
-| POST | `/bc/inventory/stock-out` | BC-UC-16 | Stock out (batch) |
+- 📄 [`spec.md`](spec.md): Approved requirements for BC-UC-12 through BC-UC-17
+- 🔬 [`research.md`](research.md): Technical context, FEFO sorting logic, Recharts selection
+- 🗄️ [`data-model.md`](data-model.md): `BloodBag` entity, Mongoose schema, validation rules, state transitions
+- 🔌 [`contracts/inventory-api.md`](contracts/inventory-api.md): REST API contracts for 6 inventory endpoints
+- 🚀 [`quickstart.md`](quickstart.md): Runnable validation scenarios and test setup
 
 ---
 
-## 4. Validation Schemas (Zod)
+## 3. Implementation Breakdown by Phase
 
-```typescript
-// stockInSchema.ts
-import { z } from 'zod';
+### Phase 1: Data Model & Backend Core API (Additive Only)
+- **Backend Model**:
+  - `src/backend-core/src/modules/blood-inventory/models/blood-bag.model.ts`
+- **Backend Schemas & Validation**:
+  - `src/backend-core/src/modules/blood-inventory/schemas/inventory.schema.ts`
+- **Backend Service & Controller**:
+  - `src/backend-core/src/modules/blood-inventory/inventory.service.ts`
+  - `src/backend-core/src/modules/blood-inventory/inventory.controller.ts`
+- **Backend Routes**:
+  - `src/backend-core/src/modules/blood-inventory/inventory.routes.ts`
 
-export const stockInEntrySchema = z.object({
-  bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']),
-  volumeMl: z.number().positive('Volume must be > 0'),
-  collectionDate: z.string().datetime(),
-  expiryDate: z.string().datetime(),
-  storageLocation: z.string().min(1, 'Storage location is required'),
-}).refine(data => new Date(data.expiryDate) > new Date(data.collectionDate), {
-  message: 'Expiry date must be after collection date',
-  path: ['expiryDate'],
-});
+### Phase 2: Frontend Shared Components & Hooks (Additive Only)
+- **Frontend Types**:
+  - `src/frontend/src/modules/blood-inventory/types/inventory.types.ts`
+- **Frontend API Service & Hooks**:
+  - `src/frontend/src/modules/blood-inventory/services/inventoryApi.ts`
+  - `src/frontend/src/modules/blood-inventory/hooks/useInventory.ts`
+- **Shared UI Components**:
+  - `src/frontend/src/modules/blood-inventory/components/BloodBagStatusBadge.tsx`
+  - `src/frontend/src/modules/blood-inventory/components/BloodTypeBadge.tsx`
+  - `src/frontend/src/modules/blood-inventory/components/DaysRemainingProgressBar.tsx`
+  - `src/frontend/src/modules/blood-inventory/components/BloodBagSearchFilter.tsx`
 
-export const stockInBatchSchema = z.object({
-  entries: z.array(stockInEntrySchema).min(1, 'At least one blood bag entry is required'),
-});
-
-export type StockInEntry = z.infer<typeof stockInEntrySchema>;
-export type StockInBatch = z.infer<typeof stockInBatchSchema>;
-```
-
-```typescript
-// stockOutSchema.ts
-export const stockOutSchema = z.object({
-  bagIds: z.array(z.string()).min(1, 'Select at least one blood bag'),
-  reason: z.enum(['Dispatch', 'Disposal', 'Transfer', 'Other']),
-  notes: z.string().optional(),
-});
-
-export type StockOutInput = z.infer<typeof stockOutSchema>;
-```
-
----
-
-## 5. Chart Library
-
-**Recommendation: `recharts`**
-
-| Feature | recharts | chart.js |
-| :--- | :--- | :--- |
-| React-native support | ✅ Built for React | ⚠ Wrapper needed |
-| TypeScript | ✅ Native | ⚠ Community types |
-| Customization | ✅ Component-based | ⚠ Config-based |
-| Bundle size | ~45KB | ~60KB |
-| Responsive | ✅ ResponsiveContainer | ⚠ Manual |
-
-Dependencies: `recharts`
-
-Charts needed:
-- `<BarChart>` — blood units by type
-- `<PieChart>` — blood type distribution
-- `<ResponsiveContainer>` — wrapper for responsive sizing
+### Phase 3: Page-Level Components & Feature Flows (Additive Only)
+- **Pages**:
+  - `src/frontend/src/modules/blood-inventory/pages/InventoryListPage.tsx` (BC-UC-12, BC-UC-17)
+  - `src/frontend/src/modules/blood-inventory/pages/BloodBagDetailPage.tsx` (BC-UC-13)
+  - `src/frontend/src/modules/blood-inventory/pages/StockInPage.tsx` (BC-UC-14)
+  - `src/frontend/src/modules/blood-inventory/pages/StockOutPage.tsx` (BC-UC-15)
+  - `src/frontend/src/modules/blood-inventory/pages/InventoryStatsPage.tsx` (BC-UC-16)
+- **Sub-components**:
+  - `src/frontend/src/modules/blood-inventory/components/StatusEditModal.tsx`
+  - `src/frontend/src/modules/blood-inventory/components/FefoRecommendationPanel.tsx`
+  - `src/frontend/src/modules/blood-inventory/components/InventoryAnalyticsChart.tsx`
 
 ---
 
-## 6. Status Transition Matrix (for BC-UC-14)
+## 4. Read-Only Integration Points & Minimal Routing Additions
 
-Valid status transitions enforced in the UI dropdown:
+1. **Backend Main App (`src/backend-core/src/app.ts`)**:
+   - *Minimal Addition*: Register new route middleware `app.use('/api/v1/bc/inventory', inventoryRoutes)`.
+2. **Frontend App Router (`src/frontend/src/App.tsx`)**:
+   - *Minimal Addition*: Mount new route pages under existing `/bc/` layout.
 
-| Current Status | Can Change To |
-| :--- | :--- |
-| Available | Reserved, Used, Expired, Discarded |
-| Reserved | Available, Used, Discarded |
-| Used | *(No transitions — terminal state)* |
-| Expired | *(No transitions — terminal state, AF-02)* |
-| Discarded | *(No transitions — terminal state)* |
+---
 
-The `StatusEditForm` component must only show valid next-states based on current status.
+## 5. Rollback Plan
+
+Because all code is created within isolated module folders:
+- **Backend Rollback**: Delete `src/backend-core/src/modules/blood-inventory/` and unmount route in `app.ts`.
+- **Frontend Rollback**: Delete `src/frontend/src/modules/blood-inventory/` and remove routes from `App.tsx`.
+- **Database Rollback**: Drop `blood_bags` collection in MongoDB.
+
+---
+
+## 6. Constitution Check
+
+- ✅ **Additive Only**: All new features isolated to dedicated module folders.
+- ✅ **No Breaking Changes**: Existing APIs, schemas, and routes remain 100% untouched.
+- ✅ **Verification Ready**: E2E test scenarios documented in `quickstart.md`.

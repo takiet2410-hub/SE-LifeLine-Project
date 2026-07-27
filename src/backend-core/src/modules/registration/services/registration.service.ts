@@ -252,14 +252,17 @@ export class RegistrationService {
       },
       screening: screeningForm ? {
         screeningFormId: screeningForm._id.toString(),
-        medicalHistory: screeningForm.medicalHistory || {},
-        currentHealthStatus: screeningForm.currentHealthStatus || 'Healthy',
-        recentTravel: screeningForm.recentTravel || 'None',
-        medicationHistory: screeningForm.medicationHistory || 'None',
-        consentGiven: screeningForm.consentGiven ?? true,
+        responses: screeningForm.responses || [],
+        outcome: screeningForm.outcome || 'PASS',
+        submittedAt: screeningForm.submittedAt,
+        medicalHistory: (screeningForm as any).medicalHistory || {},
+        currentHealthStatus: (screeningForm as any).currentHealthStatus || 'Healthy',
+        recentTravel: (screeningForm as any).recentTravel || 'None',
+        medicationHistory: (screeningForm as any).medicationHistory || 'None',
+        consentGiven: (screeningForm as any).consentGiven ?? true,
         vitals: (screeningForm as any).vitals || (digitalRecord?.screeningSummary as any)?.staffVitals || null,
         screeningNotes: (screeningForm as any).screeningNotes || digitalRecord?.clinicalNotes || '',
-        eligibilityFlag: screeningForm.eligibilityFlag || 'RequiresReview'
+        eligibilityFlag: (screeningForm as any).eligibilityFlag || 'RequiresReview'
       } : null,
       createdAt: (appointment as any).createdAt,
       updatedAt: (appointment as any).updatedAt
@@ -272,14 +275,16 @@ export class RegistrationService {
   static async updateRegistrationScreening(
     registrationIdStr: string,
     payload: {
-      vitals: {
+      bloodType?: string;
+      vitals?: {
         bloodPressure: string;
         weight: number;
         bodyTemperature: number;
         hemoglobinLevel: number;
       };
       screeningNotes?: string;
-      status: 'Pending' | 'Confirmed' | 'Rejected' | 'CheckedIn' | 'Eligible' | 'Ineligible' | 'Completed' | 'Eligible for Donation' | 'Ineligible for Donation' | 'Donation Completed';
+      status?: 'Pending' | 'Confirmed' | 'Rejected' | 'CheckedIn' | 'Eligible' | 'Ineligible' | 'Completed' | 'Eligible for Donation' | 'Ineligible for Donation' | 'Donation Completed';
+      responses?: Array<{ questionId: string; selectedOptions: string[]; description?: string }>;
     },
     actorUserId: string,
     ipAddress?: string
@@ -307,13 +312,26 @@ export class RegistrationService {
     const executeUpdate = async (session?: mongoose.ClientSession) => {
       const opts = session ? { session } : {};
 
+      // 0. Update bloodType in DonorProfile if bloodType is provided in payload
+      if (payload.bloodType) {
+        await DonorProfile.findOneAndUpdate(
+          { userId: appointment.donorId },
+          { bloodType: payload.bloodType as any },
+          opts
+        );
+      }
+
       // 1. Update or create ScreeningForm
       let screeningForm = await ScreeningForm.findOne({ appointmentId: registrationId }, null, opts);
-      const eligibilityFlag = (payload.status === 'Eligible for Donation' || payload.status === 'Eligible') ? 'Eligible' : 'Ineligible';
+      const eligibilityFlag = payload.status
+        ? (payload.status === 'Eligible for Donation' || payload.status === 'Eligible') ? 'Eligible' : 'Ineligible'
+        : (screeningForm as any)?.eligibilityFlag || 'RequiresReview';
 
       if (!screeningForm) {
         screeningForm = new ScreeningForm({
           appointmentId: registrationId,
+          responses: payload.responses || [],
+          outcome: eligibilityFlag === 'Eligible' ? 'PASS' : 'REJECT',
           medicalHistory: {},
           currentHealthStatus: 'Evaluated by Blood Center Staff',
           recentTravel: 'N/A',
@@ -322,82 +340,88 @@ export class RegistrationService {
           eligibilityFlag
         });
       } else {
-        screeningForm.eligibilityFlag = eligibilityFlag as any;
-        if (!screeningForm.currentHealthStatus) {
-          screeningForm.currentHealthStatus = 'Evaluated by Blood Center Staff';
+        if (payload.status) {
+          (screeningForm as any).eligibilityFlag = eligibilityFlag;
+          if (eligibilityFlag === 'Eligible') {
+            screeningForm.outcome = 'PASS' as any;
+          } else if (eligibilityFlag === 'Ineligible') {
+            screeningForm.outcome = 'REJECT' as any;
+          }
         }
-        if (!screeningForm.recentTravel) {
-          screeningForm.recentTravel = 'N/A';
-        }
-        if (!screeningForm.medicationHistory) {
-          screeningForm.medicationHistory = 'N/A';
-        }
-        if (screeningForm.consentGiven === undefined) {
-          screeningForm.consentGiven = true;
+        if (payload.responses) {
+          screeningForm.responses = payload.responses as any;
         }
       }
 
-      (screeningForm as any).vitals = payload.vitals;
-      (screeningForm as any).screeningNotes = payload.screeningNotes || '';
+      if (payload.vitals) {
+        (screeningForm as any).vitals = payload.vitals;
+      }
+      if (payload.screeningNotes !== undefined) {
+        (screeningForm as any).screeningNotes = payload.screeningNotes;
+      }
       (screeningForm as any).reviewedByStaffId = toObjectId(actorUserId);
       await screeningForm.save(opts);
 
-      // 2. Map payload status to valid AppointmentStatus enum on Appointment model
-      let targetAppointmentStatus: AppointmentStatus;
-      if (payload.status === 'Donation Completed' || payload.status === 'Completed') {
-        targetAppointmentStatus = AppointmentStatus.Completed;
-      } else if (payload.status === 'Ineligible for Donation' || payload.status === 'Ineligible' || payload.status === 'Rejected') {
-        targetAppointmentStatus = AppointmentStatus.Cancelled;
-      } else if (payload.status === 'Confirmed' || payload.status === 'Eligible' || payload.status === 'Eligible for Donation') {
-        targetAppointmentStatus = AppointmentStatus.Confirmed;
-      } else if (payload.status === 'Pending') {
-        targetAppointmentStatus = AppointmentStatus.Pending;
-      } else {
-        targetAppointmentStatus = AppointmentStatus.CheckedIn;
+      // 2. Map payload status to valid AppointmentStatus enum on Appointment model if status is provided
+      if (payload.status) {
+        let targetAppointmentStatus: AppointmentStatus;
+        if (payload.status === 'Donation Completed' || payload.status === 'Completed') {
+          targetAppointmentStatus = AppointmentStatus.Completed;
+        } else if (payload.status === 'Ineligible for Donation' || payload.status === 'Ineligible' || payload.status === 'Rejected') {
+          targetAppointmentStatus = AppointmentStatus.Cancelled;
+        } else if (payload.status === 'Confirmed' || payload.status === 'Eligible' || payload.status === 'Eligible for Donation') {
+          targetAppointmentStatus = AppointmentStatus.Confirmed;
+        } else if (payload.status === 'Pending') {
+          targetAppointmentStatus = AppointmentStatus.Pending;
+        } else {
+          targetAppointmentStatus = AppointmentStatus.CheckedIn;
+        }
+
+        // Generate E-Ticket if appointment is confirmed/scheduled and does not have an ETicket yet
+        if ((targetAppointmentStatus === AppointmentStatus.Confirmed || (targetAppointmentStatus as any) === AppointmentStatus.Scheduled) && !appointment.eTicketId) {
+          const ticketCode = `TK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+          const qrPayloadSigned = `SIGNED-${ticketCode}`;
+          let fileUrl = `https://res.cloudinary.com/lifeline/etickets/${ticketCode}.png`;
+          try {
+            const qrBuffer = await QRCode.toBuffer(qrPayloadSigned);
+            const uploadedUrl = await uploadImageToCloudinary(qrBuffer, 'etickets');
+            if (uploadedUrl) fileUrl = uploadedUrl;
+          } catch (e) {}
+
+          const newETicket = new ETicket({
+            appointmentId: registrationId,
+            ticketCode,
+            qrPayloadSigned,
+            fileUrl,
+            issuedAt: new Date()
+          });
+          await newETicket.save(opts);
+          appointment.eTicketId = newETicket._id as any;
+        }
+
+        appointment.status = targetAppointmentStatus;
       }
 
-      // Generate E-Ticket if appointment is confirmed/scheduled and does not have an ETicket yet
-      if ((targetAppointmentStatus === AppointmentStatus.Confirmed || (targetAppointmentStatus as any) === AppointmentStatus.Scheduled) && !appointment.eTicketId) {
-        const ticketCode = `TK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-        const qrPayloadSigned = `SIGNED-${ticketCode}`;
-        let fileUrl = `https://res.cloudinary.com/lifeline/etickets/${ticketCode}.png`;
-        try {
-          const qrBuffer = await QRCode.toBuffer(qrPayloadSigned);
-          const uploadedUrl = await uploadImageToCloudinary(qrBuffer, 'etickets');
-          if (uploadedUrl) fileUrl = uploadedUrl;
-        } catch (e) {}
-
-        const newETicket = new ETicket({
-          appointmentId: registrationId,
-          ticketCode,
-          qrPayloadSigned,
-          fileUrl,
-          issuedAt: new Date()
-        });
-        await newETicket.save(opts);
-        appointment.eTicketId = newETicket._id as any;
-      }
-
-      appointment.status = targetAppointmentStatus;
       appointment.screeningFormId = screeningForm._id as any;
       await appointment.save(opts);
 
-      // 3. Map status to DigitalDonorRecord enum: ['Pending', 'Confirmed', 'Rejected', 'CheckedIn', 'Eligible', 'Ineligible', 'Completed']
-      let mongoDonationStatus: 'Pending' | 'Confirmed' | 'Rejected' | 'CheckedIn' | 'Eligible' | 'Ineligible' | 'Completed';
-      if (payload.status === 'Eligible for Donation' || payload.status === 'Eligible') mongoDonationStatus = 'Eligible';
-      else if (payload.status === 'Ineligible for Donation' || payload.status === 'Ineligible') mongoDonationStatus = 'Ineligible';
-      else if (payload.status === 'Donation Completed' || payload.status === 'Completed') mongoDonationStatus = 'Completed';
-      else if (payload.status === 'Confirmed') mongoDonationStatus = 'Confirmed';
-      else if (payload.status === 'Rejected') mongoDonationStatus = 'Rejected';
-      else if (payload.status === 'CheckedIn') mongoDonationStatus = 'CheckedIn';
-      else mongoDonationStatus = 'Pending';
-
+      // 3. Map status to DigitalDonorRecord
       let digitalRecord = await DigitalDonorRecord.findOne({ appointmentId: registrationId }, null, opts);
+      const mongoDonationStatus = payload.status
+        ? (payload.status === 'Eligible for Donation' || payload.status === 'Eligible') ? 'Eligible'
+          : (payload.status === 'Ineligible for Donation' || payload.status === 'Ineligible') ? 'Ineligible'
+          : (payload.status === 'Donation Completed' || payload.status === 'Completed') ? 'Completed'
+          : (payload.status === 'Confirmed') ? 'Confirmed'
+          : (payload.status === 'Rejected') ? 'Rejected'
+          : (payload.status === 'CheckedIn') ? 'CheckedIn'
+          : 'Pending'
+        : digitalRecord?.donationStatus || 'Pending';
+
       if (!digitalRecord) {
         digitalRecord = new DigitalDonorRecord({
           appointmentId: registrationId,
           donorId: appointment.donorId,
-          screeningSummary: { staffVitals: payload.vitals },
+          screeningSummary: { staffVitals: payload.vitals || null },
           donationStatus: mongoDonationStatus,
           clinicalNotes: payload.screeningNotes || '',
           lastUpdatedAt: new Date()
@@ -406,10 +430,14 @@ export class RegistrationService {
         const existingSummary = (digitalRecord.screeningSummary as Record<string, any>) || {};
         digitalRecord.screeningSummary = {
           ...existingSummary,
-          staffVitals: payload.vitals
+          ...(payload.vitals ? { staffVitals: payload.vitals } : {})
         };
-        digitalRecord.donationStatus = mongoDonationStatus;
-        digitalRecord.clinicalNotes = payload.screeningNotes || '';
+        if (payload.status) {
+          digitalRecord.donationStatus = mongoDonationStatus;
+        }
+        if (payload.screeningNotes !== undefined) {
+          digitalRecord.clinicalNotes = payload.screeningNotes;
+        }
         digitalRecord.lastUpdatedAt = new Date();
       }
       await digitalRecord.save(opts);
@@ -427,26 +455,27 @@ export class RegistrationService {
       }], opts);
     };
 
-    // Attempt transactional execution
-    let session: mongoose.ClientSession | null = null;
-    try {
-      session = await mongoose.startSession();
-      await session.withTransaction(async () => {
-        await executeUpdate(session!);
-      });
-    } catch (txError: any) {
-      console.error('TxError details:', txError?.errInfo ? JSON.stringify(txError.errInfo, null, 2) : txError);
-      // Fallback for standalone MongoDB environments where transactions are not supported
+    // Attempt transactional execution if connected to MongoDB
+    if (mongoose.connection.readyState === 1) {
+      let session: mongoose.ClientSession | null = null;
       try {
-        await executeUpdate();
-      } catch (fallbackError: any) {
-        console.error('FallbackError details:', fallbackError?.errInfo ? JSON.stringify(fallbackError.errInfo, null, 2) : fallbackError);
-        throw fallbackError;
+        session = await mongoose.startSession();
+        await session.withTransaction(async () => {
+          await executeUpdate(session!);
+        });
+      } catch (txError: any) {
+        try {
+          await executeUpdate();
+        } catch (fallbackError: any) {
+          throw fallbackError;
+        }
+      } finally {
+        if (session) {
+          session.endSession();
+        }
       }
-    } finally {
-      if (session) {
-        session.endSession();
-      }
+    } else {
+      await executeUpdate();
     }
 
     // Trigger Email Notification with attached E-ticket asynchronously if appointment status was set to Confirmed

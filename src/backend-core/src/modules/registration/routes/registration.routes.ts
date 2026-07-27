@@ -132,17 +132,13 @@ router.get(
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - vitals
- *               - status
  *             properties:
+ *               bloodType:
+ *                 type: string
+ *                 enum: [A+, A-, B+, B-, AB+, AB-, O+, O-, Unknown]
+ *                 description: Cập nhật nhóm máu người hiến (đồng bộ vào DonorProfile)
  *               vitals:
  *                 type: object
- *                 required:
- *                   - bloodPressure
- *                   - weight
- *                   - bodyTemperature
- *                   - hemoglobinLevel
  *                 properties:
  *                   bloodPressure:
  *                     type: string
@@ -161,6 +157,19 @@ router.get(
  *               status:
  *                 type: string
  *                 enum: [Pending, Confirmed, Rejected, CheckedIn, Eligible, Ineligible, Completed, Eligible for Donation, Ineligible for Donation, Donation Completed]
+ *               responses:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     questionId:
+ *                       type: string
+ *                     selectedOptions:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     description:
+ *                       type: string
  *     responses:
  *       200:
  *         description: Successfully updated screening and donor status

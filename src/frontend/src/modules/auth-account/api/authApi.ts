@@ -5,14 +5,23 @@ const mapProfileResponseToAuthUser = (
   loginData: any,
   profileData: any
 ): AuthUser => {
+  const role = profileData?.role || loginData.user?.role || 'Donor';
+  const isStaff =
+    role === 'BloodCenterStaff' ||
+    role === 'HospitalStaff' ||
+    role === 'Administrator' ||
+    role.toLowerCase().includes('staff') ||
+    role.toLowerCase().includes('admin');
+
   return {
-    id: loginData.user?.id || loginData.user?._id || '',
-    email: loginData.user?.email || '',
-    fullName: profileData?.profileInfo?.fullName
-      || profileData?.fullName
-      || loginData.user?.fullName
-      || 'Donor User',
-    role: (profileData?.role || loginData.user?.role || 'donor') as any,
+    id: loginData.user?.id || loginData.user?._id || profileData?.id || '',
+    email: loginData.user?.email || profileData?.contactInfo?.email || '',
+    fullName:
+      profileData?.profileInfo?.fullName ||
+      profileData?.fullName ||
+      loginData.user?.fullName ||
+      (isStaff ? `Cán bộ ${role}` : 'Người hiến máu'),
+    role,
   };
 };
 
@@ -28,37 +37,44 @@ export const loginUser = async (
     if (response.data?.accessToken) {
       localStorage.setItem('accessToken', response.data.accessToken);
 
+      const userRole = response.data.user?.role || 'Donor';
+      const isStaff =
+        userRole === 'BloodCenterStaff' ||
+        userRole === 'HospitalStaff' ||
+        userRole === 'Administrator' ||
+        userRole.toLowerCase().includes('staff') ||
+        userRole.toLowerCase().includes('admin');
+
+      let user: AuthUser = {
+        id: response.data.user?.id || response.data.user?._id || '',
+        email: response.data.user?.email || credentials.idDocumentNumber,
+        fullName: isStaff ? `Cán bộ ${userRole}` : 'Người hiến máu',
+        role: userRole,
+      };
+
       try {
         const profileResponse = await apiClient.get('/users/profile');
         if (profileResponse.data) {
-          const user = mapProfileResponseToAuthUser(response.data, profileResponse.data);
-          localStorage.setItem('user', JSON.stringify(user));
-
-          return {
-            success: true,
-            message: response.data.message || 'Login successful',
-            token: response.data.accessToken,
-            user,
-          };
+          user = mapProfileResponseToAuthUser(response.data, profileResponse.data);
         }
       } catch (profileErr) {
-        console.warn('[authApi] Profile fetch after login failed:', profileErr);
+        console.warn('[authApi] Profile fetch note:', profileErr);
       }
+
+      localStorage.setItem('user', JSON.stringify(user));
+
+      return {
+        success: true,
+        message: response.data.message || 'Login successful',
+        token: response.data.accessToken,
+        user,
+      };
     }
 
-    const fallbackUser: AuthUser = {
-      id: response.data.user?.id || response.data.userId || '',
-      email: response.data.user?.email || credentials.idDocumentNumber,
-      fullName: response.data.user?.fullName || 'Donor User',
-      role: (response.data.user?.role || 'donor') as any,
-    };
-    localStorage.setItem('user', JSON.stringify(fallbackUser));
     return {
-      success: true,
-      message: response.data.message || 'Login successful',
-      token: response.data.accessToken,
-      user: fallbackUser,
-    } as any;
+      success: false,
+      message: response.data?.message || 'Login failed. Invalid response from server.',
+    };
   } catch (error: any) {
     if (error.response && error.response.data) {
       return {
@@ -78,12 +94,12 @@ export const getProfile = async (): Promise<{ success: boolean; message?: string
     const response = await apiClient.get('/users/profile');
     return {
       success: true,
-      user: response.data
+      user: response.data,
     };
   } catch (error: any) {
     return {
       success: false,
-      message: error.response?.data?.message || 'Failed to fetch profile.'
+      message: error.response?.data?.message || 'Failed to fetch profile.',
     };
   }
 };
@@ -198,12 +214,12 @@ export const updateProfile = async (data: any): Promise<AuthResponse> => {
     const response = await apiClient.patch('/users/profile', data);
     return {
       success: true,
-      message: response.data?.message || 'Cap nhat thanh cong'
+      message: response.data?.message || 'Cập nhật thành công',
     };
   } catch (error: any) {
     return {
       success: false,
-      message: error.response?.data?.message || 'Cap nhat that bai'
+      message: error.response?.data?.message || 'Cập nhật thất bại',
     };
   }
 };

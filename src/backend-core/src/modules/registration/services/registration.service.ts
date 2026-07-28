@@ -35,27 +35,31 @@ export class RegistrationService {
     actorUserId: string,
     ipAddress?: string
   ) {
-    if (!mongoose.Types.ObjectId.isValid(campaignIdStr)) {
-      const err: any = new Error('Campaign not found');
-      err.statusCode = 404;
-      throw err;
-    }
+    const filter: any = {};
 
-    const campaignId = new mongoose.Types.ObjectId(campaignIdStr);
+    if (campaignIdStr && campaignIdStr !== 'all') {
+      if (!mongoose.Types.ObjectId.isValid(campaignIdStr)) {
+        const err: any = new Error('Campaign not found');
+        err.statusCode = 404;
+        throw err;
+      }
 
-    // 1. Verify campaign exists
-    const campaign = await Campaign.findById(campaignId);
-    if (!campaign) {
-      const err: any = new Error('Campaign not found');
-      err.statusCode = 404;
-      throw err;
+      const campaignId = new mongoose.Types.ObjectId(campaignIdStr);
+
+      // 1. Verify campaign exists
+      const campaign = await Campaign.findById(campaignId);
+      if (!campaign) {
+        const err: any = new Error('Campaign not found');
+        err.statusCode = 404;
+        throw err;
+      }
+
+      filter.campaignId = campaignId;
     }
 
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 20;
     const skip = (page - 1) * limit;
-
-    const filter: any = { campaignId };
 
     // Filter by appointment status if provided
     if (query.status) {
@@ -151,21 +155,34 @@ export class RegistrationService {
       Appointment.countDocuments(filter)
     ]);
 
-    // Format registration items with populated donor summary
+    // Format registration items with populated donor summary & screening form
     const items = await Promise.all(
       appointments.map(async (app: any) => {
         const donorUser = await User.findById(app.donorId).lean();
         const donorProfile = await DonorProfile.findOne({ userId: app.donorId }).lean();
         const digitalRecord = await DigitalDonorRecord.findOne({ appointmentId: app._id }).lean();
+        const screeningForm = await ScreeningForm.findOne({ appointmentId: app._id }).lean();
+        const campaignDoc = app.campaignId ? await Campaign.findById(app.campaignId).lean() : null;
 
         const displayStatus: string = digitalRecord?.donationStatus || app.status;
 
+        const screeningData = screeningForm ? {
+          screeningFormId: screeningForm._id.toString(),
+          responses: screeningForm.responses || [],
+          outcome: screeningForm.outcome || 'PASS',
+          submittedAt: (screeningForm as any).submittedAt,
+          vitals: (screeningForm as any).vitals || (digitalRecord?.screeningSummary as any)?.staffVitals || null,
+          screeningNotes: (screeningForm as any).screeningNotes || digitalRecord?.clinicalNotes || '',
+          eligibilityFlag: (screeningForm as any).eligibilityFlag || 'RequiresReview'
+        } : null;
+
         return {
           registrationId: app._id.toString(),
-          campaignId: app.campaignId.toString(),
+          campaignId: app.campaignId ? app.campaignId.toString() : campaignIdStr,
+          campaignName: campaignDoc?.name || 'Chiến dịch Hiến máu',
           donor: {
-            donorId: app.donorId.toString(),
-            fullName: donorProfile?.fullName || 'N/A',
+            donorId: app.donorId ? app.donorId.toString() : '',
+            fullName: donorProfile?.fullName || (donorUser as any)?.fullName || 'N/A',
             idDocumentNumber: donorUser?.idDocumentNumber || donorProfile?.idDocumentNumber || 'N/A',
             phoneNumber: donorProfile?.phoneNumber || donorUser?.phone || 'N/A',
             bloodType: donorProfile?.bloodType || 'Unknown'
@@ -173,6 +190,8 @@ export class RegistrationService {
           appointmentDate: app.appointmentDate,
           timeSlot: app.timeSlot,
           status: displayStatus,
+          screening: screeningData,
+          screeningForm: screeningData,
           createdAt: app.createdAt
         };
       })
@@ -232,6 +251,21 @@ export class RegistrationService {
 
     const displayStatus: string = digitalRecord?.donationStatus || appointment.status;
 
+    const screeningData = screeningForm ? {
+      screeningFormId: screeningForm._id.toString(),
+      responses: screeningForm.responses || [],
+      outcome: screeningForm.outcome || 'PASS',
+      submittedAt: screeningForm.submittedAt,
+      medicalHistory: (screeningForm as any).medicalHistory || {},
+      currentHealthStatus: (screeningForm as any).currentHealthStatus || 'Healthy',
+      recentTravel: (screeningForm as any).recentTravel || 'None',
+      medicationHistory: (screeningForm as any).medicationHistory || 'None',
+      consentGiven: (screeningForm as any).consentGiven ?? true,
+      vitals: (screeningForm as any).vitals || (digitalRecord?.screeningSummary as any)?.staffVitals || null,
+      screeningNotes: (screeningForm as any).screeningNotes || digitalRecord?.clinicalNotes || '',
+      eligibilityFlag: (screeningForm as any).eligibilityFlag || 'RequiresReview'
+    } : null;
+
     return {
       registrationId: appointment._id.toString(),
       campaignId: appointment.campaignId.toString(),
@@ -250,20 +284,8 @@ export class RegistrationService {
         lastDonationDate: donorProfile?.lastDonationDate,
         totalDonations: donorProfile?.totalDonations || 0
       },
-      screening: screeningForm ? {
-        screeningFormId: screeningForm._id.toString(),
-        responses: screeningForm.responses || [],
-        outcome: screeningForm.outcome || 'PASS',
-        submittedAt: screeningForm.submittedAt,
-        medicalHistory: (screeningForm as any).medicalHistory || {},
-        currentHealthStatus: (screeningForm as any).currentHealthStatus || 'Healthy',
-        recentTravel: (screeningForm as any).recentTravel || 'None',
-        medicationHistory: (screeningForm as any).medicationHistory || 'None',
-        consentGiven: (screeningForm as any).consentGiven ?? true,
-        vitals: (screeningForm as any).vitals || (digitalRecord?.screeningSummary as any)?.staffVitals || null,
-        screeningNotes: (screeningForm as any).screeningNotes || digitalRecord?.clinicalNotes || '',
-        eligibilityFlag: (screeningForm as any).eligibilityFlag || 'RequiresReview'
-      } : null,
+      screening: screeningData,
+      screeningForm: screeningData,
       createdAt: (appointment as any).createdAt,
       updatedAt: (appointment as any).updatedAt
     };

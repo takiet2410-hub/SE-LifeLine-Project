@@ -11,4 +11,5 @@ export { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 export { VerifyOTPPage } from './pages/VerifyOTPPage';
 export { ResetPasswordPage } from './pages/ResetPasswordPage';
 export { ResetSuccessPage } from './pages/ResetSuccessPage';
+export { BloodCenterLoginPage } from './pages/BloodCenterLoginPage';
 export type * from './types';

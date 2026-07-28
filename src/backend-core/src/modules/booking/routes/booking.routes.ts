@@ -203,4 +203,26 @@ router.post('/appointments/:id/sync-bloodcenter', authenticateJWT, BookingContro
  */
 router.post('/appointments/:id/confirm', authenticateJWT, BookingController.confirmAppointment);
 
+/**
+ * @openapi
+ * /api/v1/bookings/appointments/{id}/reject:
+ *   post:
+ *     summary: BloodCenter từ chối/tạm hoãn đơn đăng ký và thông báo qua Email
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Từ chối thành công và đã gửi email thông báo
+ *       404:
+ *         description: Không tìm thấy lịch hẹn
+ */
+router.post('/appointments/:id/reject', authenticateJWT, BookingController.rejectAppointment);
+
 export default router;

@@ -5,7 +5,7 @@ const isValidObjectId = (val: string) => Types.ObjectId.isValid(val);
 
 export const QueryRegistrationListSchema = z.object({
   params: z.object({
-    campaignId: z.string().refine(isValidObjectId, { message: 'Invalid campaignId format' })
+    campaignId: z.string().refine((val) => val === 'all' || isValidObjectId(val), { message: 'Invalid campaignId format' })
   }),
   query: z.object({
     page: z.preprocess((val) => (val ? Number(val) : 1), z.number().int().min(1)).default(1),

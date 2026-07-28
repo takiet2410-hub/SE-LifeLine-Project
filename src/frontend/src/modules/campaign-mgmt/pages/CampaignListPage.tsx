@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Calendar, MapPin, Eye } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Calendar,
+  MapPin,
+  Eye,
+  Users,
+  Activity,
+  Award,
+  Sparkles,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiService } from '../../../services/apiClient';
 import type { CampaignData } from '../../../services/mockData';
@@ -18,11 +28,26 @@ export const CampaignListPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
+  const formatDateSafe = (dateStr?: string | Date) => {
+    if (!dateStr) return 'N/A';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return 'N/A';
+      return format(d, 'dd/MM/yyyy');
+    } catch {
+      return 'N/A';
+    }
+  };
+
   const fetchCampaigns = async () => {
     setLoading(true);
     try {
       const data = await apiService.getCampaigns({ search, status: statusFilter });
-      setCampaigns(data);
+      const items = Array.isArray(data) ? data : ((data as any)?.data || []);
+      setCampaigns(items);
+    } catch (err) {
+      console.error('Error fetching campaigns:', err);
+      setCampaigns([]);
     } finally {
       setLoading(false);
     }
@@ -32,62 +57,92 @@ export const CampaignListPage: React.FC = () => {
     fetchCampaigns();
   }, [search, statusFilter]);
 
+  // Calculated Summary KPI Metrics
+  const totalCount = campaigns.length;
+  const activeCount = campaigns.filter((c) => c.status === 'Active').length;
+  const totalRegistered = campaigns.reduce(
+    (sum, c) => sum + (c.registeredCount || (c as any).capacityProgress?.registered || 0),
+    0
+  );
+  const totalCapacity = campaigns.reduce(
+    (sum, c) => sum + (c.capacity || (c as any).capacityProgress?.total || 0),
+    0
+  );
+
   const columns: Column<CampaignData>[] = [
     {
-      header: 'Tên chiến dịch',
-      accessor: (row) => (
-        <div>
-          <p className="font-semibold text-slate-900">{row.name}</p>
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
-            <MapPin className="w-3.5 h-3.5 text-slate-400" />
-            <span className="truncate max-w-xs">{row.venue}</span>
+      header: 'Mã & Tên chiến dịch',
+      accessor: (row: CampaignData) => {
+        const id = row._id || (row as any).id;
+        const code = (row as any).campaignCode || `#CMP-${id.slice(-6)}`;
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-[#1a1a2e] text-white rounded">
+                {code}
+              </span>
+              <p className="font-bold text-[#271816] text-[14px] hover:text-[#93000b] transition-colors cursor-pointer" onClick={() => navigate(`/bc/campaigns/${id}`)}>
+                {row.name || 'Chiến dịch Hiến máu'}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 text-[12px] text-[#6c757d]">
+              <MapPin className="w-3.5 h-3.5 text-[#93000b] shrink-0" />
+              <span className="truncate max-w-xs">{row.venue || (row as any).fullAddress || 'TP. Hồ Chí Minh'}</span>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       header: 'Thời gian',
-      accessor: (row) => (
-        <div className="text-xs space-y-0.5">
-          <div className="flex items-center gap-1 text-slate-700 font-medium">
-            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            <span>{format(new Date(row.startDateTime), 'dd/MM/yyyy')}</span>
+      accessor: (row: CampaignData) => (
+        <div className="text-[12px] space-y-0.5">
+          <div className="flex items-center gap-1.5 text-[#271816] font-medium">
+            <Calendar className="w-3.5 h-3.5 text-[#93000b] shrink-0" />
+            <span>{formatDateSafe(row.startDateTime)}</span>
           </div>
-          <p className="text-slate-400 pl-5">
-            đến {format(new Date(row.endDateTime), 'dd/MM/yyyy')}
+          <p className="text-[#6c757d] pl-5">
+            đến {formatDateSafe(row.endDateTime)}
           </p>
         </div>
       ),
     },
     {
       header: 'Nhóm máu ưu tiên',
-      accessor: (row) => (
-        <div className="flex flex-wrap gap-1">
-          {row.targetBloodGroups.map((group) => (
-            <span
-              key={group}
-              className="px-1.5 py-0.5 text-[11px] font-bold bg-red-50 text-red-700 rounded-md border border-red-200"
-            >
-              {group}
-            </span>
-          ))}
-        </div>
-      ),
+      accessor: (row: CampaignData) => {
+        const groups = Array.isArray(row.targetBloodGroups) && row.targetBloodGroups.length > 0
+          ? row.targetBloodGroups
+          : ['A+', 'B+', 'O+'];
+        return (
+          <div className="flex flex-wrap gap-1">
+            {groups.map((group, i) => (
+              <span
+                key={`${group}-${i}`}
+                className="px-2 py-0.5 text-[11px] font-bold bg-red-50 text-[#93000b] rounded-md border border-red-200 shadow-2xs"
+              >
+                {group}
+              </span>
+            ))}
+          </div>
+        );
+      },
     },
     {
-      header: 'Chỉ tiêu',
-      accessor: (row) => {
-        const percent = Math.min(100, Math.round((row.registeredCount / row.capacity) * 100));
+      header: 'Tiến độ đăng ký',
+      accessor: (row: CampaignData) => {
+        const reg = row.registeredCount || (row as any).capacityProgress?.registered || 0;
+        const cap = row.capacity || (row as any).capacityProgress?.total || 100;
+        const percent = Math.min(100, Math.round((reg / Math.max(1, cap)) * 100));
         return (
-          <div className="w-36">
-            <div className="flex justify-between text-xs font-semibold mb-1">
-              <span className="text-slate-700">{row.registeredCount} / {row.capacity}</span>
-              <span className="text-slate-500">{percent}%</span>
+          <div className="w-40">
+            <div className="flex justify-between text-[12px] font-bold mb-1">
+              <span className="text-[#271816]">{reg} / {cap} lượt</span>
+              <span className="text-[#93000b]">{percent}%</span>
             </div>
-            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-[#f1f3f5] rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${
-                  percent >= 100 ? 'bg-amber-500' : 'bg-red-600'
+                  percent >= 100 ? 'bg-amber-500' : 'bg-[#93000b]'
                 }`}
                 style={{ width: `${percent}%` }}
               />
@@ -98,80 +153,162 @@ export const CampaignListPage: React.FC = () => {
     },
     {
       header: 'Trạng thái',
-      accessor: (row) => <StatusBadge status={row.status} />,
+      accessor: (row: CampaignData) => <StatusBadge status={row.status || 'Active'} />,
     },
     {
-      header: 'Hành động',
-      accessor: (row) => (
-        <button
-          onClick={() => navigate(`/bc/campaigns/${row._id}`)}
-          className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center gap-1.5 transition-colors"
-        >
-          <Eye className="w-3.5 h-3.5" />
-          <span>Chi tiết</span>
-        </button>
-      ),
+      header: 'Thao tác',
+      accessor: (row: CampaignData) => {
+        const id = row._id || (row as any).id;
+        return (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => navigate(`/bc/campaigns/${id}`)}
+              className="px-2.5 py-1.5 text-[12px] font-semibold text-[#271816] bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center gap-1 transition-all shadow-2xs cursor-pointer"
+              title="Xem chi tiết chiến dịch"
+            >
+              <Eye className="w-3.5 h-3.5 text-[#93000b]" />
+              <span>Chi tiết</span>
+            </button>
+            <button
+              onClick={() => navigate(`/bc/campaigns/${id}/registrations`)}
+              className="px-2.5 py-1.5 text-[12px] font-semibold text-white bg-[#93000b] hover:bg-[#7a0009] rounded-lg flex items-center gap-1 transition-all shadow-2xs cursor-pointer"
+              title="Danh sách người đăng ký"
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Đăng ký</span>
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Top Banner & Quick Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-6 rounded-2xl shadow-xs">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">{t('campaign.title')}</h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Quản lý các đợt hiến máu lưu động và theo dõi chỉ tiêu đăng ký
+          <div className="flex items-center gap-2">
+            <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
+              {t('campaign.title') || 'Quản Lý Chiến Dịch Hiến Máu'}
+            </h2>
+            <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-red-50 text-[#93000b] border border-red-100 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-[#93000b]" />
+              Live Feed
+            </span>
+          </div>
+          <p className="text-[13px] font-normal text-[#6c757d] mt-1">
+            Điều phối các đợt tiếp nhận máu lưu động, theo dõi tiến độ đăng ký và duyệt hồ sơ người hiến.
           </p>
         </div>
-        <button
-          onClick={() => navigate('/bc/campaigns/create')}
-          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 shadow-sm shadow-red-900/20 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{t('campaign.createNew')}</span>
-        </button>
+
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => navigate('/bc/campaigns/create')}
+            className="px-4.5 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[14px] font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-98"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tạo Chiến Dịch Mới</span>
+          </button>
+        </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white p-4 border border-slate-200 rounded-xl flex flex-col md:flex-row gap-3 items-center justify-between shadow-xs">
+      {/* KPI Overview Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1 */}
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-red-50 text-[#93000b] flex items-center justify-center shrink-0 border border-red-100">
+            <Activity className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[12px] font-medium text-[#6c757d] uppercase tracking-wide">Tổng số chiến dịch</p>
+            <p className="text-[24px] font-bold text-[#271816] leading-tight mt-0.5">{totalCount}</p>
+          </div>
+        </div>
+
+        {/* Card 2 */}
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[12px] font-medium text-[#6c757d] uppercase tracking-wide">Đang tiếp nhận</p>
+            <p className="text-[24px] font-bold text-emerald-700 leading-tight mt-0.5">{activeCount}</p>
+          </div>
+        </div>
+
+        {/* Card 3 */}
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[12px] font-medium text-[#6c757d] uppercase tracking-wide">Tổng lượt đăng ký</p>
+            <p className="text-[24px] font-bold text-[#271816] leading-tight mt-0.5">{totalRegistered}</p>
+          </div>
+        </div>
+
+        {/* Card 4 */}
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-100">
+            <Award className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[12px] font-medium text-[#6c757d] uppercase tracking-wide">Chỉ tiêu dự kiến</p>
+            <p className="text-[24px] font-bold text-[#271816] leading-tight mt-0.5">{totalCapacity} túi</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter and Search Control Bar */}
+      <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-col md:flex-row gap-3 items-center justify-between shadow-2xs">
         <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+          <Search className="w-4 h-4 text-[#a3a3a3] absolute left-3.5 top-3" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm theo tên chiến dịch, địa điểm..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-colors"
+            className="w-full pl-10 pr-4 py-2 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[13px] text-[#271816] placeholder-[#a3a3a3] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
-          <span className="text-xs font-medium text-slate-500 shrink-0">Lọc theo:</span>
-          {['All', 'Active', 'Full', 'Draft', 'Closed'].map((st) => (
+        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto">
+          <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Trạng thái:</span>
+          {[
+            { id: 'All', label: 'Tất cả' },
+            { id: 'Active', label: 'Đang mở' },
+            { id: 'Full', label: 'Đã đủ' },
+            { id: 'Draft', label: 'Bản nháp' },
+            { id: 'Closed', label: 'Đã đóng' },
+          ].map((st) => (
             <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shrink-0 ${
-                statusFilter === st
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              key={st.id}
+              onClick={() => setStatusFilter(st.id)}
+              className={`px-3 py-1.5 text-[12px] font-semibold rounded-xl transition-all shrink-0 cursor-pointer ${
+                statusFilter === st.id
+                  ? 'bg-[#93000b] text-white shadow-2xs'
+                  : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
               }`}
             >
-              {st === 'All' ? 'Tất cả' : st}
+              {st.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Campaign List Table */}
-      <DataTable
-        columns={columns}
-        data={campaigns}
-        keyExtractor={(item) => item._id}
-        isLoading={loading}
-        emptyMessage="Không tìm thấy chiến dịch hiến máu nào"
-      />
+      {/* Campaign List Data Table */}
+      <div className="bg-white border border-[#f1f3f5] rounded-2xl overflow-hidden shadow-2xs">
+        <DataTable
+          columns={columns}
+          data={campaigns}
+          keyExtractor={(item: CampaignData) => item._id || (item as any).id || 'cam'}
+          isLoading={loading}
+          emptyMessage="Không tìm thấy chiến dịch hiến máu nào phù hợp với bộ lọc."
+        />
+      </div>
     </div>
   );
 };
+
+export default CampaignListPage;

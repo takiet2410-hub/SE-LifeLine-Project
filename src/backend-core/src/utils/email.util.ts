@@ -137,3 +137,46 @@ export const sendBookingConfirmationEmail = async (
 
   return await sendEmailViaBrevo(email, subject, htmlContent);
 };
+
+/**
+ * Hàm gửi email thông báo từ chối / chưa đủ điều kiện cho người hiến máu
+ */
+export const sendBookingRejectionEmail = async (
+  email: string,
+  donorName: string,
+  campaignName: string,
+  appointmentDate: string | Date,
+  reason?: string
+) => {
+  const formattedDate = appointmentDate instanceof Date 
+    ? appointmentDate.toLocaleDateString('vi-VN') 
+    : new Date(appointmentDate).toLocaleDateString('vi-VN');
+
+  const subject = `[LifeLine] Thông báo về kết quả rà soát hồ sơ hiến máu - ${campaignName}`;
+  const htmlContent = `
+  <html>
+      <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #1e293b; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+              <h1 style="margin: 0; font-size: 24px;">LifeLine - Đợt Tiếp Nhận Máu</h1>
+          </div>
+          <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; padding: 24px;">
+              <h2 style="color: #be123c; margin-top: 0;">Xin chào ${donorName},</h2>
+              <p>Trung tâm Truyền máu xin chân thành cảm ơn sự đăng ký tham gia hiến máu của bạn.</p>
+              
+              <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                  <h3 style="margin-top: 0; color: #9f1239; border-bottom: 1px solid #fecdd3; padding-bottom: 8px;">Kết Quả Rà Soát Hồ Sơ</h3>
+                  <p style="margin: 8px 0;"><strong>Chiến dịch:</strong> ${campaignName}</p>
+                  <p style="margin: 8px 0;"><strong>Ngày đăng ký:</strong> ${formattedDate}</p>
+                  <p style="margin: 8px 0; color: #be123c;"><strong>Ghi chú từ Bác sĩ:</strong> ${reason || 'Chưa đủ điều kiện sức khỏe hoặc thuộc trường hợp tạm hoãn hiến máu đợt này.'}</p>
+              </div>
+
+              <p style="color: #475569; font-size: 14px;">Bạn có thể đăng ký lại vào các đợt hiến máu tiếp theo sau khi thể trạng đã sẵn sàng.</p>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+              <p style="margin: 0; text-align: center; color: #94a3b8; font-size: 13px;">Trân trọng,<br/><strong>Đội ngũ Trợ lý Y tế LifeLine</strong></p>
+          </div>
+      </body>
+  </html>
+  `;
+
+  return await sendEmailViaBrevo(email, subject, htmlContent);
+};

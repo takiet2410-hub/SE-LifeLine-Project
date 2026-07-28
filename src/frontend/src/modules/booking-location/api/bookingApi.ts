@@ -1,7 +1,7 @@
 import { apiClient } from '../../../shared/api/apiClient';
 
 // Backend AppointmentStatus enum values
-export type BackendAppointmentStatus = 'Scheduled' | 'CheckedIn' | 'Completed' | 'Cancelled' | 'NoShow';
+export type BackendAppointmentStatus = 'Scheduled' | 'CheckedIn' | 'Completed' | 'Cancelled' | 'NoShow' | 'Pending' | 'Confirmed';
 
 // Backend Campaign (when populated in appointment)
 export interface BackendCampaign {
@@ -50,7 +50,7 @@ export interface BackendAppointment {
 }
 
 // Mapped frontend appointment shape (used by UI components)
-export type AppointmentStatus = 'upcoming' | 'completed' | 'cancelled' | 'no-show';
+export type AppointmentStatus = 'upcoming' | 'completed' | 'cancelled' | 'no-show' | 'pending';
 
 export interface Appointment {
   id: string;
@@ -249,9 +249,6 @@ export const cancelAppointment = async (id: string, reason?: string): Promise<Ap
   try {
     const cancelReason = reason || 'Người dùng yêu cầu hủy lịch hẹn';
     const response = await apiClient.patch(`/bookings/appointments/${id}/cancel`, { reason: cancelReason });
-    // BUG-04 FIX: lưu message TRƯỚC khi destructure — response.data là object Appointment
-    // Backend cancelAppointment trả về Mongoose document, không có field 'message'
-    // nên ta dùng message cứng sau khi confirm success
     const successMessage = 'Hủy lịch hẹn thành công.';
     const rawAppointment: BackendAppointment = response.data;
     const mapped = mapBackendAppointment(rawAppointment);
@@ -261,9 +258,19 @@ export const cancelAppointment = async (id: string, reason?: string): Promise<Ap
       message: successMessage,
     };
   } catch (error: any) {
+    const errData = error.response?.data;
+    const isDeadline =
+      errData?.code === 'CANCELLATION_DEADLINE_PASSED' ||
+      errData?.message?.includes('CANCELLATION_DEADLINE_PASSED') ||
+      errData?.message?.includes('24');
+
+    const message = isDeadline
+      ? 'Đã quá thời hạn hủy lịch hẹn. Theo quy định, không thể hủy lịch hẹn khi thời điểm hẹn cách dưới 24 giờ hoặc lịch hẹn đã qua thời gian tiếp nhận.'
+      : errData?.message || 'Lỗi hệ thống. Vui lòng thử lại sau.';
+
     return {
       success: false,
-      message: error.response?.data?.message || 'Lỗi hệ thống. Vui lòng thử lại sau.',
+      message,
     };
   }
 };

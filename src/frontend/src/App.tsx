@@ -10,6 +10,7 @@ import {
   VerifyOTPPage,
   ResetPasswordPage,
   ResetSuccessPage,
+  BloodCenterLoginPage,
 } from './modules/auth-account';
 
 // Auth & Protected Route
@@ -58,6 +59,8 @@ function App() {
 
       {/* 2. Public Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/bc/login" element={<BloodCenterLoginPage />} />
+      <Route path="/bc-login" element={<BloodCenterLoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/register" element={<RegisterCitizenIdPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />

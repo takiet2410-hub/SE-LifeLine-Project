@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Campaign, ICampaign } from '../models/campaign.model';
 import { Appointment } from '../../booking/models/appointment.model';
 
@@ -214,12 +215,16 @@ export class CampaignService {
    * Sub-resource endpoint: Get Registrations for a Campaign
    */
   public static async getCampaignRegistrations(campaignId: string) {
-    const campaign = await Campaign.findById(campaignId);
-    if (!campaign) {
-      throw new Error('CAMPAIGN_NOT_FOUND');
+    let filter: any = {};
+    if (campaignId && campaignId !== 'all') {
+      if (mongoose.Types.ObjectId.isValid(campaignId)) {
+        filter = { campaignId: new mongoose.Types.ObjectId(campaignId) };
+      } else {
+        filter = { campaignId };
+      }
     }
 
-    const appointments = await Appointment.find({ campaignId })
+    const appointments = await Appointment.find(filter)
       .populate('donorId', 'fullName bloodType phone email idDocumentNumber')
       .populate('screeningFormId')
       .sort({ appointmentDate: -1 })

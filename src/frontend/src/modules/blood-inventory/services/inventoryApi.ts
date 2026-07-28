@@ -33,7 +33,7 @@ export const inventoryApi = {
       // Fallback to mock API if backend endpoint is unavailable
     }
 
-    const mockBags = await mockApiService.getBloodBags(params?.search, params?.bloodType, params?.status);
+    const mockBags = await mockApiService.getInventory(params?.search, params?.bloodType, params?.status);
     const page = params?.page || 1;
     const limit = params?.limit || 10;
     const total = mockBags.length;

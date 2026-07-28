@@ -24,32 +24,52 @@ export const LoginPage: React.FC = () => {
     try {
       const response = await loginUser(credentials);
 
-      if (response.success) {
-        // BUG-07 FIX: Populate AuthContext.user ngay sau login
-        // login() nhận token + user object để setState trong context
+      if (response.success && response.user) {
+        const userRole = response.user.role || 'Donor';
+        const roleLower = userRole.toLowerCase();
+
+        const isUserStaffRole =
+          userRole === 'BloodCenterStaff' ||
+          userRole === 'Administrator' ||
+          userRole === 'HospitalStaff' ||
+          roleLower.includes('staff') ||
+          roleLower.includes('admin') ||
+          roleLower.includes('hospital') ||
+          roleLower.includes('bloodcenter');
+
         if (response.token) {
           login(response.token, response.user);
         }
 
-        // Xử lý Remember Me
+        // Save Remember Me settings
         if (credentials.rememberMe) {
           localStorage.setItem('rememberedId', credentials.idDocumentNumber);
+          if (credentials.role) {
+            localStorage.setItem('rememberedRole', credentials.role);
+          }
         } else {
           localStorage.removeItem('rememberedId');
+          localStorage.removeItem('rememberedRole');
         }
 
-        setToastMessage('Login successful! Redirecting...');
+        const targetPortal = isUserStaffRole ? 'Blood Center Management' : 'Donor Portal';
+        setToastMessage(`Đăng nhập thành công (${userRole})! Đang chuyển hướng đến ${targetPortal}...`);
         setShowToast(true);
+
         setTimeout(() => {
-          navigate('/my-appointments');
-        }, 1500);
+          if (isUserStaffRole) {
+            navigate('/bc/campaigns', { replace: true });
+          } else {
+            navigate('/my-appointments', { replace: true });
+          }
+        }, 800);
       } else {
         setErrorMessage(
-          response.message || 'Invalid email or password. Please try again.'
+          response.message || 'Mật khẩu hoặc Số CCCD không hợp lệ. Vui lòng kiểm tra lại.'
         );
       }
     } catch (err) {
-      setErrorMessage('An unexpected error occurred. Please try again.');
+      setErrorMessage('Đã xảy ra lỗi kết nối máy chủ. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
@@ -68,8 +88,8 @@ export const LoginPage: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 md:py-16">
-        <div className="w-full max-w-[440px] flex flex-col items-center gap-8">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 md:py-14">
+        <div className="w-full max-w-[460px] flex flex-col items-center gap-6">
           {/* Brand Logo & Slogan Header */}
           <BrandIdentity />
 

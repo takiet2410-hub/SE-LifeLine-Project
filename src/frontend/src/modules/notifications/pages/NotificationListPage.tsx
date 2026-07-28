@@ -18,6 +18,17 @@ export const NotificationListPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
+  const formatDateSafe = (dateStr?: string | Date) => {
+    if (!dateStr) return 'N/A';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return 'N/A';
+      return format(d, 'dd/MM/yyyy HH:mm');
+    } catch {
+      return 'N/A';
+    }
+  };
+
   const fetchNotifications = async () => {
     setLoading(true);
     try {
@@ -37,7 +48,7 @@ export const NotificationListPage: React.FC = () => {
     try {
       await apiService.removeNotification(deleteTargetId);
       setNotifications((prev) => prev.filter((n) => n._id !== deleteTargetId));
-      toast.success('Đã xóa thông báo!');
+      toast.success('Đã xóa thông báo khỏi danh sách!');
     } catch (err) {
       toast.error('Xóa thông báo thất bại.');
     } finally {
@@ -48,38 +59,40 @@ export const NotificationListPage: React.FC = () => {
   const unreadCount = notifications.filter((n) => n.readAt === null).length;
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Top Banner Header */}
+      <div className="bg-white border border-[#f1f3f5] p-6 rounded-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-slate-900">Thông Báo Hệ Thống</h2>
+            <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
+              Thông Báo System & Yêu Cầu SOS
+            </h2>
             {unreadCount > 0 && (
-              <span className="px-2.5 py-0.5 text-xs font-bold bg-red-600 text-white rounded-full">
+              <span className="px-2.5 py-0.5 text-[11px] font-bold bg-[#93000b] text-white rounded-full">
                 {unreadCount} chưa đọc
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Cập nhật các yêu cầu máu cấp cứu (SOS) từ bệnh viện và cảnh báo hệ thống
+          <p className="text-[13px] font-normal text-[#6c757d] mt-1">
+            Tiếp nhận yêu cầu cấp cứu khẩn cấp (SOS) từ các bệnh viện đối tác và cảnh báo vận hành kho máu.
           </p>
         </div>
       </div>
 
       {/* Filter Controls */}
-      <div className="bg-white p-4 border border-slate-200 rounded-xl flex flex-wrap gap-3 items-center justify-between shadow-xs">
-        <div className="flex items-center gap-2 overflow-x-auto">
-          <span className="text-xs font-medium text-slate-500 shrink-0">Loại thông báo:</span>
+      <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-wrap gap-3 items-center justify-between shadow-2xs">
+        <div className="flex items-center gap-1.5 overflow-x-auto">
+          <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Loại thông báo:</span>
           {['All', 'SOS', 'Campaign', 'Routine'].map((type) => (
             <button
               key={type}
               onClick={() => setTypeFilter(type)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shrink-0 ${
+              className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all shrink-0 cursor-pointer ${
                 typeFilter === type
                   ? type === 'SOS'
-                    ? 'bg-red-600 text-white font-bold'
-                    : 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-[#93000b] text-white shadow-2xs'
+                    : 'bg-[#1a1a2e] text-white shadow-2xs'
+                  : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
               }`}
             >
               {type === 'All' ? 'Tất cả' : type === 'SOS' ? '🚨 Cấp cứu (SOS)' : type}
@@ -87,16 +100,16 @@ export const NotificationListPage: React.FC = () => {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-slate-500">Trạng thái:</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[12px] font-semibold text-[#6c757d] mr-1">Trạng thái:</span>
           {['All', 'Unread'].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all cursor-pointer ${
                 statusFilter === st
-                  ? 'bg-slate-800 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-[#1a1a2e] text-white shadow-2xs'
+                  : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
               }`}
             >
               {st === 'All' ? 'Tất cả' : 'Chưa đọc'}
@@ -109,9 +122,9 @@ export const NotificationListPage: React.FC = () => {
       {loading ? (
         <SkeletonLoader type="table" rows={4} />
       ) : notifications.length === 0 ? (
-        <EmptyState message="Không có thông báo nào" />
+        <EmptyState message="Không tìm thấy thông báo nào." />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           {notifications.map((item) => {
             const isSOS = item.type === 'SOS';
             const isUnread = item.readAt === null;
@@ -120,22 +133,22 @@ export const NotificationListPage: React.FC = () => {
               <div
                 key={item._id}
                 onClick={() => navigate(`/bc/notifications/${item._id}`)}
-                className={`rounded-xl p-5 border transition-all cursor-pointer relative group ${
+                className={`rounded-2xl p-5 border transition-all cursor-pointer relative group ${
                   isSOS
-                    ? 'bg-red-50 border-red-300 border-l-4 border-l-red-600 shadow-xs shadow-red-100 hover:bg-red-100/80'
+                    ? 'bg-red-50/70 border-red-300 border-l-4 border-l-[#93000b] shadow-xs hover:bg-red-100/70'
                     : isUnread
-                    ? 'bg-white border-slate-300 border-l-4 border-l-blue-600 shadow-xs hover:bg-slate-50'
-                    : 'bg-white border-slate-200 hover:bg-slate-50'
+                    ? 'bg-white border-[#f1f3f5] border-l-4 border-l-[#1a1a2e] shadow-2xs hover:bg-slate-50'
+                    : 'bg-white border-[#f1f3f5] hover:bg-slate-50'
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3.5">
+                  <div className="flex items-start gap-4">
                     {/* Icon */}
                     <div
-                      className={`p-2.5 rounded-full shrink-0 mt-0.5 ${
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                         isSOS
-                          ? 'bg-red-600 text-white shadow-xs animate-pulse'
-                          : 'bg-slate-100 text-slate-500'
+                          ? 'bg-[#93000b] text-white shadow-sm animate-pulse'
+                          : 'bg-slate-100 text-[#1a1a2e]'
                       }`}
                     >
                       {isSOS ? (
@@ -146,15 +159,15 @@ export const NotificationListPage: React.FC = () => {
                     </div>
 
                     {/* Notification Details */}
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3
-                          className={`text-sm ${
+                          className={`text-[15px] ${
                             isSOS
-                              ? 'text-red-950 font-bold text-base'
+                              ? 'text-[#93000b] font-bold'
                               : isUnread
-                              ? 'text-slate-900 font-bold'
-                              : 'text-slate-800 font-medium'
+                              ? 'text-[#271816] font-bold'
+                              : 'text-[#271816] font-medium'
                           }`}
                         >
                           {item.title}
@@ -162,32 +175,32 @@ export const NotificationListPage: React.FC = () => {
 
                         {/* Badge */}
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-[11px] ${
+                          className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                             isSOS
-                              ? 'bg-red-600 text-white font-extrabold uppercase tracking-wide shadow-2xs'
-                              : 'bg-blue-100 text-blue-700 font-semibold'
+                              ? 'bg-[#93000b] text-white shadow-2xs'
+                              : 'bg-blue-50 text-blue-700 border border-blue-100'
                           }`}
                         >
-                          {isSOS ? '🔴 SOS Emergency' : item.type}
+                          {isSOS ? '🚨 SOS EMERGENCY' : item.type}
                         </span>
                       </div>
 
                       <p
-                        className={`text-xs ${
-                          isSOS ? 'text-red-800 font-medium' : 'text-slate-600'
-                        } line-clamp-2 leading-relaxed`}
+                        className={`text-[13px] ${
+                          isSOS ? 'text-[#93000b] font-medium' : 'text-[#5b403d]'
+                        } leading-relaxed`}
                       >
                         {item.body}
                       </p>
 
-                      <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
-                        <span className="flex items-center gap-1 font-medium text-slate-500">
-                          <Hospital className="w-3.5 h-3.5" />
+                      <div className="flex items-center gap-4 text-[11px] text-[#6c757d] pt-1">
+                        <span className="flex items-center gap-1 font-semibold text-[#271816]">
+                          <Hospital className="w-3.5 h-3.5 text-[#93000b]" />
                           {item.senderName}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          {format(new Date(item.createdAt), 'dd/MM/yyyy HH:mm')}
+                          <Clock className="w-3.5 h-3.5 text-[#6c757d]" />
+                          {formatDateSafe(item.createdAt)}
                         </span>
                       </div>
                     </div>
@@ -199,7 +212,7 @@ export const NotificationListPage: React.FC = () => {
                       e.stopPropagation();
                       setDeleteTargetId(item._id);
                     }}
-                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-[#a3a3a3] hover:text-[#93000b] hover:bg-white rounded-lg transition-colors cursor-pointer"
                     title="Xóa thông báo"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -215,8 +228,8 @@ export const NotificationListPage: React.FC = () => {
       <ConfirmDialog
         isOpen={deleteTargetId !== null}
         title="Xóa thông báo?"
-        message="Bạn có chắc chắn muốn xóa thông báo này khỏi danh sách không?"
-        confirmLabel="Xóa ngay"
+        message="Bạn có chắc chắn muốn xóa thông báo này khỏi hệ thống không?"
+        confirmLabel="Xóa Ngay"
         cancelLabel="Hủy"
         variant="danger"
         onConfirm={handleConfirmDelete}
@@ -225,3 +238,5 @@ export const NotificationListPage: React.FC = () => {
     </div>
   );
 };
+
+export default NotificationListPage;

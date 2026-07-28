@@ -206,7 +206,6 @@ export const MyAppointmentPage: React.FC = () => {
   };
 
   const [isSyncing, setIsSyncing] = useState<Record<string, boolean>>({});
-  const [isConfirming, setIsConfirming] = useState<Record<string, boolean>>({});
 
   const handleSync = async (id: string) => {
     try {
@@ -222,24 +221,6 @@ export const MyAppointmentPage: React.FC = () => {
       toast.error('Lỗi kết nối khi đồng bộ');
     } finally {
       setIsSyncing(prev => ({ ...prev, [id]: false }));
-    }
-  };
-
-  const handleConfirmByBloodCenter = async (id: string) => {
-    try {
-      setIsConfirming(prev => ({ ...prev, [id]: true }));
-      const { confirmAppointmentByBloodCenterApi } = await import('../api/bookingApi');
-      const res = await confirmAppointmentByBloodCenterApi(id);
-      if (res.success) {
-        toast.success(res.message);
-        await loadAppointments();
-      } else {
-        toast.error(res.message);
-      }
-    } catch (err) {
-      toast.error('Lỗi kết nối khi xác nhận lịch hẹn');
-    } finally {
-      setIsConfirming(prev => ({ ...prev, [id]: false }));
     }
   };
 

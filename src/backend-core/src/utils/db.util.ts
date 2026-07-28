@@ -13,6 +13,10 @@ export const connectDB = async (): Promise<void> => {
         await mongoose.connection.db.command({ collMod: collName, validator: {}, validationLevel: 'off' }).catch(() => {});
       }
     }
+
+    // Auto-seed default roles and staff users if missing
+    const { seedDefaultUsers } = await import('./seed-users');
+    await seedDefaultUsers();
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
     process.exit(1);

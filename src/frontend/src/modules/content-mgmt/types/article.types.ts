@@ -17,7 +17,7 @@ export interface Article {
   status: ArticleStatus;
   coverImageUrl?: string;
   publishedAt?: string;
-  scheduledAt?: string;
+  scheduledAt?: string | null;
   targetAudience: TargetAudience[];
   authorStaffId: string;
   authorName: string;

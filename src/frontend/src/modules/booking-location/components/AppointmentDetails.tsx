@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDays, Clock, MapPin, Download, XCircle, Droplet, Activity, Heart, Scale, RefreshCw, QrCode, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { CalendarDays, Clock, MapPin, Download, XCircle, Droplet, Activity, Heart, Scale, QrCode, AlertCircle, CheckCircle2 } from 'lucide-react';
 import type { Appointment } from '../types';
 
 interface AppointmentDetailsProps {
@@ -16,15 +16,14 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   appointment,
   onCancel,
   onDownload,
-  onSync,
   onViewETicket,
-  isCancelling = false,
-  isSyncing = false
+  isCancelling = false
 }) => {
-  const isPending = appointment.status === 'pending' || (!appointment.qrCodeUrl && appointment.status !== 'completed' && appointment.status !== 'cancelled');
-  const isUpcoming = appointment.status === 'upcoming' || (Boolean(appointment.qrCodeUrl) && appointment.status !== 'completed' && appointment.status !== 'cancelled');
+  const isNoShow = appointment.status === 'no-show';
   const isCancelled = appointment.status === 'cancelled';
   const isCompleted = appointment.status === 'completed';
+  const isPending = !isNoShow && !isCancelled && !isCompleted && (appointment.status === 'pending' || !appointment.qrCodeUrl);
+  const isUpcoming = !isNoShow && !isCancelled && !isCompleted && (appointment.status === 'upcoming' || Boolean(appointment.qrCodeUrl));
 
   return (
     <div className="bg-white border border-[#f1f3f5] rounded-xl overflow-hidden shadow-sm h-full flex flex-col">
@@ -61,6 +60,11 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                   ĐÃ HỦY
                 </span>
               )}
+              {isNoShow && (
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-red-100 text-red-800 border border-red-300">
+                  <XCircle className="w-3.5 h-3.5 text-red-700" /> VẮNG MẶT / QUÁ HẠN HẸN
+                </span>
+              )}
 
               {appointment.bloodType && (
                 <span className="flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-bold bg-[#fff8f7] text-[#93000b] border border-[#93000b]/20">
@@ -80,6 +84,19 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
               <p className="text-[13px] font-bold">Lịch hẹn đang chờ Ngân hàng máu / Bệnh viện phê duyệt</p>
               <p className="text-[12px] text-amber-800 leading-snug mt-0.5">
                 Hồ sơ đăng ký của bạn đang được Bệnh viện rà soát. Ngay khi Bệnh viện xác nhận, hệ thống sẽ tự động gửi Email kèm Thẻ E-Ticket và mở quyền xem/tải về ngay trên ứng dụng.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* NoShow Status Notice Banner */}
+        {isNoShow && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-950">
+            <AlertCircle className="w-5 h-5 text-[#93000b] shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[13px] font-bold">Lịch hẹn đã quá thời gian hẹn và được đánh dấu Vắng Mặt</p>
+              <p className="text-[12px] text-red-800 leading-snug mt-0.5">
+                Do quá thời gian hẹn tiếp nhận mà chưa thực hiện check-in điểm danh, hệ thống đã tự động hủy lịch hẹn và ghi nhận trạng thái vắng mặt. Bạn có thể chọn địa điểm mới để đăng ký lại.
               </p>
             </div>
           </div>

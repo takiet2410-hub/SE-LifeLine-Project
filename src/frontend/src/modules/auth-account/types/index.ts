@@ -3,6 +3,7 @@ export interface LoginCredentials {
   email?: string;
   password: string;
   rememberMe?: boolean;
+  role?: string;
 }
 
 export interface AuthUser {

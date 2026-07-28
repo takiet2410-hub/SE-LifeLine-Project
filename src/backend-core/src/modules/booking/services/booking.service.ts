@@ -8,7 +8,7 @@ import { ETicket } from '../models/eticket.model';
 import { User } from '../../auth-account/models/user.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { DigitalDonorRecord } from '../../registration/models/digital-donor-record.model';
-import { sendBookingConfirmationEmail } from '../../../utils/email.util';
+import { sendBookingConfirmationEmail, sendBookingRejectionEmail } from '../../../utils/email.util';
 import { Campaign } from '../../campaign/models/campaign.model';
 
 const ensureHcmcCampaigns = async () => {
@@ -508,6 +508,83 @@ export class BookingService {
     }
   }
 
+  public static async rejectAppointmentByBloodCenter(id: string, reason?: string) {
+    const appointment = await Appointment.findById(id).populate('donorId').populate('campaignId');
+    if (!appointment) {
+      throw new Error('APPOINTMENT_NOT_FOUND');
+    }
+
+    appointment.status = AppointmentStatus.Cancelled;
+    await appointment.save();
+
+    const donor: any = appointment.donorId;
+    const campaign: any = appointment.campaignId;
+
+    if (donor && donor.email) {
+      try {
+        const donorName = donor.fullName || 'Người hiến máu';
+        const campaignName = campaign?.name || 'Chiến dịch hiến máu';
+        const appDate = appointment.appointmentDate;
+        await sendBookingRejectionEmail(donor.email, donorName, campaignName, appDate, reason);
+      } catch (err) {
+        console.error('Error sending rejection email:', err);
+      }
+    }
+
+    return appointment;
+  }
+
+  private static async checkAndMarkExpiredAppointments(appointments: any[]) {
+    if (!Array.isArray(appointments) || appointments.length === 0) return;
+    const now = new Date();
+
+    for (const app of appointments) {
+      if (!app || !app.appointmentDate) continue;
+      if (
+        app.status === AppointmentStatus.Pending ||
+        app.status === AppointmentStatus.Confirmed ||
+        app.status === AppointmentStatus.Scheduled
+      ) {
+        const endTime = new Date(app.appointmentDate);
+        let endHour = 23;
+        let endMinute = 59;
+
+        if (app.timeSlot) {
+          const parts = app.timeSlot.split('-');
+          if (parts.length > 1) {
+            const [h, m] = parts[1].trim().split(':').map(Number);
+            if (!isNaN(h)) endHour = h;
+            if (!isNaN(m)) endMinute = m;
+          } else if (parts.length === 1) {
+            const [h, m] = parts[0].trim().split(':').map(Number);
+            if (!isNaN(h)) endHour = h + 2;
+            if (!isNaN(m)) endMinute = m;
+          }
+        }
+
+        endTime.setHours(endHour, endMinute, 59, 999);
+
+        if (now > endTime) {
+          app.status = AppointmentStatus.NoShow;
+          await Appointment.updateOne(
+            { _id: app._id },
+            { $set: { status: AppointmentStatus.NoShow } }
+          );
+
+          if (app.eTicketId) {
+            const ticketId = typeof app.eTicketId === 'object' ? app.eTicketId._id : app.eTicketId;
+            if (ticketId) {
+              await ETicket.updateOne(
+                { _id: ticketId },
+                { $set: { qrPayloadSigned: 'EXPIRED' } }
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+
   public static async getAppointmentById(id: string, donorId: string) {
     const appointment = await Appointment.findOne({ _id: id, donorId })
       .populate('screeningFormId')
@@ -517,15 +594,18 @@ export class BookingService {
     if (!appointment) {
       throw new Error('APPOINTMENT_NOT_FOUND');
     }
+    await this.checkAndMarkExpiredAppointments([appointment]);
     return appointment;
   }
 
   public static async listAppointments(donorId: string) {
-    return await Appointment.find({ donorId })
+    const appointments = await Appointment.find({ donorId })
       .populate('campaignId')
       .populate('eTicketId')
       .sort({ appointmentDate: -1 })
       .lean();
+    await this.checkAndMarkExpiredAppointments(appointments);
+    return appointments;
   }
 
   public static async cancelAppointment(id: string, donorId: string) {

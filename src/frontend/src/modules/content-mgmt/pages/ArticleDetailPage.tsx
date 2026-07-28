@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Edit3, Trash2, Calendar, User, Clock, CheckCircle2, AlertCircle, Save } from 'lucide-react';
+import { ArrowLeft, Edit3, Trash2, Calendar, User, Clock, CheckCircle2, Save } from 'lucide-react';
 import { articleApi } from '../services/articleApi';
 import { PerformancePanel } from '../components/PerformancePanel';
 import { FeaturedMediaUpload } from '../components/FeaturedMediaUpload';
@@ -63,7 +63,7 @@ export const ArticleDetailPage: React.FC = () => {
 
   const editState = { title, bodyContent, category, status, coverImageUrl, scheduledAt, targetAudience };
 
-  const { hasUnsavedChanges, lastSavedTime, isSaving, markSaved } = useAutosave({
+  const { hasUnsavedChanges, lastSavedTime: _lastSavedTime, isSaving, markSaved } = useAutosave({
     data: editState,
     onSave: async (data) => {
       if (!articleId || !isEditing || !data.title.trim()) return;

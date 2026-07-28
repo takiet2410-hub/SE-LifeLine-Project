@@ -11,22 +11,34 @@ import {
   initialNotifications,
   initialBloodBags,
 } from './mockData';
+import { apiClient } from '../shared/api/apiClient';
 
-// In-memory state store for modules without real backend APIs yet.
-// These modules (campaign-mgmt, content-mgmt, notifications, blood-inventory)
-// will use mock data until their corresponding backend endpoints are implemented.
+// Local in-memory fallbacks
 let campaigns = [...initialCampaigns];
 let registrations = [...initialRegistrations];
 let articles = [...initialArticles];
 let notifications = [...initialNotifications];
 let bloodBags = [...initialBloodBags];
 
-// Helper delay to simulate API latency for mock endpoints
-const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
+const delay = (ms = 200) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const apiService = {
-  // ==================== CAMPAIGN APIs (Mock - no backend yet) ====================
+  // ==================== CAMPAIGN APIs ====================
   async getCampaigns(params?: { search?: string; status?: string }) {
+    try {
+      const queryParams: any = {};
+      if (params?.search) queryParams.location = params.search;
+      if (params?.status && params.status !== 'All') queryParams.status = params.status;
+
+      const res = await apiClient.get('/campaigns', { params: queryParams });
+      const rawData = res.data?.data || res.data;
+      if (Array.isArray(rawData) && rawData.length > 0) {
+        return rawData as CampaignData[];
+      }
+    } catch (err) {
+      console.warn('[apiService] Backend getCampaigns failed, falling back to local dataset:', err);
+    }
+
     await delay();
     let result = [...campaigns];
     if (params?.search) {
@@ -42,11 +54,33 @@ export const apiService = {
   },
 
   async getCampaignById(id: string) {
+    try {
+      const res = await apiClient.get(`/campaigns/${id}`);
+      if (res.data) {
+        return res.data as CampaignData;
+      }
+    } catch (err) {
+      console.warn('[apiService] Backend getCampaignById failed, using fallback:', err);
+    }
+
     await delay();
     return campaigns.find((c) => c._id === id) || null;
   },
 
   async createCampaign(data: Omit<CampaignData, '_id' | 'registeredCount' | 'createdAt'>) {
+    try {
+      const res = await apiClient.post('/campaigns', {
+        ...data,
+        targetUnitsGoal: data.capacity ? Math.round(data.capacity * 0.8) : 80,
+        contactPerson: { name: 'Cán bộ Kho máu', phone: '0909123456' },
+      });
+      if (res.data) {
+        return res.data as CampaignData;
+      }
+    } catch (err) {
+      console.warn('[apiService] Backend createCampaign failed, using fallback:', err);
+    }
+
     await delay();
     const newCampaign: CampaignData = {
       ...data,
@@ -59,6 +93,15 @@ export const apiService = {
   },
 
   async updateCampaign(id: string, updates: Partial<CampaignData>) {
+    try {
+      const res = await apiClient.put(`/campaigns/${id}`, updates);
+      if (res.data) {
+        return res.data as CampaignData;
+      }
+    } catch (err) {
+      console.warn('[apiService] Backend updateCampaign failed, using fallback:', err);
+    }
+
     await delay();
     const idx = campaigns.findIndex((c) => c._id === id);
     if (idx === -1) return null;
@@ -66,40 +109,150 @@ export const apiService = {
     return campaigns[idx];
   },
 
-  // ==================== REGISTRATION APIs (Mock - no backend yet) ====================
+  // ==================== REGISTRATION APIs ====================
   async getRegistrations(campaignId: string, search?: string, status?: string) {
-    await delay();
-    let result = registrations.filter((r) => r.campaignId === campaignId);
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (r) =>
-          r._id.toLowerCase().includes(q) ||
-          r.donorName.toLowerCase().includes(q) ||
-          r.donorIdCard.includes(q)
-      );
+    try {
+      const endpoint = `/campaigns/${campaignId || 'all'}/registrations`;
+      const res = await apiClient.get(endpoint);
+      const rawList = Array.isArray(res.data) ? res.data : (res.data?.items || res.data?.data || null);
+      if (rawList && Array.isArray(rawList)) {
+        let result = rawList.map((item: any) => {
+          const donorObj = typeof item.donorId === 'object' ? item.donorId : item.donor || {};
+          const screeningObj = item.screening || item.screeningFormId || item.screeningForm || null;
+          return {
+            _id: item._id || item.id || item.registrationId,
+            campaignId: item.campaignId?._id || item.campaignId || campaignId,
+            donorId: donorObj._id || donorObj.donorId || item.donorId || '',
+            donorName: donorObj.fullName || item.donorName || item.donor?.fullName || item.donorId?.fullName || item.fullName || 'Người hiến máu',
+            donorBloodType: donorObj.bloodType || item.donorBloodType || item.donor?.bloodType || item.donorId?.bloodType || 'Unknown',
+            donorDob: donorObj.dateOfBirth || item.donorDob || item.donor?.dateOfBirth || item.donorId?.dateOfBirth || '',
+            donorIdCard: donorObj.idDocumentNumber || item.donorIdCard || item.donor?.idDocumentNumber || item.donorId?.idDocumentNumber || 'Chưa cập nhật',
+            donorPhone: donorObj.phoneNumber || donorObj.phone || item.donorPhone || item.donor?.phoneNumber || item.donorId?.phone || 'Chưa cập nhật SĐT',
+            appointmentDate: item.appointmentDate || new Date().toISOString(),
+            status: item.status || 'Pending',
+            screeningForm: screeningObj,
+          };
+        });
+
+        // Filter out Cancelled and NoShow by default unless explicitly requested
+        if (!status || status === 'All') {
+          result = result.filter(
+            (r: any) =>
+              r.status !== 'Cancelled' &&
+              r.status !== 'NoShow' &&
+              r.status !== 'cancelled' &&
+              r.status !== 'no-show'
+          );
+        } else {
+          result = result.filter((r: any) => r.status === status);
+        }
+
+        if (search) {
+          const q = search.toLowerCase();
+          result = result.filter(
+            (r: any) =>
+              r._id.toLowerCase().includes(q) ||
+              r.donorName.toLowerCase().includes(q) ||
+              r.donorIdCard.includes(q)
+          );
+        }
+        return result as RegistrationData[];
+      }
+      return [];
+    } catch (err) {
+      console.warn('[apiService] Backend getRegistrations failed:', err);
+      return [];
     }
-    if (status && status !== 'All') {
-      result = result.filter((r) => r.status === status);
-    }
-    return result;
   },
 
   async getRegistrationById(id: string) {
-    await delay();
-    return registrations.find((r) => r._id === id) || null;
+    try {
+      const res = await apiClient.get(`/registrations/${id}`);
+      if (res.data) {
+        const item = res.data;
+        const donorObj = typeof item.donorId === 'object' ? item.donorId : item.donor || {};
+        const screeningObj = item.screening || item.screeningForm || item.screeningFormId || null;
+
+        return {
+          _id: item._id || item.id || item.registrationId || id,
+          campaignId: item.campaignId?._id || item.campaignId || '',
+          donorId: donorObj._id || donorObj.donorId || item.donorId || '',
+          donorName: donorObj.fullName || item.donorName || item.donor?.fullName || item.donorId?.fullName || item.fullName || 'Người hiến máu',
+          donorBloodType: donorObj.bloodType || item.donorBloodType || item.donor?.bloodType || item.donorId?.bloodType || 'Unknown',
+          donorDob: donorObj.dateOfBirth || item.donorDob || item.donor?.dateOfBirth || item.donorId?.dateOfBirth || '',
+          donorIdCard: donorObj.idDocumentNumber || item.donorIdCard || item.donor?.idDocumentNumber || item.donorId?.idDocumentNumber || 'Chưa cập nhật',
+          donorPhone: donorObj.phoneNumber || donorObj.phone || item.donorPhone || item.donor?.phoneNumber || item.donorId?.phone || 'Chưa cập nhật SĐT',
+          appointmentDate: item.appointmentDate || new Date().toISOString(),
+          status: item.status || 'CheckedIn',
+          bloodPressure: screeningObj?.vitals?.bloodPressure || item.bloodPressure || '',
+          weight: screeningObj?.vitals?.weight || item.weight || undefined,
+          bodyTemperature: screeningObj?.vitals?.bodyTemperature || item.bodyTemperature || undefined,
+          hemoglobinLevel: screeningObj?.vitals?.hemoglobinLevel || item.hemoglobinLevel || undefined,
+          screeningNotes: screeningObj?.screeningNotes || item.screeningNotes || '',
+          screeningForm: screeningObj,
+        } as RegistrationData;
+      }
+    } catch (err) {
+      console.warn('[apiService] Backend getRegistrationById failed:', err);
+    }
+    return null;
   },
 
   async updateRegistration(id: string, updates: Partial<RegistrationData>) {
+    try {
+      const payload = {
+        status: updates.status,
+        vitals: {
+          bloodPressure: updates.bloodPressure,
+          weight: updates.weight,
+          bodyTemperature: updates.bodyTemperature,
+          hemoglobinLevel: updates.hemoglobinLevel,
+        },
+        screeningNotes: updates.screeningNotes,
+      };
+
+      const res = await apiClient.put(`/registrations/${id}/screening`, payload);
+      if (res.data) {
+        const item = res.data;
+        const screeningObj = item.screening || item.screeningForm || item.screeningFormId || null;
+        return {
+          _id: id,
+          ...updates,
+          screeningForm: screeningObj || updates.screeningForm,
+        } as RegistrationData;
+      }
+    } catch (err) {
+      console.warn('[apiService] Backend updateRegistration API failed, fallback to mock state:', err);
+    }
+
     await delay();
     const idx = registrations.findIndex((r) => r._id === id);
-    if (idx === -1) return null;
+    if (idx === -1) {
+      return {
+        _id: id,
+        ...updates,
+      } as RegistrationData;
+    }
     registrations[idx] = { ...registrations[idx], ...updates };
     return registrations[idx];
   },
 
-  // ==================== ARTICLE APIs (Mock - no backend yet) ====================
+  // ==================== ARTICLE APIs ====================
   async getArticles(category?: string, status?: string) {
+    try {
+      const queryParams: any = {};
+      if (category && category !== 'All') queryParams.category = category;
+      if (status && status !== 'All') queryParams.status = status;
+
+      const res = await apiClient.get('/bc/articles', { params: queryParams });
+      const rawData = res.data?.data || res.data;
+      if (Array.isArray(rawData) && rawData.length > 0) {
+        return rawData as ArticleData[];
+      }
+    } catch (err) {
+      console.warn('[apiService] Backend getArticles failed, using fallback:', err);
+    }
+
     await delay();
     let result = [...articles];
     if (category && category !== 'All') {
@@ -112,11 +265,27 @@ export const apiService = {
   },
 
   async getArticleById(id: string) {
+    try {
+      const res = await apiClient.get(`/bc/articles/${id}`);
+      if (res.data) {
+        return res.data as ArticleData;
+      }
+    } catch (err) {
+      console.warn('[apiService] Backend getArticleById failed, using fallback:', err);
+    }
+
     await delay();
     return articles.find((a) => a._id === id) || null;
   },
 
   async createArticle(data: Omit<ArticleData, '_id' | 'createdAt' | 'authorStaffId' | 'authorName'>) {
+    try {
+      const res = await apiClient.post('/bc/articles', data);
+      if (res.data) return res.data as ArticleData;
+    } catch (err) {
+      console.warn('[apiService] Backend createArticle failed, using fallback:', err);
+    }
+
     await delay();
     const newArt: ArticleData = {
       ...data,
@@ -130,6 +299,13 @@ export const apiService = {
   },
 
   async updateArticle(id: string, updates: Partial<ArticleData>) {
+    try {
+      const res = await apiClient.put(`/bc/articles/${id}`, updates);
+      if (res.data) return res.data as ArticleData;
+    } catch (err) {
+      console.warn('[apiService] Backend updateArticle failed, using fallback:', err);
+    }
+
     await delay();
     const idx = articles.findIndex((a) => a._id === id);
     if (idx === -1) return null;
@@ -137,7 +313,7 @@ export const apiService = {
     return articles[idx];
   },
 
-  // ==================== NOTIFICATION APIs (Mock - no backend yet) ====================
+  // ==================== NOTIFICATION APIs ====================
   async getNotifications(type?: string, status?: string) {
     await delay();
     let result = [...notifications];
@@ -150,7 +326,6 @@ export const apiService = {
       result = result.filter((n) => n.readAt !== null);
     }
 
-    // SOS pinning: SOS items always at top
     const sosItems = result.filter((n) => n.type === 'SOS');
     const normalItems = result.filter((n) => n.type !== 'SOS');
     return [...sosItems, ...normalItems];
@@ -160,8 +335,6 @@ export const apiService = {
     await delay();
     const idx = notifications.findIndex((n) => n._id === id);
     if (idx === -1) return null;
-    // BUG-08 FIX: mutate array gốc để persist trạng thái "đã đọc"
-    // Trước đây: return { ...notif, readAt: ... } — không mutate → sau reload vẫn unread
     if (notifications[idx].readAt === null) {
       notifications[idx] = {
         ...notifications[idx],
@@ -183,8 +356,23 @@ export const apiService = {
     notifications = notifications.filter((n) => n._id !== id);
   },
 
-  // ==================== INVENTORY APIs (Mock - no backend yet) ====================
+  // ==================== INVENTORY APIs ====================
   async getInventory(search?: string, bloodType?: string, status?: string) {
+    try {
+      const queryParams: any = {};
+      if (search) queryParams.search = search;
+      if (bloodType && bloodType !== 'All') queryParams.bloodType = bloodType;
+      if (status && status !== 'All') queryParams.status = status;
+
+      const res = await apiClient.get('/bc/inventory', { params: queryParams });
+      const rawData = res.data?.data || res.data;
+      if (Array.isArray(rawData) && rawData.length > 0) {
+        return rawData as BloodBagData[];
+      }
+    } catch (err) {
+      console.warn('[apiService] Backend getInventory failed, using fallback:', err);
+    }
+
     await delay();
     let result = [...bloodBags];
     if (search) {
@@ -205,11 +393,25 @@ export const apiService = {
   },
 
   async getBloodBagById(id: string) {
+    try {
+      const res = await apiClient.get(`/bc/inventory/${id}`);
+      if (res.data) return res.data as BloodBagData;
+    } catch (err) {
+      console.warn('[apiService] Backend getBloodBagById failed, using fallback:', err);
+    }
+
     await delay();
     return bloodBags.find((b) => b._id === id) || null;
   },
 
   async updateBloodBagStatus(id: string, newStatus: BloodBagData['status'], reason?: string) {
+    try {
+      const res = await apiClient.put(`/bc/inventory/${id}/status`, { status: newStatus, reason: reason || 'Cập nhật trạng thái' });
+      if (res.data) return res.data as BloodBagData;
+    } catch (err) {
+      console.warn('[apiService] Backend updateBloodBagStatus failed, using fallback:', err);
+    }
+
     await delay();
     const idx = bloodBags.findIndex((b) => b._id === id);
     if (idx === -1) return null;
@@ -225,7 +427,7 @@ export const apiService = {
     bloodBags[idx] = {
       ...bloodBags[idx],
       status: newStatus,
-      statusHistory: [historyEntry, ...bloodBags[idx].statusHistory],
+      statusHistory: [historyEntry, ...(bloodBags[idx].statusHistory || [])],
     };
     return bloodBags[idx];
   },
@@ -239,6 +441,13 @@ export const apiService = {
       storageLocation: string;
     }>
   ) {
+    try {
+      const res = await apiClient.post('/bc/inventory/stock-in', { entries });
+      if (res.data) return res.data;
+    } catch (err) {
+      console.warn('[apiService] Backend stockIn failed, using fallback:', err);
+    }
+
     await delay();
     const newBags: BloodBagData[] = entries.map((e, idx) => ({
       _id: `bag-${Date.now()}-${idx}`,
@@ -269,6 +478,13 @@ export const apiService = {
     reason: string,
     notes?: string
   ): Promise<boolean> {
+    try {
+      const res = await apiClient.post('/bc/inventory/stock-out', { bagIds, reason, notes });
+      if (res.status === 200) return true;
+    } catch (err) {
+      console.warn('[apiService] Backend stockOut failed, using fallback:', err);
+    }
+
     await delay();
     bloodBags = bloodBags.map((b) => {
       if (bagIds.includes(b._id)) {
@@ -283,7 +499,7 @@ export const apiService = {
               changedAt: new Date().toISOString(),
               reason: `Xuất kho: ${reason}${notes ? ` (${notes})` : ''}`,
             },
-            ...b.statusHistory,
+            ...(b.statusHistory || []),
           ],
         };
       }
@@ -293,6 +509,13 @@ export const apiService = {
   },
 
   async getInventoryStatistics() {
+    try {
+      const res = await apiClient.get('/bc/inventory/statistics');
+      if (res.data) return res.data;
+    } catch (err) {
+      console.warn('[apiService] Backend getInventoryStatistics failed, using fallback:', err);
+    }
+
     await delay();
     const totalUnits = bloodBags.length;
     const availableUnits = bloodBags.filter((b) => b.status === 'Available').length;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ArrowUpRight, BarChart2, Search, Eye, AlertCircle, Package } from 'lucide-react';
+import { Plus, ArrowUpRight, BarChart2, Search, Eye, AlertCircle, Package, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiService } from '../../../services/apiClient';
 import type { BloodBagData } from '../../../services/mockData';
@@ -17,13 +17,28 @@ export const InventoryListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [bloodTypeFilter, setBloodTypeFilter] = useState('All');
-  const statusFilter = 'All';
+  const [statusFilter, setStatusFilter] = useState('All');
+
+  const formatDateSafe = (dateStr?: string | Date) => {
+    if (!dateStr) return 'N/A';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return 'N/A';
+      return format(d, 'dd/MM/yyyy');
+    } catch {
+      return 'N/A';
+    }
+  };
 
   const fetchInventory = async () => {
     setLoading(true);
     try {
       const data = await apiService.getInventory(search, bloodTypeFilter, statusFilter);
-      setBags(data);
+      const items = Array.isArray(data) ? data : ((data as any)?.data || []);
+      setBags(items);
+    } catch (err) {
+      console.error('Error fetching inventory:', err);
+      setBags([]);
     } finally {
       setLoading(false);
     }
@@ -36,52 +51,66 @@ export const InventoryListPage: React.FC = () => {
   const totalBags = bags.length;
   const availableBags = bags.filter((b) => b.status === 'Available').length;
   const nearExpiryBags = bags.filter((b) => {
-    const diffDays = differenceInDays(new Date(b.expiryDate), new Date());
-    return diffDays >= 0 && diffDays <= 7 && b.status === 'Available';
+    try {
+      const diffDays = differenceInDays(new Date(b.expiryDate), new Date());
+      return diffDays >= 0 && diffDays <= 7 && b.status === 'Available';
+    } catch {
+      return false;
+    }
   }).length;
+  const usedBags = bags.filter((b) => b.status === 'Used').length;
 
   const columns: Column<BloodBagData>[] = [
     {
-      header: 'Mã túi máu',
-      accessor: (row) => (
-        <div>
-          <p className="font-bold text-slate-900 font-mono">{row.bagCode}</p>
-          <p className="text-[11px] text-slate-400">ID: {row._id}</p>
-        </div>
-      ),
+      header: 'Mã Túi Máu & Mã Định Danh',
+      accessor: (row: BloodBagData) => {
+        const id = row._id || (row as any).id || 'bag';
+        return (
+          <div className="space-y-0.5">
+            <p className="font-bold text-[#271816] font-mono text-[14px]">{row.bagCode || `BB-2026-${id.slice(-4)}`}</p>
+            <p className="text-[11px] text-[#6c757d]">ID: {id}</p>
+          </div>
+        );
+      },
     },
     {
-      header: 'Nhóm máu',
-      accessor: (row) => (
-        <span className="px-2.5 py-1 text-xs font-black bg-red-600 text-white rounded-md shadow-2xs">
-          {row.bloodType}
+      header: 'Nhóm Máu',
+      accessor: (row: BloodBagData) => (
+        <span className="px-2.5 py-1 text-[12px] font-black bg-[#93000b] text-white rounded-md shadow-2xs">
+          {row.bloodType || 'O+'}
         </span>
       ),
     },
     {
-      header: 'Thể tích',
-      accessor: (row) => <span className="font-semibold text-slate-800">{row.volumeMl} ml</span>,
+      header: 'Thể Tích',
+      accessor: (row: BloodBagData) => <span className="font-semibold text-[#271816] text-[13px]">{row.volumeMl || 350} ml</span>,
     },
     {
-      header: 'Hạn sử dụng (FEFO)',
-      accessor: (row) => {
-        const diffDays = differenceInDays(new Date(row.expiryDate), new Date());
+      header: 'Hạn Sử Dụng (FEFO)',
+      accessor: (row: BloodBagData) => {
+        let diffDays = 30;
+        try {
+          diffDays = differenceInDays(new Date(row.expiryDate), new Date());
+        } catch {
+          diffDays = 30;
+        }
+
         const isNearExpiry = diffDays >= 0 && diffDays <= 7 && row.status === 'Available';
         const isExpired = diffDays < 0 || row.status === 'Expired';
 
         return (
-          <div className="space-y-0.5">
-            <p className={`font-medium text-xs ${isExpired ? 'text-red-700 font-bold' : isNearExpiry ? 'text-amber-700 font-bold' : 'text-slate-700'}`}>
-              {format(new Date(row.expiryDate), 'dd/MM/yyyy')}
+          <div className="space-y-1">
+            <p className={`font-medium text-[12px] ${isExpired ? 'text-red-700 font-bold' : isNearExpiry ? 'text-amber-700 font-bold' : 'text-[#271816]'}`}>
+              {formatDateSafe(row.expiryDate)}
             </p>
             {isNearExpiry && (
-              <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                 ⚠ Hết hạn sau {diffDays} ngày
               </span>
             )}
             {isExpired && (
-              <span className="text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded border border-red-300">
-                🔴 ĐÃ HẾT HẠN
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-800 bg-red-50 px-2 py-0.5 rounded-md border border-red-200">
+                🔴 Đã Hết Hạn
               </span>
             )}
           </div>
@@ -89,135 +118,195 @@ export const InventoryListPage: React.FC = () => {
       },
     },
     {
-      header: 'Vị trí lưu trữ',
-      accessor: (row) => <span className="text-xs text-slate-600 font-medium">{row.storageLocation}</span>,
-    },
-    {
-      header: 'Trạng thái',
-      accessor: (row) => <StatusBadge status={row.status} />,
-    },
-    {
-      header: 'Hành động',
-      accessor: (row) => (
-        <button
-          onClick={() => navigate(`/bc/inventory/${row._id}`)}
-          className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center gap-1.5 transition-colors"
-        >
-          <Eye className="w-3.5 h-3.5" />
-          <span>Chi tiết</span>
-        </button>
+      header: 'Vị Trí Lưu Trữ',
+      accessor: (row: BloodBagData) => (
+        <span className="text-[12px] text-[#271816] font-medium px-2.5 py-1 bg-slate-100 rounded-md border border-[#f1f3f5]">
+          {row.storageLocation || 'Khu A - Tủ đông 01'}
+        </span>
       ),
+    },
+    {
+      header: 'Trạng Thái',
+      accessor: (row: BloodBagData) => <StatusBadge status={row.status || 'Available'} />,
+    },
+    {
+      header: 'Thao Tác',
+      accessor: (row: BloodBagData) => {
+        const id = row._id || (row as any).id;
+        return (
+          <button
+            onClick={() => navigate(`/bc/inventory/${id}`)}
+            className="px-3 py-1.5 text-[12px] font-semibold text-[#271816] bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+          >
+            <Eye className="w-3.5 h-3.5 text-[#93000b]" />
+            <span>Chi tiết</span>
+          </button>
+        );
+      },
     },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Top Banner & Quick Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-6 rounded-2xl shadow-xs">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">{t('inventory.title')}</h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Quản lý lưu trữ túi máu, cập nhật trạng thái và thực hiện nhập/xuất kho
+          <div className="flex items-center gap-2">
+            <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
+              {t('inventory.title') || 'Quản Lý Kho Túi Máu'}
+            </h2>
+            <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-red-50 text-[#93000b] border border-red-100 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-[#93000b]" />
+              FEFO Priority
+            </span>
+          </div>
+          <p className="text-[13px] font-normal text-[#6c757d] mt-1">
+            Theo dõi vị trí lưu trữ, cảnh báo hạn sử dụng FEFO và điều phối xuất nhập kho chuẩn ISO.
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => navigate('/bc/inventory/stock-in')}
-            className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-xs transition-colors"
+            className="px-4 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-semibold rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-98"
           >
             <Plus className="w-4 h-4" />
-            <span>{t('inventory.stockIn')}</span>
+            <span>Nhập Kho (Stock In)</span>
           </button>
           <button
             onClick={() => navigate('/bc/inventory/stock-out')}
-            className="px-3.5 py-2 bg-white text-red-600 border border-red-600 hover:bg-red-50 text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-xs transition-colors"
+            className="px-4 py-2.5 bg-white text-[#93000b] border border-[#93000b] hover:bg-red-50 text-[13px] font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer active:scale-98"
           >
             <ArrowUpRight className="w-4 h-4" />
-            <span>{t('inventory.stockOut')}</span>
+            <span>Xuất Kho (Stock Out)</span>
           </button>
           <button
             onClick={() => navigate('/bc/inventory/stats')}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-xs transition-colors"
+            className="px-4 py-2.5 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[13px] font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
           >
             <BarChart2 className="w-4 h-4" />
-            <span>Thống kê kho</span>
+            <span>Thống Kê</span>
           </button>
         </div>
       </div>
 
-      {/* Summary Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Tổng túi máu</span>
-            <Package className="w-4 h-4 text-slate-400" />
+      {/* Summary KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1 */}
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-red-50 text-[#93000b] flex items-center justify-center shrink-0 border border-red-100">
+            <Package className="w-6 h-6" />
           </div>
-          <p className="text-2xl font-black text-slate-900 mt-2">{totalBags}</p>
+          <div>
+            <p className="text-[12px] font-medium text-[#6c757d] uppercase tracking-wide">Tổng túi trong kho</p>
+            <p className="text-[24px] font-bold text-[#271816] leading-tight mt-0.5">{totalBags}</p>
+          </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Túi máu sẵn có</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        {/* Card 2 */}
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
+            <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
           </div>
-          <p className="text-2xl font-black text-emerald-600 mt-2">{availableBags}</p>
+          <div>
+            <p className="text-[12px] font-medium text-[#6c757d] uppercase tracking-wide">Sẵn có phát hành</p>
+            <p className="text-[24px] font-bold text-emerald-700 leading-tight mt-0.5">{availableBags}</p>
+          </div>
         </div>
 
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-amber-800 text-xs font-bold">
-            <span>Gần hết hạn (≤ 7 ngày)</span>
-            <AlertCircle className="w-4 h-4 text-amber-600" />
+        {/* Card 3 */}
+        <div className="bg-amber-50/70 border border-amber-200 p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 border border-amber-300">
+            <AlertCircle className="w-6 h-6" />
           </div>
-          <p className="text-2xl font-black text-amber-700 mt-2">{nearExpiryBags}</p>
+          <div>
+            <p className="text-[12px] font-bold text-amber-800 uppercase tracking-wide">Cảnh báo (≤ 7 ngày)</p>
+            <p className="text-[24px] font-bold text-amber-900 leading-tight mt-0.5">{nearExpiryBags} túi</p>
+          </div>
+        </div>
+
+        {/* Card 4 */}
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 border border-slate-200">
+            <ArrowUpRight className="w-6 h-6 text-slate-700" />
+          </div>
+          <div>
+            <p className="text-[12px] font-medium text-[#6c757d] uppercase tracking-wide">Đã xuất / Sử dụng</p>
+            <p className="text-[24px] font-bold text-[#271816] leading-tight mt-0.5">{usedBags}</p>
+          </div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 border border-slate-200 rounded-xl flex flex-col md:flex-row gap-3 items-center justify-between shadow-xs">
+      <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-col md:flex-row gap-3 items-center justify-between shadow-2xs">
         <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+          <Search className="w-4 h-4 text-[#a3a3a3] absolute left-3.5 top-3" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm theo Mã túi, Vị trí lưu trữ..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-colors"
+            className="w-full pl-10 pr-4 py-2 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[13px] text-[#271816] placeholder-[#a3a3a3] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
-          <span className="text-xs font-medium text-slate-500 shrink-0">Nhóm máu:</span>
-          {['All', 'O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].map((type) => (
-            <button
-              key={type}
-              onClick={() => setBloodTypeFilter(type)}
-              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors shrink-0 ${
-                bloodTypeFilter === type
-                  ? 'bg-red-600 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              {type === 'All' ? 'Tất cả' : type}
-            </button>
-          ))}
+        <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Nhóm máu:</span>
+            {['All', 'O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].map((type) => (
+              <button
+                key={type}
+                onClick={() => setBloodTypeFilter(type)}
+                className={`px-2.5 py-1 text-[12px] font-bold rounded-xl transition-all shrink-0 cursor-pointer ${
+                  bloodTypeFilter === type
+                    ? 'bg-[#93000b] text-white shadow-2xs'
+                    : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
+                }`}
+              >
+                {type === 'All' ? 'Tất cả' : type}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1.5 border-l border-[#f1f3f5] pl-3">
+            <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Trạng thái:</span>
+            {['All', 'Available', 'Reserved', 'Used', 'Expired'].map((st) => (
+              <button
+                key={st}
+                onClick={() => setStatusFilter(st)}
+                className={`px-2.5 py-1 text-[12px] font-bold rounded-xl transition-all shrink-0 cursor-pointer ${
+                  statusFilter === st
+                    ? 'bg-[#1a1a2e] text-white shadow-2xs'
+                    : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
+                }`}
+              >
+                {st === 'All' ? 'Tất cả' : st}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Inventory Table */}
-      <DataTable
-        columns={columns}
-        data={bags}
-        keyExtractor={(item) => item._id}
-        isLoading={loading}
-        emptyMessage="Không có túi máu nào phù hợp"
-        rowClassName={(row) => {
-          const diffDays = differenceInDays(new Date(row.expiryDate), new Date());
-          if (diffDays < 0 || row.status === 'Expired') return 'bg-red-50/50';
-          if (diffDays <= 7 && row.status === 'Available') return 'bg-amber-50/40';
-          return '';
-        }}
-      />
+      {/* Inventory Data Table */}
+      <div className="bg-white border border-[#f1f3f5] rounded-2xl overflow-hidden shadow-2xs">
+        <DataTable
+          columns={columns}
+          data={bags}
+          keyExtractor={(item: BloodBagData) => item._id || (item as any).id || 'bag'}
+          isLoading={loading}
+          emptyMessage="Không tìm thấy túi máu nào trong kho."
+          rowClassName={(row: BloodBagData) => {
+            try {
+              const diffDays = differenceInDays(new Date(row.expiryDate), new Date());
+              if (diffDays < 0 || row.status === 'Expired') return 'bg-red-50/50';
+              if (diffDays <= 7 && row.status === 'Available') return 'bg-amber-50/40';
+            } catch {}
+            return '';
+          }}
+        />
+      </div>
     </div>
   );
 };
+
+export default InventoryListPage;

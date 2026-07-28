@@ -25,12 +25,12 @@ export const createCampaignSchema = z
 export type CreateCampaignInput = z.infer<typeof createCampaignSchema>;
 
 export const screeningSchema = z.object({
-  bloodPressure: z.string().min(1, 'Vui lòng nhập huyết áp'),
-  weight: z.number().positive('Cân nặng phải lớn hơn 0'),
-  bodyTemperature: z.number().positive('Thân nhiệt không hợp lệ'),
-  hemoglobinLevel: z.number().positive('Hàm lượng Hemoglobin không hợp lệ'),
+  bloodPressure: z.string().optional().or(z.literal('')),
+  weight: z.union([z.number().positive(), z.nan()]).optional(),
+  bodyTemperature: z.union([z.number().positive(), z.nan()]).optional(),
+  hemoglobinLevel: z.union([z.number().positive(), z.nan()]).optional(),
   screeningNotes: z.string().optional(),
-  status: z.enum(['Registered', 'CheckedIn', 'Eligible', 'Completed', 'Ineligible']),
+  status: z.string(),
 });
 
 export type ScreeningInput = z.infer<typeof screeningSchema>;

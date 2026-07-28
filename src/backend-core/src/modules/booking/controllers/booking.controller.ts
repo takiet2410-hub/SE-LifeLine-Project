@@ -51,9 +51,18 @@ export class BookingController {
       const appointment = await BookingService.cancelAppointment(req.params.id as string, donorId);
       res.status(200).json(appointment);
     } catch (error: any) {
-      if (error.message.includes('NOT_FOUND')) res.status(404).json({ message: error.message });
-      else if (error.message.includes('INVALID') || error.message.includes('DEADLINE')) res.status(403).json({ message: error.message });
-      else next(error);
+      if (error.message.includes('NOT_FOUND')) {
+        res.status(404).json({ code: 'APPOINTMENT_NOT_FOUND', message: 'Không tìm thấy lịch hẹn.' });
+      } else if (error.message.includes('CANCELLATION_DEADLINE_PASSED')) {
+        res.status(400).json({
+          code: 'CANCELLATION_DEADLINE_PASSED',
+          message: 'Đã quá thời hạn hủy lịch hẹn. Theo quy định, không thể hủy khi thời điểm hẹn cách dưới 24 giờ hoặc đã qua thời gian hẹn.'
+        });
+      } else if (error.message.includes('INVALID')) {
+        res.status(403).json({ code: 'INVALID_STATUS_TRANSITION', message: 'Không thể hủy lịch hẹn ở trạng thái hiện tại.' });
+      } else {
+        next(error);
+      }
     }
   }
 
@@ -88,6 +97,18 @@ export class BookingController {
     } catch (error: any) {
       if (error.message.includes('NOT_FOUND')) res.status(404).json({ message: error.message });
       else if (error.message.includes('INVALID')) res.status(403).json({ message: error.message });
+      else next(error);
+    }
+  }
+
+  public static async rejectAppointment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const appointmentId = req.params.id as string;
+      const reason = req.body?.reason;
+      const appointment = await BookingService.rejectAppointmentByBloodCenter(appointmentId, reason);
+      res.status(200).json(appointment);
+    } catch (error: any) {
+      if (error.message.includes('NOT_FOUND')) res.status(404).json({ message: error.message });
       else next(error);
     }
   }

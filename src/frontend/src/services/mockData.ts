@@ -23,12 +23,21 @@ export interface RegistrationData {
   donorIdCard: string;
   donorPhone: string;
   appointmentDate: string;
-  status: 'Registered' | 'CheckedIn' | 'Eligible' | 'Completed' | 'Ineligible';
+  status: 'Pending' | 'Confirmed' | 'Registered' | 'CheckedIn' | 'Eligible' | 'Completed' | 'Ineligible' | 'Cancelled' | 'NoShow' | 'cancelled' | 'no-show';
   bloodPressure?: string;
   weight?: number;
   bodyTemperature?: number;
   hemoglobinLevel?: number;
   screeningNotes?: string;
+  screeningForm?: {
+    screeningFormId?: string;
+    outcome?: 'PASS' | 'REJECT' | 'REVIEW';
+    responses?: Array<{
+      questionId: string;
+      selectedOptions: string[];
+      description?: string;
+    }>;
+  };
 }
 
 export interface ArticleData {
@@ -127,54 +136,7 @@ export const initialCampaigns: CampaignData[] = [
   },
 ];
 
-export const initialRegistrations: RegistrationData[] = [
-  {
-    _id: 'reg-001',
-    campaignId: 'cam-001',
-    donorId: 'donor-101',
-    donorName: 'Trần Văn Minh',
-    donorBloodType: 'O+',
-    donorDob: '1995-04-12',
-    donorIdCard: '079095123456',
-    donorPhone: '0908123456',
-    appointmentDate: '2026-07-21T08:30:00Z',
-    status: 'Eligible',
-    bloodPressure: '120/80',
-    weight: 68,
-    bodyTemperature: 36.6,
-    hemoglobinLevel: 13.5,
-    screeningNotes: 'Sức khỏe tốt, đủ điều kiện hiến 350ml',
-  },
-  {
-    _id: 'reg-002',
-    campaignId: 'cam-001',
-    donorId: 'donor-102',
-    donorName: 'Lê Thị Thu Thảo',
-    donorBloodType: 'A+',
-    donorDob: '1998-11-25',
-    donorIdCard: '079098654321',
-    donorPhone: '0912987654',
-    appointmentDate: '2026-07-21T09:00:00Z',
-    status: 'CheckedIn',
-  },
-  {
-    _id: 'reg-003',
-    campaignId: 'cam-001',
-    donorId: 'donor-103',
-    donorName: 'Phạm Hoàng Nam',
-    donorBloodType: 'B-',
-    donorDob: '1992-08-03',
-    donorIdCard: '079092456789',
-    donorPhone: '0933112233',
-    appointmentDate: '2026-07-21T10:00:00Z',
-    status: 'Completed',
-    bloodPressure: '118/75',
-    weight: 72,
-    bodyTemperature: 36.5,
-    hemoglobinLevel: 14.2,
-    screeningNotes: 'Đã hoàn tất hiến 450ml thành công',
-  },
-];
+export const initialRegistrations: RegistrationData[] = [];
 
 export const initialArticles: ArticleData[] = [
   {

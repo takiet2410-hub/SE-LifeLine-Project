@@ -49,10 +49,14 @@ export const CancelAppointmentModal: React.FC<CancelAppointmentModalProps> = ({
             Are you sure you want to cancel this appointment? This action cannot be undone and your slot will be given to someone else.
           </p>
 
-          {/* AF-03 Error Message */}
+          {/* Error Message Display */}
           {error && (
-            <div className="w-full mb-6 p-3 bg-red-50 border border-red-100 rounded-lg text-left animate-in fade-in">
-              <p className="text-[13px] font-medium text-[#93000b]">{error}</p>
+            <div className="w-full mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-left animate-in fade-in flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-[#93000b] shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[13px] font-bold text-[#93000b]">Không thể hủy lịch hẹn</p>
+                <p className="text-[12px] text-red-800 leading-relaxed mt-0.5">{error}</p>
+              </div>
             </div>
           )}
 

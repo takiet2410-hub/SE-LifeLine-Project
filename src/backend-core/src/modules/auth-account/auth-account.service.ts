@@ -160,12 +160,20 @@ export class AuthAccountService {
     await user.save();
 
     const accessToken = jwt.sign(
-      { userId: user._id, idDocumentNumber: user.idDocumentNumber },
+      { userId: user._id, idDocumentNumber: user.idDocumentNumber, role: user.role },
       env.JWT_SECRET,
       { expiresIn: '30m' }
     );
 
-    return { accessToken, user: { id: user._id, email: user.email, idDocumentNumber: user.idDocumentNumber } };
+    return {
+      accessToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        idDocumentNumber: user.idDocumentNumber,
+        role: user.role
+      }
+    };
   }
 
 
@@ -325,7 +333,41 @@ export class AuthAccountService {
     if (!user) throw new Error('Không tìm thấy tài khoản người dùng');
 
     const profile = await DonorProfile.findOne({ userId }).lean();
-    if (!profile) throw new Error('Không tìm thấy hồ sơ người hiến máu');
+    if (!profile) {
+      if (user.role !== 'Donor') {
+        return {
+          profileInfo: {
+            avatarUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150',
+            fullName: `Cán bộ ${user.role}`,
+            memberSince: user.createdAt,
+            currentAddress: 'Trung tâm Truyền máu Quốc gia',
+            bloodType: 'Staff'
+          },
+          personalInfo: {
+            idDocumentNumber: user.idDocumentNumber,
+            fullName: `Cán bộ ${user.role}`,
+            dateOfBirth: new Date('1990-01-01'),
+            gender: 'Male',
+            bloodType: 'N/A'
+          },
+          contactInfo: {
+            permanentAddress: 'Trung tâm Truyền máu TP.HCM',
+            phoneNumber: user.phone || '0909123456',
+            email: user.email
+          },
+          donationImpact: {
+            totalDonations: 0,
+            livesImpacted: 0,
+            currentStreak: 0,
+            status: 'Active Staff',
+            xp: 0,
+            donorLevel: 1
+          },
+          role: user.role
+        };
+      }
+      throw new Error('Không tìm thấy hồ sơ người hiến máu');
+    }
 
     // 2. Query lịch sử hiến máu từ collection appointments
     // Vì donorId trong Appointment tham chiếu đến User._id, ta truyền thẳng userId vào đây

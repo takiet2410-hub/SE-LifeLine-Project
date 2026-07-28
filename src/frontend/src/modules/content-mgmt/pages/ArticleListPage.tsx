@@ -1,27 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, User, Edit3 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { apiService } from '../../../services/apiClient';
-import type { ArticleData } from '../../../services/mockData';
-import { StatusBadge } from '../../../components/common/StatusBadge';
-import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
-import { EmptyState } from '../../../components/common/EmptyState';
+import { Plus, Search, Filter, RefreshCw } from 'lucide-react';
+import { articleApi } from '../services/articleApi';
+import { ContentStatsCards } from '../components/ContentStatsCards';
+import { ArticleCard } from '../components/ArticleCard';
+import { DeleteConfirmationModal } from '../components/DeleteConfirmationModal';
+import type { Article, ContentStatsSummary } from '../types/article.types';
 
 export const ArticleListPage: React.FC = () => {
-  useTranslation();
   const navigate = useNavigate();
 
-  const [articles, setArticles] = useState<ArticleData[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [summary, setSummary] = useState<ContentStatsSummary | undefined>(undefined);
   const [loading, setLoading] = useState(true);
-  const categoryFilter = 'All';
+  const [error, setError] = useState<string | null>(null);
+
+  // Filter state
+  const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Delete modal state
+  const [selectedArticleToDelete, setSelectedArticleToDelete] = useState<Article | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchArticles = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const data = await apiService.getArticles(categoryFilter, statusFilter);
-      setArticles(data);
+      const res = await articleApi.getArticles({
+        category: categoryFilter,
+        status: statusFilter,
+        search: searchQuery
+      });
+      if (res.success) {
+        setArticles(res.data);
+        if (res.summary) setSummary(res.summary);
+      }
+    } catch (e: any) {
+      setError('Failed to load articles');
     } finally {
       setLoading(false);
     }
@@ -29,105 +46,153 @@ export const ArticleListPage: React.FC = () => {
 
   useEffect(() => {
     fetchArticles();
-  }, [categoryFilter, statusFilter]);
+  }, [categoryFilter, statusFilter, searchQuery]);
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedArticleToDelete) return;
+    setIsDeleting(true);
+    try {
+      const res = await articleApi.deleteArticle(selectedArticleToDelete._id);
+      if (res.success) {
+        setArticles(prev => prev.filter(a => a._id !== selectedArticleToDelete._id));
+        if (summary) {
+          setSummary({
+            ...summary,
+            totalArticles: Math.max(0, summary.totalArticles - 1)
+          });
+        }
+        setSelectedArticleToDelete(null);
+      }
+    } catch (e: any) {
+      alert(e.message || 'Failed to delete article');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      {/* Top Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Quản Lý Bài Viết & Truyền Thông</h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Đăng tải bài viết tuyên truyền, kiến thức sức khỏe và thông báo chiến dịch
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">Content Management</h1>
+          <p className="text-xs text-gray-500 mt-1">Manage announcements, news, and donor education articles</p>
         </div>
+
         <button
           onClick={() => navigate('/bc/content/create')}
-          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 shadow-xs transition-colors"
+          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-sm flex items-center justify-center space-x-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          <span>Tạo bài viết mới</span>
+          <span>Create Article</span>
         </button>
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-white p-4 border border-slate-200 rounded-xl flex flex-wrap gap-3 items-center justify-between shadow-xs">
-        <div className="flex items-center gap-2 overflow-x-auto">
-          <span className="text-xs font-medium text-slate-500 shrink-0">Trạng thái:</span>
-          {['All', 'Published', 'Draft'].map((st) => (
-            <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shrink-0 ${
-                statusFilter === st
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+      {/* Summary Cards */}
+      <ContentStatsCards summary={summary} loading={loading} />
+
+      {/* Filters & Search */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-md">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search articles by title..."
+            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-red-500 focus:border-red-500"
+          />
+          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+        </div>
+
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1.5 text-xs text-gray-500 font-medium">
+            <Filter className="w-4 h-4 text-gray-400" />
+            <span>Category:</span>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-red-500 focus:border-red-500 bg-white"
             >
-              {st === 'All' ? 'Tất cả' : st === 'Published' ? 'Đã xuất bản' : 'Bản nháp'}
-            </button>
-          ))}
+              <option value="All">All Categories</option>
+              <option value="News">News</option>
+              <option value="Alert">Alerts</option>
+              <option value="Educational">Educational</option>
+              <option value="Campaign">Campaign</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-1.5 text-xs text-gray-500 font-medium">
+            <span>Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-red-500 focus:border-red-500 bg-white"
+            >
+              <option value="All">All Statuses</option>
+              <option value="Published">Published</option>
+              <option value="Draft">Draft</option>
+              <option value="Scheduled">Scheduled</option>
+            </select>
+          </div>
+
+          <button
+            onClick={fetchArticles}
+            className="p-2 text-gray-500 hover:text-gray-900 border border-gray-200 rounded-md hover:bg-gray-50"
+            title="Refresh list"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
-      {/* Article Cards Grid */}
+      {/* Grid View */}
       {loading ? (
-        <SkeletonLoader type="card" />
+        <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
+          <div className="inline-block animate-spin w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full mb-2"></div>
+          <p className="text-sm text-gray-500">Loading articles...</p>
+        </div>
+      ) : error ? (
+        <div className="text-center py-12 bg-red-50 rounded-xl border border-red-100 text-red-700 text-sm">
+          {error}
+        </div>
       ) : articles.length === 0 ? (
-        <EmptyState message="Chưa có bài viết nào" />
+        <div className="text-center py-16 bg-white rounded-xl border border-gray-200 p-8 space-y-3">
+          <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto">
+            <Plus className="w-6 h-6" />
+          </div>
+          <h3 className="text-base font-bold text-gray-900">No articles found</h3>
+          <p className="text-xs text-gray-500 max-w-sm mx-auto">
+            No articles match your current filter settings. Click below to create your first article!
+          </p>
+          <button
+            onClick={() => navigate('/bc/content/create')}
+            className="px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700"
+          >
+            Create First Article
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {articles.map((article) => (
-            <div
-              key={article._id}
-              className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
-            >
-              <div>
-                {/* Thumbnail Image */}
-                <div className="h-48 bg-slate-100 relative overflow-hidden">
-                  <img
-                    src={article.imageUrls[0] || 'https://images.unsplash.com/photo-1615461066841-6116e61058f4?w=800&q=80'}
-                    alt={article.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 right-3">
-                    <StatusBadge status={article.status} />
-                  </div>
-                  <span className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-semibold px-2.5 py-0.5 rounded-full">
-                    {article.category}
-                  </span>
-                </div>
-
-                {/* Article Info */}
-                <div className="p-5 space-y-2">
-                  <h3 className="font-bold text-slate-900 text-base line-clamp-2 hover:text-red-600 transition-colors">
-                    {article.title}
-                  </h3>
-                  <div
-                    className="text-xs text-slate-500 line-clamp-3 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: article.bodyContent.replace(/<[^>]+>/g, '') }}
-                  />
-                </div>
-              </div>
-
-              {/* Card Footer */}
-              <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <div className="flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="truncate max-w-[120px]">{article.authorName}</span>
-                </div>
-                <button
-                  onClick={() => navigate(`/bc/content/${article._id}`)}
-                  className="font-semibold text-red-600 hover:text-red-700 flex items-center gap-1"
-                >
-                  <span>Xem & Sửa</span>
-                  <Edit3 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
+          {articles.map((art) => (
+            <ArticleCard
+              key={art._id}
+              article={art}
+              onSelect={(id) => navigate(`/bc/content/${id}`)}
+              onEdit={(id) => navigate(`/bc/content/${id}?edit=true`)}
+              onDelete={(article) => setSelectedArticleToDelete(article)}
+            />
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={!!selectedArticleToDelete}
+        articleTitle={selectedArticleToDelete?.title}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setSelectedArticleToDelete(null)}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };

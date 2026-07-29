@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Award, Printer, X, Heart, ShieldCheck, Droplet, Sparkles } from 'lucide-react';
 import { formatDateToDDMMYYYY } from '../../booking-location/api/bookingApi';
 
@@ -48,8 +49,8 @@ export const DonationCertificateModal: React.FC<DonationCertificateModalProps> =
     window.print();
   };
 
-  return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto print:p-0 print:bg-white print:static print:block">
+  const modalContent = (
+    <div className="certificate-modal-portal fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto print:p-0 print:bg-white print:static print:block">
       <style>{`
         @media print {
           @page {
@@ -64,8 +65,25 @@ export const DonationCertificateModal: React.FC<DonationCertificateModalProps> =
             print-color-adjust: exact !important;
             font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
           }
+          /* Hide main application root so background pages like MyAppointments are 100% invisible on print */
+          #root {
+            display: none !important;
+          }
           .print\\:hidden {
             display: none !important;
+          }
+          .certificate-modal-portal {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
           }
           .certificate-container {
             padding: 0 !important;
@@ -80,6 +98,8 @@ export const DonationCertificateModal: React.FC<DonationCertificateModalProps> =
             box-shadow: none !important;
             margin: 0 auto !important;
             border-radius: 0 !important;
+            page-break-inside: avoid !important;
+            page-break-after: avoid !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
@@ -274,4 +294,6 @@ export const DonationCertificateModal: React.FC<DonationCertificateModalProps> =
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

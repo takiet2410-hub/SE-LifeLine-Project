@@ -49,7 +49,52 @@ export const DonationCertificateModal: React.FC<DonationCertificateModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto print:p-0 print:bg-white">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto print:p-0 print:bg-white print:static print:block">
+      <style>{`
+        @media print {
+          @page {
+            size: A4 landscape;
+            margin: 0;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          }
+          .print\\:hidden {
+            display: none !important;
+          }
+          .certificate-container {
+            padding: 0 !important;
+            background: transparent !important;
+          }
+          .certificate-paper {
+            width: 297mm !important;
+            height: 210mm !important;
+            max-width: none !important;
+            max-height: none !important;
+            border-width: 12px !important;
+            box-shadow: none !important;
+            margin: 0 auto !important;
+            border-radius: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          }
+          .certificate-paper * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          }
+          .certificate-signature-text {
+            font-family: 'Georgia', 'Times New Roman', serif !important;
+          }
+        }
+      `}</style>
+
       {/* Container */}
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full flex flex-col overflow-hidden border border-slate-200 animate-in zoom-in-95 print:shadow-none print:border-none print:max-w-none print:rounded-none">
         
@@ -78,7 +123,7 @@ export const DonationCertificateModal: React.FC<DonationCertificateModalProps> =
         </div>
 
         {/* Certificate Paper Frame */}
-        <div className="p-4 md:p-8 bg-slate-100 flex justify-center items-center overflow-x-auto print:p-0 print:bg-white">
+        <div className="certificate-container p-4 md:p-8 bg-slate-100 flex justify-center items-center overflow-x-auto print:p-0 print:bg-white">
           <div
             ref={printRef}
             className="certificate-paper relative bg-[#fffdfa] w-[820px] h-[550px] p-6 border-[10px] border-[#93000b] shadow-2xl flex flex-col justify-between overflow-hidden print:w-full print:h-screen print:border-8 print:shadow-none"
@@ -218,7 +263,7 @@ export const DonationCertificateModal: React.FC<DonationCertificateModalProps> =
                 <div className="text-[10px] text-slate-600 font-medium italic">TP. Hồ Chí Minh, ngày {formattedDonationDate}</div>
                 <div className="text-[10px] font-bold text-slate-800 uppercase tracking-tight">TM. BAN CHỈ ĐẠO LIFELINE</div>
                 <div className="h-10 flex items-center justify-end my-0.5">
-                  <span className="font-serif italic text-base text-[#93000b] font-bold select-none">
+                  <span className="certificate-signature-text font-serif italic text-base text-[#93000b] font-bold select-none">
                     Dr. LifeLine Director
                   </span>
                 </div>

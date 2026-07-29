@@ -148,21 +148,21 @@ export const RegistrationDetailPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Navigation & Header Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-xs">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-xs">
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate(`/bc/campaigns/${campaignId || 'all'}/registrations`)}
-            className="p-2 rounded-xl text-[#6c757d] hover:text-[#271816] hover:bg-slate-100 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-[#6c757d] hover:text-[#271816] hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
             title="Quay lại danh sách đăng ký"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 text-[11px] font-mono font-bold bg-[#1a1a2e] text-white rounded-md">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-0.5 text-[11px] font-mono font-bold bg-[#1a1a2e] text-white rounded-md shrink-0">
                 {codeId}
               </span>
-              <h2 className="text-[20px] font-bold text-[#271816] tracking-tight">
+              <h2 className="text-[18px] md:text-[20px] font-bold text-[#271816] tracking-tight whitespace-nowrap">
                 Xác Nhận & Phê Duyệt Đơn Sàng Lọc
               </h2>
               <StatusBadge status={registration.status as any} />
@@ -173,31 +173,31 @@ export const RegistrationDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Action Toggles for Doctor */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Action Buttons for Doctor aligned neatly on the right */}
+        <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
           <button
             type="button"
             onClick={() => setConfirmStatusModal({ isOpen: true, targetStatus: 'Confirmed' })}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
           >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Xác Nhận Đơn (Confirmed)</span>
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Xác nhận (Confirmed)</span>
           </button>
           <button
             type="button"
             onClick={() => setRejectModal({ isOpen: true, reason: '' })}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+            className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
           >
-            <XCircle className="w-4 h-4" />
-            <span>Từ Chối (Rejected)</span>
+            <XCircle className="w-3.5 h-3.5" />
+            <span>Từ chối (Rejected)</span>
           </button>
           <button
             type="button"
             onClick={() => setConfirmStatusModal({ isOpen: true, targetStatus: 'Completed' })}
-            className="px-4 py-2 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+            className="px-3.5 py-2 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
           >
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>Hoàn Tất Hiến Máu</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Đã hiến thành công (Completed)</span>
           </button>
         </div>
       </div>

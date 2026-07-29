@@ -120,7 +120,7 @@ export const QRScanPage: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Quét & Điểm Danh Mã QR (Check-In)</h2>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Quét QR Điểm Danh</h2>
             <p className="text-xs text-slate-500 font-medium">Xác thực Thẻ E-Ticket & tự động chuyển trạng thái sang CheckedIn</p>
           </div>
         </div>

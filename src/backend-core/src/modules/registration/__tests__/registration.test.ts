@@ -227,6 +227,12 @@ describe('Donor Registration & Health Screening Module (BC-UC-04, BC-UC-05)', ()
         lean: jest.fn().mockResolvedValue(mockAppointment)
       } as any);
 
+      jest.spyOn(Appointment, 'find').mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue([])
+      } as any);
+
       jest.spyOn(User, 'findById').mockReturnValue({
         lean: jest.fn().mockResolvedValue({
           _id: '65f1a2b3c4d5e6f7a8b9c001',
@@ -315,6 +321,12 @@ describe('Donor Registration & Health Screening Module (BC-UC-04, BC-UC-05)', ()
         queryObj.populate = jest.fn().mockReturnValue(queryObj);
         return queryObj;
       });
+
+      jest.spyOn(Appointment, 'find').mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue([])
+      } as any);
 
       const mockForm = {
         save: jest.fn().mockResolvedValue({}),

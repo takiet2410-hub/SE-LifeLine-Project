@@ -38,6 +38,15 @@ export interface RegistrationData {
       description?: string;
     }>;
   };
+  donationHistory?: Array<{
+    _id: string;
+    appointmentDate: string;
+    timeSlot?: string;
+    donationType?: string;
+    volume?: string;
+    locationName?: string;
+    status: string;
+  }>;
 }
 
 export interface ArticleData {

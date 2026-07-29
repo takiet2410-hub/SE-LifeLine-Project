@@ -528,47 +528,47 @@ export const RegistrationDetailPage: React.FC = () => {
                 <span>Lịch Sử Hiến Máu Của Người Dùng</span>
               </h3>
               <span className="px-2.5 py-0.5 text-[11px] font-bold bg-[#1a1a2e] text-white rounded-full">
-                Tổng cộng: 3 lần hiến
+                Tổng cộng: {registration.donationHistory?.length || 0} lượt hiến / đăng ký
               </span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-[12px]">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-[#f1f3f5] text-[#6c757d] font-bold uppercase tracking-wider">
-                    <th className="px-4 py-2.5">Ngày hiến</th>
-                    <th className="px-4 py-2.5">Loại hiến</th>
-                    <th className="px-4 py-2.5">Thể tích</th>
-                    <th className="px-4 py-2.5">Địa điểm</th>
-                    <th className="px-4 py-2.5 text-right">Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#f1f3f5]">
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="px-4 py-3 font-semibold text-[#271816]">15/04/2025</td>
-                    <td className="px-4 py-3 text-[#5b403d]">Máu toàn phần</td>
-                    <td className="px-4 py-3 font-bold text-[#93000b]">350 ml</td>
-                    <td className="px-4 py-3 text-[#6c757d]">BV Truyền máu Huyết học</td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 text-[10px] font-bold rounded-full border border-emerald-200">
-                        Thành công
-                      </span>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="px-4 py-3 font-semibold text-[#271816]">10/11/2024</td>
-                    <td className="px-4 py-3 text-[#5b403d]">Máu toàn phần</td>
-                    <td className="px-4 py-3 font-bold text-[#93000b]">350 ml</td>
-                    <td className="px-4 py-3 text-[#6c757d]">BV Chợ Rẫy Q5</td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 text-[10px] font-bold rounded-full border border-emerald-200">
-                        Thành công
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            {(!registration.donationHistory || registration.donationHistory.length === 0) ? (
+              <div className="text-center py-6 text-slate-500 text-[13px]">
+                Chưa ghi nhận lịch sử hiến máu nào cho người dùng này.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-[12px]">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-[#f1f3f5] text-[#6c757d] font-bold uppercase tracking-wider">
+                      <th className="px-4 py-2.5">Ngày hiến</th>
+                      <th className="px-4 py-2.5">Loại hiến</th>
+                      <th className="px-4 py-2.5">Thể tích</th>
+                      <th className="px-4 py-2.5">Địa điểm</th>
+                      <th className="px-4 py-2.5 text-right">Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f1f3f5]">
+                    {registration.donationHistory.map((item, idx) => {
+                      const formattedDate = item.appointmentDate
+                        ? new Date(item.appointmentDate).toLocaleDateString('vi-VN')
+                        : '---';
+                      return (
+                        <tr key={item._id || idx} className="hover:bg-slate-50/50">
+                          <td className="px-4 py-3 font-semibold text-[#271816]">{formattedDate}</td>
+                          <td className="px-4 py-3 text-[#5b403d]">{item.donationType || 'Máu toàn phần'}</td>
+                          <td className="px-4 py-3 font-bold text-[#93000b]">{item.volume || '350 ml'}</td>
+                          <td className="px-4 py-3 text-[#6c757d]">{item.locationName || 'Điểm hiến máu LifeLine'}</td>
+                          <td className="px-4 py-3 text-right">
+                            <StatusBadge status={item.status} />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>

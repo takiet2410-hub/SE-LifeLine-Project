@@ -356,6 +356,37 @@ export class RegistrationService {
     const phoneNumber = donorProfile?.phoneNumber || donorUser?.phone || 'N/A';
     const bloodType = donorProfile?.bloodType || 'Unknown';
 
+    // Fetch real donor donation history from appointments collection by donorId
+    const donorIdQuery = appointment.donorId?._id || appointment.donorId;
+    let historyAppointments: any[] = [];
+    if (donorIdQuery) {
+      try {
+        const findRes: any = Appointment.find({ donorId: donorIdQuery });
+        if (findRes && typeof findRes.populate === 'function') {
+          const popRes = findRes.populate('campaignId');
+          const sortRes = popRes && typeof popRes.sort === 'function' ? popRes.sort({ appointmentDate: -1 }) : popRes;
+          if (sortRes && typeof sortRes.lean === 'function') {
+            historyAppointments = (await sortRes.lean()) || [];
+          }
+        }
+      } catch (e) {
+        historyAppointments = [];
+      }
+    }
+
+    const donationHistory = historyAppointments.map((app: any) => {
+      const campaignObj = typeof app.campaignId === 'object' ? app.campaignId : null;
+      return {
+        _id: app._id.toString(),
+        appointmentDate: app.appointmentDate,
+        timeSlot: app.timeSlot,
+        donationType: 'Máu toàn phần',
+        volume: '350 ml',
+        locationName: campaignObj?.name || 'Điểm hiến máu LifeLine',
+        status: app.status
+      };
+    });
+
     return {
       registrationId: appointment._id.toString(),
       campaignId: appointment.campaignId.toString(),
@@ -377,10 +408,11 @@ export class RegistrationService {
         bloodType,
         permanentAddress: donorProfile?.permanentAddress || 'N/A',
         lastDonationDate: donorProfile?.lastDonationDate,
-        totalDonations: donorProfile?.totalDonations || 0
+        totalDonations: donorProfile?.totalDonations || donationHistory.length
       },
       screening: screeningData,
       screeningForm: screeningData,
+      donationHistory,
       createdAt: (appointment as any).createdAt,
       updatedAt: (appointment as any).updatedAt
     };

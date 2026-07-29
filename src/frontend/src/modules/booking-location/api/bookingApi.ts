@@ -1,7 +1,7 @@
 import { apiClient } from '../../../shared/api/apiClient';
 
 // Backend AppointmentStatus enum values
-export type BackendAppointmentStatus = 'Scheduled' | 'CheckedIn' | 'Completed' | 'Cancelled' | 'NoShow' | 'Pending' | 'Confirmed';
+export type BackendAppointmentStatus = 'Scheduled' | 'CheckedIn' | 'Completed' | 'Cancelled' | 'NoShow' | 'Pending' | 'Confirmed' | 'Rejected';
 
 // Backend Campaign (when populated in appointment)
 export interface BackendCampaign {
@@ -50,7 +50,7 @@ export interface BackendAppointment {
 }
 
 // Mapped frontend appointment shape (used by UI components)
-export type AppointmentStatus = 'upcoming' | 'completed' | 'cancelled' | 'no-show' | 'pending';
+export type AppointmentStatus = 'upcoming' | 'completed' | 'cancelled' | 'no-show' | 'pending' | 'rejected';
 
 export interface Appointment {
   id: string;
@@ -95,11 +95,43 @@ const mapStatus = (backendStatus: BackendAppointmentStatus): AppointmentStatus =
       return 'completed';
     case 'Cancelled':
       return 'cancelled';
+    case 'Rejected':
+      return 'rejected';
     case 'NoShow':
       return 'no-show';
     default:
       return 'pending';
   }
+};
+
+export const parseDate = (dateInput: string | Date | undefined | null): Date | null => {
+  if (!dateInput) return null;
+  if (dateInput instanceof Date) return isNaN(dateInput.getTime()) ? null : dateInput;
+  if (typeof dateInput === 'string') {
+    const trimmed = dateInput.trim();
+    if (trimmed.includes('/')) {
+      const parts = trimmed.split('/');
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        const d = new Date(year, month, day);
+        if (!isNaN(d.getTime())) return d;
+      }
+    }
+    const d = new Date(trimmed);
+    if (!isNaN(d.getTime())) return d;
+  }
+  return null;
+};
+
+export const formatDateToDDMMYYYY = (dateInput: string | Date | undefined | null): string => {
+  const d = parseDate(dateInput);
+  if (!d) return '';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 };
 
 // Map backend appointment to frontend appointment
@@ -121,7 +153,7 @@ export const mapBackendAppointment = (raw: BackendAppointment): Appointment => {
 
   return {
     id: raw._id,
-    date: new Date(raw.appointmentDate).toLocaleDateString('vi-VN'),
+    date: formatDateToDDMMYYYY(raw.appointmentDate),
     time: raw.timeSlot,
     location: {
       id: campaign?._id || 'unknown',
@@ -217,6 +249,7 @@ export const createAppointment = async (payload: {
     return {
       success: false,
       message: error.response?.data?.message || 'Lỗi đặt lịch hẹn.',
+      data: error.response?.data,
     };
   }
 };

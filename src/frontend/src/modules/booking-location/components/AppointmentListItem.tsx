@@ -16,6 +16,7 @@ export const AppointmentListItem: React.FC<AppointmentListItemProps> = ({
   const isPending = appointment.status === 'pending';
   const isUpcoming = appointment.status === 'upcoming';
   const isCancelled = appointment.status === 'cancelled';
+  const isRejected = appointment.status === 'rejected';
   const isCompleted = appointment.status === 'completed';
   const isNoShow = appointment.status === 'no-show';
 
@@ -26,7 +27,7 @@ export const AppointmentListItem: React.FC<AppointmentListItemProps> = ({
         isSelected 
           ? 'bg-[#fff8f7] border-[#93000b] ring-1 ring-[#93000b]' 
           : 'bg-white border-[#f1f3f5] hover:border-[#dee2e6] hover:shadow-md'
-      } ${isCancelled || isNoShow ? 'opacity-75' : ''}`}
+      } ${isCancelled || isRejected || isNoShow ? 'opacity-75' : ''}`}
     >
       <div className="flex justify-between items-start gap-2">
         <h3 className={`text-[15px] font-bold line-clamp-1 flex-1 ${isSelected ? 'text-[#93000b]' : 'text-[#271816]'}`}>
@@ -48,6 +49,11 @@ export const AppointmentListItem: React.FC<AppointmentListItemProps> = ({
           {isCompleted && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-50 text-green-700 border border-green-200">
               Đã hoàn thành
+            </span>
+          )}
+          {isRejected && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+              Đã từ chối (Rejected)
             </span>
           )}
           {isCancelled && (

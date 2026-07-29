@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAppointments } from '../../booking-location/api/bookingApi';
+import { fetchAppointments, parseDate, type Appointment } from '../../booking-location/api/bookingApi';
 
 interface XPActivityLogProps {
   userId?: string;
 }
 
 export const XPActivityLog: React.FC<XPActivityLogProps> = ({ userId }) => {
-  const [hasActivity, setHasActivity] = useState(false);
+  const [completedAppointments, setCompletedAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -16,7 +16,12 @@ export const XPActivityLog: React.FC<XPActivityLogProps> = ({ userId }) => {
         const res = await fetchAppointments();
         if (res.success && res.data) {
           const completed = res.data.filter(a => a.status === 'completed');
-          setHasActivity(completed.length > 0);
+          completed.sort((a, b) => {
+            const timeA = parseDate((a as any)._raw?.appointmentDate || a.date)?.getTime() || 0;
+            const timeB = parseDate((b as any)._raw?.appointmentDate || b.date)?.getTime() || 0;
+            return timeB - timeA;
+          });
+          setCompletedAppointments(completed);
         }
       } catch (error) {
         console.error("Error loading XP activities:", error);
@@ -38,7 +43,7 @@ export const XPActivityLog: React.FC<XPActivityLogProps> = ({ userId }) => {
           <div className="flex py-8 px-6 w-full justify-center">
             <span className="text-[#6C757D] text-sm">Đang tải dữ liệu...</span>
           </div>
-        ) : !hasActivity ? (
+        ) : completedAppointments.length === 0 ? (
           <div className="flex py-10 px-6 w-full justify-center">
             <span className="text-[#6C757D] text-sm italic">Bạn chưa có hoạt động nào để nhận XP. Hãy tham gia hiến máu!</span>
           </div>
@@ -46,44 +51,33 @@ export const XPActivityLog: React.FC<XPActivityLogProps> = ({ userId }) => {
           <>
             {/* Header row */}
             <div className="flex w-full border-b border-[#F1F3F5] bg-[#F8F9FA]">
-              <div className="flex py-4 px-6 w-[40%]"><span className="text-[#6C757D] text-xs font-medium tracking-wide">ACTIVITY</span></div>
-              <div className="flex py-4 px-6 w-[20%]"><span className="text-[#6C757D] text-xs font-medium tracking-wide">DATE</span></div>
-              <div className="flex py-4 px-6 w-[20%]"><span className="text-[#6C757D] text-xs font-medium tracking-wide">POINTS</span></div>
-              <div className="flex py-4 px-6 w-[20%] justify-end"><span className="text-[#6C757D] text-xs font-medium tracking-wide">IMPACT</span></div>
+              <div className="flex py-4 px-6 w-[40%]"><span className="text-[#6C757D] text-xs font-medium tracking-wide">HOẠT ĐỘNG</span></div>
+              <div className="flex py-4 px-6 w-[20%]"><span className="text-[#6C757D] text-xs font-medium tracking-wide">NGÀY THỰC HIỆN</span></div>
+              <div className="flex py-4 px-6 w-[20%]"><span className="text-[#6C757D] text-xs font-medium tracking-wide">ĐIỂM THƯỞNG</span></div>
+              <div className="flex py-4 px-6 w-[20%] justify-end"><span className="text-[#6C757D] text-xs font-medium tracking-wide">TÁC ĐỘNG</span></div>
             </div>
             
-            {/* Row 1 */}
-            <div className="flex w-full items-center border-b border-[#F1F3F5] py-4">
-              <div className="flex flex-col px-6 w-[40%]">
-                <span className="text-[#271816] text-base font-medium">Whole Blood Donation</span>
-                <span className="text-[#A3A3A3] text-xs font-medium">Regular Cycle</span>
-              </div>
-              <div className="flex px-6 w-[20%] text-[#271816] text-sm">Mar 15, 2024</div>
-              <div className="flex px-6 w-[20%] text-[#16A34A] text-base font-bold">+250 XP</div>
-              <div className="flex px-6 w-[20%] justify-end gap-1 text-[#271816] font-semibold text-base">♥️ x3</div>
-            </div>
+            {/* Dynamic Rows */}
+            {completedAppointments.map((evt, idx) => {
+              const rawDate = (evt as any)._raw?.appointmentDate || evt.date;
+              const dateObj = parseDate(rawDate);
+              const formattedDate = dateObj
+                ? dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                : evt.date;
+              const locationName = (evt as any).locationName || evt.location?.name || 'Chiến dịch Hiến máu LifeLine';
 
-            {/* Row 2 */}
-            <div className="flex w-full items-center border-b border-[#F1F3F5] py-4">
-              <div className="flex flex-col px-6 w-[40%]">
-                <span className="text-[#271816] text-base font-medium">Shared Campaign</span>
-                <span className="text-[#A3A3A3] text-xs font-medium">World Blood Donor Day</span>
-              </div>
-              <div className="flex px-6 w-[20%] text-[#271816] text-sm">Feb 20, 2024</div>
-              <div className="flex px-6 w-[20%] text-[#16A34A] text-base font-bold">+50 XP</div>
-              <div className="flex px-6 w-[20%] justify-end gap-1 text-[#271816] font-semibold text-base">🔗 x1</div>
-            </div>
-
-            {/* Row 3 */}
-            <div className="flex w-full items-center py-4">
-              <div className="flex flex-col px-6 w-[40%]">
-                <span className="text-[#271816] text-base font-medium">Referral Signup</span>
-                <span className="text-[#A3A3A3] text-xs font-medium">Invite: Tran Ha My</span>
-              </div>
-              <div className="flex px-6 w-[20%] text-[#271816] text-sm">Jan 12, 2024</div>
-              <div className="flex px-6 w-[20%] text-[#16A34A] text-base font-bold">+100 XP</div>
-              <div className="flex px-6 w-[20%] justify-end gap-1 text-[#271816] font-semibold text-base">🤝 x1</div>
-            </div>
+              return (
+                <div key={evt.id || idx} className="flex w-full items-center border-b border-[#F1F3F5] last:border-b-0 py-4 hover:bg-slate-50/50 transition-colors">
+                  <div className="flex flex-col px-6 w-[40%]">
+                    <span className="text-[#271816] text-base font-medium">Hiến máu toàn phần</span>
+                    <span className="text-[#A3A3A3] text-xs font-medium">{locationName}</span>
+                  </div>
+                  <div className="flex px-6 w-[20%] text-[#271816] text-sm font-semibold">{formattedDate}</div>
+                  <div className="flex px-6 w-[20%] text-[#16A34A] text-base font-bold">+250 XP</div>
+                  <div className="flex px-6 w-[20%] justify-end gap-1 text-[#271816] font-semibold text-base">♥️ x3</div>
+                </div>
+              );
+            })}
           </>
         )}
       </div>

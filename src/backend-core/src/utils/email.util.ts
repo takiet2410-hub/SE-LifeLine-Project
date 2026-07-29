@@ -8,11 +8,17 @@ const SENDER_NAME = "LifeLine Support System"; // Tên dự án mới của bạ
  * Hàm chung để gửi email qua Brevo API (Tương đương send_email_via_brevo)
  */
 export const sendEmailViaBrevo = async (toEmail: string, subject: string, htmlContent: string): Promise<boolean> => {
-  const url = "https://api.brevo.com/v3/smtp/email"; // Endpoint từ Python[cite: 32]
+  if (!toEmail || typeof toEmail !== 'string' || !toEmail.trim() || !toEmail.includes('@')) {
+    console.warn(`[sendEmailViaBrevo] Bỏ qua gửi email do địa chỉ email không tồn tại hoặc không hợp lệ: "${toEmail}"`);
+    return false;
+  }
+
+  const cleanEmail = toEmail.trim();
+  const url = "https://api.brevo.com/v3/smtp/email";
   
   const payload = {
     sender: { name: SENDER_NAME, email: SENDER_EMAIL },
-    to: [{ email: toEmail }],
+    to: [{ email: cleanEmail }],
     subject: subject,
     htmlContent: htmlContent
   }; // Cấu trúc JSON từ Python[cite: 32]

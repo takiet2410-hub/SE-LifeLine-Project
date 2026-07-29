@@ -45,6 +45,13 @@ export interface ProfileData {
     xp?: number;
     donorLevel?: number;
   };
+  achievements?: Array<{
+    badgeType: string;
+    title: string;
+    description: string;
+    icon: string;
+    awardedAt: string;
+  }>;
 }
 
 interface ProfileHeaderCardProps {

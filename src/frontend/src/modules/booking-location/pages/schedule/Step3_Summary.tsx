@@ -72,11 +72,31 @@ export const Step3_Summary: React.FC = () => {
           });
           setShowEligibilityModal(true);
         } else if (msg.includes('ELIGIBILITY_FAILED_84_DAYS') || msg.includes('84') || msg.includes('khoảng cách')) {
+          const rawLast = res.data?.lastDonationDate;
+          const rawNext = res.data?.nextEligibleDate;
+
+          const formatDateStr = (d?: string) => {
+            if (!d) return undefined;
+            try {
+              const dt = new Date(d);
+              if (isNaN(dt.getTime())) return d;
+              const day = String(dt.getDate()).padStart(2, '0');
+              const month = String(dt.getMonth() + 1).padStart(2, '0');
+              const year = dt.getFullYear();
+              return `${day}/${month}/${year}`;
+            } catch {
+              return d;
+            }
+          };
+
+          const formattedLast = formatDateStr(rawLast);
+          const formattedNext = formatDateStr(rawNext);
+
           setEligibilityData({
             title: 'Chưa đủ thời gian giãn cách',
             message: 'Bạn chưa đủ khoảng cách tối thiểu 84 ngày kể từ lần hiến máu gần nhất.',
-            lastDonationDate: '15/06/2025',
-            nextEligibleDate: '27/09/2025',
+            lastDonationDate: formattedLast,
+            nextEligibleDate: formattedNext,
           });
           setShowEligibilityModal(true);
         } else if (msg.includes('DUPLICATE') || msg.includes('trùng') || msg.includes('đã có')) {

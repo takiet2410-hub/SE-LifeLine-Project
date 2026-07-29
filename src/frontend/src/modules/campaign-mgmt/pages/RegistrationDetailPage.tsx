@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
+import { formatDateToDDMMYYYY } from '../../booking-location/api/bookingApi';
 import type { RegistrationData } from '../../../services/mockData';
 import { screeningSchema } from '../schemas/campaignSchema';
 import type { ScreeningInput } from '../schemas/campaignSchema';
@@ -100,6 +101,7 @@ export const RegistrationDetailPage: React.FC = () => {
         Confirmed: '🟢 Đã xác nhận đơn (Confirmed)',
         Eligible: '🟢 Đủ điều kiện hiến máu (Eligible)',
         Ineligible: '🔴 Không đủ điều kiện (Ineligible)',
+        Rejected: '🔴 Đã từ chối đơn (Rejected)',
         Completed: '✨ Đã hoàn tất hiến máu (Completed)',
         CheckedIn: '🟡 Đã điểm danh (CheckedIn)',
       };
@@ -523,6 +525,7 @@ export const RegistrationDetailPage: React.FC = () => {
                     <option value="Confirmed">🟢 Xác nhận đơn (Confirmed)</option>
                     <option value="Eligible">🟢 Đủ điều kiện hiến máu (Eligible)</option>
                     <option value="Ineligible">🔴 Không đủ điều kiện (Ineligible)</option>
+                    <option value="Rejected">🔴 Từ chối đơn (Rejected)</option>
                     <option value="Completed">✨ Đã hoàn tất hiến máu (Completed)</option>
                     <option value="CheckedIn">🟡 Đã điểm danh (CheckedIn)</option>
                   </select>
@@ -573,7 +576,7 @@ export const RegistrationDetailPage: React.FC = () => {
                   <tbody className="divide-y divide-[#f1f3f5]">
                     {registration.donationHistory.map((item, idx) => {
                       const formattedDate = item.appointmentDate
-                        ? new Date(item.appointmentDate).toLocaleDateString('vi-VN')
+                        ? formatDateToDDMMYYYY(item.appointmentDate)
                         : '---';
                       return (
                         <tr key={item._id || idx} className="hover:bg-slate-50/50">
@@ -658,10 +661,10 @@ export const RegistrationDetailPage: React.FC = () => {
                       bodyTemperature: watchTemp || undefined,
                       hemoglobinLevel: watchHgb || undefined,
                       screeningNotes: reason,
-                      status: 'Ineligible' as any,
+                      status: 'Rejected' as any,
                     });
                     setRegistration(updated);
-                    setValue('status', 'Ineligible' as any);
+                    setValue('status', 'Rejected' as any);
                     setRejectModal({ isOpen: false, reason: '' });
                     toast.dismiss(toastId);
                     toast.success('Đã từ chối đơn đăng ký và gửi thông báo lý do tới người hiến.');

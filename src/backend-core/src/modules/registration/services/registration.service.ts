@@ -10,6 +10,7 @@ import { User } from '../../auth-account/models/user.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { DigitalDonorRecord } from '../models/digital-donor-record.model';
 import { AuditLog } from '../models/audit-log.model';
+import { GamificationService } from '../../auth-account/services/gamification.service';
 import { sendBookingConfirmationEmail } from '../../../utils/email.util';
 
 const toObjectId = (idStr: string) => {
@@ -472,15 +473,37 @@ export class RegistrationService {
 
       // 1. Update or create ScreeningForm
       let screeningForm = await ScreeningForm.findOne({ appointmentId: registrationId }, null, opts);
-      const eligibilityFlag = payload.status
-        ? (payload.status === 'Eligible for Donation' || payload.status === 'Eligible') ? 'Eligible' : 'Ineligible'
-        : (screeningForm as any)?.eligibilityFlag || 'RequiresReview';
+
+      let eligibilityFlag = (screeningForm as any)?.eligibilityFlag || 'RequiresReview';
+      let outcome = (screeningForm as any)?.outcome || 'PASS';
+
+      if (payload.status) {
+        if (
+          payload.status === 'Eligible for Donation' ||
+          payload.status === 'Eligible' ||
+          payload.status === 'Confirmed' ||
+          payload.status === 'CheckedIn' ||
+          payload.status === 'Completed' ||
+          payload.status === 'Donation Completed'
+        ) {
+          eligibilityFlag = 'Eligible';
+          outcome = 'PASS';
+        } else if (
+          payload.status === 'Ineligible for Donation' ||
+          payload.status === 'Ineligible' ||
+          payload.status === 'Rejected' ||
+          (payload.status as string) === 'Cancelled'
+        ) {
+          eligibilityFlag = 'Ineligible';
+          outcome = 'REJECT';
+        }
+      }
 
       if (!screeningForm) {
         screeningForm = new ScreeningForm({
           appointmentId: registrationId,
           responses: payload.responses || [],
-          outcome: eligibilityFlag === 'Eligible' ? 'PASS' : 'REJECT',
+          outcome: outcome as any,
           medicalHistory: {},
           currentHealthStatus: 'Evaluated by Blood Center Staff',
           recentTravel: 'N/A',
@@ -491,11 +514,7 @@ export class RegistrationService {
       } else {
         if (payload.status) {
           (screeningForm as any).eligibilityFlag = eligibilityFlag;
-          if (eligibilityFlag === 'Eligible') {
-            screeningForm.outcome = 'PASS' as any;
-          } else if (eligibilityFlag === 'Ineligible') {
-            screeningForm.outcome = 'REJECT' as any;
-          }
+          screeningForm.outcome = outcome as any;
         }
         if (payload.responses) {
           screeningForm.responses = payload.responses as any;
@@ -517,7 +536,7 @@ export class RegistrationService {
         if (payload.status === 'Donation Completed' || payload.status === 'Completed') {
           targetAppointmentStatus = AppointmentStatus.Completed;
         } else if (payload.status === 'Ineligible for Donation' || payload.status === 'Ineligible' || payload.status === 'Rejected') {
-          targetAppointmentStatus = AppointmentStatus.Cancelled;
+          targetAppointmentStatus = AppointmentStatus.Rejected;
         } else if (payload.status === 'Confirmed' || payload.status === 'Eligible' || payload.status === 'Eligible for Donation') {
           targetAppointmentStatus = AppointmentStatus.Confirmed;
         } else if (payload.status === 'Pending') {
@@ -549,6 +568,15 @@ export class RegistrationService {
         }
 
         appointment.status = targetAppointmentStatus;
+
+        // Process Gamification (+250 XP & Achievement unlocking) when donation is completed
+        if (targetAppointmentStatus === AppointmentStatus.Completed && previousStatus !== AppointmentStatus.Completed) {
+          try {
+            await GamificationService.processDonationCompletion(appointment.donorId, appointment.appointmentDate, session);
+          } catch (gErr) {
+            console.error('Error processing gamification logic:', gErr);
+          }
+        }
       }
 
       appointment.screeningFormId = screeningForm._id as any;

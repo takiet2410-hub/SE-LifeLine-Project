@@ -19,7 +19,11 @@ export class BookingController {
     } catch (error: any) {
       if (error.message.includes('NOT_FOUND')) res.status(404).json({ message: error.message });
       else if (error.message.includes('CAMPAIGN_NOT_ACTIVE') || error.message.includes('FULL') || error.message.includes('DUPLICATE')) res.status(409).json({ message: error.message });
-      else if (error.message.includes('ELIGIBILITY')) res.status(403).json({ message: error.message });
+      else if (error.message.includes('ELIGIBILITY')) res.status(403).json({
+        message: error.message,
+        lastDonationDate: error.lastDonationDate,
+        nextEligibleDate: error.nextEligibleDate,
+      });
       else next(error);
     }
   }

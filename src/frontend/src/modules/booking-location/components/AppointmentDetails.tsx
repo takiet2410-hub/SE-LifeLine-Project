@@ -1,6 +1,9 @@
-import React from 'react';
-import { CalendarDays, Clock, MapPin, Download, XCircle, Droplet, Activity, Heart, Scale, QrCode, AlertCircle, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { CalendarDays, Clock, MapPin, Download, XCircle, Droplet, Activity, Heart, Scale, QrCode, AlertCircle, CheckCircle2, Award } from 'lucide-react';
 import type { Appointment } from '../types';
+import { DonationCertificateModal } from '../../impact-tracking/components/DonationCertificateModal';
+import { getProfile } from '../../auth-account/api/authApi';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 
 interface AppointmentDetailsProps {
   appointment: Appointment;
@@ -19,11 +22,25 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   onViewETicket,
   isCancelling = false
 }) => {
+  const { user } = useAuth();
+  const [isCertOpen, setIsCertOpen] = useState(false);
+  const [donorProfileData, setDonorProfileData] = useState<any>(null);
+
+  const handleOpenCert = async () => {
+    setIsCertOpen(true);
+    try {
+      const res = await getProfile();
+      if (res.success && res.user) {
+        setDonorProfileData(res.user);
+      }
+    } catch (e) {}
+  };
   const isNoShow = appointment.status === 'no-show';
   const isCancelled = appointment.status === 'cancelled';
+  const isRejected = appointment.status === 'rejected';
   const isCompleted = appointment.status === 'completed';
-  const isPending = !isNoShow && !isCancelled && !isCompleted && (appointment.status === 'pending' || !appointment.qrCodeUrl);
-  const isUpcoming = !isNoShow && !isCancelled && !isCompleted && (appointment.status === 'upcoming' || Boolean(appointment.qrCodeUrl));
+  const isPending = !isNoShow && !isCancelled && !isRejected && !isCompleted && (appointment.status === 'pending' || !appointment.qrCodeUrl);
+  const isUpcoming = !isNoShow && !isCancelled && !isRejected && !isCompleted && (appointment.status === 'upcoming' || Boolean(appointment.qrCodeUrl));
 
   return (
     <div className="bg-white border border-[#f1f3f5] rounded-xl overflow-hidden shadow-sm h-full flex flex-col">
@@ -53,6 +70,11 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
               {isCompleted && (
                 <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-green-50 text-green-700 border border-green-200">
                   HOÀN THÀNH
+                </span>
+              )}
+              {isRejected && (
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                  <XCircle className="w-3.5 h-3.5 text-rose-700" /> ĐÃ TỪ CHỐI (REJECTED)
                 </span>
               )}
               {isCancelled && (
@@ -90,7 +112,7 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
         )}
 
         {/* Cancelled / Rejected Status Notice Banner */}
-        {isCancelled && (
+        {(isCancelled || isRejected) && (
           <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-3 text-rose-950 shadow-2xs">
             <AlertCircle className="w-5 h-5 text-rose-700 shrink-0 mt-0.5" />
             <div className="space-y-1 w-full">
@@ -286,17 +308,32 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
 
             {isCompleted && (
               <button
-                onClick={() => onDownload(appointment.id)}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[14px] font-semibold rounded-lg transition-all shadow-sm active:scale-[0.98]"
+                onClick={handleOpenCert}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[14px] font-semibold rounded-lg transition-all shadow-sm active:scale-[0.98] cursor-pointer"
               >
-                <Download className="w-4 h-4" />
-                Download Certificate
+                <Award className="w-4 h-4 text-amber-300" />
+                Xem / In Giấy Chứng Nhận Hiến Máu
               </button>
             )}
           </div>
         </div>
 
       </div>
+
+      <DonationCertificateModal
+        isOpen={isCertOpen}
+        onClose={() => setIsCertOpen(false)}
+        data={{
+          donorName: donorProfileData?.personalInfo?.fullName || donorProfileData?.profileInfo?.fullName || user?.fullName || 'Người Hiến Máu LifeLine',
+          idDocumentNumber: donorProfileData?.personalInfo?.idDocumentNumber || (user as any)?.idDocumentNumber || '079099xxxxxx',
+          dateOfBirth: donorProfileData?.personalInfo?.dateOfBirth || (user as any)?.dateOfBirth,
+          bloodType: appointment.bloodType || donorProfileData?.personalInfo?.bloodType || donorProfileData?.profileInfo?.bloodType || 'O+',
+          volume: '350 ml',
+          donationDate: (appointment as any)._raw?.appointmentDate || appointment.date,
+          locationName: appointment.location?.name || 'Trung tâm Hiến máu LifeLine',
+          certificateNo: `CERT-${new Date().getFullYear()}-LL${(appointment.id || '').slice(-6).toUpperCase()}`
+        }}
+      />
     </div>
   );
 };

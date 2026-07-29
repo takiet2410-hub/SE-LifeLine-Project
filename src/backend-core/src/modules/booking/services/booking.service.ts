@@ -242,13 +242,28 @@ export class BookingService {
       }
 
       // 2. Validate 84-day eligibility
-      // Find latest completed appointment
       const lastCompleted = await Appointment.findOne({ donorId, status: AppointmentStatus.Completed }).sort({ appointmentDate: -1 });
-      if (lastCompleted) {
-        const diffTime = Math.abs(new Date(appointmentDate).getTime() - lastCompleted.appointmentDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        if (diffDays < 84) {
-          throw new Error('ELIGIBILITY_FAILED_84_DAYS');
+      const donorProfile = await DonorProfile.findOne({ userId: donorId });
+
+      let lastDonationDate: Date | null = null;
+      const completedDate = lastCompleted?.appointmentDate ? new Date(lastCompleted.appointmentDate) : null;
+      const profileDate = donorProfile?.lastDonationDate ? new Date(donorProfile.lastDonationDate) : null;
+
+      if (completedDate && profileDate) {
+        lastDonationDate = completedDate > profileDate ? completedDate : profileDate;
+      } else {
+        lastDonationDate = completedDate || profileDate || null;
+      }
+
+      if (lastDonationDate) {
+        const nextEligibleDate = new Date(lastDonationDate.getTime() + 84 * 24 * 60 * 60 * 1000);
+        const targetDate = new Date(appointmentDate);
+        
+        if (targetDate < nextEligibleDate) {
+          const err: any = new Error('ELIGIBILITY_FAILED_84_DAYS');
+          err.lastDonationDate = lastDonationDate.toISOString();
+          err.nextEligibleDate = nextEligibleDate.toISOString();
+          throw err;
         }
       }
 
@@ -259,8 +274,6 @@ export class BookingService {
       }
 
       // 4. Validate Screening Form
-      const donorProfile = await DonorProfile.findOne({ userId: donorId });
-      
       let outcome = 'PASS';
       let usedTemplateId = undefined;
       
@@ -478,22 +491,35 @@ export class BookingService {
       // Trigger Email Notification with attached E-ticket asynchronously
       try {
         if (fullAppointment) {
-          const donorUser = await User.findById(fullAppointment.donorId).lean();
-          const donorProfile = await DonorProfile.findOne({ userId: fullAppointment.donorId }).lean();
-          const recipientEmail = donorUser?.email || donorProfile?.email;
+          let donorUser: any = await User.findById(fullAppointment.donorId).lean();
+          let donorProfile: any = await DonorProfile.findOne({
+            $or: [
+              { userId: fullAppointment.donorId },
+              { _id: fullAppointment.donorId }
+            ]
+          }).lean();
+
+          if (!donorUser && donorProfile?.userId) {
+            donorUser = await User.findById(donorProfile.userId).lean();
+          }
+
+          const rawEmail = donorUser?.email || donorProfile?.email || '';
+          const recipientEmail = (rawEmail && typeof rawEmail === 'string' && rawEmail.includes('@')) ? rawEmail.trim() : null;
 
           if (recipientEmail && fullAppointment.eTicketId) {
             const eTicket: any = fullAppointment.eTicketId;
             const campaign: any = fullAppointment.campaignId;
             sendBookingConfirmationEmail(
               recipientEmail,
-              donorProfile?.fullName || 'Người hiến máu',
+              donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu',
               campaign?.name || 'Chiến dịch hiến máu',
               fullAppointment.appointmentDate,
               fullAppointment.timeSlot,
               eTicket.ticketCode || '',
               eTicket.fileUrl || ''
             ).catch(err => console.error('Failed to send confirmation email:', err));
+          } else {
+            console.log(`[BookingService] Skipping email notification - No valid email for donorId: ${fullAppointment.donorId}`);
           }
         }
       } catch (emailErr) {
@@ -509,26 +535,43 @@ export class BookingService {
   }
 
   public static async rejectAppointmentByBloodCenter(id: string, reason?: string) {
-    const appointment = await Appointment.findById(id).populate('donorId').populate('campaignId');
+    const appointment = await Appointment.findById(id).populate('campaignId');
     if (!appointment) {
       throw new Error('APPOINTMENT_NOT_FOUND');
     }
 
-    appointment.status = AppointmentStatus.Cancelled;
+    appointment.status = AppointmentStatus.Rejected;
     await appointment.save();
 
-    const donor: any = appointment.donorId;
     const campaign: any = appointment.campaignId;
 
-    if (donor && donor.email) {
-      try {
-        const donorName = donor.fullName || 'Người hiến máu';
+    try {
+      let donorUser: any = await User.findById(appointment.donorId).lean();
+      let donorProfile: any = await DonorProfile.findOne({
+        $or: [
+          { userId: appointment.donorId },
+          { _id: appointment.donorId }
+        ]
+      }).lean();
+
+      if (!donorUser && donorProfile?.userId) {
+        donorUser = await User.findById(donorProfile.userId).lean();
+      }
+
+      const rawEmail = donorUser?.email || donorProfile?.email || '';
+      const recipientEmail = (rawEmail && typeof rawEmail === 'string' && rawEmail.includes('@')) ? rawEmail.trim() : null;
+
+      if (recipientEmail) {
+        const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
         const campaignName = campaign?.name || 'Chiến dịch hiến máu';
         const appDate = appointment.appointmentDate;
-        await sendBookingRejectionEmail(donor.email, donorName, campaignName, appDate, reason);
-      } catch (err) {
-        console.error('Error sending rejection email:', err);
+        await sendBookingRejectionEmail(recipientEmail, donorName, campaignName, appDate, reason)
+          .catch(err => console.error('Failed to send rejection email:', err));
+      } else {
+        console.log(`[BookingService] Skipping rejection email - No valid email for donorId: ${appointment.donorId}`);
       }
+    } catch (err) {
+      console.error('Error sending rejection email:', err);
     }
 
     return appointment;

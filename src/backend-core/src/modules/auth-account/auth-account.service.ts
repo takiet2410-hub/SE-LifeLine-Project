@@ -11,6 +11,7 @@ import crypto from 'crypto';
 import { sendVerificationEmail, sendResetEmail } from '../../utils/email.util';
 import { DEFAULT_AVATAR_URL } from '../../utils/cloudinary.util';
 import { Appointment, AppointmentStatus } from '../booking/models/appointment.model';
+import { Badge } from './models/badge.model';
 export class AuthAccountService {
   
   static async register(data: RegisterInput) {
@@ -378,7 +379,15 @@ export class AuthAccountService {
 
     // 3. Tính toán các chỉ số động cho UI
     const totalDonations = completedAppointments.length;
-    const lastDonationDate = totalDonations > 0 ? completedAppointments[0].appointmentDate : null;
+    const completedDate = totalDonations > 0 ? new Date(completedAppointments[0].appointmentDate) : null;
+    const profileDate = profile.lastDonationDate ? new Date(profile.lastDonationDate) : null;
+
+    let lastDonationDate: Date | null = null;
+    if (completedDate && profileDate) {
+      lastDonationDate = completedDate > profileDate ? completedDate : profileDate;
+    } else {
+      lastDonationDate = completedDate || profileDate || null;
+    }
     
     // Y học thực tế: 1 đơn vị máu toàn phần có thể tách làm 3 chế phẩm (Hồng cầu, Huyết tương, Tiểu cầu) để cứu 3 người
     const livesImpacted = totalDonations * 3; 
@@ -390,7 +399,10 @@ export class AuthAccountService {
       const currentDate = new Date(); 
       
       if (currentDate < nextEligibleDate) {
-        eligibilityStatus = `Eligible on ${nextEligibleDate.toLocaleDateString('en-GB')}`; // Format dd/mm/yyyy
+        const day = String(nextEligibleDate.getDate()).padStart(2, '0');
+        const month = String(nextEligibleDate.getMonth() + 1).padStart(2, '0');
+        const year = nextEligibleDate.getFullYear();
+        eligibilityStatus = `Eligible on ${day}/${month}/${year}`;
       }
     }
 
@@ -398,7 +410,10 @@ export class AuthAccountService {
     // Tương lai bạn có thể viết logic kiểm tra hiến máu đều đặn mỗi năm để tăng streak
     const currentStreak = totalDonations > 0 ? 1 : 0; 
 
-    // 4. Định dạng dữ liệu trả về khớp hoàn toàn với thiết kế UI Frontend
+    // 4. Query badges earned by user
+    const badges = await Badge.find({ donorId: userId }).sort({ awardedAt: -1 }).lean();
+
+    // 5. Định dạng dữ liệu trả về khớp hoàn toàn với thiết kế UI Frontend
     return {
       profileInfo: {
         avatarUrl: profile.avatarUrl,
@@ -415,6 +430,13 @@ export class AuthAccountService {
         xp: profile.xp,
         donorLevel: profile.donorLevel
       },
+      achievements: badges.map(b => ({
+        badgeType: b.badgeType,
+        title: b.title,
+        description: b.description,
+        icon: b.icon,
+        awardedAt: b.awardedAt
+      })),
       personalInfo: {
         idDocumentNumber: profile.idDocumentNumber,
         fullName: profile.fullName,

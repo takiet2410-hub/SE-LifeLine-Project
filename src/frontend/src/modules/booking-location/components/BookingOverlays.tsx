@@ -16,8 +16,8 @@ export const EligibilityOverlay: React.FC<EligibilityOverlayProps> = ({
   onClose,
   title = 'Không đủ điều kiện hiến máu',
   message = 'Bạn chưa đủ khoảng cách 84 ngày kể từ lần hiến máu gần nhất hoặc thông tin sức khỏe chưa đáp ứng tiêu chuẩn.',
-  lastDonationDate = '15/06/2025',
-  nextEligibleDate = '27/09/2025',
+  lastDonationDate,
+  nextEligibleDate,
 }) => {
   const navigate = useNavigate();
   if (!isOpen) return null;
@@ -37,16 +37,22 @@ export const EligibilityOverlay: React.FC<EligibilityOverlayProps> = ({
         </div>
 
         {/* Information Box */}
-        <div className="w-full bg-[#f8f9fa] border border-[#f1f3f5] rounded-xl p-4 space-y-2.5 text-sm">
-          <div className="flex justify-between items-center text-[13px]">
-            <span className="text-[#6c757d]">Lần hiến máu cuối:</span>
-            <span className="font-semibold text-[#271816]">{lastDonationDate}</span>
+        {(lastDonationDate || nextEligibleDate) && (
+          <div className="w-full bg-[#f8f9fa] border border-[#f1f3f5] rounded-xl p-4 space-y-2.5 text-sm">
+            {lastDonationDate && (
+              <div className="flex justify-between items-center text-[13px]">
+                <span className="text-[#6c757d]">Lần hiến máu cuối:</span>
+                <span className="font-semibold text-[#271816]">{lastDonationDate}</span>
+              </div>
+            )}
+            {nextEligibleDate && (
+              <div className="flex justify-between items-center text-[13px]">
+                <span className="text-[#6c757d]">Ngày đủ điều kiện tiếp theo:</span>
+                <span className="font-bold text-[#93000b]">{nextEligibleDate}</span>
+              </div>
+            )}
           </div>
-          <div className="flex justify-between items-center text-[13px]">
-            <span className="text-[#6c757d]">Ngày đủ điều kiện tiếp theo:</span>
-            <span className="font-bold text-[#93000b]">{nextEligibleDate}</span>
-          </div>
-        </div>
+        )}
 
         {/* Action Buttons */}
         <div className="w-full space-y-3 pt-2">

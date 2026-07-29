@@ -189,7 +189,7 @@ export const RegistrationDetailPage: React.FC = () => {
             className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
           >
             <XCircle className="w-4 h-4" />
-            <span>Từ Chối (Tạm Hoãn)</span>
+            <span>Từ Chối (Rejected)</span>
           </button>
           <button
             type="button"
@@ -595,7 +595,7 @@ export const RegistrationDetailPage: React.FC = () => {
           <div className="bg-white border border-[#f1f3f5] rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4">
             <div className="flex items-center gap-3 text-red-600">
               <AlertCircle className="w-6 h-6 shrink-0 text-red-600" />
-              <h3 className="text-[18px] font-bold text-[#271816]">Từ chối / Tạm hoãn đơn hiến máu</h3>
+              <h3 className="text-[18px] font-bold text-[#271816]">Từ chối đơn hiến máu (Rejected)</h3>
             </div>
             
             <p className="text-[13px] text-[#6c757d] leading-relaxed">
@@ -629,7 +629,7 @@ export const RegistrationDetailPage: React.FC = () => {
                   if (!registrationId) return;
                   const toastId = toast.loading('Đang xử lý từ chối đơn...');
                   try {
-                    const reason = rejectModal.reason.trim() || 'Chưa đủ điều kiện sức khỏe hoặc thuộc diện tạm hoãn hiến máu.';
+                    const reason = rejectModal.reason.trim() || 'Chưa đủ điều kiện sức khỏe hoặc đơn bị từ chối.';
                     const updated = await apiService.updateRegistration(registrationId, {
                       bloodPressure: watchBp || undefined,
                       weight: watchWeight || undefined,

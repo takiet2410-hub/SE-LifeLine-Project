@@ -267,21 +267,43 @@ export const RegistrationDetailPage: React.FC = () => {
           </div>
 
           {/* Card 2: Donor Pre-screening Self-Report (Tờ khai tiền sử bệnh lý từ collection screening_forms) */}
+          {/* Screening Survey Form Card (4 cols) */}
           <div className="bg-white border border-[#f1f3f5] rounded-2xl p-6 shadow-2xs space-y-4">
             <div className="flex items-center justify-between border-b border-[#f1f3f5] pb-3">
               <h4 className="text-[14px] font-bold text-[#271816] flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[#93000b]" />
-                <span>Tờ Khai Khảo Sát Tự Khai (Form Sàng Lọc)</span>
+                <span>Đơn khảo sát sàng lọc (Screening Survey Form)</span>
               </h4>
-              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
-                ((registration as any)?.screeningForm?.outcome || 'PASS') === 'PASS'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : ((registration as any)?.screeningForm?.outcome || 'PASS') === 'REJECT'
-                  ? 'bg-red-50 text-red-700 border-red-200'
-                  : 'bg-amber-50 text-amber-700 border-amber-200'
-              }`}>
-                {(registration as any)?.screeningForm?.outcome || 'PASS'}
-              </span>
+              {(() => {
+                const sf = (registration as any)?.screeningForm || (registration as any)?.screening;
+                if (!sf) {
+                  return (
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                      CHƯA TỰ KHAI
+                    </span>
+                  );
+                }
+                const outcome = sf.outcome || 'PASS';
+                if (outcome === 'PASS') {
+                  return (
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      ĐẠT SÀNG LỌC (PASS)
+                    </span>
+                  );
+                }
+                if (outcome === 'REJECT') {
+                  return (
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                      KHÔNG ĐẠT (REJECT)
+                    </span>
+                  );
+                }
+                return (
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                    CẦN BÁC SĨ XEM XÉT (REVIEW)
+                  </span>
+                );
+              })()}
             </div>
 
             <div className="space-y-2.5 text-[12px]">

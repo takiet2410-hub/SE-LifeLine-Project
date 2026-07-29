@@ -161,6 +161,10 @@ describe('Donor Registration & Health Screening Module (BC-UC-04, BC-UC-05)', ()
         lean: jest.fn().mockResolvedValue(null)
       } as any);
 
+      jest.spyOn(ScreeningForm, 'findOne').mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null)
+      } as any);
+
       jest.spyOn(AuditLog, 'create').mockResolvedValue({} as any);
 
       const result = await RegistrationService.getCampaignRegistrations(
@@ -189,6 +193,7 @@ describe('Donor Registration & Health Screening Module (BC-UC-04, BC-UC-05)', ()
 
       jest.spyOn(Appointment, 'find').mockReturnValue(chainMock as any);
       jest.spyOn(Appointment, 'countDocuments').mockResolvedValue(0 as any);
+      jest.spyOn(DigitalDonorRecord, 'find').mockReturnValue({ select: jest.fn().mockResolvedValue([]) } as any);
       jest.spyOn(AuditLog, 'create').mockResolvedValue({} as any);
 
       const result = await RegistrationService.getCampaignRegistrations(

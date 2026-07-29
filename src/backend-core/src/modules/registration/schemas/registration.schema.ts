@@ -47,10 +47,10 @@ export const UpdateScreeningSchema = z.object({
     vitals: z.object({
       bloodPressure: z.string().regex(/^\d{2,3}\/\d{2,3}$/, {
         message: 'bloodPressure must match pattern SYS/DIA (e.g. 120/80)'
-      }),
-      weight: z.number().positive({ message: 'weight must be greater than 0' }),
-      bodyTemperature: z.number().positive({ message: 'bodyTemperature must be greater than 0' }),
-      hemoglobinLevel: z.number().positive({ message: 'hemoglobinLevel must be greater than 0' })
+      }).optional(),
+      weight: z.number().positive({ message: 'weight must be greater than 0' }).optional(),
+      bodyTemperature: z.number().positive({ message: 'bodyTemperature must be greater than 0' }).optional(),
+      hemoglobinLevel: z.number().positive({ message: 'hemoglobinLevel must be greater than 0' }).optional()
     }).optional(),
     screeningNotes: z.string().max(1000).optional(),
     status: z.enum([

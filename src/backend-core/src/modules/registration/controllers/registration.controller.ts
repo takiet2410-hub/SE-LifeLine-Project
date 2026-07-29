@@ -61,4 +61,18 @@ export class RegistrationController {
       return next(error);
     }
   }
+
+  /**
+   * POST /api/v1/registrations/qr-checkin
+   */
+  static async checkInByQRCode(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { qrPayload } = req.body;
+      const actorUserId = String(req.user?._id || req.user?.id || '');
+      const result = await RegistrationService.checkInByQRCode(qrPayload || '', actorUserId);
+      return res.status(200).json(result);
+    } catch (error) {
+      return next(error);
+    }
+  }
 }

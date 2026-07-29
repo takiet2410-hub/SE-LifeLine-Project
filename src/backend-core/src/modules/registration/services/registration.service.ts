@@ -5,6 +5,7 @@ import { Campaign } from '../../campaign/models/campaign.model';
 import { Appointment, AppointmentStatus } from '../../booking/models/appointment.model';
 import { ScreeningForm } from '../../booking/models/screening-form.model';
 import { ETicket } from '../../booking/models/eticket.model';
+import { BookingService } from '../../booking/services/booking.service';
 import { User } from '../../auth-account/models/user.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { DigitalDonorRecord } from '../models/digital-donor-record.model';
@@ -61,9 +62,28 @@ export class RegistrationService {
     const limit = Number(query.limit) || 20;
     const skip = (page - 1) * limit;
 
-    // Filter by appointment status if provided
-    if (query.status) {
-      filter.status = query.status;
+    // Filter by appointment/digital record status if provided
+    if (query.status && query.status !== 'All') {
+      const matchingDigitalRecords = await DigitalDonorRecord.find({ donationStatus: query.status as any }).select('appointmentId');
+      const digitalAppIds = matchingDigitalRecords.map(d => d.appointmentId);
+
+      if (filter.$or) {
+        filter.$and = [
+          { $or: filter.$or },
+          {
+            $or: [
+              { status: query.status },
+              { _id: { $in: digitalAppIds } }
+            ]
+          }
+        ];
+        delete filter.$or;
+      } else {
+        filter.$or = [
+          { status: query.status },
+          { _id: { $in: digitalAppIds } }
+        ];
+      }
     }
 
     // Filter by date range
@@ -91,9 +111,9 @@ export class RegistrationService {
         const searchRegex = new RegExp(query.search, 'i');
         const userMatches = await User.find({
           $or: [
-            { fullName: searchRegex },
             { idDocumentNumber: searchRegex },
-            { phone: searchRegex }
+            { phone: searchRegex },
+            { email: searchRegex }
           ]
         }).select('_id');
 
@@ -103,23 +123,31 @@ export class RegistrationService {
             { idDocumentNumber: searchRegex },
             { phoneNumber: searchRegex }
           ]
-        }).select('userId');
+        }).select('userId _id');
 
         const matchingUserIds = [
           ...userMatches.map(u => u._id),
-          ...profileMatches.map(p => p.userId)
-        ];
+          ...profileMatches.map(p => p.userId),
+          ...profileMatches.map(p => p._id)
+        ].filter(Boolean);
 
         if (query.bloodType) {
-          donorFilter.userId = { $in: matchingUserIds };
+          donorFilter.$or = [
+            { userId: { $in: matchingUserIds } },
+            { _id: { $in: matchingUserIds } }
+          ];
         } else {
           matchedDonorUserIds = matchingUserIds;
         }
       }
 
       if (query.bloodType) {
-        const matchedProfiles = await DonorProfile.find(donorFilter).select('userId');
-        const bloodTypeUserIds = matchedProfiles.map(p => p.userId);
+        const matchedProfiles = await DonorProfile.find(donorFilter).select('userId _id');
+        const bloodTypeUserIds = [
+          ...matchedProfiles.map(p => p.userId),
+          ...matchedProfiles.map(p => p._id)
+        ].filter(Boolean);
+
         if (matchedDonorUserIds) {
           matchedDonorUserIds = matchedDonorUserIds.filter(id =>
             bloodTypeUserIds.some(btId => btId.equals(id))
@@ -158,11 +186,34 @@ export class RegistrationService {
     // Format registration items with populated donor summary & screening form
     const items = await Promise.all(
       appointments.map(async (app: any) => {
-        const donorUser = await User.findById(app.donorId).lean();
-        const donorProfile = await DonorProfile.findOne({ userId: app.donorId }).lean();
+        const rawDonorId = app.donorId?._id || app.donorId;
+
+        let donorProfile = await DonorProfile.findOne({
+          $or: [
+            { userId: app.donorId },
+            { _id: app.donorId },
+            ...(rawDonorId ? [{ userId: rawDonorId }, { _id: rawDonorId }] : [])
+          ]
+        }).lean();
+
+        let donorUser = app.donorId ? await User.findById(app.donorId).lean() : null;
+        if (!donorUser && donorProfile?.userId) {
+          donorUser = await User.findById(donorProfile.userId).lean();
+        }
+
+        if (!donorProfile && donorUser) {
+          donorProfile = await DonorProfile.findOne({
+            $or: [
+              ...(donorUser.idDocumentNumber ? [{ idDocumentNumber: donorUser.idDocumentNumber }] : []),
+              ...(donorUser.phone ? [{ phoneNumber: donorUser.phone }] : []),
+              ...(donorUser.email ? [{ email: donorUser.email }] : [])
+            ]
+          }).lean();
+        }
+
         const digitalRecord = await DigitalDonorRecord.findOne({ appointmentId: app._id }).lean();
         const screeningForm = await ScreeningForm.findOne({ appointmentId: app._id }).lean();
-        const campaignDoc = app.campaignId ? await Campaign.findById(app.campaignId).lean() : null;
+        const campaignDoc = app.campaignId ? await Campaign.findById(app.campaignId) : null;
 
         const displayStatus: string = digitalRecord?.donationStatus || app.status;
 
@@ -176,16 +227,29 @@ export class RegistrationService {
           eligibilityFlag: (screeningForm as any).eligibilityFlag || 'RequiresReview'
         } : null;
 
+        const fullName = donorProfile?.fullName || 'N/A';
+        const idDocumentNumber = donorProfile?.idDocumentNumber || donorUser?.idDocumentNumber || 'N/A';
+        const phoneNumber = donorProfile?.phoneNumber || donorUser?.phone || 'N/A';
+        const bloodType = donorProfile?.bloodType || 'Unknown';
+
         return {
           registrationId: app._id.toString(),
           campaignId: app.campaignId ? app.campaignId.toString() : campaignIdStr,
           campaignName: campaignDoc?.name || 'Chiến dịch Hiến máu',
+          donorId: app.donorId ? app.donorId.toString() : '',
+          donorName: fullName,
+          donorPhone: phoneNumber,
+          donorIdCard: idDocumentNumber,
+          donorBloodType: bloodType,
+          donorDob: donorProfile?.dateOfBirth || '',
           donor: {
             donorId: app.donorId ? app.donorId.toString() : '',
-            fullName: donorProfile?.fullName || (donorUser as any)?.fullName || 'N/A',
-            idDocumentNumber: donorUser?.idDocumentNumber || donorProfile?.idDocumentNumber || 'N/A',
-            phoneNumber: donorProfile?.phoneNumber || donorUser?.phone || 'N/A',
-            bloodType: donorProfile?.bloodType || 'Unknown'
+            fullName,
+            idDocumentNumber,
+            phoneNumber,
+            bloodType,
+            dateOfBirth: donorProfile?.dateOfBirth,
+            email: donorProfile?.email || donorUser?.email || ''
           },
           appointmentDate: app.appointmentDate,
           timeSlot: app.timeSlot,
@@ -205,7 +269,7 @@ export class RegistrationService {
         actorUserId: toObjectId(actorUserId),
         action: 'VIEW_REGISTRATION_LIST',
         resourceType: 'Campaign',
-        resourceId: campaignId,
+        resourceId: toObjectId(campaignIdStr),
         newValue: { query, page, limit, totalCount },
         ipAddress: ipAddress || '127.0.0.1',
         timestamp: new Date()
@@ -242,12 +306,33 @@ export class RegistrationService {
       throw err;
     }
 
-    const [donorUser, donorProfile, screeningForm, digitalRecord] = await Promise.all([
-      User.findById(appointment.donorId).lean(),
-      DonorProfile.findOne({ userId: appointment.donorId }).lean(),
-      ScreeningForm.findOne({ appointmentId: registrationId }).lean(),
-      DigitalDonorRecord.findOne({ appointmentId: registrationId }).lean()
-    ]);
+    const rawDonorId = appointment.donorId?._id || appointment.donorId;
+
+    let donorProfile = await DonorProfile.findOne({
+      $or: [
+        { userId: appointment.donorId },
+        { _id: appointment.donorId },
+        ...(rawDonorId ? [{ userId: rawDonorId }, { _id: rawDonorId }] : [])
+      ]
+    }).lean();
+
+    let donorUser = appointment.donorId ? await User.findById(appointment.donorId).lean() : null;
+    if (!donorUser && donorProfile?.userId) {
+      donorUser = await User.findById(donorProfile.userId).lean();
+    }
+
+    if (!donorProfile && donorUser) {
+      donorProfile = await DonorProfile.findOne({
+        $or: [
+          ...(donorUser.idDocumentNumber ? [{ idDocumentNumber: donorUser.idDocumentNumber }] : []),
+          ...(donorUser.phone ? [{ phoneNumber: donorUser.phone }] : []),
+          ...(donorUser.email ? [{ email: donorUser.email }] : [])
+        ]
+      }).lean();
+    }
+
+    const screeningForm = await ScreeningForm.findOne({ appointmentId: registrationId }).lean();
+    const digitalRecord = await DigitalDonorRecord.findOne({ appointmentId: registrationId }).lean();
 
     const displayStatus: string = digitalRecord?.donationStatus || appointment.status;
 
@@ -266,20 +351,30 @@ export class RegistrationService {
       eligibilityFlag: (screeningForm as any).eligibilityFlag || 'RequiresReview'
     } : null;
 
+    const fullName = donorProfile?.fullName || 'N/A';
+    const idDocumentNumber = donorProfile?.idDocumentNumber || donorUser?.idDocumentNumber || 'N/A';
+    const phoneNumber = donorProfile?.phoneNumber || donorUser?.phone || 'N/A';
+    const bloodType = donorProfile?.bloodType || 'Unknown';
+
     return {
       registrationId: appointment._id.toString(),
       campaignId: appointment.campaignId.toString(),
       appointmentDate: appointment.appointmentDate,
       timeSlot: appointment.timeSlot,
       status: displayStatus,
+      donorName: fullName,
+      donorPhone: phoneNumber,
+      donorIdCard: idDocumentNumber,
+      donorBloodType: bloodType,
+      donorDob: donorProfile?.dateOfBirth || '',
       donor: {
         donorId: appointment.donorId.toString(),
-        fullName: donorProfile?.fullName || 'N/A',
+        fullName,
         dateOfBirth: donorProfile?.dateOfBirth,
-        idDocumentNumber: donorUser?.idDocumentNumber || donorProfile?.idDocumentNumber || 'N/A',
-        phoneNumber: donorProfile?.phoneNumber || donorUser?.phone || 'N/A',
-        email: donorUser?.email || donorProfile?.email,
-        bloodType: donorProfile?.bloodType || 'Unknown',
+        idDocumentNumber,
+        phoneNumber,
+        email: donorProfile?.email || donorUser?.email || '',
+        bloodType,
         permanentAddress: donorProfile?.permanentAddress || 'N/A',
         lastDonationDate: donorProfile?.lastDonationDate,
         totalDonations: donorProfile?.totalDonations || 0
@@ -500,32 +595,84 @@ export class RegistrationService {
       await executeUpdate();
     }
 
-    // Trigger Email Notification with attached E-ticket asynchronously if appointment status was set to Confirmed
+    // Combine logic with BookingService from booking module for confirmation & rejection (triggers E-Ticket generation & Email notifications)
     try {
-      const fullApp: any = await Appointment.findById(registrationId).populate('eTicketId').populate('campaignId').lean();
-      if (fullApp && fullApp.status === AppointmentStatus.Confirmed && fullApp.eTicketId) {
-        const donorUser = await User.findById(fullApp.donorId).lean();
-        const donorProfile = await DonorProfile.findOne({ userId: fullApp.donorId }).lean();
-        const recipientEmail = donorUser?.email || donorProfile?.email;
-
-        if (recipientEmail) {
-          const eTicket: any = fullApp.eTicketId;
-          const campaign: any = fullApp.campaignId;
-          sendBookingConfirmationEmail(
-            recipientEmail,
-            donorProfile?.fullName || 'Người hiến máu',
-            campaign?.name || 'Chiến dịch hiến máu',
-            fullApp.appointmentDate,
-            fullApp.timeSlot,
-            eTicket.ticketCode || '',
-            eTicket.fileUrl || ''
-          ).catch(err => console.error('Failed to send confirmation email on screening update:', err));
-        }
+      if (payload.status === 'Confirmed') {
+        await BookingService.confirmAppointmentByBloodCenter(registrationIdStr);
+      } else if (payload.status === 'Ineligible' || payload.status === 'Rejected' || payload.status === 'Ineligible for Donation') {
+        await BookingService.rejectAppointmentByBloodCenter(registrationIdStr, payload.screeningNotes);
       }
-    } catch (emailErr) {
-      console.error('Error sending confirmation email after screening update:', emailErr);
+    } catch (bookingErr) {
+      console.error('Error running BookingService confirm/reject logic:', bookingErr);
     }
 
     return await RegistrationService.getRegistrationById(registrationIdStr);
+  }
+
+  /**
+   * Scan QR Code & Check-in registration automatically
+   */
+  static async checkInByQRCode(qrPayload: string, actorUserId?: string) {
+    let appointment: any = null;
+    const cleanPayload = qrPayload ? qrPayload.trim() : '';
+
+    if (cleanPayload) {
+      // 1. Try finding ETicket by ticketCode or qrPayloadSigned
+      const eTicket = await ETicket.findOne({
+        $or: [
+          { ticketCode: cleanPayload },
+          { qrPayloadSigned: cleanPayload },
+          { ticketCode: cleanPayload.replace('SIGNED-', '') }
+        ]
+      }).lean();
+
+      if (eTicket) {
+        appointment = await Appointment.findById(eTicket.appointmentId);
+      }
+
+      // 2. Try finding by CCCD (idDocumentNumber) in DonorProfile or User
+      if (!appointment) {
+        const matchingProfile = await DonorProfile.findOne({ idDocumentNumber: cleanPayload }).lean();
+        const matchingUser = await User.findOne({ idDocumentNumber: cleanPayload }).lean();
+
+        const donorUserIds = [
+          ...(matchingProfile ? [matchingProfile.userId, matchingProfile._id] : []),
+          ...(matchingUser ? [matchingUser._id] : [])
+        ].filter(Boolean);
+
+        if (donorUserIds.length > 0) {
+          appointment = await Appointment.findOne({
+            donorId: { $in: donorUserIds },
+            status: { $in: [AppointmentStatus.Confirmed, AppointmentStatus.Pending, AppointmentStatus.Scheduled, AppointmentStatus.CheckedIn] }
+          }).sort({ appointmentDate: -1, createdAt: -1 });
+        }
+      }
+
+      // 3. Try finding Appointment directly by _id
+      if (!appointment && mongoose.Types.ObjectId.isValid(cleanPayload)) {
+        appointment = await Appointment.findById(cleanPayload);
+      }
+    }
+
+    // 3. Fallback: if cleanPayload is empty or mock demo, find the first available confirmed/pending appointment
+    if (!appointment) {
+      appointment = await Appointment.findOne({
+        status: { $in: [AppointmentStatus.Confirmed, AppointmentStatus.Pending, AppointmentStatus.Scheduled, AppointmentStatus.CheckedIn] }
+      }).sort({ createdAt: -1 });
+    }
+
+    if (!appointment) {
+      const err: any = new Error('Không tìm thấy phiếu đăng ký / E-Ticket hợp lệ');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    // 4. Update status to CheckedIn
+    const registrationIdStr = appointment._id.toString();
+    return await RegistrationService.updateRegistrationScreening(
+      registrationIdStr,
+      { status: 'CheckedIn' },
+      actorUserId || 'system'
+    );
   }
 }

@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import { Campaign, ICampaign } from '../models/campaign.model';
 import { Appointment } from '../../booking/models/appointment.model';
+import { DonorProfile } from '../../auth-account/models/donor-profile.model';
+import { User } from '../../auth-account/models/user.model';
 
 export class CampaignService {
   /**
@@ -215,13 +217,16 @@ export class CampaignService {
    * Sub-resource endpoint: Get Registrations for a Campaign
    */
   public static async getCampaignRegistrations(campaignId: string) {
+    if (campaignId && campaignId !== 'all') {
+      const campaign = mongoose.Types.ObjectId.isValid(campaignId) ? await Campaign.findById(campaignId) : null;
+      if (!campaign) {
+        throw new Error('CAMPAIGN_NOT_FOUND');
+      }
+    }
+
     let filter: any = {};
     if (campaignId && campaignId !== 'all') {
-      if (mongoose.Types.ObjectId.isValid(campaignId)) {
-        filter = { campaignId: new mongoose.Types.ObjectId(campaignId) };
-      } else {
-        filter = { campaignId };
-      }
+      filter = { campaignId: new mongoose.Types.ObjectId(campaignId) };
     }
 
     const appointments = await Appointment.find(filter)

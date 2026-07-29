@@ -89,6 +89,28 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
           </div>
         )}
 
+        {/* Cancelled / Rejected Status Notice Banner */}
+        {isCancelled && (
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-3 text-rose-950 shadow-2xs">
+            <AlertCircle className="w-5 h-5 text-rose-700 shrink-0 mt-0.5" />
+            <div className="space-y-1 w-full">
+              <p className="text-[13px] font-bold text-rose-900">Lịch hẹn không được chấp nhận / Đã hủy</p>
+              {appointment.rejectionReason || appointment.screeningNotes ? (
+                <div className="p-3 bg-white/90 border border-rose-200 rounded-lg mt-1.5 shadow-2xs">
+                  <p className="text-[11px] font-bold text-rose-900 uppercase tracking-wider mb-0.5">Lý do từ chối từ Nhân viên y tế:</p>
+                  <p className="text-[13px] font-semibold text-rose-800 italic">
+                    "{appointment.rejectionReason || appointment.screeningNotes}"
+                  </p>
+                </div>
+              ) : (
+                <p className="text-[12px] text-rose-800 leading-snug">
+                  Lịch hẹn hiến máu của bạn không được phê duyệt hoặc đã bị hủy. Nếu cần hỗ trợ thêm, vui lòng liên hệ nhân viên trung tâm truyền máu.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* NoShow Status Notice Banner */}
         {isNoShow && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-950">

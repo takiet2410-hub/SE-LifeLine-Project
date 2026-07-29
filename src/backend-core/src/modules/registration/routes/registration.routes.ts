@@ -189,4 +189,31 @@ router.put(
   RegistrationController.updateRegistrationScreening
 );
 
+/**
+  * @openapi
+  * /api/v1/registrations/qr-checkin:
+  *   post:
+  *     summary: Scan E-Ticket QR Code & Auto Check-In Registration Status
+  *     tags: [Registration]
+  *     security:
+  *       - bearerAuth: []
+  *     requestBody:
+  *       required: true
+  *       content:
+  *         application/json:
+  *           schema:
+  *             type: object
+  *             properties:
+  *               qrPayload:
+  *                 type: string
+  *     responses:
+  *       200:
+  *         description: Successfully checked-in registration via QR Code
+  */
+router.post(
+  '/registrations/qr-checkin',
+  authenticateJWT,
+  RegistrationController.checkInByQRCode
+);
+
 export default router;

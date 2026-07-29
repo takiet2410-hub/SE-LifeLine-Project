@@ -9,25 +9,35 @@ jest.mock('mongoose', () => {
     Types: {
       ObjectId: jest.fn().mockImplementation(() => 'mocked-object-id')
     },
-    models: {
-      Campaign: {
-        find: jest.fn(),
-        findById: jest.fn(),
-        findOne: jest.fn(),
-        updateOne: jest.fn(),
-        init: jest.fn().mockResolvedValue({}),
-        createCollection: jest.fn().mockResolvedValue({}),
+    models: new Proxy({}, {
+      get(target: any, prop: string) {
+        if (!target[prop]) {
+          const createQueryMock = () => {
+            const fn: any = jest.fn();
+            fn.session = jest.fn().mockResolvedValue(null);
+            return fn;
+          };
+          target[prop] = {
+            find: jest.fn().mockImplementation(createQueryMock),
+            findById: jest.fn().mockImplementation(createQueryMock),
+            findOne: jest.fn().mockImplementation(createQueryMock),
+            updateOne: jest.fn().mockImplementation(createQueryMock),
+            init: jest.fn().mockResolvedValue({}),
+            createCollection: jest.fn().mockResolvedValue({})
+          };
+        }
+        return target[prop];
       }
-    },
-    model: jest.fn().mockReturnValue({
-      find: jest.fn(),
-      findById: jest.fn(),
-      findOne: jest.fn(),
-      updateOne: jest.fn(),
-      init: jest.fn().mockResolvedValue({}),
-      createCollection: jest.fn().mockResolvedValue({}),
     }),
-    Schema: jest.fn()
+    model: jest.fn().mockImplementation((name: string) => (m.models as any)[name]),
+    Schema: Object.assign(
+      jest.fn().mockImplementation(() => ({
+        index: jest.fn(),
+        pre: jest.fn(),
+        post: jest.fn()
+      })),
+      { Types: { ObjectId: String, Mixed: String } }
+    )
   };
   return m;
 });

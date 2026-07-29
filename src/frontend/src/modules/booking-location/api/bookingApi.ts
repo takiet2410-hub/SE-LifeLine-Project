@@ -70,6 +70,8 @@ export interface Appointment {
     hemoglobin?: string;
   };
   qrCodeUrl?: string;
+  rejectionReason?: string;
+  screeningNotes?: string;
   // Raw backend fields (accessible when needed)
   _raw?: BackendAppointment;
 }
@@ -104,6 +106,7 @@ const mapStatus = (backendStatus: BackendAppointmentStatus): AppointmentStatus =
 export const mapBackendAppointment = (raw: BackendAppointment): Appointment => {
   const campaign = typeof raw.campaignId === 'object' ? raw.campaignId : null;
   const eTicket = typeof raw.eTicketId === 'object' ? raw.eTicketId : null;
+  const screeningForm = typeof (raw as any).screeningFormId === 'object' ? (raw as any).screeningFormId : null;
   const rawAny = raw as any;
 
   const isConfirmed = raw.status === 'Confirmed' || raw.status === 'Scheduled' || raw.status === 'CheckedIn' || Boolean(raw.eTicketId);
@@ -113,6 +116,8 @@ export const mapBackendAppointment = (raw: BackendAppointment): Appointment => {
   // 2. Direct qrCodeUrl from raw object
   // 3. Standard fallback generator if confirmed
   const qrCodeUrl = eTicket?.fileUrl || rawAny.qrCodeUrl || (isConfirmed ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=LifeLineTicket-${raw._id}` : undefined);
+
+  const notes = rawAny.screeningNotes || screeningForm?.screeningNotes || rawAny.rejectionReason || rawAny.reason;
 
   return {
     id: raw._id,
@@ -125,6 +130,8 @@ export const mapBackendAppointment = (raw: BackendAppointment): Appointment => {
     },
     status: mapStatus(raw.status),
     qrCodeUrl,
+    rejectionReason: notes,
+    screeningNotes: notes,
     _raw: raw,
   };
 };

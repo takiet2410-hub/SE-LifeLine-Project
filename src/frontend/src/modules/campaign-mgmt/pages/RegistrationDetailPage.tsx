@@ -19,6 +19,7 @@ import {
   Sparkles,
   History,
   HelpCircle,
+  AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
@@ -39,6 +40,10 @@ export const RegistrationDetailPage: React.FC = () => {
   const [confirmStatusModal, setConfirmStatusModal] = useState<{ isOpen: boolean; targetStatus: string | null }>({
     isOpen: false,
     targetStatus: null,
+  });
+  const [rejectModal, setRejectModal] = useState<{ isOpen: boolean; reason: string }>({
+    isOpen: false,
+    reason: '',
   });
 
   const {
@@ -180,7 +185,7 @@ export const RegistrationDetailPage: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={() => setConfirmStatusModal({ isOpen: true, targetStatus: 'Ineligible' })}
+            onClick={() => setRejectModal({ isOpen: true, reason: '' })}
             className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
           >
             <XCircle className="w-4 h-4" />
@@ -583,6 +588,74 @@ export const RegistrationDetailPage: React.FC = () => {
         }}
         onCancel={() => setConfirmStatusModal({ isOpen: false, targetStatus: null })}
       />
+
+      {/* Rejection Modal with Optional Reason Input */}
+      {rejectModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white border border-[#f1f3f5] rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4">
+            <div className="flex items-center gap-3 text-red-600">
+              <AlertCircle className="w-6 h-6 shrink-0 text-red-600" />
+              <h3 className="text-[18px] font-bold text-[#271816]">Từ chối / Tạm hoãn đơn hiến máu</h3>
+            </div>
+            
+            <p className="text-[13px] text-[#6c757d] leading-relaxed">
+              Vui lòng nhập lý do từ chối (không bắt buộc). Lý do này sẽ được gửi tới email của người hiến và hiển thị khi họ xem chi tiết lịch hẹn.
+            </p>
+
+            <div>
+              <label className="block text-[12px] font-bold text-[#271816] mb-1.5 uppercase tracking-wider">
+                Lý do từ chối (Tùy chọn)
+              </label>
+              <textarea
+                value={rejectModal.reason}
+                onChange={(e) => setRejectModal(prev => ({ ...prev, reason: e.target.value }))}
+                placeholder="Ví dụ: Huyết áp chưa đạt chuẩn (145/95 mmHg), Chỉ số Hemoglobin thấp, Tiền sử dùng thuốc gần đây..."
+                rows={3}
+                className="w-full p-3 text-[13px] border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setRejectModal({ isOpen: false, reason: '' })}
+                className="px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-gray-100 rounded-xl transition-all cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!registrationId) return;
+                  const toastId = toast.loading('Đang xử lý từ chối đơn...');
+                  try {
+                    const reason = rejectModal.reason.trim() || 'Chưa đủ điều kiện sức khỏe hoặc thuộc diện tạm hoãn hiến máu.';
+                    const updated = await apiService.updateRegistration(registrationId, {
+                      bloodPressure: watchBp || undefined,
+                      weight: watchWeight || undefined,
+                      bodyTemperature: watchTemp || undefined,
+                      hemoglobinLevel: watchHgb || undefined,
+                      screeningNotes: reason,
+                      status: 'Ineligible' as any,
+                    });
+                    setRegistration(updated);
+                    setValue('status', 'Ineligible' as any);
+                    setRejectModal({ isOpen: false, reason: '' });
+                    toast.dismiss(toastId);
+                    toast.success('Đã từ chối đơn đăng ký và gửi thông báo lý do tới người hiến.');
+                  } catch (err) {
+                    toast.dismiss(toastId);
+                    toast.error('Có lỗi xảy ra khi từ chối đơn.');
+                  }
+                }}
+                className="px-5 py-2 text-[13px] font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all shadow-2xs cursor-pointer"
+              >
+                Xác Nhận Từ Chối
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

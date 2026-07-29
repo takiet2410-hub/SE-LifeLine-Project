@@ -32,8 +32,8 @@ setupSwagger(app);
 // Base routing structure
 app.use('/api/v1/users', authAccountRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
-app.use('/api/v1/campaigns', campaignRoutes);
 app.use('/api/v1', registrationRoutes);
+app.use('/api/v1/campaigns', campaignRoutes);
 app.use('/api/v1/bc/inventory', bloodInventoryRoutes);
 app.use('/api/v1/bc/articles', articleRoutes);
 

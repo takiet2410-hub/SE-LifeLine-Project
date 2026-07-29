@@ -602,6 +602,7 @@ export class BookingService {
     const appointments = await Appointment.find({ donorId })
       .populate('campaignId')
       .populate('eTicketId')
+      .populate('screeningFormId')
       .sort({ appointmentDate: -1 })
       .lean();
     await this.checkAndMarkExpiredAppointments(appointments);

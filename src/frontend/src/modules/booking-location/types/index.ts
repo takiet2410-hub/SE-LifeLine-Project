@@ -20,6 +20,8 @@ export interface Appointment {
     hemoglobin?: string;
   };
   qrCodeUrl?: string;
+  rejectionReason?: string;
+  screeningNotes?: string;
 }
 
 export interface ApiResponse<T = any> {

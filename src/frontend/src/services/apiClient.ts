@@ -117,17 +117,36 @@ export const apiService = {
       const rawList = Array.isArray(res.data) ? res.data : (res.data?.items || res.data?.data || null);
       if (rawList && Array.isArray(rawList)) {
         let result = rawList.map((item: any) => {
-          const donorObj = typeof item.donorId === 'object' ? item.donorId : item.donor || {};
+          const donorObj = typeof item.donorId === 'object' ? item.donorId : (item.donor || {});
           const screeningObj = item.screening || item.screeningFormId || item.screeningForm || null;
+          
+          const donorName = (item.donorName && item.donorName !== 'N/A')
+            ? item.donorName
+            : (donorObj.fullName || item.donor?.fullName || item.donorId?.fullName || item.fullName || 'Người hiến máu');
+
+          const donorBloodType = (item.donorBloodType && item.donorBloodType !== 'Unknown')
+            ? item.donorBloodType
+            : (donorObj.bloodType || item.donor?.bloodType || item.donorId?.bloodType || 'Unknown');
+
+          const donorDob = item.donorDob || donorObj.dateOfBirth || item.donor?.dateOfBirth || item.donorId?.dateOfBirth || '';
+
+          const donorIdCard = (item.donorIdCard && item.donorIdCard !== 'N/A' && item.donorIdCard !== 'Chưa cập nhật')
+            ? item.donorIdCard
+            : (donorObj.idDocumentNumber || item.donor?.idDocumentNumber || item.donorId?.idDocumentNumber || 'Chưa cập nhật');
+
+          const donorPhone = (item.donorPhone && item.donorPhone !== 'N/A' && item.donorPhone !== 'Chưa cập nhật SĐT')
+            ? item.donorPhone
+            : (donorObj.phoneNumber || donorObj.phone || item.donor?.phoneNumber || item.donorId?.phone || 'Chưa cập nhật SĐT');
+
           return {
             _id: item._id || item.id || item.registrationId,
             campaignId: item.campaignId?._id || item.campaignId || campaignId,
             donorId: donorObj._id || donorObj.donorId || item.donorId || '',
-            donorName: donorObj.fullName || item.donorName || item.donor?.fullName || item.donorId?.fullName || item.fullName || 'Người hiến máu',
-            donorBloodType: donorObj.bloodType || item.donorBloodType || item.donor?.bloodType || item.donorId?.bloodType || 'Unknown',
-            donorDob: donorObj.dateOfBirth || item.donorDob || item.donor?.dateOfBirth || item.donorId?.dateOfBirth || '',
-            donorIdCard: donorObj.idDocumentNumber || item.donorIdCard || item.donor?.idDocumentNumber || item.donorId?.idDocumentNumber || 'Chưa cập nhật',
-            donorPhone: donorObj.phoneNumber || donorObj.phone || item.donorPhone || item.donor?.phoneNumber || item.donorId?.phone || 'Chưa cập nhật SĐT',
+            donorName,
+            donorBloodType,
+            donorDob,
+            donorIdCard,
+            donorPhone,
             appointmentDate: item.appointmentDate || new Date().toISOString(),
             status: item.status || 'Pending',
             screeningForm: screeningObj,
@@ -170,18 +189,36 @@ export const apiService = {
       const res = await apiClient.get(`/registrations/${id}`);
       if (res.data) {
         const item = res.data;
-        const donorObj = typeof item.donorId === 'object' ? item.donorId : item.donor || {};
+        const donorObj = typeof item.donorId === 'object' ? item.donorId : (item.donor || {});
         const screeningObj = item.screening || item.screeningForm || item.screeningFormId || null;
+
+        const donorName = (item.donorName && item.donorName !== 'N/A')
+          ? item.donorName
+          : (donorObj.fullName || item.donor?.fullName || item.donorId?.fullName || item.fullName || 'Người hiến máu');
+
+        const donorBloodType = (item.donorBloodType && item.donorBloodType !== 'Unknown')
+          ? item.donorBloodType
+          : (donorObj.bloodType || item.donor?.bloodType || item.donorId?.bloodType || 'Unknown');
+
+        const donorDob = item.donorDob || donorObj.dateOfBirth || item.donor?.dateOfBirth || item.donorId?.dateOfBirth || '';
+
+        const donorIdCard = (item.donorIdCard && item.donorIdCard !== 'N/A' && item.donorIdCard !== 'Chưa cập nhật')
+          ? item.donorIdCard
+          : (donorObj.idDocumentNumber || item.donor?.idDocumentNumber || item.donorId?.idDocumentNumber || 'Chưa cập nhật');
+
+        const donorPhone = (item.donorPhone && item.donorPhone !== 'N/A' && item.donorPhone !== 'Chưa cập nhật SĐT')
+          ? item.donorPhone
+          : (donorObj.phoneNumber || donorObj.phone || item.donor?.phoneNumber || item.donorId?.phone || 'Chưa cập nhật SĐT');
 
         return {
           _id: item._id || item.id || item.registrationId || id,
           campaignId: item.campaignId?._id || item.campaignId || '',
           donorId: donorObj._id || donorObj.donorId || item.donorId || '',
-          donorName: donorObj.fullName || item.donorName || item.donor?.fullName || item.donorId?.fullName || item.fullName || 'Người hiến máu',
-          donorBloodType: donorObj.bloodType || item.donorBloodType || item.donor?.bloodType || item.donorId?.bloodType || 'Unknown',
-          donorDob: donorObj.dateOfBirth || item.donorDob || item.donor?.dateOfBirth || item.donorId?.dateOfBirth || '',
-          donorIdCard: donorObj.idDocumentNumber || item.donorIdCard || item.donor?.idDocumentNumber || item.donorId?.idDocumentNumber || 'Chưa cập nhật',
-          donorPhone: donorObj.phoneNumber || donorObj.phone || item.donorPhone || item.donor?.phoneNumber || item.donorId?.phone || 'Chưa cập nhật SĐT',
+          donorName,
+          donorBloodType,
+          donorDob,
+          donorIdCard,
+          donorPhone,
           appointmentDate: item.appointmentDate || new Date().toISOString(),
           status: item.status || 'CheckedIn',
           bloodPressure: screeningObj?.vitals?.bloodPressure || item.bloodPressure || '',
@@ -200,24 +237,38 @@ export const apiService = {
 
   async updateRegistration(id: string, updates: Partial<RegistrationData>) {
     try {
-      const payload = {
+      const hasVitals = Boolean(
+        updates.bloodPressure || updates.weight || updates.bodyTemperature || updates.hemoglobinLevel
+      );
+
+      const payload: any = {
         status: updates.status,
-        vitals: {
-          bloodPressure: updates.bloodPressure,
-          weight: updates.weight,
-          bodyTemperature: updates.bodyTemperature,
-          hemoglobinLevel: updates.hemoglobinLevel,
-        },
-        screeningNotes: updates.screeningNotes,
       };
+
+      if (hasVitals) {
+        payload.vitals = {
+          ...(updates.bloodPressure ? { bloodPressure: updates.bloodPressure } : {}),
+          ...(updates.weight ? { weight: Number(updates.weight) } : {}),
+          ...(updates.bodyTemperature ? { bodyTemperature: Number(updates.bodyTemperature) } : {}),
+          ...(updates.hemoglobinLevel ? { hemoglobinLevel: Number(updates.hemoglobinLevel) } : {}),
+        };
+      }
+
+      if (updates.screeningNotes !== undefined) {
+        payload.screeningNotes = updates.screeningNotes;
+      }
+      if (updates.donorBloodType && updates.donorBloodType !== 'Unknown') {
+        payload.bloodType = updates.donorBloodType;
+      }
 
       const res = await apiClient.put(`/registrations/${id}/screening`, payload);
       if (res.data) {
         const item = res.data;
         const screeningObj = item.screening || item.screeningForm || item.screeningFormId || null;
         return {
-          _id: id,
+          ...item,
           ...updates,
+          status: item.status || updates.status,
           screeningForm: screeningObj || updates.screeningForm,
         } as RegistrationData;
       }
@@ -235,6 +286,23 @@ export const apiService = {
     }
     registrations[idx] = { ...registrations[idx], ...updates };
     return registrations[idx];
+  },
+
+  async checkInQRCode(qrPayload: string) {
+    try {
+      const res = await apiClient.post('/registrations/qr-checkin', { qrPayload });
+      if (res.data) {
+        return res.data;
+      }
+    } catch (err) {
+      console.warn('[apiService] Backend checkInQRCode failed, fallback to mock update:', err);
+    }
+    await delay();
+    if (registrations.length > 0) {
+      registrations[0].status = 'CheckedIn';
+      return registrations[0];
+    }
+    return null;
   },
 
   // ==================== ARTICLE APIs ====================

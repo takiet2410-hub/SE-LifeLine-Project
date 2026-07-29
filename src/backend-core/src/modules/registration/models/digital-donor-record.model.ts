@@ -12,9 +12,9 @@ export interface IDigitalDonorRecord extends Document {
 }
 
 const DigitalDonorRecordSchema: Schema = new Schema({
-  appointmentId: { type: Schema.Types.ObjectId, ref: 'Appointment', required: true, index: true },
-  donorId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  screeningSummary: { type: Schema.Types.Mixed, default: {} },
+  appointmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment', required: true, index: true },
+  donorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+  screeningSummary: { type: mongoose.Schema.Types.Mixed, default: {} },
   donationStatus: {
     type: String,
     enum: ['Pending', 'Confirmed', 'Rejected', 'CheckedIn', 'Eligible', 'Ineligible', 'Completed'],

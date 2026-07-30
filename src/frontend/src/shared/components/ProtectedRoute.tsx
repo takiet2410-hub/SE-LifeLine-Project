@@ -13,25 +13,43 @@ export const ProtectedRoute: React.FC = () => {
   }
 
   const isBcRoute = location.pathname.startsWith('/bc');
-  const roleLower = (user?.role || '').toLowerCase();
+  const isDonorRoute =
+    location.pathname.startsWith('/my-appointments') ||
+    location.pathname.startsWith('/map') ||
+    location.pathname.startsWith('/profile');
+
+  const userRole = user?.role || 'Donor';
+  const roleLower = userRole.toLowerCase();
+
   const isStaffRole =
-    user?.role === 'BloodCenterStaff' ||
-    user?.role === 'Administrator' ||
-    user?.role === 'HospitalStaff' ||
+    userRole === 'BloodCenterStaff' ||
+    userRole === 'Administrator' ||
+    userRole === 'HospitalStaff' ||
     roleLower.includes('staff') ||
     roleLower.includes('admin') ||
     roleLower.includes('hospital') ||
     roleLower.includes('bloodcenter');
 
-  // Strict Access Control: Only BloodCenterStaff / Staff can access Blood Center (/bc/*) routes
+  const isDonorRole = userRole === 'Donor' || roleLower === 'donor';
+
+  // 1. Strict Access Control: Only Staff/Admin roles can access Blood Center (/bc/*) routes
   if (isBcRoute && !isStaffRole) {
-    toast.error('Cảnh báo truy cập: Chỉ tài khoản Cán bộ (BloodCenterStaff) mới có quyền truy cập Cổng Trung tâm máu.');
+    toast.error('Cảnh báo truy cập: Chỉ tài khoản Cán bộ Y tế / Trung tâm Máu mới có quyền truy cập Cổng quản lý.');
     return <Navigate to="/my-appointments" replace />;
   }
 
-  // If a staff user accesses root citizen pages, redirect to BC campaigns dashboard
-  if (!isBcRoute && isStaffRole && (location.pathname === '/' || location.pathname === '/dashboard')) {
+  // 2. Strict Access Control: Only Donors can access appointment booking & donor portal routes
+  if (isDonorRoute && !isDonorRole) {
+    toast.info('Tài khoản Cán bộ Y tế đã được tự động chuyển hướng đến Cổng quản lý đợt hiến máu.');
     return <Navigate to="/bc/campaigns" replace />;
+  }
+
+  // 3. Fallback root/dashboard redirect based on role
+  if (location.pathname === '/' || location.pathname === '/dashboard') {
+    if (isStaffRole) {
+      return <Navigate to="/bc/campaigns" replace />;
+    }
+    return <Navigate to="/my-appointments" replace />;
   }
 
   return <Outlet />;

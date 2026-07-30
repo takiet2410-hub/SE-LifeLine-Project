@@ -1,6 +1,5 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { ScheduleProvider } from '../../context/ScheduleContext';
 
 export const ScheduleLayout: React.FC = () => {
   const location = useLocation();
@@ -45,16 +44,14 @@ export const ScheduleLayout: React.FC = () => {
   };
 
   return (
-    <ScheduleProvider>
-      <div className="flex flex-col h-full relative p-6 md:p-8 max-w-[1000px] mx-auto w-full">
-        {/* Stepper */}
-        {renderStepper()}
+    <div className="flex flex-col h-full relative p-6 md:p-8 max-w-[1000px] mx-auto w-full">
+      {/* Stepper */}
+      {renderStepper()}
 
-        {/* Outlet for Step Content */}
-        <div className="flex-1 overflow-y-auto">
-          <Outlet />
-        </div>
+      {/* Outlet for Step Content */}
+      <div className="flex-1 overflow-y-auto">
+        <Outlet />
       </div>
-    </ScheduleProvider>
+    </div>
   );
 };

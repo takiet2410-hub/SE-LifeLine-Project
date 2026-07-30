@@ -29,6 +29,11 @@ app.use(express.json());
 // Setup Swagger
 setupSwagger(app);
 
+// Convenient redirects to Swagger API documentation
+app.get(['/', '/swagger', '/docs'], (req, res) => {
+  res.redirect('/api-docs');
+});
+
 // Base routing structure
 app.use('/api/v1/users', authAccountRoutes);
 app.use('/api/v1/bookings', bookingRoutes);

@@ -32,23 +32,86 @@ export const Step1_LocationTime: React.FC = () => {
   useEffect(() => {
     const fetchLocations = async () => {
       setLoadingLocations(true);
-      setSelectedTime(''); // Reset time slot when selected date changes
       try {
         const res = await searchLocations(selectedDate ? { date: selectedDate } : undefined);
+        let locationOptions: LocationOption[] = [];
+
         if (res.success && res.data && res.data.length > 0) {
-          const locationOptions: LocationOption[] = res.data.map((item: any) => ({
+          locationOptions = res.data.map((item: any) => ({
             id: item.id || item._id,
             name: item.name,
             venue: item.venue || item.name,
             address: item.address || item.fullAddress || 'TP. Hồ Chí Minh',
             targetBloodGroups: item.targetBloodGroups || ['A+', 'B+', 'O+', 'AB+'],
-            timeSlots: item.timeSlots || []
+            timeSlots: item.timeSlots?.length ? item.timeSlots : [
+              { startTime: '08:00', endTime: '10:00', capacity: 30, registeredCount: 0 },
+              { startTime: '10:00', endTime: '12:00', capacity: 30, registeredCount: 0 },
+              { startTime: '13:30', endTime: '15:30', capacity: 30, registeredCount: 0 },
+            ]
           }));
-          setLocations(locationOptions);
+        }
 
-          // Auto-select first location if current selection is invalid for new date
-          if (!locationOptions.some(l => l.id === selectedLoc)) {
-            setSelectedLoc(locationOptions[0].id);
+        // Ensure location selected from Map is ALWAYS included in locationOptions
+        if (data.locationData && !locationOptions.some(l => String(l.id) === String(data.locationId) || (l.name && l.name.toLowerCase().trim() === data.locationData?.name.toLowerCase().trim()))) {
+          locationOptions.unshift({
+            id: data.locationId || data.locationData.id,
+            name: data.locationData.name,
+            venue: data.locationData.name,
+            address: data.locationData.address,
+            targetBloodGroups: ['A+', 'B+', 'O+', 'AB+'],
+            timeSlots: [
+              { startTime: '08:00', endTime: '10:00', capacity: 30, registeredCount: 0 },
+              { startTime: '10:00', endTime: '12:00', capacity: 30, registeredCount: 0 },
+              { startTime: '13:30', endTime: '15:30', capacity: 30, registeredCount: 0 },
+            ]
+          });
+        }
+
+        setLocations(locationOptions);
+
+        if (locationOptions.length > 0) {
+          // 1. Determine location to select (by exact ID or campaign name matching from Map)
+          let targetLocObj: LocationOption | undefined;
+          if (data.locationId) {
+            targetLocObj = locationOptions.find(l => String(l.id) === String(data.locationId));
+          }
+
+          if (!targetLocObj && data.locationData?.name) {
+            const cleanTargetName = data.locationData.name.replace(/\(Mã:.*?\)/gi, '').toLowerCase().trim();
+            targetLocObj = locationOptions.find(l => {
+              const cleanName = l.name.replace(/\(Mã:.*?\)/gi, '').toLowerCase().trim();
+              return cleanName === cleanTargetName || cleanName.includes(cleanTargetName) || cleanTargetName.includes(cleanName);
+            });
+          }
+
+          if (!targetLocObj && selectedLoc) {
+            targetLocObj = locationOptions.find(l => String(l.id) === String(selectedLoc));
+          }
+
+          if (!targetLocObj && locationOptions.length > 0) {
+            targetLocObj = locationOptions[0];
+          }
+
+          const targetLocId = targetLocObj ? targetLocObj.id : '';
+          setSelectedLoc(targetLocId);
+
+          if (targetLocObj) {
+            updateData({
+              locationId: targetLocObj.id,
+              locationData: {
+                id: targetLocObj.id,
+                name: targetLocObj.name,
+                address: targetLocObj.address,
+              }
+            });
+          }
+
+          // 2. Determine time slot to select: ALWAYS prioritize data.timeSlot if provided!
+          if (data.timeSlot && (data.date === selectedDate || !data.date)) {
+            setSelectedTime(data.timeSlot);
+          } else if (targetLocObj && targetLocObj.timeSlots && targetLocObj.timeSlots.length > 0) {
+            const availSlot = targetLocObj.timeSlots.find(s => (s.capacity - s.registeredCount) > 0) || targetLocObj.timeSlots[0];
+            setSelectedTime(`${availSlot.startTime} - ${availSlot.endTime}`);
           }
         } else {
           setLocations([]);
@@ -64,6 +127,16 @@ export const Step1_LocationTime: React.FC = () => {
     };
     fetchLocations();
   }, [selectedDate]);
+
+  // When selected location changes, update time slots if necessary
+  const handleSelectLocation = (locId: string) => {
+    setSelectedLoc(locId);
+    const targetLocObj = locations.find(l => l.id === locId);
+    if (targetLocObj && targetLocObj.timeSlots && targetLocObj.timeSlots.length > 0) {
+      const availSlot = targetLocObj.timeSlots.find(s => s.registeredCount < s.capacity) || targetLocObj.timeSlots[0];
+      setSelectedTime(`${availSlot.startTime} - ${availSlot.endTime}`);
+    }
+  };
 
   const handleNext = () => {
     if (selectedLoc && selectedDate && selectedTime) {
@@ -101,7 +174,7 @@ export const Step1_LocationTime: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/map')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#fff8f7] border border-[#f9dcd8] text-[#93000b] hover:bg-[#ffe9e6] rounded-xl text-[12px] font-bold transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#fff8f7] border border-[#f9dcd8] text-[#93000b] hover:bg-[#ffe9e6] rounded-xl text-[12px] font-bold transition-all cursor-pointer"
             >
               <MapPin className="w-3.5 h-3.5" />
               Bản đồ tương tác
@@ -134,7 +207,7 @@ export const Step1_LocationTime: React.FC = () => {
               <p className="text-[14px] font-medium text-[#6c757d]">Không có chiến dịch phù hợp cho ngày đã chọn.</p>
               <button
                 onClick={() => setSelectedDate(todayStr)}
-                className="mt-3 text-[13px] font-bold text-[#93000b] hover:underline"
+                className="mt-3 text-[13px] font-bold text-[#93000b] hover:underline cursor-pointer"
               >
                 Xem chiến dịch hôm nay
               </button>
@@ -146,7 +219,7 @@ export const Step1_LocationTime: React.FC = () => {
                 return (
                   <div
                     key={loc.id}
-                    onClick={() => setSelectedLoc(loc.id)}
+                    onClick={() => handleSelectLocation(loc.id)}
                     className={`flex items-start p-4 border rounded-xl cursor-pointer transition-all ${
                       isSelected
                         ? 'border-[#93000b] bg-[#fff8f7] ring-1 ring-[#93000b] shadow-sm'
@@ -233,7 +306,7 @@ export const Step1_LocationTime: React.FC = () => {
                           type="button"
                           onClick={() => setSelectedTime(slotLabel)}
                           disabled={isFull}
-                          className={`py-3 px-3 border rounded-xl text-[13px] font-bold transition-all text-center ${
+                          className={`py-3 px-3 border rounded-xl text-[13px] font-bold transition-all text-center cursor-pointer ${
                             isSelected
                               ? 'border-[#93000b] bg-[#93000b] text-white shadow-sm'
                               : isFull
@@ -263,7 +336,7 @@ export const Step1_LocationTime: React.FC = () => {
       <div className="flex items-center justify-between mt-4">
         <button
           onClick={() => navigate('/my-appointments')}
-          className="flex items-center gap-2 px-6 py-3 border border-[#dee2e6] text-[#271816] hover:bg-[#f8f9fa] text-[15px] font-semibold rounded-xl transition-all"
+          className="flex items-center gap-2 px-6 py-3 border border-[#dee2e6] text-[#271816] hover:bg-[#f8f9fa] text-[15px] font-semibold rounded-xl transition-all cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           Quay lại Lịch hẹn của tôi
@@ -272,7 +345,7 @@ export const Step1_LocationTime: React.FC = () => {
         <button
           onClick={handleNext}
           disabled={!isFormComplete}
-          className="flex items-center justify-center gap-2 px-8 py-3 bg-[#93000b] hover:bg-[#7a0009] text-white text-[15px] font-semibold rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center justify-center gap-2 px-8 py-3 bg-[#93000b] hover:bg-[#7a0009] text-white text-[15px] font-semibold rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           Bước tiếp theo: Khảo sát sức khỏe
           <ArrowRight className="w-4 h-4" />

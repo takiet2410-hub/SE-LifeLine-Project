@@ -66,6 +66,7 @@ export class AuthAccountService {
       email: data.email,
       phone: data.phoneNumber, 
       passwordHash,
+      roles: ['Donor'],
       role: 'Donor', 
       accountStatus: 'PendingVerification',
       verificationToken: verificationToken, // Lưu chuỗi thường
@@ -154,14 +155,35 @@ export class AuthAccountService {
       throw new Error('Account pending verification');
     }
 
+    // Consolidate all roles by scanning both user.role and user.roles array in database
+    const userRoles = Array.from(
+      new Set([
+        user.role,
+        ...(Array.isArray(user.roles) ? user.roles : [])
+      ].filter(Boolean))
+    );
+    const activeRole = data.role || user.role;
+
+    // Strict Mandatory Role Check: Reject login if requested role does not match DB role
+    if (data.role && !userRoles.includes(data.role as any)) {
+      throw new Error('Tài khoản của bạn chưa được cấp quyền truy cập với vai trò này.');
+    }
+
     // Reset attempts on successful login
     user.failedLoginAttempts = 0;
     user.accountStatus = 'Active';
     user.lockUntil = undefined;
-    await user.save();
+    try {
+      await user.save();
+    } catch (saveErr) {
+      await User.updateOne(
+        { _id: user._id },
+        { $set: { failedLoginAttempts: 0, accountStatus: 'Active' }, $unset: { lockUntil: 1 } }
+      ).catch(() => {});
+    }
 
     const accessToken = jwt.sign(
-      { userId: user._id, idDocumentNumber: user.idDocumentNumber, role: user.role },
+      { userId: user._id, idDocumentNumber: user.idDocumentNumber, role: activeRole },
       env.JWT_SECRET,
       { expiresIn: '30m' }
     );
@@ -172,7 +194,8 @@ export class AuthAccountService {
         id: user._id,
         email: user.email,
         idDocumentNumber: user.idDocumentNumber,
-        role: user.role
+        role: activeRole,
+        roles: userRoles
       }
     };
   }

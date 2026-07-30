@@ -6,6 +6,7 @@ import {
   Calendar,
   MapPin,
   Eye,
+  Edit,
   Users,
   Activity,
   Award,
@@ -71,20 +72,14 @@ export const CampaignListPage: React.FC = () => {
 
   const columns: Column<CampaignData>[] = [
     {
-      header: 'Mã & Tên chiến dịch',
+      header: 'Tên chiến dịch',
       accessor: (row: CampaignData) => {
         const id = row._id || (row as any).id;
-        const code = (row as any).campaignCode || `#CMP-${id.slice(-6)}`;
         return (
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-[#1a1a2e] text-white rounded">
-                {code}
-              </span>
-              <p className="font-bold text-[#271816] text-[14px] hover:text-[#93000b] transition-colors cursor-pointer" onClick={() => navigate(`/bc/campaigns/${id}`)}>
-                {row.name || 'Chiến dịch Hiến máu'}
-              </p>
-            </div>
+            <p className="font-bold text-[#271816] text-[14px] hover:text-[#93000b] transition-colors cursor-pointer" onClick={() => navigate(`/bc/campaigns/${id}`)}>
+              {row.name || 'Chiến dịch Hiến máu'}
+            </p>
             <div className="flex items-center gap-1.5 text-[12px] text-[#6c757d]">
               <MapPin className="w-3.5 h-3.5 text-[#93000b] shrink-0" />
               <span className="truncate max-w-xs">{row.venue || (row as any).fullAddress || 'TP. Hồ Chí Minh'}</span>
@@ -168,6 +163,14 @@ export const CampaignListPage: React.FC = () => {
             >
               <Eye className="w-3.5 h-3.5 text-[#93000b]" />
               <span>Chi tiết</span>
+            </button>
+            <button
+              onClick={() => navigate(`/bc/campaigns/${id}/edit`)}
+              className="px-2.5 py-1.5 text-[12px] font-semibold text-[#271816] bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center gap-1 transition-all shadow-2xs cursor-pointer"
+              title="Chỉnh sửa thông tin chiến dịch"
+            >
+              <Edit className="w-3.5 h-3.5 text-blue-600" />
+              <span>Sửa</span>
             </button>
             <button
               onClick={() => navigate(`/bc/campaigns/${id}/registrations`)}

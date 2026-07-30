@@ -10,11 +10,21 @@ export const seedDefaultUsers = async () => {
 
     const defaultUsers = [
       {
+        idDocumentNumber: '079099000111',
+        email: 'staff.bloodcenter@lifeline.gov.vn',
+        phone: '0909123111',
+        passwordHash,
+        role: 'BloodCenterStaff' as const,
+        roles: ['BloodCenterStaff' as const, 'Donor' as const],
+        accountStatus: 'Active' as const,
+      },
+      {
         idDocumentNumber: '079099000123',
         email: 'staff@lifeline.gov.vn',
         phone: '0909123456',
         passwordHash,
         role: 'BloodCenterStaff' as const,
+        roles: ['BloodCenterStaff' as const, 'Donor' as const],
         accountStatus: 'Active' as const,
       },
       {
@@ -23,6 +33,7 @@ export const seedDefaultUsers = async () => {
         phone: '0908123456',
         passwordHash,
         role: 'BloodCenterStaff' as const,
+        roles: ['BloodCenterStaff' as const, 'Donor' as const],
         accountStatus: 'Active' as const,
       },
       {
@@ -31,6 +42,7 @@ export const seedDefaultUsers = async () => {
         phone: '0907123456',
         passwordHash,
         role: 'Administrator' as const,
+        roles: ['Administrator' as const, 'Donor' as const],
         accountStatus: 'Active' as const,
       },
       {
@@ -39,36 +51,38 @@ export const seedDefaultUsers = async () => {
         phone: '0901234567',
         passwordHash,
         role: 'Donor' as const,
+        roles: ['Donor' as const],
         accountStatus: 'Active' as const,
       },
     ];
 
     for (const u of defaultUsers) {
-      const existing = await User.findOne({ idDocumentNumber: u.idDocumentNumber });
-      if (!existing) {
-        const newUser = await User.create(u);
-        console.log(`✅ Seeded user ${u.idDocumentNumber} (${u.role})`);
+      const newUser = await User.findOneAndUpdate(
+        { idDocumentNumber: u.idDocumentNumber },
+        { $set: u },
+        { upsert: true, new: true }
+      );
+      console.log(`✅ Seeded/Updated user ${u.idDocumentNumber} (${u.role})`);
 
-        if (u.role === 'Donor') {
-          const profileExisting = await DonorProfile.findOne({ userId: newUser._id });
-          if (!profileExisting) {
-            await DonorProfile.create({
-              userId: newUser._id,
-              fullName: 'Nguyễn Văn Hiến Máu',
-              dateOfBirth: new Date('1995-05-15'),
-              idDocumentNumber: u.idDocumentNumber,
-              phoneNumber: u.phone,
-              permanentAddress: '123 Nguyễn Trãi, Phường 2, Quận 5, TP. Hồ Chí Minh',
-              bloodType: 'O+',
-              gender: 'Male',
-              email: u.email,
-              totalDonations: 3,
-              xp: 150,
-              donorLevel: 2,
-              emergencyOptIn: true,
-            });
-            console.log(`✅ Seeded donor profile for ${u.idDocumentNumber}`);
-          }
+      if (u.role === 'Donor') {
+        const profileExisting = await DonorProfile.findOne({ userId: newUser._id });
+        if (!profileExisting) {
+          await DonorProfile.create({
+            userId: newUser._id,
+            fullName: 'Nguyễn Văn Hiến Máu',
+            dateOfBirth: new Date('1995-05-15'),
+            idDocumentNumber: u.idDocumentNumber,
+            phoneNumber: u.phone,
+            permanentAddress: '123 Nguyễn Trãi, Phường 2, Quận 5, TP. Hồ Chí Minh',
+            bloodType: 'O+',
+            gender: 'Male',
+            email: u.email,
+            totalDonations: 3,
+            xp: 150,
+            donorLevel: 2,
+            emergencyOptIn: true,
+          });
+          console.log(`✅ Seeded donor profile for ${u.idDocumentNumber}`);
         }
       }
     }

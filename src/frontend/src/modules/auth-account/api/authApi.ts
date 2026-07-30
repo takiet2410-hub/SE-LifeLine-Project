@@ -5,7 +5,8 @@ const mapProfileResponseToAuthUser = (
   loginData: any,
   profileData: any
 ): AuthUser => {
-  const role = profileData?.role || loginData.user?.role || 'Donor';
+  // Prioritize active session role selected by user at login!
+  const role = loginData.user?.role || profileData?.role || 'Donor';
   const isStaff =
     role === 'BloodCenterStaff' ||
     role === 'HospitalStaff' ||
@@ -32,6 +33,7 @@ export const loginUser = async (
     const response = await apiClient.post('/users/login', {
       idDocumentNumber: credentials.idDocumentNumber,
       password: credentials.password,
+      role: credentials.role,
     });
 
     if (response.data?.accessToken) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, Calendar, MapPin, ListChecks } from 'lucide-react';
+import { ArrowLeft, Users, Calendar, MapPin, ListChecks, Edit } from 'lucide-react';
 import { apiService } from '../../../services/apiClient';
 import type { CampaignData } from '../../../services/mockData';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -30,7 +30,7 @@ export const CampaignDetailPage: React.FC = () => {
         <p className="text-slate-600">Không tìm thấy chiến dịch hiến máu.</p>
         <button
           onClick={() => navigate('/bc/campaigns')}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm"
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm cursor-pointer"
         >
           Quay lại danh sách
         </button>
@@ -47,7 +47,7 @@ export const CampaignDetailPage: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/bc/campaigns')}
-            className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -56,17 +56,25 @@ export const CampaignDetailPage: React.FC = () => {
               <h2 className="text-xl font-bold text-slate-900">{campaign.name}</h2>
               <StatusBadge status={campaign.status} />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">Mã chiến dịch: {campaign._id}</p>
           </div>
         </div>
 
-        <button
-          onClick={() => navigate(`/bc/campaigns/${campaign._id}/registrations`)}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg flex items-center gap-2 shadow-xs transition-colors"
-        >
-          <ListChecks className="w-4 h-4" />
-          <span>Danh sách đăng ký ({campaign.registeredCount})</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate(`/bc/campaigns/${campaign._id}/edit`)}
+            className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 text-sm font-semibold rounded-lg flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+          >
+            <Edit className="w-4 h-4 text-blue-600" />
+            <span>Chỉnh sửa</span>
+          </button>
+          <button
+            onClick={() => navigate(`/bc/campaigns/${campaign._id}/registrations`)}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+          >
+            <ListChecks className="w-4 h-4" />
+            <span>Danh sách đăng ký ({campaign.registeredCount})</span>
+          </button>
+        </div>
       </div>
 
       {/* Stats Progress Card */}

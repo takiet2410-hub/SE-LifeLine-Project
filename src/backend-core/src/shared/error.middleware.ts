@@ -24,8 +24,16 @@ export const errorHandler = (
     details = (err as any).errors;
   }
 
-  return res.status(500).json({
-    code: 'INTERNAL_SERVER_ERROR',
+  const isClientError = err.message && (
+    err.message.includes('Invalid credentials') ||
+    err.message.includes('Đăng nhập') ||
+    err.message.includes('Tài khoản') ||
+    err.message.includes('verification')
+  );
+  const statusCode = isClientError ? 400 : 500;
+
+  return res.status(statusCode).json({
+    code: isClientError ? 'BAD_REQUEST' : 'INTERNAL_SERVER_ERROR',
     message: err.message || 'Internal Server Error',
     details,
   });

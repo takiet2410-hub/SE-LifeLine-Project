@@ -6,7 +6,8 @@ export interface IUser extends Document {
   email: string;
   phone?: string;
   passwordHash: string;
-  role: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
+  roles: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
+  role?: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
   accountStatus: 'PendingVerification' | 'Active' | 'Suspended';
   failedLoginAttempts: number;
   lockUntil?: Date; // Giữ lại phục vụ cho logic khóa tài khoản tạm thời
@@ -30,10 +31,15 @@ const userSchema = new Schema<IUser>({
   email: { type: String, required: true, unique: true, index: true },
   phone: { type: String },
   passwordHash: { type: String, required: true },
+  roles: {
+    type: [String],
+    enum: ['Donor', 'BloodCenterStaff', 'HospitalStaff', 'Administrator'],
+    required: true,
+    default: ['Donor'],
+  },
   role: { 
     type: String, 
     enum: ['Donor', 'BloodCenterStaff', 'HospitalStaff', 'Administrator'],
-    required: true // Bắt buộc theo JSON Schema
   },
   accountStatus: { 
     type: String, 

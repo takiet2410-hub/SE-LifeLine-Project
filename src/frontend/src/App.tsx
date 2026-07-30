@@ -10,7 +10,6 @@ import {
   VerifyOTPPage,
   ResetPasswordPage,
   ResetSuccessPage,
-  BloodCenterLoginPage,
 } from './modules/auth-account';
 
 // Auth & Protected Route
@@ -25,12 +24,14 @@ import { Step1_LocationTime } from './modules/booking-location/pages/schedule/St
 import { Step2_HealthForm } from './modules/booking-location/pages/schedule/Step2_HealthForm';
 import { Step3_Summary } from './modules/booking-location/pages/schedule/Step3_Summary';
 import { SuccessPage } from './modules/booking-location/pages/schedule/SuccessPage';
+import { ScheduleProvider } from './modules/booking-location/context/ScheduleContext';
 import { MyProfilePage } from './modules/impact-tracking/pages/MyProfilePage';
 
 // Blood Center Admin Module
 import { AppLayout } from './components/common/AppLayout';
 import { CampaignListPage } from './modules/campaign-mgmt/pages/CampaignListPage';
 import { CreateCampaignPage } from './modules/campaign-mgmt/pages/CreateCampaignPage';
+import { EditCampaignPage } from './modules/campaign-mgmt/pages/EditCampaignPage';
 import { CampaignDetailPage } from './modules/campaign-mgmt/pages/CampaignDetailPage';
 import { RegistrationListPage } from './modules/campaign-mgmt/pages/RegistrationListPage';
 import { RegistrationDetailPage } from './modules/campaign-mgmt/pages/RegistrationDetailPage';
@@ -59,8 +60,8 @@ function App() {
 
       {/* 2. Public Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/bc/login" element={<BloodCenterLoginPage />} />
-      <Route path="/bc-login" element={<BloodCenterLoginPage />} />
+      <Route path="/bc/login" element={<Navigate to="/login" replace />} />
+      <Route path="/bc-login" element={<Navigate to="/login" replace />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/register" element={<RegisterCitizenIdPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -73,7 +74,11 @@ function App() {
 
       {/* 3. Citizen / Donor Portal Routes */}
       <Route element={<ProtectedRoute />}>
-        <Route element={<DashboardLayout />}>
+        <Route element={
+          <ScheduleProvider>
+            <DashboardLayout />
+          </ScheduleProvider>
+        }>
           <Route path="/dashboard" element={<Navigate to="/my-appointments" replace />} />
           <Route path="/map" element={<InteractiveMapPage />} />
           <Route path="/my-appointments" element={<MyAppointmentPage />} />
@@ -97,6 +102,7 @@ function App() {
           <Route path="/bc/campaigns" element={<CampaignListPage />} />
           <Route path="/bc/campaigns/create" element={<CreateCampaignPage />} />
           <Route path="/bc/campaigns/:campaignId" element={<CampaignDetailPage />} />
+          <Route path="/bc/campaigns/:campaignId/edit" element={<EditCampaignPage />} />
           <Route path="/bc/campaigns/:campaignId/registrations" element={<RegistrationListPage />} />
           <Route path="/bc/campaigns/:campaignId/registrations/:registrationId" element={<RegistrationDetailPage />} />
           <Route path="/bc/campaigns/:campaignId/qr-scan" element={<QRScanPage />} />

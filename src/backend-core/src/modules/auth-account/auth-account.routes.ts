@@ -72,7 +72,7 @@ router.post('/verify-email', validate(verifyEmailSchema), verifyEmail);
  * @openapi
  * /api/v1/users/login:
  *   post:
- *     summary: Login to the application
+ *     summary: Login to the application with optional role selection
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -80,14 +80,56 @@ router.post('/verify-email', validate(verifyEmailSchema), verifyEmail);
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - idDocumentNumber
+ *               - password
  *             properties:
  *               idDocumentNumber:
  *                 type: string
+ *                 description: Số CCCD 12 chữ số
+ *                 example: "079099000111"
  *               password:
  *                 type: string
+ *                 description: Mật khẩu người dùng
+ *                 example: "StrongPass123!"
+ *               role:
+ *                 type: string
+ *                 enum: [Donor, BloodCenterStaff, HospitalStaff, Administrator]
+ *                 description: Vai trò muốn chọn đăng nhập vào hệ thống (Tùy chọn)
+ *                 example: "BloodCenterStaff"
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: Login successful, returns JWT access token and active user role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: "6a6b023e654f08d426e971e8"
+ *                     email:
+ *                       type: string
+ *                       example: "staff.bloodcenter@lifeline.gov.vn"
+ *                     idDocumentNumber:
+ *                       type: string
+ *                       example: "079099000111"
+ *                     role:
+ *                       type: string
+ *                       example: "BloodCenterStaff"
+ *                     roles:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["BloodCenterStaff"]
+ *       400:
+ *         description: Invalid credentials or unauthorized role requested
  */
 router.post('/login', validate(loginSchema), login);
 

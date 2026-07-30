@@ -110,7 +110,7 @@ export const InteractiveMapPage: React.FC = () => {
 
           const campaignName = raw?.name || item.name || 'Chiến dịch Hiến máu';
           const campaignCode = (raw as any)?.campaignCode || '';
-          const displayName = campaignCode ? `${campaignName} (#${campaignCode})` : campaignName;
+          const displayName = campaignName;
           const address = (raw as any)?.fullAddress || (raw as any)?.venue || item.address || 'TP. Hồ Chí Minh';
 
           return {
@@ -271,22 +271,51 @@ export const InteractiveMapPage: React.FC = () => {
     };
   }, []);
 
+  const handleStartBooking = (loc: any, slotTime?: string) => {
+    if (!loc) return;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dateToUse = selectedDate || todayStr;
+
+    let timeSlotToUse = slotTime;
+    if (!timeSlotToUse && loc?.timeSlots && loc.timeSlots.length > 0) {
+      const firstAvailable = loc.timeSlots.find((s: any) => (s.capacity - (s.registeredCount || 0)) > 0) || loc.timeSlots[0];
+      if (firstAvailable) {
+        timeSlotToUse = `${firstAvailable.startTime} - ${firstAvailable.endTime}`;
+      }
+    }
+    if (!timeSlotToUse) {
+      timeSlotToUse = '08:00 - 10:00';
+    }
+
+    const locId = loc._raw?._id || loc.id || loc._id;
+    updateData({
+      locationId: locId,
+      date: dateToUse,
+      timeSlot: timeSlotToUse,
+      locationData: {
+        id: locId,
+        name: loc.name,
+        address: loc.address,
+      },
+    });
+    toast.success(`Đã chọn điểm "${loc.name}" (${dateToUse}, khung giờ ${timeSlotToUse})!`);
+    navigate('/my-appointments/schedule');
+  };
+
   // Event listener to handle location selection from popup action button
   useEffect(() => {
     const handlePopupSelect = (e: any) => {
       const locationId = e.detail;
       const target = locations.find((l) => l.id === locationId);
       if (target) {
-        setSelectedLocation(target);
-        updateData({ locationId: target.id });
-        navigate('/my-appointments/schedule');
+        handleStartBooking(target);
       }
     };
     window.addEventListener('select-donation-location', handlePopupSelect);
     return () => {
       window.removeEventListener('select-donation-location', handlePopupSelect);
     };
-  }, [locations, navigate, updateData]);
+  }, [locations, navigate, updateData, selectedDate]);
 
   // Render Map Markers & Dynamic Radius Circle whenever filteredLocations or radius update
   useEffect(() => {
@@ -490,18 +519,7 @@ export const InteractiveMapPage: React.FC = () => {
     toast.info('Đã đặt lại bộ lọc');
   };
 
-  // Handle Select & Book Location
-  const handleStartBooking = (loc: any) => {
-    updateData({
-      locationId: loc.id,
-      locationData: {
-        id: loc.id,
-        name: loc.name,
-        address: loc.address,
-      },
-    });
-    navigate('/my-appointments/schedule/step-1');
-  };
+  // Handlers for search & filters reset
 
   return (
     <div className="flex flex-col h-[calc(100vh-72px)] bg-[#fff8f7] relative overflow-hidden">
@@ -925,12 +943,14 @@ export const InteractiveMapPage: React.FC = () => {
                   {selectedLocation.timeSlots.map((slot: any, i: number) => (
                     <div
                       key={i}
-                      className="p-3 border border-[#dee2e6] rounded-xl flex items-center justify-between text-[12px]"
+                      onClick={() => handleStartBooking(selectedLocation, `${slot.startTime} - ${slot.endTime}`)}
+                      className="p-3 border border-[#dee2e6] hover:border-[#93000b] hover:bg-[#fff8f7] rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all group"
+                      title="Nhấn để đặt lịch khung giờ này"
                     >
-                      <span className="font-semibold text-[#271816]">
+                      <span className="font-semibold text-[#271816] group-hover:text-[#93000b]">
                         {slot.startTime} - {slot.endTime}
                       </span>
-                      <span className="text-[11px] font-bold text-[#16a34a]">
+                      <span className="text-[11px] font-bold text-[#16a34a] flex items-center gap-0.5">
                         Còn {slot.capacity - slot.registeredCount} chỗ
                       </span>
                     </div>

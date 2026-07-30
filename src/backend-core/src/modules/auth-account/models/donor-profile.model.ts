@@ -19,6 +19,13 @@ export interface IDonorProfile extends Document {
   avatarUrl: string;
   email?: string;
   gender?: 'Male' | 'Female' | 'Other';
+  achievements?: Array<{
+    badgeType: string;
+    title: string;
+    description: string;
+    icon: string;
+    awardedAt: Date;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,7 +58,14 @@ const donorProfileSchema = new Schema<IDonorProfile>({
   gender: { 
     type: String, 
     enum: ['Male', 'Female', 'Other'] 
-  }
+  },
+  achievements: [{
+    badgeType: { type: String, required: true },
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    icon: { type: String, required: true },
+    awardedAt: { type: Date, required: true }
+  }]
 }, {
   timestamps: true,
   collection: 'donor_profiles'

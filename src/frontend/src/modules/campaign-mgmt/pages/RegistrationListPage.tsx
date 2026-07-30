@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, QrCode, Search, Sparkles, ShieldCheck, HelpCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, QrCode, Search, Sparkles, Eye, HelpCircle } from 'lucide-react';
 import { apiService } from '../../../services/apiClient';
 import type { RegistrationData, CampaignData } from '../../../services/mockData';
 import { StatusBadge } from '../../../components/common/StatusBadge';
 import { DataTable } from '../../../components/common/DataTable';
 import type { Column } from '../../../components/common/DataTable';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
 
 export const RegistrationListPage: React.FC = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
@@ -18,6 +17,8 @@ export const RegistrationListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
 
   const formatDateSafe = (dateStr?: string | Date) => {
     if (!dateStr) return 'N/A';
@@ -48,7 +49,11 @@ export const RegistrationListPage: React.FC = () => {
 
   useEffect(() => {
     fetchRegistrations();
+    setCurrentPage(1);
   }, [campaignId, search, statusFilter]);
+
+  const totalPages = Math.ceil(registrations.length / pageSize) || 1;
+  const paginatedRegistrations = registrations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const columns: Column<RegistrationData>[] = [
     {
@@ -114,39 +119,17 @@ export const RegistrationListPage: React.FC = () => {
       accessor: (row: RegistrationData) => <StatusBadge status={row.status || 'CheckedIn'} />,
     },
     {
-      header: 'Phê duyệt & Sàng lọc',
+      header: 'Thao tác',
       accessor: (row: RegistrationData) => (
         <div className="flex items-center gap-2">
-          {row.status !== 'Confirmed' && row.status !== 'Completed' && (
-            <button
-              onClick={async (e) => {
-                e.stopPropagation();
-                const toastId = toast.loading('Đang duyệt đơn & tạo E-Ticket...');
-                try {
-                  await apiService.updateRegistration(row._id, { status: 'Confirmed' });
-                  toast.dismiss(toastId);
-                  toast.success(`Đã xác nhận đơn cho ${row.donorName}! E-Ticket & Email đã được gửi.`);
-                  fetchRegistrations();
-                } catch (err) {
-                  toast.dismiss(toastId);
-                  toast.error('Có lỗi xảy ra khi xác nhận đơn.');
-                }
-              }}
-              className="px-3 py-1.5 text-[12px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl flex items-center gap-1 transition-all shadow-2xs cursor-pointer shrink-0"
-              title="Xác nhận đơn ngay & Gửi E-Ticket Qua Email"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-              <span>Xác Nhận Đơn</span>
-            </button>
-          )}
           <button
             onClick={() =>
               navigate(`/bc/campaigns/${campaignId || 'all'}/registrations/${row._id}`)
             }
-            className="px-3 py-1.5 text-[12px] font-semibold text-white bg-[#93000b] hover:bg-[#7a0009] rounded-xl flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer shrink-0"
+            className="px-3.5 py-1.5 text-[12px] font-semibold text-white bg-[#93000b] hover:bg-[#7a0009] rounded-xl flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer shrink-0"
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-white" />
-            <span>Sàng lọc</span>
+            <Eye className="w-3.5 h-3.5 text-white" />
+            <span>Chi tiết</span>
           </button>
         </div>
       ),
@@ -191,7 +174,7 @@ export const RegistrationListPage: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-col md:flex-row gap-3 items-center justify-between shadow-2xs">
+      <div className="bg-[#white] p-4 border border-[#f1f3f5] rounded-2xl flex flex-col md:flex-row gap-3 items-center justify-between shadow-2xs">
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-[#a3a3a3] absolute left-3.5 top-3" />
           <input
@@ -225,10 +208,13 @@ export const RegistrationListPage: React.FC = () => {
       <div className="bg-white border border-[#f1f3f5] rounded-2xl overflow-hidden shadow-2xs">
         <DataTable
           columns={columns}
-          data={registrations}
+          data={paginatedRegistrations}
           keyExtractor={(item: RegistrationData) => item._id || (item as any).id || 'reg'}
           isLoading={loading}
           emptyMessage="Chưa có phiếu sàng lọc nào phù hợp với bộ lọc."
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
         />
       </div>
     </div>

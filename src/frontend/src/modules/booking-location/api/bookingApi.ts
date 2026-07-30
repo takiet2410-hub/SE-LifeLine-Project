@@ -17,7 +17,7 @@ export interface BackendCampaign {
   registeredCount: number;
   status: string;
   targetBloodGroups: string[];
-  timeSlots: Array<{
+  timeslots: Array<{
     startTime: string;
     endTime: string;
     capacity: number;
@@ -171,15 +171,9 @@ export const mapBackendAppointment = (raw: BackendAppointment): Appointment => {
 // Map backend location/campaign to frontend location for step-1
 export const mapBackendCampaignToLocation = (campaign: BackendCampaign) => {
   const cAny = campaign as any;
-  const timeSlots = cAny.timeSlots && cAny.timeSlots.length > 0
-    ? cAny.timeSlots
-    : [
-        { startTime: '07:30', endTime: '09:00', capacity: 20, registeredCount: 5 },
-        { startTime: '09:00', endTime: '10:30', capacity: 20, registeredCount: 8 },
-        { startTime: '10:30', endTime: '12:00', capacity: 20, registeredCount: 4 },
-        { startTime: '13:30', endTime: '15:00', capacity: 20, registeredCount: 6 },
-        { startTime: '15:00', endTime: '16:30', capacity: 20, registeredCount: 2 }
-      ];
+  const timeslots = cAny.timeslots && cAny.timeslots.length > 0
+    ? cAny.timeslots
+    : [];
 
   return {
     id: campaign._id || cAny.id,
@@ -188,7 +182,7 @@ export const mapBackendCampaignToLocation = (campaign: BackendCampaign) => {
     address: cAny.fullAddress || cAny.venue || (campaign.location?.coordinates
       ? `Tọa độ: ${campaign.location.coordinates[1]}, ${campaign.location.coordinates[0]}`
       : 'TP. Hồ Chí Minh'),
-    timeSlots,
+    timeslots,
     status: campaign.status,
     targetBloodGroups: campaign.targetBloodGroups,
     _raw: campaign,

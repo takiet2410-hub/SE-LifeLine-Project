@@ -577,6 +577,15 @@ export class RegistrationService {
             console.error('Error processing gamification logic:', gErr);
           }
         }
+
+        // Process Gamification (+50 XP bonus) when donor checks in
+        if (targetAppointmentStatus === AppointmentStatus.CheckedIn && previousStatus !== AppointmentStatus.CheckedIn) {
+          try {
+            await GamificationService.processCheckInBonus(appointment.donorId, session);
+          } catch (gErr) {
+            console.error('Error processing check-in gamification logic:', gErr);
+          }
+        }
       }
 
       appointment.screeningFormId = screeningForm._id as any;

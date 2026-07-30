@@ -127,7 +127,7 @@ export const MyProfilePage: React.FC = () => {
         <div className="flex flex-col gap-6 w-full lg:sticky lg:top-8">
           <CurrentProgress profileData={profileData} />
           <AchievementsWidget profileData={profileData} />
-          <CallToAction />
+          <CallToAction status={profileData?.donationImpact?.status} />
         </div>
       </div>
     </div>

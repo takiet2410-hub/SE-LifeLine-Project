@@ -2,7 +2,9 @@ export interface CampaignData {
   _id: string;
   bloodCenterId: string;
   name: string;
+  description?: string;
   venue: string;
+  fullAddress?: string;
   location: { type: string; coordinates: [number, number] };
   startDateTime: string;
   endDateTime: string;

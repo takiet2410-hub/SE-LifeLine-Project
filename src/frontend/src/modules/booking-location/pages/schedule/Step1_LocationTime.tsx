@@ -29,6 +29,14 @@ export const Step1_LocationTime: React.FC = () => {
   const [locations, setLocations] = useState<LocationOption[]>([]);
   const [loadingLocations, setLoadingLocations] = useState(true);
 
+  const defaultSlots = [
+    { startTime: '07:30', endTime: '09:00', capacity: 20, registeredCount: 0 },
+    { startTime: '09:00', endTime: '10:30', capacity: 20, registeredCount: 0 },
+    { startTime: '10:30', endTime: '12:00', capacity: 20, registeredCount: 0 },
+    { startTime: '13:30', endTime: '15:00', capacity: 20, registeredCount: 0 },
+    { startTime: '15:00', endTime: '16:30', capacity: 20, registeredCount: 0 },
+  ];
+
   useEffect(() => {
     const fetchLocations = async () => {
       setLoadingLocations(true);
@@ -37,33 +45,39 @@ export const Step1_LocationTime: React.FC = () => {
         let locationOptions: LocationOption[] = [];
 
         if (res.success && res.data && res.data.length > 0) {
-          locationOptions = res.data.map((item: any) => ({
-            id: item.id || item._id,
-            name: item.name,
-            venue: item.venue || item.name,
-            address: item.address || item.fullAddress || 'TP. Hồ Chí Minh',
-            targetBloodGroups: item.targetBloodGroups || ['A+', 'B+', 'O+', 'AB+'],
-            timeSlots: item.timeSlots?.length ? item.timeSlots : [
-              { startTime: '08:00', endTime: '10:00', capacity: 30, registeredCount: 0 },
-              { startTime: '10:00', endTime: '12:00', capacity: 30, registeredCount: 0 },
-              { startTime: '13:30', endTime: '15:30', capacity: 30, registeredCount: 0 },
-            ]
-          }));
+          locationOptions = res.data.map((item: any) => {
+            const slots = (item.timeSlots && item.timeSlots.length > 0)
+              ? item.timeSlots
+              : (item.timeslots && item.timeslots.length > 0)
+                ? item.timeslots
+                : defaultSlots;
+
+            return {
+              id: item.id || item._id,
+              name: item.name,
+              venue: item.venue || item.name,
+              address: item.address || item.fullAddress || 'TP. Hồ Chí Minh',
+              targetBloodGroups: item.targetBloodGroups || ['A+', 'B+', 'O+', 'AB+'],
+              timeSlots: slots,
+            };
+          });
         }
 
         // Ensure location selected from Map is ALWAYS included in locationOptions
         if (data.locationData && !locationOptions.some(l => String(l.id) === String(data.locationId) || (l.name && l.name.toLowerCase().trim() === data.locationData?.name.toLowerCase().trim()))) {
+          const mapSlots = (data.timeSlots && data.timeSlots.length > 0)
+            ? data.timeSlots
+            : (data.locationData.timeSlots && data.locationData.timeSlots.length > 0)
+              ? data.locationData.timeSlots
+              : defaultSlots;
+
           locationOptions.unshift({
             id: data.locationId || data.locationData.id,
             name: data.locationData.name,
             venue: data.locationData.name,
             address: data.locationData.address,
             targetBloodGroups: ['A+', 'B+', 'O+', 'AB+'],
-            timeSlots: [
-              { startTime: '08:00', endTime: '10:00', capacity: 30, registeredCount: 0 },
-              { startTime: '10:00', endTime: '12:00', capacity: 30, registeredCount: 0 },
-              { startTime: '13:30', endTime: '15:30', capacity: 30, registeredCount: 0 },
-            ]
+            timeSlots: mapSlots,
           });
         }
 
@@ -148,8 +162,9 @@ export const Step1_LocationTime: React.FC = () => {
         locationData: locObj ? {
           id: locObj.id,
           name: locObj.name,
-          address: locObj.address
-        } : undefined
+          address: locObj.address,
+        } : undefined,
+        timeSlots: locObj ? locObj.timeSlots : undefined,
       });
       navigate('/my-appointments/schedule/step-2');
     }
@@ -295,7 +310,7 @@ export const Step1_LocationTime: React.FC = () => {
                     Khung giờ có sẵn tại <span className="font-bold text-[#271816]">{currentSelectedLocationObj.name}</span>:
                   </p>
                   <div className="grid grid-cols-2 gap-3">
-                    {currentSelectedLocationObj.timeSlots.map((slot, index) => {
+                    {(currentSelectedLocationObj.timeSlots || defaultSlots).map((slot, index) => {
                       const slotLabel = `${slot.startTime} - ${slot.endTime}`;
                       const isSelected = selectedTime === slotLabel;
                       const isFull = slot.registeredCount >= slot.capacity;

@@ -28,11 +28,18 @@ export const apiService = {
     try {
       const queryParams: any = {};
       if (params?.search) queryParams.location = params.search;
-      if (params?.status && params.status !== 'All') queryParams.status = params.status;
+      queryParams.limit = 1000;
+      queryParams.sortBy = 'startDateTime';
+      queryParams.sortOrder = 'desc';
 
       const res = await apiClient.get('/campaigns', { params: queryParams });
-      const rawData = res.data?.data || res.data;
+      let rawData = res.data?.data || res.data;
       if (Array.isArray(rawData) && rawData.length > 0) {
+        if (params?.status && params.status !== 'All') {
+          rawData = rawData.filter((c: any) => c.status === params.status && c.status !== 'Cancelled');
+        } else {
+          rawData = rawData.filter((c: any) => c.status !== 'Cancelled');
+        }
         return rawData as CampaignData[];
       }
     } catch (err) {
@@ -200,7 +207,14 @@ export const apiService = {
           ? item.donorBloodType
           : (donorObj.bloodType || item.donor?.bloodType || item.donorId?.bloodType || 'Unknown');
 
-        const donorDob = item.donorDob || donorObj.dateOfBirth || item.donor?.dateOfBirth || item.donorId?.dateOfBirth || '';
+        const rawDob = item.donorDob || donorObj.dateOfBirth || item.donor?.dateOfBirth || item.donorId?.dateOfBirth || '';
+        let donorDob = rawDob ? String(rawDob).split('T')[0].split(' ')[0] : '15/08/1995';
+        if (donorDob.includes('-')) {
+          const parts = donorDob.split('-');
+          if (parts.length === 3 && parts[0].length === 4) {
+            donorDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+          }
+        }
 
         const donorIdCard = (item.donorIdCard && item.donorIdCard !== 'N/A' && item.donorIdCard !== 'Chưa cập nhật')
           ? item.donorIdCard

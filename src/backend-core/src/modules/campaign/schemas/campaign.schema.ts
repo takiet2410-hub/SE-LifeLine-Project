@@ -25,7 +25,13 @@ export const CreateCampaignSchema = z.object({
       phone: z.string().min(1, 'Contact person phone is required')
     }),
     internalRemarks: z.string().optional(),
-    status: z.enum(validStatuses).optional()
+    status: z.enum(validStatuses).optional(),
+    timeslots: z.array(z.object({
+      startTime: z.string(),
+      endTime: z.string(),
+      capacity: z.number().int().positive(),
+      registeredCount: z.number().int().nonnegative().optional().default(0)
+    })).optional()
   }).refine((data) => new Date(data.endDateTime) >= new Date(data.startDateTime), {
     message: 'End date time must be after or equal to start date time',
     path: ['endDateTime']
@@ -68,7 +74,13 @@ export const UpdateCampaignSchema = z.object({
       phone: z.string().min(1)
     }).optional(),
     internalRemarks: z.string().optional(),
-    status: z.enum(validStatuses).optional()
+    status: z.enum(validStatuses).optional(),
+    timeslots: z.array(z.object({
+      startTime: z.string(),
+      endTime: z.string(),
+      capacity: z.number().int().positive(),
+      registeredCount: z.number().int().nonnegative().optional().default(0)
+    })).optional()
   })
 });
 

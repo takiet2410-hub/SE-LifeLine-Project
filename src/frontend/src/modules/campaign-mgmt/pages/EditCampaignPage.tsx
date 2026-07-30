@@ -44,6 +44,7 @@ export const EditCampaignPage: React.FC = () => {
     resolver: zodResolver(createCampaignSchema),
     defaultValues: {
       name: '',
+      description: '',
       venue: '',
       startDateTime: '',
       endDateTime: '',
@@ -60,7 +61,8 @@ export const EditCampaignPage: React.FC = () => {
         if (campaign) {
           reset({
             name: campaign.name || '',
-            venue: campaign.venue || (campaign as any).fullAddress || '',
+            description: campaign.description || '',
+            venue: campaign.venue || campaign.fullAddress || '',
             startDateTime: formatForDateTimeInput(campaign.startDateTime),
             endDateTime: formatForDateTimeInput(campaign.endDateTime),
             targetBloodGroups: campaign.targetBloodGroups || ['O+', 'A+'],
@@ -102,7 +104,9 @@ export const EditCampaignPage: React.FC = () => {
     try {
       await apiService.updateCampaign(campaignId, {
         name: data.name,
+        description: data.description || data.name,
         venue: data.venue,
+        fullAddress: data.venue,
         startDateTime: new Date(data.startDateTime).toISOString(),
         endDateTime: new Date(data.endDateTime).toISOString(),
         targetBloodGroups: data.targetBloodGroups,
@@ -160,6 +164,18 @@ export const EditCampaignPage: React.FC = () => {
                 type="text"
                 {...register('name')}
                 placeholder="VD: Ngày Hội Hiến Máu Tình Nguyện Mùa Hè 2026"
+                className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+              />
+            </FormField>
+          </div>
+
+          {/* Description */}
+          <div className="md:col-span-2">
+            <FormField label="Mô tả chi tiết chiến dịch" error={errors.description?.message}>
+              <textarea
+                rows={3}
+                {...register('description')}
+                placeholder="Nhập nội dung mô tả, mục đích và lưu ý dành cho người tham gia hiến máu..."
                 className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
               />
             </FormField>

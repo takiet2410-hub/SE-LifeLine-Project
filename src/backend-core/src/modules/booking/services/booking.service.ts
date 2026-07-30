@@ -13,7 +13,7 @@ import { Campaign } from '../../campaign/models/campaign.model';
 
 const ensureHcmcCampaigns = async () => {
   try {
-    const timeSlots = [
+    const timeslots = [
       { startTime: '07:30', endTime: '09:00', capacity: 20, registeredCount: 5 },
       { startTime: '09:00', endTime: '10:30', capacity: 20, registeredCount: 8 },
       { startTime: '10:30', endTime: '12:00', capacity: 20, registeredCount: 4 },
@@ -137,7 +137,7 @@ const ensureHcmcCampaigns = async () => {
               ...item,
               startDateTime: now,
               endDateTime: nextMonth,
-              timeSlots
+              timeslots
             }
           },
           { upsert: true }
@@ -152,10 +152,11 @@ const ensureHcmcCampaigns = async () => {
 export class BookingService {
   public static async searchLocations(filters: any) {
     await ensureHcmcCampaigns();
-    let query: any = { status: 'Active' };
+    // Query both Active & Upcoming campaigns (exclude Cancelled)
+    let query: any = { status: { $nin: ['Cancelled'] } };
 
     if (filters.lat !== undefined && filters.lng !== undefined) {
-      const radiusInMeters = (filters.radius || 10) * 1000;
+      const radiusInMeters = (filters.radius || 15) * 1000;
       query.location = {
         $near: {
           $geometry: {
@@ -191,14 +192,36 @@ export class BookingService {
       }
     }
 
-    let campaigns = await Campaign.find(query).lean();
+    let campaigns: any[] = await Campaign.find(query).lean();
+
+    // Dynamically calculate real-time status (Active, Upcoming, Completed)
+    const now = new Date();
+    campaigns = campaigns.map(c => {
+      if (c.status === 'Cancelled') return c;
+      const start = new Date(c.startDateTime);
+      const end = new Date(c.endDateTime);
+      let calculatedStatus = c.status;
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        if (now >= start && now <= end) {
+          calculatedStatus = 'Active';
+        } else if (now < start) {
+          calculatedStatus = 'Upcoming';
+        } else if (now > end) {
+          calculatedStatus = 'Completed';
+        }
+      }
+      return {
+        ...c,
+        status: calculatedStatus
+      };
+    }).filter(c => c.status === 'Active' || c.status === 'Upcoming');
 
     if (filters.crowdingLevel) {
       campaigns = campaigns.filter(c => {
         if (!c.capacity) return true;
         const ratio = (c.registeredCount || 0) / c.capacity;
         if (filters.crowdingLevel === 'Low') return ratio < 0.5;
-        if (filters.crowdingLevel === 'Medium') return ratio >= 0.5 && ratio < 0.8;
+        if (filters.crowdingLevel === 'Medium' || filters.crowdingLevel === 'Moderate') return ratio >= 0.5 && ratio < 0.8;
         if (filters.crowdingLevel === 'High') return ratio >= 0.8;
         return true;
       });
@@ -234,7 +257,7 @@ export class BookingService {
       if (!campaign) {
         throw new Error('NOT_FOUND_CAMPAIGN');
       }
-      if (campaign.status !== 'Active') {
+      if (campaign.status !== 'Active' && campaign.status !== 'Upcoming') {
         throw new Error('CAMPAIGN_NOT_ACTIVE');
       }
       if (campaign.registeredCount >= campaign.capacity) {
@@ -695,6 +718,13 @@ export class BookingService {
       await Campaign.updateOne(
         { _id: appointment.campaignId },
         { $inc: { registeredCount: -1 } },
+        { session }
+      );
+
+      // Synchronize DigitalDonorRecord donationStatus to Cancelled so registration list removes it
+      await DigitalDonorRecord.updateOne(
+        { appointmentId: appointment._id },
+        { $set: { donationStatus: 'Cancelled', lastUpdatedAt: new Date() } },
         { session }
       );
 

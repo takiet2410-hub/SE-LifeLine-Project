@@ -434,7 +434,7 @@ export class AuthAccountService {
     const currentStreak = totalDonations > 0 ? 1 : 0; 
 
     // 4. Query badges earned by user
-    const badges = await Badge.find({ donorId: userId }).sort({ awardedAt: -1 }).lean();
+    const badges = profile.achievements || [];
 
     // 5. Định dạng dữ liệu trả về khớp hoàn toàn với thiết kế UI Frontend
     return {
@@ -459,7 +459,7 @@ export class AuthAccountService {
         description: b.description,
         icon: b.icon,
         awardedAt: b.awardedAt
-      })),
+      })).sort((a, b) => new Date(b.awardedAt).getTime() - new Date(a.awardedAt).getTime()),
       personalInfo: {
         idDocumentNumber: profile.idDocumentNumber,
         fullName: profile.fullName,

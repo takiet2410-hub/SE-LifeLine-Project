@@ -113,6 +113,22 @@ export const InteractiveMapPage: React.FC = () => {
           const displayName = campaignName;
           const address = (raw as any)?.fullAddress || (raw as any)?.venue || item.address || 'TP. Hồ Chí Minh';
 
+          const now = new Date();
+          const start = raw?.startDateTime ? new Date(raw.startDateTime) : null;
+          const end = raw?.endDateTime ? new Date(raw.endDateTime) : null;
+          let computedStatusStr = 'Active Now';
+          if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
+            if (now >= start && now <= end) {
+              computedStatusStr = 'Active Now';
+            } else if (now < start) {
+              computedStatusStr = 'Starting Soon';
+            } else {
+              computedStatusStr = 'Completed';
+            }
+          } else if (raw?.status === 'Upcoming') {
+            computedStatusStr = 'Starting Soon';
+          }
+
           return {
             id: raw?._id || item.id || `CMP-${idx}`,
             name: displayName,
@@ -123,18 +139,14 @@ export const InteractiveMapPage: React.FC = () => {
             lng,
             rating: (4.8 + (idx % 3) * 0.1).toFixed(1),
             crowdingLevel,
-            status: raw?.status === 'Active' ? 'Active Now' : 'Starting Soon',
+            status: computedStatusStr,
             bloodTypes: raw?.targetBloodGroups?.length ? raw.targetBloodGroups : ['A+', 'O+', 'B+'],
             operatingHours: raw?.startDateTime
               ? `${new Date(raw.startDateTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${new Date(raw.endDateTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
               : '08:00 - 16:00',
-            timeSlots: raw?.timeSlots?.length
-              ? raw.timeSlots
-              : [
-                  { startTime: '08:00', endTime: '10:00', capacity: 30, registeredCount: regCount },
-                  { startTime: '10:00', endTime: '12:00', capacity: 30, registeredCount: 0 },
-                  { startTime: '13:30', endTime: '15:30', capacity: 30, registeredCount: 0 },
-                ],
+            timeslots: raw?.timeslots?.length
+              ? raw.timeslots
+              : [],
             _raw: raw,
           };
         });
@@ -201,6 +213,11 @@ export const InteractiveMapPage: React.FC = () => {
 
   // Filter & Sort location list locally: strictly ONLY positions within scan radius
   useEffect(() => {
+    if (!selectedDate) {
+      setFilteredLocations([]);
+      return;
+    }
+
     let result = [...locations];
 
     if (searchQuery.trim()) {
@@ -277,14 +294,14 @@ export const InteractiveMapPage: React.FC = () => {
     const dateToUse = selectedDate || todayStr;
 
     let timeSlotToUse = slotTime;
-    if (!timeSlotToUse && loc?.timeSlots && loc.timeSlots.length > 0) {
-      const firstAvailable = loc.timeSlots.find((s: any) => (s.capacity - (s.registeredCount || 0)) > 0) || loc.timeSlots[0];
+    if (!timeSlotToUse && loc?.timeslots && loc.timeslots.length > 0) {
+      const firstAvailable = loc.timeslots.find((s: any) => (s.capacity - (s.registeredCount || 0)) > 0) || loc.timeslots[0];
       if (firstAvailable) {
         timeSlotToUse = `${firstAvailable.startTime} - ${firstAvailable.endTime}`;
       }
     }
     if (!timeSlotToUse) {
-      timeSlotToUse = '08:00 - 10:00';
+      timeSlotToUse = '';
     }
 
     const locId = loc._raw?._id || loc.id || loc._id;
@@ -296,6 +313,7 @@ export const InteractiveMapPage: React.FC = () => {
         id: locId,
         name: loc.name,
         address: loc.address,
+        timeslots: loc.timeslots,
       },
     });
     toast.success(`Đã chọn điểm "${loc.name}" (${dateToUse}, khung giờ ${timeSlotToUse})!`);
@@ -378,30 +396,9 @@ export const InteractiveMapPage: React.FC = () => {
       const markerColor = colorMap[loc.crowdingLevel] || '#93000b';
       const distanceKm = getDistanceNum(loc.lat, loc.lng);
 
-      // Prominent High-Visibility Teardrop Pin + Label Badge
+      // Prominent High-Visibility Teardrop Pin
       const customHtml = `
         <div style="position:relative; display:flex; flex-direction:column; align-items:center; cursor:pointer;" class="map-campaign-pin">
-          <!-- Top Label Badge -->
-          <div style="
-            background: ${isSelected ? '#93000b' : '#1f2937'};
-            color: white;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 3px 9px;
-            border-radius: 12px;
-            white-space: nowrap;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-            margin-bottom: 4px;
-            border: 1.5px solid white;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transform: ${isSelected ? 'scale(1.15)' : 'scale(1)'};
-            transition: all 0.2s ease;
-          ">
-            <span>${loc.name}</span>
-            <span style="font-size: 10px; opacity: 0.9; background: rgba(255,255,255,0.2); padding: 1px 5px; border-radius: 8px;">${distanceKm}km</span>
-          </div>
 
           <!-- Teardrop Pin Container -->
           <div style="position:relative; width:${isSelected ? '40px' : '34px'}; height:${isSelected ? '40px' : '34px'};">
@@ -762,17 +759,21 @@ export const InteractiveMapPage: React.FC = () => {
                   <AlertCircle className="w-7 h-7" />
                 </div>
                 <h4 className="text-[15px] font-bold text-[#271816] mb-1">
-                  Không tìm thấy điểm hiến máu
+                  {!selectedDate ? 'Chưa chọn ngày hiến máu' : 'Không tìm thấy điểm hiến máu'}
                 </h4>
                 <p className="text-[13px] text-[#6c757d] max-w-xs mb-4">
-                  Không có chiến dịch nào phù hợp với bộ lọc hiện tại. Hãy thử mở rộng bán kính hoặc chọn lại nhóm máu.
+                  {!selectedDate 
+                    ? 'Vui lòng chọn ngày dự định hiến máu để xem các chiến dịch đang hoạt động.' 
+                    : 'Không có chiến dịch nào phù hợp với bộ lọc hiện tại. Hãy thử mở rộng bán kính hoặc chọn lại nhóm máu.'}
                 </p>
-                <button
-                  onClick={handleResetFilters}
-                  className="px-4 py-2 border border-[#dee2e6] rounded-xl text-[13px] font-semibold text-[#271816] hover:bg-[#f8f9fa]"
-                >
-                  Xóa bộ lọc
-                </button>
+                {selectedDate && (
+                  <button
+                    onClick={handleResetFilters}
+                    className="px-4 py-2 border border-[#dee2e6] rounded-xl text-[13px] font-semibold text-[#271816] hover:bg-[#f8f9fa]"
+                  >
+                    Xóa bộ lọc
+                  </button>
+                )}
               </div>
             ) : (
               filteredLocations.map((loc) => {
@@ -940,7 +941,7 @@ export const InteractiveMapPage: React.FC = () => {
                   Khung giờ hiến khả dụng
                 </span>
                 <div className="grid grid-cols-2 gap-2">
-                  {selectedLocation.timeSlots.map((slot: any, i: number) => (
+                  {selectedLocation.timeslots && selectedLocation.timeslots.length > 0 ? selectedLocation.timeslots.map((slot: any, i: number) => (
                     <div
                       key={i}
                       onClick={() => handleStartBooking(selectedLocation, `${slot.startTime} - ${slot.endTime}`)}
@@ -954,7 +955,11 @@ export const InteractiveMapPage: React.FC = () => {
                         Còn {slot.capacity - slot.registeredCount} chỗ
                       </span>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="col-span-2 text-[12px] text-[#6c757d] italic p-2 text-center bg-[#f8f9fa] rounded-xl border border-dashed border-[#dee2e6]">
+                      Chưa có dữ liệu khung giờ từ hệ thống
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -18,6 +18,8 @@ export const InventoryListPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [bloodTypeFilter, setBloodTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
 
   const formatDateSafe = (dateStr?: string | Date) => {
     if (!dateStr) return 'N/A';
@@ -46,7 +48,11 @@ export const InventoryListPage: React.FC = () => {
 
   useEffect(() => {
     fetchInventory();
+    setCurrentPage(1);
   }, [search, bloodTypeFilter, statusFilter]);
+
+  const totalPages = Math.ceil(bags.length / pageSize) || 1;
+  const paginatedBags = bags.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const totalBags = bags.length;
   const availableBags = bags.filter((b) => b.status === 'Available').length;
@@ -291,10 +297,13 @@ export const InventoryListPage: React.FC = () => {
       <div className="bg-white border border-[#f1f3f5] rounded-2xl overflow-hidden shadow-2xs">
         <DataTable
           columns={columns}
-          data={bags}
+          data={paginatedBags}
           keyExtractor={(item: BloodBagData) => item._id || (item as any).id || 'bag'}
           isLoading={loading}
           emptyMessage="Không tìm thấy túi máu nào trong kho."
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
           rowClassName={(row: BloodBagData) => {
             try {
               const diffDays = differenceInDays(new Date(row.expiryDate), new Date());

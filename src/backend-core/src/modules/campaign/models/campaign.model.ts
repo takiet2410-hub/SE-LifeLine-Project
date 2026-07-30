@@ -23,6 +23,12 @@ export interface ICampaign extends Document {
   internalRemarks?: string;
   status: 'Draft' | 'Upcoming' | 'Registration Pending' | 'Active' | 'Full' | 'Completed' | 'Cancelled';
   bloodCenterId?: mongoose.Types.ObjectId;
+  timeslots?: {
+    startTime: string;
+    endTime: string;
+    capacity: number;
+    registeredCount: number;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,7 +60,13 @@ const CampaignSchema = new Schema<ICampaign>({
     default: 'Upcoming',
     index: true
   },
-  bloodCenterId: { type: Schema.Types.ObjectId, ref: 'BloodCenter' }
+  bloodCenterId: { type: Schema.Types.ObjectId, ref: 'BloodCenter' },
+  timeslots: [{
+    startTime: { type: String, required: true },
+    endTime: { type: String, required: true },
+    capacity: { type: Number, required: true },
+    registeredCount: { type: Number, default: 0 }
+  }]
 }, {
   timestamps: true
 });

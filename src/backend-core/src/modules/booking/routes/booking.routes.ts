@@ -23,6 +23,24 @@ const router = Router();
  *         name: lng
  *         schema:
  *           type: number
+ *       - in: query
+ *         name: radius
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: bloodType
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: crowdingLevel
+ *         schema:
+ *           type: string
+ *           enum: [Low, Medium, High]
  *     responses:
  *       200:
  *         description: Lấy danh sách địa điểm thành công

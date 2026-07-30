@@ -18,9 +18,7 @@ export const connectDB = async (): Promise<void> => {
       }
     }
 
-    // Auto-seed default roles and staff users if missing
-    const { seedDefaultUsers } = await import('./seed-users');
-    await seedDefaultUsers();
+    // Removed auto-seed
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
     process.exit(1);

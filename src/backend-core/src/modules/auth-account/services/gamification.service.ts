@@ -93,11 +93,25 @@ export class GamificationService {
       }
     ];
 
-    const existingBadges = await Badge.find({ donorId }, null, opts).lean();
+    const existingBadges = profile.achievements || [];
     const existingTypes = new Set(existingBadges.map(b => b.badgeType));
+    let isProfileModified = false;
 
     for (const def of badgeDefinitions) {
       if (def.condition && !existingTypes.has(def.badgeType)) {
+        if (!profile.achievements) {
+          profile.achievements = [];
+        }
+        profile.achievements.push({
+          badgeType: def.badgeType,
+          title: def.title,
+          description: def.description,
+          icon: def.icon,
+          awardedAt: new Date()
+        });
+        existingTypes.add(def.badgeType);
+        isProfileModified = true;
+
         try {
           const newBadge = new Badge({
             donorId,
@@ -113,6 +127,33 @@ export class GamificationService {
         }
       }
     }
+
+    if (isProfileModified) {
+      await profile.save(opts);
+    }
+  }
+
+  /**
+   * Process XP addition when donor successfully checks in
+   */
+  static async processCheckInBonus(
+    donorUserId: string | Types.ObjectId,
+    session?: any
+  ) {
+    const opts = session ? { session } : {};
+    const donorId = typeof donorUserId === 'string' ? new Types.ObjectId(donorUserId) : donorUserId;
+
+    let profile = await DonorProfile.findOne({ userId: donorId }, null, opts);
+    if (!profile) return;
+
+    const xpReward = 50;
+    const newXp = (profile.xp || 0) + xpReward;
+    const newLevel = calculateDonorLevel(newXp);
+
+    profile.xp = newXp;
+    profile.donorLevel = newLevel;
+
+    await profile.save(opts);
   }
 
   /**

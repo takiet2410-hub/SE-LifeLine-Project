@@ -4,6 +4,50 @@ import { Appointment } from '../../booking/models/appointment.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { User } from '../../auth-account/models/user.model';
 
+const geocodeAddress = async (addressStr?: string): Promise<[number, number] | null> => {
+  if (!addressStr || typeof addressStr !== 'string') return null;
+  const cleanAddr = addressStr.trim();
+  if (!cleanAddr) return null;
+
+  let queryStr = cleanAddr;
+  if (!queryStr.toLowerCase().includes('hồ chí minh') && !queryStr.toLowerCase().includes('hcm') && !queryStr.toLowerCase().includes('tphcm')) {
+    queryStr += ', TP. Hồ Chí Minh';
+  }
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(queryStr)}`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'LifeLine-BloodDonation/1.0 (contact@lifeline.org.vn)'
+      }
+    });
+    if (response.ok) {
+      const data = (await response.json()) as any[];
+      if (data && data.length > 0 && data[0].lon && data[0].lat) {
+        const lng = parseFloat(data[0].lon);
+        const lat = parseFloat(data[0].lat);
+        if (!isNaN(lng) && !isNaN(lat)) {
+          return [lng, lat];
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[geocodeAddress] Nominatim fetch error:', err);
+  }
+
+  const lower = cleanAddr.toLowerCase();
+  if (lower.includes('quận 1') || lower.includes('q1')) return [106.699280, 10.780561];
+  if (lower.includes('quận 3') || lower.includes('q3')) return [106.683610, 10.763428];
+  if (lower.includes('quận 5') || lower.includes('q5')) return [106.660172, 10.755498];
+  if (lower.includes('quận 10') || lower.includes('q10')) return [106.666133, 10.756247];
+  if (lower.includes('bình thạnh')) return [106.696120, 10.803510];
+  if (lower.includes('tân bình')) return [106.660812, 10.771945];
+  if (lower.includes('gò vấp')) return [106.678240, 10.817530];
+  if (lower.includes('thủ đức')) return [106.758410, 10.852530];
+
+  return [106.660172, 10.762622];
+};
+
 export class CampaignService {
   /**
    * BC-UC-01: View Campaign List
@@ -59,14 +103,31 @@ export class CampaignService {
       Campaign.countDocuments(filterQuery)
     ]);
 
-    // Format output to include calculated capacity details
+    // Format output to include calculated capacity details & dynamic real-time status
+    const now = new Date();
     const formattedCampaigns = campaigns.map((c: any) => {
       const registered = c.registeredCount || 0;
       const totalCapacity = c.capacity || 1;
       const percentage = Math.min(100, Math.round((registered / totalCapacity) * 100));
       
+      let computedStatus = c.status;
+      if (c.status !== 'Cancelled') {
+        const start = c.startDateTime ? new Date(c.startDateTime) : null;
+        const end = c.endDateTime ? new Date(c.endDateTime) : null;
+        if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          if (now >= start && now <= end) {
+            computedStatus = 'Active';
+          } else if (now < start) {
+            computedStatus = 'Upcoming';
+          } else if (now > end) {
+            computedStatus = 'Completed';
+          }
+        }
+      }
+
       return {
         ...c,
+        status: computedStatus,
         capacityProgress: {
           registered,
           total: totalCapacity,
@@ -111,20 +172,30 @@ export class CampaignService {
     // Auto-assign initial status
     const status = data.status || 'Upcoming';
 
+    const slotCap = Math.max(5, Math.round((data.capacity || 100) / 5));
+    const defaultSlots = [
+      { startTime: '07:30', endTime: '09:00', capacity: slotCap, registeredCount: 0 },
+      { startTime: '09:00', endTime: '10:30', capacity: slotCap, registeredCount: 0 },
+      { startTime: '10:30', endTime: '12:00', capacity: slotCap, registeredCount: 0 },
+      { startTime: '13:30', endTime: '15:00', capacity: slotCap, registeredCount: 0 },
+      { startTime: '15:00', endTime: '16:30', capacity: slotCap, registeredCount: 0 },
+    ];
+
     const campaignPayload: any = {
       campaignCode,
       name: data.name,
-      description: data.description,
+      description: data.description || data.name,
       venue: data.venue,
-      fullAddress: data.fullAddress,
+      fullAddress: data.fullAddress || data.venue || 'TP. Hồ Chí Minh',
       startDateTime: startDate,
       endDateTime: new Date(data.endDateTime),
-      targetBloodGroups: data.targetBloodGroups,
+      targetBloodGroups: data.targetBloodGroups || ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
       capacity: data.capacity,
       registeredCount: 0,
-      targetUnitsGoal: data.targetUnitsGoal,
-      contactPerson: data.contactPerson,
+      targetUnitsGoal: data.targetUnitsGoal || (data.capacity ? Math.round(data.capacity * 0.8) : 80),
+      contactPerson: data.contactPerson || { name: 'Cán bộ Kho máu', phone: '0909123456' },
       internalRemarks: data.internalRemarks,
+      timeslots: data.timeslots && data.timeslots.length > 0 ? data.timeslots : defaultSlots,
       status
     };
 
@@ -132,8 +203,7 @@ export class CampaignService {
       campaignPayload.bloodCenterId = data.bloodCenterId;
     }
 
-    // Only set location if valid coordinates array of length 2 is explicitly provided;
-    // otherwise let Mongoose schema default apply naturally ({ type: 'Point', coordinates: [106.660172, 10.762622] })
+    // Geocode fullAddress / venue to map coordinates if location is not explicitly provided
     if (
       data.location &&
       Array.isArray(data.location.coordinates) &&
@@ -142,6 +212,11 @@ export class CampaignService {
       typeof data.location.coordinates[1] === 'number'
     ) {
       campaignPayload.location = data.location;
+    } else {
+      const coords = await geocodeAddress(campaignPayload.fullAddress || campaignPayload.venue);
+      if (coords) {
+        campaignPayload.location = { type: 'Point', coordinates: coords };
+      }
     }
 
     const campaign = new Campaign(campaignPayload);
@@ -166,8 +241,25 @@ export class CampaignService {
     const percentGoalReached = Math.round((registered / targetGoal) * 100);
     const remainingSpots = Math.max(0, totalCapacity - registered);
 
+    const now = new Date();
+    let computedStatus = campaign.status;
+    if (campaign.status !== 'Cancelled') {
+      const start = campaign.startDateTime ? new Date(campaign.startDateTime) : null;
+      const end = campaign.endDateTime ? new Date(campaign.endDateTime) : null;
+      if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        if (now >= start && now <= end) {
+          computedStatus = 'Active';
+        } else if (now < start) {
+          computedStatus = 'Upcoming';
+        } else if (now > end) {
+          computedStatus = 'Completed';
+        }
+      }
+    }
+
     return {
       ...campaign,
+      status: computedStatus,
       capacityProgress: {
         registeredDonors: registered,
         totalCapacity,
@@ -203,8 +295,34 @@ export class CampaignService {
       campaign.endDateTime = new Date(updateData.endDateTime);
     }
 
+    if (updateData.venue) {
+      campaign.venue = updateData.venue;
+      if (!updateData.fullAddress) {
+        campaign.fullAddress = updateData.venue;
+      }
+    }
+    if (updateData.fullAddress) {
+      campaign.fullAddress = updateData.fullAddress;
+    }
+
+    // Geocode updated fullAddress / venue to map coordinates if location is not explicitly passed
+    if (
+      updateData.location &&
+      Array.isArray(updateData.location.coordinates) &&
+      updateData.location.coordinates.length === 2 &&
+      typeof updateData.location.coordinates[0] === 'number' &&
+      typeof updateData.location.coordinates[1] === 'number'
+    ) {
+      campaign.location = updateData.location;
+    } else if (updateData.venue || updateData.fullAddress) {
+      const coords = await geocodeAddress(campaign.fullAddress || campaign.venue);
+      if (coords) {
+        campaign.location = { type: 'Point', coordinates: coords };
+      }
+    }
+
     Object.keys(updateData).forEach((key) => {
-      if (key !== 'startDateTime' && key !== 'endDateTime') {
+      if (key !== 'startDateTime' && key !== 'endDateTime' && key !== 'venue' && key !== 'fullAddress' && key !== 'location') {
         (campaign as any)[key] = updateData[key];
       }
     });

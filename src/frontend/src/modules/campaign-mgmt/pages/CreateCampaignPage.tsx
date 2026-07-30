@@ -28,6 +28,7 @@ export const CreateCampaignPage: React.FC = () => {
     resolver: zodResolver(createCampaignSchema),
     defaultValues: {
       name: '',
+      description: '',
       venue: '',
       startDateTime: '',
       endDateTime: '',
@@ -59,8 +60,10 @@ export const CreateCampaignPage: React.FC = () => {
       await apiService.createCampaign({
         bloodCenterId: 'bc-01',
         name: data.name,
+        description: data.description || data.name,
         venue: data.venue,
-        location: { type: 'Point', coordinates: [106.7, 10.8] },
+        fullAddress: data.venue,
+        location: { type: 'Point', coordinates: [106.660172, 10.755498] },
         startDateTime: new Date(data.startDateTime).toISOString(),
         endDateTime: new Date(data.endDateTime).toISOString(),
         targetBloodGroups: data.targetBloodGroups,
@@ -110,6 +113,18 @@ export const CreateCampaignPage: React.FC = () => {
                 type="text"
                 {...register('name')}
                 placeholder="VD: Ngày Hội Hiến Máu Tình Nguyện Mùa Hè 2026"
+                className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+              />
+            </FormField>
+          </div>
+
+          {/* Description */}
+          <div className="md:col-span-2">
+            <FormField label="Mô tả chi tiết chiến dịch" error={errors.description?.message}>
+              <textarea
+                rows={3}
+                {...register('description')}
+                placeholder="Nhập nội dung mô tả, mục đích và lưu ý dành cho người tham gia hiến máu..."
                 className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
               />
             </FormField>

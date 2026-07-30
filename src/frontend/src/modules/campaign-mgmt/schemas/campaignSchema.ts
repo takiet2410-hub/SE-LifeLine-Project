@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const createCampaignSchema = z
   .object({
     name: z.string().min(3, 'Tên chiến dịch phải có ít nhất 3 ký tự'),
+    description: z.string().optional(),
     venue: z.string().min(3, 'Địa điểm tổ chức không được để trống'),
     startDateTime: z.string().min(1, 'Vui lòng chọn thời gian bắt đầu'),
     endDateTime: z.string().min(1, 'Vui lòng chọn thời gian kết thúc'),

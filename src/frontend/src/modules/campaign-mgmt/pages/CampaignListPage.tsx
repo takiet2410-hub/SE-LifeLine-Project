@@ -28,6 +28,8 @@ export const CampaignListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
 
   const formatDateSafe = (dateStr?: string | Date) => {
     if (!dateStr) return 'N/A';
@@ -56,7 +58,11 @@ export const CampaignListPage: React.FC = () => {
 
   useEffect(() => {
     fetchCampaigns();
+    setCurrentPage(1);
   }, [search, statusFilter]);
+
+  const totalPages = Math.ceil(campaigns.length / pageSize) || 1;
+  const paginatedCampaigns = campaigns.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   // Calculated Summary KPI Metrics
   const totalCount = campaigns.length;
@@ -158,27 +164,24 @@ export const CampaignListPage: React.FC = () => {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => navigate(`/bc/campaigns/${id}`)}
-              className="px-2.5 py-1.5 text-[12px] font-semibold text-[#271816] bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center gap-1 transition-all shadow-2xs cursor-pointer"
+              className="p-2 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
               title="Xem chi tiết chiến dịch"
             >
-              <Eye className="w-3.5 h-3.5 text-[#93000b]" />
-              <span>Chi tiết</span>
+              <Eye className="w-4 h-4 text-[#93000b]" />
             </button>
             <button
               onClick={() => navigate(`/bc/campaigns/${id}/edit`)}
-              className="px-2.5 py-1.5 text-[12px] font-semibold text-[#271816] bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center gap-1 transition-all shadow-2xs cursor-pointer"
+              className="p-2 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
               title="Chỉnh sửa thông tin chiến dịch"
             >
-              <Edit className="w-3.5 h-3.5 text-blue-600" />
-              <span>Sửa</span>
+              <Edit className="w-4 h-4 text-blue-600" />
             </button>
             <button
               onClick={() => navigate(`/bc/campaigns/${id}/registrations`)}
-              className="px-2.5 py-1.5 text-[12px] font-semibold text-white bg-[#93000b] hover:bg-[#7a0009] rounded-lg flex items-center gap-1 transition-all shadow-2xs cursor-pointer"
+              className="p-2 text-white bg-[#93000b] hover:bg-[#7a0009] rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
               title="Danh sách người đăng ký"
             >
-              <Users className="w-3.5 h-3.5" />
-              <span>Đăng ký</span>
+              <Users className="w-4 h-4" />
             </button>
           </div>
         );
@@ -280,10 +283,10 @@ export const CampaignListPage: React.FC = () => {
           <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Trạng thái:</span>
           {[
             { id: 'All', label: 'Tất cả' },
+            { id: 'Draft', label: 'Bản nháp' },
+            { id: 'Upcoming', label: 'Sắp diễn ra' },
             { id: 'Active', label: 'Đang mở' },
             { id: 'Full', label: 'Đã đủ' },
-            { id: 'Draft', label: 'Bản nháp' },
-            { id: 'Closed', label: 'Đã đóng' },
           ].map((st) => (
             <button
               key={st.id}
@@ -304,10 +307,13 @@ export const CampaignListPage: React.FC = () => {
       <div className="bg-white border border-[#f1f3f5] rounded-2xl overflow-hidden shadow-2xs">
         <DataTable
           columns={columns}
-          data={campaigns}
+          data={paginatedCampaigns}
           keyExtractor={(item: CampaignData) => item._id || (item as any).id || 'cam'}
           isLoading={loading}
           emptyMessage="Không tìm thấy chiến dịch hiến máu nào phù hợp với bộ lọc."
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
         />
       </div>
     </div>

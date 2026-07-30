@@ -113,6 +113,19 @@ router.get('/', validateRequest(QueryCampaignSchema), CampaignController.listCam
  *                 type: string
  *               status:
  *                 type: string
+ *               timeslots:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     startTime:
+ *                       type: string
+ *                     endTime:
+ *                       type: string
+ *                     capacity:
+ *                       type: integer
+ *                     registeredCount:
+ *                       type: integer
  *     responses:
  *       201:
  *         description: Campaign created successfully
@@ -193,6 +206,19 @@ router.get('/:id', validateRequest(GetCampaignDetailsSchema), CampaignController
  *                 type: string
  *               status:
  *                 type: string
+ *               timeslots:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     startTime:
+ *                       type: string
+ *                     endTime:
+ *                       type: string
+ *                     capacity:
+ *                       type: integer
+ *                     registeredCount:
+ *                       type: integer
  *     responses:
  *       200:
  *         description: Campaign updated successfully

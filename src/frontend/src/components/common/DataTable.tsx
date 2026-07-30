@@ -47,7 +47,7 @@ export function DataTable<T>({
           <thead className="bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
             <tr>
               {columns.map((col, idx) => (
-                <th key={idx} className={`px-4 py-3.5 ${col.className || ''}`}>
+                <th key={idx} className={`px-4 py-3.5 whitespace-nowrap ${col.className || ''}`}>
                   {col.header}
                 </th>
               ))}

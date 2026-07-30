@@ -698,6 +698,13 @@ export class BookingService {
         { session }
       );
 
+      // Synchronize DigitalDonorRecord donationStatus to Cancelled so registration list removes it
+      await DigitalDonorRecord.updateOne(
+        { appointmentId: appointment._id },
+        { $set: { donationStatus: 'Cancelled', lastUpdatedAt: new Date() } },
+        { session }
+      );
+
       // Invalidate ETicket
       if (appointment.eTicketId) {
         await ETicket.updateOne(

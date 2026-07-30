@@ -189,6 +189,8 @@ export const mapBackendCampaignToLocation = (campaign: BackendCampaign) => {
       ? `Tọa độ: ${campaign.location.coordinates[1]}, ${campaign.location.coordinates[0]}`
       : 'TP. Hồ Chí Minh'),
     timeSlots,
+    startDateTime: campaign.startDateTime,
+    endDateTime: campaign.endDateTime,
     status: campaign.status,
     targetBloodGroups: campaign.targetBloodGroups,
     _raw: campaign,

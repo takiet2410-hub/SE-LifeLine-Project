@@ -59,7 +59,9 @@ export const CreateCampaignPage: React.FC = () => {
       await apiService.createCampaign({
         bloodCenterId: 'bc-01',
         name: data.name,
+        description: data.name,
         venue: data.venue,
+        fullAddress: data.venue,
         location: { type: 'Point', coordinates: [106.7, 10.8] },
         startDateTime: new Date(data.startDateTime).toISOString(),
         endDateTime: new Date(data.endDateTime).toISOString(),

@@ -71,6 +71,8 @@ export const apiService = {
     try {
       const res = await apiClient.post('/campaigns', {
         ...data,
+        fullAddress: (data as any).fullAddress || data.venue || 'TP. Hồ Chí Minh',
+        description: (data as any).description || data.name,
         targetUnitsGoal: data.capacity ? Math.round(data.capacity * 0.8) : 80,
         contactPerson: { name: 'Cán bộ Kho máu', phone: '0909123456' },
       });

@@ -9,6 +9,8 @@ interface LocationOption {
   name: string;
   venue?: string;
   address: string;
+  startDateTime?: string;
+  endDateTime?: string;
   targetBloodGroups?: string[];
   timeSlots: Array<{
     startTime: string;
@@ -29,25 +31,40 @@ export const Step1_LocationTime: React.FC = () => {
   const [locations, setLocations] = useState<LocationOption[]>([]);
   const [loadingLocations, setLoadingLocations] = useState(true);
 
+  const formatDateRange = (start?: string, end?: string) => {
+    if (!start || !end) return '';
+    try {
+      const s = new Date(start).toLocaleDateString('vi-VN');
+      const e = new Date(end).toLocaleDateString('vi-VN');
+      return `${s} - ${e}`;
+    } catch {
+      return '';
+    }
+  };
+
   useEffect(() => {
     const fetchLocations = async () => {
       setLoadingLocations(true);
-      setSelectedTime(''); // Reset time slot when selected date changes
       try {
-        const res = await searchLocations(selectedDate ? { date: selectedDate } : undefined);
+        const res = await searchLocations();
         if (res.success && res.data && res.data.length > 0) {
           const locationOptions: LocationOption[] = res.data.map((item: any) => ({
             id: item.id || item._id,
             name: item.name,
             venue: item.venue || item.name,
             address: item.address || item.fullAddress || 'TP. Hồ Chí Minh',
+            startDateTime: item.startDateTime,
+            endDateTime: item.endDateTime,
             targetBloodGroups: item.targetBloodGroups || ['A+', 'B+', 'O+', 'AB+'],
             timeSlots: item.timeSlots || []
           }));
           setLocations(locationOptions);
 
-          // Auto-select first location if current selection is invalid for new date
-          if (!locationOptions.some(l => l.id === selectedLoc)) {
+          // Preserve location selected from Map if available
+          const targetLocId = data.locationId || selectedLoc;
+          if (targetLocId && locationOptions.some(l => l.id === targetLocId)) {
+            setSelectedLoc(targetLocId);
+          } else if (locationOptions.length > 0) {
             setSelectedLoc(locationOptions[0].id);
           }
         } else {
@@ -63,7 +80,28 @@ export const Step1_LocationTime: React.FC = () => {
       }
     };
     fetchLocations();
-  }, [selectedDate]);
+  }, []);
+
+  const currentSelectedLocationObj = locations.find(l => l.id === selectedLoc);
+
+  // Auto-bound selectedDate within selected campaign's startDateTime & endDateTime
+  const campaignMinDate = currentSelectedLocationObj?.startDateTime
+    ? new Date(currentSelectedLocationObj.startDateTime).toISOString().split('T')[0]
+    : todayStr;
+  const campaignMaxDate = currentSelectedLocationObj?.endDateTime
+    ? new Date(currentSelectedLocationObj.endDateTime).toISOString().split('T')[0]
+    : undefined;
+
+  useEffect(() => {
+    if (currentSelectedLocationObj) {
+      const minD = campaignMinDate < todayStr ? todayStr : campaignMinDate;
+      if (selectedDate < minD) {
+        setSelectedDate(minD);
+      } else if (campaignMaxDate && selectedDate > campaignMaxDate) {
+        setSelectedDate(campaignMaxDate);
+      }
+    }
+  }, [selectedLoc, currentSelectedLocationObj]);
 
   const handleNext = () => {
     if (selectedLoc && selectedDate && selectedTime) {
@@ -83,7 +121,6 @@ export const Step1_LocationTime: React.FC = () => {
   };
 
   const isFormComplete = selectedLoc && selectedDate && selectedTime;
-  const currentSelectedLocationObj = locations.find(l => l.id === selectedLoc);
 
   return (
     <div className="flex flex-col gap-6">
@@ -143,6 +180,7 @@ export const Step1_LocationTime: React.FC = () => {
             <div className="flex flex-col gap-3 max-h-[460px] overflow-y-auto pr-1">
               {locations.map((loc) => {
                 const isSelected = selectedLoc === loc.id;
+                const rangeStr = formatDateRange(loc.startDateTime, loc.endDateTime);
                 return (
                   <div
                     key={loc.id}
@@ -173,6 +211,12 @@ export const Step1_LocationTime: React.FC = () => {
                       </div>
                       <p className="text-[12px] text-[#6c757d] leading-snug">{loc.address}</p>
 
+                      {rangeStr && (
+                        <p className="text-[11px] font-medium text-[#93000b] mt-1">
+                          📅 Thời gian diễn ra: {rangeStr}
+                        </p>
+                      )}
+
                       {loc.targetBloodGroups && loc.targetBloodGroups.length > 0 && (
                         <div className="flex items-center gap-1 mt-2">
                           <span className="text-[10px] font-bold text-[#6c757d]">Nhóm máu cần:</span>
@@ -202,10 +246,16 @@ export const Step1_LocationTime: React.FC = () => {
             <input
               type="date"
               value={selectedDate}
-              min={todayStr}
+              min={campaignMinDate < todayStr ? todayStr : campaignMinDate}
+              max={campaignMaxDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               className="w-full px-4 py-3 border border-[#dee2e6] rounded-xl text-[14px] font-medium text-[#271816] focus:border-[#93000b] focus:ring-1 focus:ring-[#93000b] outline-none bg-white cursor-pointer"
             />
+            {currentSelectedLocationObj?.startDateTime && (
+              <p className="text-[11px] text-[#6c757d] mt-2">
+                * Ngày hiến phải trùng với thời gian diễn ra chiến dịch ({formatDateRange(currentSelectedLocationObj.startDateTime, currentSelectedLocationObj.endDateTime)})
+              </p>
+            )}
           </div>
 
           {/* Time Slot Selector */}

@@ -114,16 +114,16 @@ export class CampaignService {
     const campaignPayload: any = {
       campaignCode,
       name: data.name,
-      description: data.description,
+      description: data.description || data.name,
       venue: data.venue,
-      fullAddress: data.fullAddress,
+      fullAddress: data.fullAddress || data.venue || 'TP. Hồ Chí Minh',
       startDateTime: startDate,
       endDateTime: new Date(data.endDateTime),
       targetBloodGroups: data.targetBloodGroups,
       capacity: data.capacity,
       registeredCount: 0,
-      targetUnitsGoal: data.targetUnitsGoal,
-      contactPerson: data.contactPerson,
+      targetUnitsGoal: data.targetUnitsGoal || (data.capacity ? Math.round(data.capacity * 0.8) : 80),
+      contactPerson: data.contactPerson || { name: 'Cán bộ Kho máu', phone: '0909123456' },
       internalRemarks: data.internalRemarks,
       status
     };

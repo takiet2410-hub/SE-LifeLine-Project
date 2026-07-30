@@ -278,8 +278,15 @@ export const InteractiveMapPage: React.FC = () => {
       const target = locations.find((l) => l.id === locationId);
       if (target) {
         setSelectedLocation(target);
-        updateData({ locationId: target.id });
-        navigate('/my-appointments/schedule');
+        updateData({
+          locationId: target.id,
+          locationData: {
+            id: target.id,
+            name: target.name,
+            address: target.address,
+          },
+        });
+        navigate('/my-appointments/schedule/step-1');
       }
     };
     window.addEventListener('select-donation-location', handlePopupSelect);

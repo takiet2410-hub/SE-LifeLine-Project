@@ -257,7 +257,7 @@ export const InteractiveMapPage: React.FC = () => {
         zoomControl: false,
       });
 
-      const goongApiKey = import.meta.env.VITE_GOONG_API_KEY || 'LojOKbN26JMpzwvjMsJ2mGCR8OxXOsNAZP80bAxU';
+      const goongApiKey = import.meta.env.VITE_GOONG_API_KEY || '';
       const goongStyleUrl = `https://tiles.goong.io/assets/goong_map_web.json?api_key=${goongApiKey}`;
 
       if (typeof (L as any).maplibreGL === 'function') {

@@ -5,8 +5,8 @@ import axios from 'axios';
  * Trao quyền đẩy file cho Cloudinary để giảm tải cho Backend Server
  */
 export async function uploadToCloudinary(file: File): Promise<string> {
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'demo';
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'lifeline_preset';
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || '';
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || '';
 
   const formData = new FormData();
   formData.append('file', file);

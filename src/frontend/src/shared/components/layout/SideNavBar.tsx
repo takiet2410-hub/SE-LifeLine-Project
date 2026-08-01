@@ -28,7 +28,7 @@ export const SideNavBar: React.FC = () => {
     <aside className="w-64 h-screen bg-[#1a1a2e] text-white flex flex-col shrink-0">
       {/* Logo Area */}
       <div className="h-[72px] flex items-center px-6 border-b border-white/10 shrink-0">
-        <Link to="/" className="flex items-center gap-2 group">
+        <Link to="/dashboard" className="flex items-center gap-2 group">
           <div className="w-8 h-8 bg-[#93000b] rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
             <LifeLineLogo className="w-5 h-6 text-white" />
           </div>

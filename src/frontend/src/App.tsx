@@ -50,13 +50,24 @@ import { StockOutPage } from './modules/blood-inventory/pages/StockOutPage';
 import { InventoryStatsPage } from './modules/blood-inventory/pages/InventoryStatsPage';
 import { BloodBagDetailPage } from './modules/blood-inventory/pages/BloodBagDetailPage';
 
+//Landing Pages
+import { LandingPage } from './modules/landing-page/LandingPage';
+import { AboutUsPage } from './modules/landing-page/pages/AboutUsPage';
+import { HowItWorksPage } from './modules/landing-page/pages/HowItWorksPage';
+import { FindLocationsPage } from './modules/landing-page/pages/FindLocationsPage';
+import { HealthTipsPage } from './modules/landing-page/pages/HealthTipsPage';
+
 function App() {
   return (
     <>
       <Toaster position="top-right" />
       <Routes>
-      {/* 1. Root Redirect */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* 1. Public Landing Pages */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/about" element={<AboutUsPage />} />
+      <Route path="/how-it-works" element={<HowItWorksPage />} />
+      <Route path="/find-locations" element={<FindLocationsPage />} />
+      <Route path="/health-tips" element={<HealthTipsPage />} />
 
       {/* 2. Public Auth Routes */}
       <Route path="/login" element={<LoginPage />} />

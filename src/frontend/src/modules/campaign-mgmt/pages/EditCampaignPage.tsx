@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Save, MapPin, Users } from 'lucide-react';
+import { ArrowLeft, Save, MapPin, Users, Plus, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { createCampaignSchema } from '../schemas/campaignSchema';
@@ -12,7 +12,7 @@ import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
 import { apiService } from '../../../services/apiClient';
 
-const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+const BLOOD_GROUPS = ['All Types', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 const formatForDateTimeInput = (dateStr?: string | Date) => {
   if (!dateStr) return '';
@@ -39,6 +39,7 @@ export const EditCampaignPage: React.FC = () => {
     setValue,
     reset,
     watch,
+    control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<CreateCampaignInput>({
     resolver: zodResolver(createCampaignSchema),
@@ -46,12 +47,21 @@ export const EditCampaignPage: React.FC = () => {
       name: '',
       description: '',
       venue: '',
+      fullAddress: '',
       startDateTime: '',
       endDateTime: '',
       targetBloodGroups: ['O+', 'A+', 'B+'],
       capacity: 100,
+      targetUnitsGoal: 100,
+      contactPerson: { name: '', phone: '' },
       status: 'Active',
+      timeslots: [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'timeslots',
   });
 
   useEffect(() => {
@@ -62,12 +72,16 @@ export const EditCampaignPage: React.FC = () => {
           reset({
             name: campaign.name || '',
             description: campaign.description || '',
-            venue: campaign.venue || campaign.fullAddress || '',
+            venue: campaign.venue || '',
+            fullAddress: campaign.fullAddress || campaign.venue || '',
             startDateTime: formatForDateTimeInput(campaign.startDateTime),
             endDateTime: formatForDateTimeInput(campaign.endDateTime),
             targetBloodGroups: campaign.targetBloodGroups || ['O+', 'A+'],
             capacity: campaign.capacity || 100,
+            targetUnitsGoal: campaign.targetUnitsGoal || 100,
+            contactPerson: campaign.contactPerson || { name: '', phone: '' },
             status: (campaign.status as any) || 'Active',
+            timeslots: campaign.timeslots || [],
           });
         } else {
           toast.error('Không tìm thấy thông tin chiến dịch');
@@ -85,6 +99,15 @@ export const EditCampaignPage: React.FC = () => {
   const selectedBloodGroups = watch('targetBloodGroups') || [];
 
   const toggleBloodGroup = (group: string) => {
+    if (group === 'All Types') {
+      if (selectedBloodGroups.includes('All Types')) {
+        setValue('targetBloodGroups', [], { shouldValidate: true, shouldDirty: true });
+      } else {
+        setValue('targetBloodGroups', ['All Types'], { shouldValidate: true, shouldDirty: true });
+      }
+      return;
+    }
+
     if (selectedBloodGroups.includes(group)) {
       setValue(
         'targetBloodGroups',
@@ -92,7 +115,8 @@ export const EditCampaignPage: React.FC = () => {
         { shouldValidate: true, shouldDirty: true }
       );
     } else {
-      setValue('targetBloodGroups', [...selectedBloodGroups, group], {
+      const newGroups = selectedBloodGroups.filter((g) => g !== 'All Types');
+      setValue('targetBloodGroups', [...newGroups, group], {
         shouldValidate: true,
         shouldDirty: true,
       });
@@ -102,15 +126,21 @@ export const EditCampaignPage: React.FC = () => {
   const onSubmit = async (data: CreateCampaignInput) => {
     if (!campaignId) return;
     try {
+      const startDate = new Date(data.startDateTime);
+      const endDate = new Date(data.endDateTime);
+      
       await apiService.updateCampaign(campaignId, {
         name: data.name,
         description: data.description || data.name,
         venue: data.venue,
-        fullAddress: data.venue,
-        startDateTime: new Date(data.startDateTime).toISOString(),
-        endDateTime: new Date(data.endDateTime).toISOString(),
+        fullAddress: data.fullAddress,
+        startDateTime: startDate.toISOString(),
+        endDateTime: endDate.toISOString(),
         targetBloodGroups: data.targetBloodGroups,
         capacity: data.capacity,
+        targetUnitsGoal: data.targetUnitsGoal,
+        contactPerson: data.contactPerson,
+        timeslots: data.timeslots,
         status: data.status,
       });
       toast.success('Cập nhật thông tin chiến dịch thành công!');
@@ -189,7 +219,22 @@ export const EditCampaignPage: React.FC = () => {
                 <input
                   type="text"
                   {...register('venue')}
-                  placeholder="VD: Ủy ban Nhân dân Quận 1, 47 Lê Duẩn..."
+                  placeholder="VD: Ủy ban Nhân dân Quận 1"
+                  className="w-full pl-9 pr-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                />
+              </div>
+            </FormField>
+          </div>
+
+          {/* Full Address */}
+          <div className="md:col-span-2">
+            <FormField label="Địa chỉ chi tiết" required error={errors.fullAddress?.message}>
+              <div className="relative">
+                <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  {...register('fullAddress')}
+                  placeholder="VD: 47 Lê Duẩn, Phường Bến Nghé, Quận 1, TP.HCM"
                   className="w-full pl-9 pr-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
                 />
               </div>
@@ -227,14 +272,46 @@ export const EditCampaignPage: React.FC = () => {
             </div>
           </FormField>
 
+          {/* Target Units Goal */}
+          <FormField label="Mục tiêu đơn vị máu" required error={errors.targetUnitsGoal?.message}>
+            <input
+              type="number"
+              {...register('targetUnitsGoal', { valueAsNumber: true })}
+              placeholder="100"
+              className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+            />
+          </FormField>
+
+          {/* Contact Person Name */}
+          <FormField label="Tên người liên hệ" required error={errors.contactPerson?.name?.message}>
+            <input
+              type="text"
+              {...register('contactPerson.name')}
+              placeholder="VD: Nguyễn Văn A"
+              className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+            />
+          </FormField>
+
+          {/* Contact Person Phone */}
+          <FormField label="Số điện thoại liên hệ" required error={errors.contactPerson?.phone?.message}>
+            <input
+              type="text"
+              {...register('contactPerson.phone')}
+              placeholder="0901234567"
+              className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+            />
+          </FormField>
+
           {/* Status */}
           <FormField label="Trạng thái chiến dịch" required error={errors.status?.message}>
             <select
               {...register('status')}
               className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none bg-white"
             >
-              <option value="Active">Đang mở (Active)</option>
               <option value="Draft">Bản nháp (Draft)</option>
+              <option value="Upcoming">Sắp diễn ra (Upcoming)</option>
+              <option value="Registration Pending">Chờ đăng ký (Registration Pending)</option>
+              <option value="Active">Đang mở (Active)</option>
               <option value="Full">Đã đủ (Full)</option>
               <option value="Completed">Đã hoàn thành (Completed)</option>
               <option value="Cancelled">Đã hủy (Cancelled)</option>
@@ -252,7 +329,7 @@ export const EditCampaignPage: React.FC = () => {
                       type="button"
                       key={group}
                       onClick={() => toggleBloodGroup(group)}
-                      className={`py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                      className={`py-2 text-xs font-bold rounded-lg border transition-all ${
                         isChecked
                           ? 'bg-red-600 text-white border-red-600 shadow-xs'
                           : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -265,34 +342,95 @@ export const EditCampaignPage: React.FC = () => {
               </div>
             </FormField>
           </div>
+
+          {/* Timeslots */}
+          <div className="md:col-span-2 space-y-3 pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-slate-800">Cấu hình khung giờ (Timeslots)</label>
+              <button
+                type="button"
+                onClick={() => append({ startTime: '07:30', endTime: '11:30', capacity: 50, registeredCount: 0 })}
+                className="text-xs font-medium text-red-600 hover:text-red-700 flex items-center gap-1 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-md transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" /> Thêm khung giờ
+              </button>
+            </div>
+            
+            {errors.timeslots && !Array.isArray(errors.timeslots) && (
+              <p className="text-xs text-red-600">{errors.timeslots.message as string}</p>
+            )}
+
+            <div className="space-y-3">
+              {fields.map((field, index) => (
+                <div key={field.id} className="flex flex-col sm:flex-row gap-3 items-start sm:items-end p-3 bg-slate-50 rounded-lg border border-slate-100">
+                  <FormField label="Giờ bắt đầu" required error={errors.timeslots?.[index]?.startTime?.message}>
+                    <input
+                      type="time"
+                      {...register(`timeslots.${index}.startTime` as const)}
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none bg-white"
+                    />
+                  </FormField>
+                  
+                  <FormField label="Giờ kết thúc" required error={errors.timeslots?.[index]?.endTime?.message}>
+                    <input
+                      type="time"
+                      {...register(`timeslots.${index}.endTime` as const)}
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none bg-white"
+                    />
+                  </FormField>
+                  
+                  <FormField label="Chỉ tiêu" required error={errors.timeslots?.[index]?.capacity?.message}>
+                    <input
+                      type="number"
+                      {...register(`timeslots.${index}.capacity` as const, { valueAsNumber: true })}
+                      placeholder="50"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none bg-white"
+                    />
+                  </FormField>
+
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors sm:mb-1"
+                    title="Xóa khung giờ này"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Submit & Cancel Actions */}
-        <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
           <button
             type="button"
             onClick={handleCancel}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+            className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-colors"
           >
             Hủy bỏ
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-5 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg flex items-center gap-2 shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+            className="px-6 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-70"
           >
-            <Save className="w-4 h-4" />
-            <span>{isSubmitting ? 'Đang lưu...' : 'Cập nhật chiến dịch'}</span>
+            {isSubmitting ? (
+              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            Lưu thay đổi
           </button>
         </div>
       </form>
 
-      {/* Discard Confirmation Dialog */}
       <ConfirmDialog
         isOpen={showCancelDialog}
-        title="Hủy bỏ chỉnh sửa?"
-        message="Những thay đổi chưa lưu sẽ bị hủy. Bạn có chắc chắn muốn thoát không?"
-        confirmLabel="Rời khỏi"
+        title="Hủy chỉnh sửa"
+        message="Bạn có chắc chắn muốn hủy? Các thay đổi chưa lưu sẽ bị mất."
+        confirmLabel="Đồng ý hủy"
         cancelLabel="Tiếp tục chỉnh sửa"
         onConfirm={() => navigate('/bc/campaigns')}
         onCancel={() => setShowCancelDialog(false)}

@@ -10,8 +10,19 @@ export interface CampaignData {
   endDateTime: string;
   targetBloodGroups: string[];
   capacity: number;
+  targetUnitsGoal: number;
+  contactPerson: {
+    name: string;
+    phone: string;
+  };
+  timeslots: Array<{
+    startTime: string;
+    endTime: string;
+    capacity: number;
+    registeredCount: number;
+  }>;
   registeredCount: number;
-  status: 'Draft' | 'Active' | 'Full' | 'Closed' | 'Cancelled';
+  status: 'Draft' | 'Upcoming' | 'Registration Pending' | 'Active' | 'Full' | 'Completed' | 'Cancelled';
   createdAt: string;
 }
 
@@ -104,46 +115,61 @@ export interface BloodBagData {
 // Initial Mock Datasets
 export const initialCampaigns: CampaignData[] = [
   {
-    _id: 'cam-001',
+    _id: 'c1',
     bloodCenterId: 'bc-01',
-    name: 'Chiến dịch Hiến máu Tình nguyện Mùa Hè 2026',
-    venue: 'Ủy ban Nhân dân Quận 1, 47 Lê Duẩn, TP.HCM',
-    location: { type: 'Point', coordinates: [106.698, 10.778] },
-    startDateTime: '2026-07-20T08:00:00Z',
-    endDateTime: '2026-07-25T17:00:00Z',
-    targetBloodGroups: ['O+', 'O-', 'A+', 'B+'],
-    capacity: 100,
-    registeredCount: 45,
+    name: 'Ngày Hội Hiến Máu Tình Nguyện - Mùa Hè Yêu Thương',
+    venue: 'Nhà Văn Hóa Thanh Niên',
+    location: { type: 'Point', coordinates: [106.696172, 10.782622] },
+    startDateTime: '2026-06-15T07:00:00Z',
+    endDateTime: '2026-06-15T11:00:00Z',
+    targetBloodGroups: ['O+', 'A+', 'B+', 'AB+'],
+    capacity: 200,
+    targetUnitsGoal: 200,
+    contactPerson: { name: 'Admin', phone: '0901234567' },
+    timeslots: [
+      { startTime: '07:00', endTime: '11:00', capacity: 200, registeredCount: 150 }
+    ],
+    registeredCount: 150,
     status: 'Active',
-    createdAt: '2026-07-01T10:00:00Z',
+    createdAt: '2026-05-01T00:00:00Z',
   },
   {
-    _id: 'cam-002',
+    _id: 'c2',
     bloodCenterId: 'bc-01',
-    name: 'Giọt Hồng Công Nghệ — Sài Gòn Tech Park',
-    venue: 'Sảnh A, Khu Công Nghệ Cao Quận 9, TP. Thủ Đức',
-    location: { type: 'Point', coordinates: [106.79, 10.84] },
-    startDateTime: '2026-08-01T08:00:00Z',
-    endDateTime: '2026-08-03T16:30:00Z',
-    targetBloodGroups: ['A-', 'B-', 'AB-', 'O-'],
-    capacity: 150,
-    registeredCount: 150,
+    name: 'Giọt Máu Hồng Cứu Người',
+    venue: 'Đại Học Quốc Gia TP.HCM',
+    location: { type: 'Point', coordinates: [106.8031, 10.8700] },
+    startDateTime: '2026-06-20T08:00:00Z',
+    endDateTime: '2026-06-20T16:00:00Z',
+    targetBloodGroups: ['O-', 'A-', 'B-'],
+    capacity: 100,
+    targetUnitsGoal: 100,
+    contactPerson: { name: 'Admin', phone: '0901234567' },
+    timeslots: [
+      { startTime: '08:00', endTime: '16:00', capacity: 100, registeredCount: 100 }
+    ],
+    registeredCount: 100,
     status: 'Full',
-    createdAt: '2026-07-10T09:00:00Z',
+    createdAt: '2026-05-10T00:00:00Z',
   },
   {
     _id: 'cam-003',
     bloodCenterId: 'bc-01',
-    name: 'Ngày Hội Hiến Máu Sinh Viên Đại Học Y Dược',
-    venue: 'Khuôn viên ĐH Y Dược, 217 Hồng Bàng, Quận 5',
-    location: { type: 'Point', coordinates: [106.66, 10.75] },
-    startDateTime: '2026-08-15T07:30:00Z',
-    endDateTime: '2026-08-16T17:00:00Z',
-    targetBloodGroups: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
-    capacity: 200,
-    registeredCount: 12,
+    name: 'Hiến Máu Tình Nguyện Mùa Thu',
+    venue: 'Công viên Gia Định',
+    location: { type: 'Point', coordinates: [106.6781, 10.8123] },
+    startDateTime: '2026-08-10T07:30:00Z',
+    endDateTime: '2026-08-10T11:30:00Z',
+    targetBloodGroups: ['O+', 'A+'],
+    capacity: 300,
+    targetUnitsGoal: 300,
+    contactPerson: { name: 'Admin', phone: '0901234567' },
+    timeslots: [
+      { startTime: '07:30', endTime: '11:30', capacity: 300, registeredCount: 0 }
+    ],
+    registeredCount: 0,
     status: 'Draft',
-    createdAt: '2026-07-15T14:00:00Z',
+    createdAt: '2026-06-01T00:00:00Z',
   },
 ];
 

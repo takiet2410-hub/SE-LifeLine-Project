@@ -3,8 +3,9 @@ import { z } from 'zod';
 export const createCampaignSchema = z
   .object({
     name: z.string().min(3, 'Tên chiến dịch phải có ít nhất 3 ký tự'),
-    description: z.string().optional(),
-    venue: z.string().min(3, 'Địa điểm tổ chức không được để trống'),
+    description: z.string().min(1, 'Mô tả không được để trống'),
+    venue: z.string().min(3, 'Tên địa điểm không được để trống'),
+    fullAddress: z.string().min(3, 'Địa chỉ chi tiết không được để trống'),
     startDateTime: z.string().min(1, 'Vui lòng chọn thời gian bắt đầu'),
     endDateTime: z.string().min(1, 'Vui lòng chọn thời gian kết thúc'),
     targetBloodGroups: z
@@ -13,7 +14,22 @@ export const createCampaignSchema = z
     capacity: z
       .number({ invalid_type_error: 'Chỉ tiêu phải là số' })
       .positive('Chỉ tiêu phải lớn hơn 0'),
-    status: z.enum(['Draft', 'Active', 'Full', 'Closed', 'Cancelled']),
+    targetUnitsGoal: z
+      .number({ invalid_type_error: 'Mục tiêu đơn vị máu phải là số' })
+      .positive('Mục tiêu phải lớn hơn 0'),
+    contactPerson: z.object({
+      name: z.string().min(2, 'Tên người liên hệ không được để trống'),
+      phone: z.string().min(10, 'Số điện thoại không hợp lệ'),
+    }),
+    status: z.enum(['Draft', 'Upcoming', 'Registration Pending', 'Active', 'Full', 'Completed', 'Cancelled']),
+    timeslots: z.array(
+      z.object({
+        startTime: z.string(),
+        endTime: z.string(),
+        capacity: z.number().positive(),
+        registeredCount: z.number().default(0),
+      })
+    ).min(1, 'Phải có ít nhất 1 khung giờ'),
   })
   .refine(
     (data) => new Date(data.endDateTime) > new Date(data.startDateTime),

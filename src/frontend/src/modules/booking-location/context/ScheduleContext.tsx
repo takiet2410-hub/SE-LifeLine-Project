@@ -12,6 +12,12 @@ export interface ScheduleData {
     id: string;
     name: string;
     address: string;
+    timeslots?: Array<{
+      startTime: string;
+      endTime: string;
+      capacity: number;
+      registeredCount: number;
+    }>;
   };
 }
 

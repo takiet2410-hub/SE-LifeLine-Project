@@ -36,7 +36,7 @@ export interface ICampaign extends Document {
 const CampaignSchema = new Schema<ICampaign>({
   campaignCode: { type: String, required: true, unique: true, index: true },
   name: { type: String, required: true, index: true },
-  description: { type: String },
+  description: { type: String, required: true },
   venue: { type: String, required: true },
   fullAddress: { type: String, required: true },
   location: {
@@ -45,7 +45,7 @@ const CampaignSchema = new Schema<ICampaign>({
   },
   startDateTime: { type: Date, required: true, index: true },
   endDateTime: { type: Date, required: true },
-  targetBloodGroups: [{ type: String, required: true }],
+  targetBloodGroups: { type: [String], required: true },
   capacity: { type: Number, required: true, min: 1 },
   registeredCount: { type: Number, default: 0, min: 0 },
   targetUnitsGoal: { type: Number, required: true, min: 1 },

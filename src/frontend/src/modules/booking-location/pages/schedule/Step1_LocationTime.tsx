@@ -65,11 +65,9 @@ export const Step1_LocationTime: React.FC = () => {
 
         // Ensure location selected from Map is ALWAYS included in locationOptions
         if (data.locationData && !locationOptions.some(l => String(l.id) === String(data.locationId) || (l.name && l.name.toLowerCase().trim() === data.locationData?.name.toLowerCase().trim()))) {
-          const mapSlots = (data.timeSlots && data.timeSlots.length > 0)
-            ? data.timeSlots
-            : (data.locationData.timeSlots && data.locationData.timeSlots.length > 0)
-              ? data.locationData.timeSlots
-              : defaultSlots;
+          const mapSlots = (data.locationData.timeslots && data.locationData.timeslots.length > 0)
+            ? data.locationData.timeslots
+            : defaultSlots;
 
           locationOptions.unshift({
             id: data.locationId || data.locationData.id,
@@ -163,8 +161,8 @@ export const Step1_LocationTime: React.FC = () => {
           id: locObj.id,
           name: locObj.name,
           address: locObj.address,
+          timeslots: locObj.timeSlots,
         } : undefined,
-        timeSlots: locObj ? locObj.timeSlots : undefined,
       });
       navigate('/my-appointments/schedule/step-2');
     }

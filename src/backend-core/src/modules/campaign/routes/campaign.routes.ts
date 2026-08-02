@@ -98,6 +98,7 @@ router.get('/', validateRequest(QueryCampaignSchema), CampaignController.listCam
  *                 type: array
  *                 items:
  *                   type: string
+ *                   enum: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-', 'ALL TYPES']
  *               capacity:
  *                 type: integer
  *               targetUnitsGoal:

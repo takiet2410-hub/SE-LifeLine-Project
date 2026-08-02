@@ -36,7 +36,7 @@ export const apiService = {
       let rawData = res.data?.data || res.data;
       if (Array.isArray(rawData) && rawData.length > 0) {
         if (params?.status && params.status !== 'All') {
-          rawData = rawData.filter((c: any) => c.status === params.status && c.status !== 'Cancelled');
+          rawData = rawData.filter((c: any) => c.status === params.status);
         } else {
           rawData = rawData.filter((c: any) => c.status !== 'Cancelled');
         }
@@ -74,7 +74,7 @@ export const apiService = {
     return campaigns.find((c) => c._id === id) || null;
   },
 
-  async createCampaign(data: Omit<CampaignData, '_id' | 'registeredCount' | 'createdAt'>) {
+  async createCampaign(data: Omit<CampaignData, '_id' | 'registeredCount' | 'createdAt' | 'location'> & { location?: any }) {
     try {
       const res = await apiClient.post('/campaigns', {
         ...data,
@@ -91,6 +91,7 @@ export const apiService = {
     await delay();
     const newCampaign: CampaignData = {
       ...data,
+      location: data.location || { type: 'Point', coordinates: [106.660172, 10.755498] },
       _id: `cam-${Date.now()}`,
       registeredCount: 0,
       createdAt: new Date().toISOString(),

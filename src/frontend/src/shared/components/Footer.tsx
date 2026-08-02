@@ -19,15 +19,14 @@ export const Footer: React.FC = () => {
           </p>
           {/* Social Icons Placeholder */}
           <div className="flex gap-4">
-            <div className="w-10 h-10 bg-[#16213E] rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-700 transition">
+            <a
+              href="https://www.facebook.com/profile.php?id=61592481823429"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 bg-[#16213E] rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-700 transition"
+            >
                <span className="text-white text-xs">FB</span>
-            </div>
-            <div className="w-10 h-10 bg-[#16213E] rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-700 transition">
-               <span className="text-white text-xs">IN</span>
-            </div>
-            <div className="w-10 h-10 bg-[#16213E] rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-700 transition">
-               <span className="text-white text-xs">TW</span>
-            </div>
+            </a>
           </div>
         </div>
 
@@ -36,9 +35,9 @@ export const Footer: React.FC = () => {
           <h4 className="font-bold text-base text-white">Quick Links</h4>
           <ul className="flex flex-col gap-4 text-[#8E8EA0] text-base">
             <li><Link to="/about" className="hover:text-white transition">About Us</Link></li>
-            <li><Link to="/map" className="hover:text-white transition">Donation Locations</Link></li>
-            <li><Link to="/stories" className="hover:text-white transition">Success Stories</Link></li>
-            <li><Link to="/news" className="hover:text-white transition">News Feed</Link></li>
+            <li><Link to="/how-it-works" className="hover:text-white transition">How It Works</Link></li>
+            <li><Link to="/find-locations" className="hover:text-white transition">Find Locations</Link></li>
+            <li><Link to="/health-tips" className="hover:text-white transition">Health Tips</Link></li>
           </ul>
         </div>
 
@@ -59,7 +58,14 @@ export const Footer: React.FC = () => {
           <ul className="flex flex-col gap-4 text-[#8E8EA0] text-base">
             <li className="flex items-start gap-3">
               <span className="mt-1">📍</span>
-              <span>123 Nguyen Van Linh, District 7<br />Ho Chi Minh City, Vietnam</span>
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=123+Nguyen+Van+Linh,+District+7,+Ho+Chi+Minh+City,+Vietnam"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition cursor-pointer"
+              >
+                123 Nguyen Van Linh, District 7<br />Ho Chi Minh City, Vietnam
+              </a>
             </li>
             <li className="flex items-center gap-3">
               <span>📞</span>

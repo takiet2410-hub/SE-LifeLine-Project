@@ -11,147 +11,8 @@ import { DigitalDonorRecord } from '../../registration/models/digital-donor-reco
 import { sendBookingConfirmationEmail, sendBookingRejectionEmail } from '../../../utils/email.util';
 import { Campaign } from '../../campaign/models/campaign.model';
 
-const ensureHcmcCampaigns = async () => {
-  try {
-    const timeslots = [
-      { startTime: '07:30', endTime: '09:00', capacity: 20, registeredCount: 5 },
-      { startTime: '09:00', endTime: '10:30', capacity: 20, registeredCount: 8 },
-      { startTime: '10:30', endTime: '12:00', capacity: 20, registeredCount: 4 },
-      { startTime: '13:30', endTime: '15:00', capacity: 20, registeredCount: 6 },
-      { startTime: '15:00', endTime: '16:30', capacity: 20, registeredCount: 2 }
-    ];
-
-    const hcmcCampaignList = [
-      {
-        campaignCode: 'CMP-CR-2026',
-        name: 'Bệnh viện Chợ Rẫy - Đợt Hiến Máu Nhân Đạo Q5',
-        description: 'Chiến dịch hiến máu nhân đạo hỗ trợ cấp cứu và điều trị tại Bệnh viện Chợ Rẫy.',
-        venue: 'Bệnh viện Chợ Rẫy',
-        fullAddress: '201B Nguyễn Chí Thanh, Phường 12, Quận 5, TP. Hồ Chí Minh',
-        location: { type: 'Point', coordinates: [106.660172, 10.755498] },
-        status: 'Active',
-        targetBloodGroups: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
-        capacity: 100,
-        registeredCount: 25,
-        targetUnitsGoal: 80,
-        contactPerson: { name: 'Đội Tình Nguyện Chợ Rẫy', phone: '02838554137' }
-      },
-      {
-        campaignCode: 'CMP-TMHH-2026',
-        name: 'Bệnh viện Truyền Máu Huyết Học - Đợt Tiếp Nhận Máu',
-        description: 'Đợt tiếp nhận máu lưu động chuẩn quốc tế tại Bệnh viện Truyền máu Huyết học.',
-        venue: 'Bệnh viện Truyền máu Huyết học',
-        fullAddress: '118 Hồng Bàng, Phường 12, Quận 5, TP. Hồ Chí Minh',
-        location: { type: 'Point', coordinates: [106.666133, 10.756247] },
-        status: 'Active',
-        targetBloodGroups: ['A+', 'B+', 'O+', 'O-'],
-        capacity: 150,
-        registeredCount: 40,
-        targetUnitsGoal: 120,
-        contactPerson: { name: 'Khoa Tiếp Nhận Máu', phone: '02839571342' }
-      },
-      {
-        campaignCode: 'CMP-TD-2026',
-        name: 'Bệnh viện Từ Dũ - Ngày Hội Hiến Máu Mẹ & Bé',
-        description: 'Chương trình hiến máu tình nguyện dành cho sản phụ và nhi khoa.',
-        venue: 'Bệnh viện Từ Dũ',
-        fullAddress: '284 Cống Quỳnh, Phường Phạm Ngũ Lão, Quận 1, TP. Hồ Chí Minh',
-        location: { type: 'Point', coordinates: [106.683610, 10.763428] },
-        status: 'Active',
-        targetBloodGroups: ['O-', 'AB-', 'A+', 'B+'],
-        capacity: 90,
-        registeredCount: 15,
-        targetUnitsGoal: 70,
-        contactPerson: { name: 'Đoàn Thanh Niên Từ Dũ', phone: '02854042829' }
-      },
-      {
-        campaignCode: 'CMP-115-2026',
-        name: 'Bệnh viện Nhân Dân 115 - Giọt Máu Hồng Cấp Cứu',
-        description: 'Chiến dịch bổ sung dự trữ máu cấp cứu đột quỵ và tim mạch tại Bệnh viện 115.',
-        venue: 'Bệnh viện Nhân dân 115',
-        fullAddress: '520 Lý Thường Kiệt, Phường 14, Quận 10, TP. Hồ Chí Minh',
-        location: { type: 'Point', coordinates: [106.660812, 10.771945] },
-        status: 'Active',
-        targetBloodGroups: ['O+', 'A+', 'B+'],
-        capacity: 120,
-        registeredCount: 30,
-        targetUnitsGoal: 100,
-        contactPerson: { name: 'BS. Trần Văn Nam', phone: '02838652368' }
-      },
-      {
-        campaignCode: 'CMP-GD-2026',
-        name: 'Bệnh viện Nhân Dân Gia Định - Ngày Hiến Máu Bình Thạnh',
-        description: 'Điểm hiến máu nhân đạo phục vụ khu vực Bình Thạnh và Phú Nhuận.',
-        venue: 'Bệnh viện Nhân dân Gia Định',
-        fullAddress: '1 Nơ Trang Long, Phường 7, Bình Thạnh, TP. Hồ Chí Minh',
-        location: { type: 'Point', coordinates: [106.696120, 10.803510] },
-        status: 'Active',
-        targetBloodGroups: ['O-', 'AB-', 'A+'],
-        capacity: 100,
-        registeredCount: 18,
-        targetUnitsGoal: 85,
-        contactPerson: { name: 'Phòng Công Tác Xã Hội', phone: '02838412697' }
-      },
-      {
-        campaignCode: 'CMP-175-2026',
-        name: 'Bệnh viện Quân Y 175 - Giọt Máu Chiến Sĩ Gò Vấp',
-        description: 'Ngày hội hiến máu quân dân y tại Bệnh viện Quân Y 175.',
-        venue: 'Bệnh viện Quân Y 175',
-        fullAddress: '786 Nguyễn Kiệm, Phường 3, Gò Vấp, TP. Hồ Chí Minh',
-        location: { type: 'Point', coordinates: [106.678240, 10.817530] },
-        status: 'Active',
-        targetBloodGroups: ['O+', 'B+', 'A+'],
-        capacity: 130,
-        registeredCount: 22,
-        targetUnitsGoal: 100,
-        contactPerson: { name: 'Ban Thanh Niên BV 175', phone: '02838942438' }
-      },
-      {
-        campaignCode: 'CMP-TD-CITY-2026',
-        name: 'Bệnh viện TP. Thủ Đức - Kết Nối Yêu Thương',
-        description: 'Điểm tiếp nhận máu tình nguyện TP. Thủ Đức.',
-        venue: 'Bệnh viện Thành phố Thủ Đức',
-        fullAddress: '29 Phú Châu, Tam Phú, Thủ Đức, TP. Hồ Chí Minh',
-        location: { type: 'Point', coordinates: [106.758410, 10.852530] },
-        status: 'Active',
-        targetBloodGroups: ['A+', 'O+', 'B+'],
-        capacity: 110,
-        registeredCount: 14,
-        targetUnitsGoal: 90,
-        contactPerson: { name: 'Đoàn Thanh Niên Thủ Đức', phone: '02837206000' }
-      }
-    ];
-
-    const now = new Date();
-    const nextMonth = new Date();
-    nextMonth.setMonth(nextMonth.getMonth() + 2);
-
-    const existingCampaigns = await Campaign.find({}).lean();
-    if (existingCampaigns.length === 0 || existingCampaigns.some(c => c.venue === 'Hoa Lu Stadium' || !c.fullAddress)) {
-      await Campaign.deleteMany({ venue: 'Hoa Lu Stadium' });
-      for (const item of hcmcCampaignList) {
-        await Campaign.updateOne(
-          { campaignCode: item.campaignCode },
-          {
-            $set: {
-              ...item,
-              startDateTime: now,
-              endDateTime: nextMonth,
-              timeslots
-            }
-          },
-          { upsert: true }
-        );
-      }
-    }
-  } catch (err) {
-    console.error('Error ensuring HCMC campaigns:', err);
-  }
-};
-
 export class BookingService {
   public static async searchLocations(filters: any) {
-    await ensureHcmcCampaigns();
     // Query both Active & Upcoming campaigns (exclude Cancelled)
     let query: any = { status: { $nin: ['Cancelled'] } };
 
@@ -166,10 +27,6 @@ export class BookingService {
           $maxDistance: radiusInMeters
         }
       };
-    }
-
-    if (filters.bloodType) {
-      query.targetBloodGroups = filters.bloodType;
     }
 
     if (filters.date) {
@@ -215,6 +72,33 @@ export class BookingService {
         status: calculatedStatus
       };
     }).filter(c => c.status === 'Active' || c.status === 'Upcoming');
+
+    // Filter by blood type (supporting multi-select and matching spots accepting all blood types)
+    if (filters.bloodType) {
+      const selectedTypes = (typeof filters.bloodType === 'string' ? filters.bloodType.split(',') : [filters.bloodType])
+        .map((t: string) => t.trim().toUpperCase())
+        .filter(Boolean);
+
+      const isAllSelected = selectedTypes.length === 0 || selectedTypes.length >= 8 || selectedTypes.includes('ALL');
+
+      if (!isAllSelected && selectedTypes.length > 0) {
+        campaigns = campaigns.filter(c => {
+          const bgUpper = (c.targetBloodGroups || []).map((g: string) => String(g).trim().toUpperCase());
+          // Spot accepts all blood types if empty/undefined, contains 'ALL', 'TẤT CẢ', 'MỌI', 'EVERYONE', has >= 8 blood types, or covers all 4 main groups
+          const acceptsAll =
+            bgUpper.length === 0 ||
+            bgUpper.length >= 8 ||
+            bgUpper.some((g: string) => g === 'ALL TYPES' || g.includes('TẤT CẢ') || g.includes('MỌI') || g.includes('EVERYONE')) ||
+            (bgUpper.some((g: string) => g.startsWith('A')) &&
+             bgUpper.some((g: string) => g.startsWith('B')) &&
+             bgUpper.some((g: string) => g.startsWith('O')) &&
+             bgUpper.some((g: string) => g.startsWith('AB')));
+
+          if (acceptsAll) return true;
+          return selectedTypes.some((st: string) => bgUpper.includes(st));
+        });
+      }
+    }
 
     if (filters.crowdingLevel) {
       campaigns = campaigns.filter(c => {

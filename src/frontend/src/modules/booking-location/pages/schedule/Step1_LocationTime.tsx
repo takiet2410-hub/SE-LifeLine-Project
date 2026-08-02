@@ -57,26 +57,26 @@ export const Step1_LocationTime: React.FC = () => {
               name: item.name,
               venue: item.venue || item.name,
               address: item.address || item.fullAddress || 'TP. Hồ Chí Minh',
-              targetBloodGroups: item.targetBloodGroups || ['A+', 'B+', 'O+', 'AB+'],
+              targetBloodGroups: (item.targetBloodGroups && item.targetBloodGroups.length > 0) ? item.targetBloodGroups : ['Tất cả các nhóm máu'],
               timeSlots: slots,
             };
           });
-        }
 
-        // Ensure location selected from Map is ALWAYS included in locationOptions
-        if (data.locationData && !locationOptions.some(l => String(l.id) === String(data.locationId) || (l.name && l.name.toLowerCase().trim() === data.locationData?.name.toLowerCase().trim()))) {
-          const mapSlots = (data.locationData.timeslots && data.locationData.timeslots.length > 0)
-            ? data.locationData.timeslots
-            : defaultSlots;
+          // Ensure location selected from Map is included ONLY IF date matches
+          if (data.locationData && data.date === selectedDate && !locationOptions.some(l => String(l.id) === String(data.locationId) || (l.name && l.name.toLowerCase().trim() === data.locationData?.name.toLowerCase().trim()))) {
+            const mapSlots = (data.locationData.timeslots && data.locationData.timeslots.length > 0)
+              ? data.locationData.timeslots
+              : defaultSlots;
 
-          locationOptions.unshift({
-            id: data.locationId || data.locationData.id,
-            name: data.locationData.name,
-            venue: data.locationData.name,
-            address: data.locationData.address,
-            targetBloodGroups: ['A+', 'B+', 'O+', 'AB+'],
-            timeSlots: mapSlots,
-          });
+            locationOptions.unshift({
+              id: data.locationId || data.locationData.id,
+              name: data.locationData.name,
+              venue: data.locationData.name,
+              address: data.locationData.address,
+              targetBloodGroups: ['Tất cả các nhóm máu'],
+              timeSlots: mapSlots,
+            });
+          }
         }
 
         setLocations(locationOptions);
@@ -110,6 +110,7 @@ export const Step1_LocationTime: React.FC = () => {
           if (targetLocObj) {
             updateData({
               locationId: targetLocObj.id,
+              date: selectedDate,
               locationData: {
                 id: targetLocObj.id,
                 name: targetLocObj.name,
@@ -128,11 +129,25 @@ export const Step1_LocationTime: React.FC = () => {
         } else {
           setLocations([]);
           setSelectedLoc('');
+          setSelectedTime('');
+          updateData({
+            locationId: '',
+            locationData: undefined,
+            timeSlot: '',
+            date: selectedDate,
+          });
         }
       } catch (err) {
         console.error('Failed to fetch campaign locations:', err);
         setLocations([]);
         setSelectedLoc('');
+        setSelectedTime('');
+        updateData({
+          locationId: '',
+          locationData: undefined,
+          timeSlot: '',
+          date: selectedDate,
+        });
       } finally {
         setLoadingLocations(false);
       }

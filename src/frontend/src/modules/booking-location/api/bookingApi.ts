@@ -253,7 +253,7 @@ export const searchLocations = async (filters?: {
   lng?: number;
   radius?: number;
   date?: string;
-  bloodType?: string;
+  bloodType?: string | string[];
   crowdingLevel?: 'Low' | 'Medium' | 'High';
 }): Promise<ApiResponse<any[]>> => {
   try {
@@ -262,7 +262,10 @@ export const searchLocations = async (filters?: {
     if (filters?.lng !== undefined) params.append('lng', String(filters.lng));
     if (filters?.radius !== undefined) params.append('radius', String(filters.radius));
     if (filters?.date) params.append('date', filters.date);
-    if (filters?.bloodType) params.append('bloodType', filters.bloodType);
+    if (filters?.bloodType) {
+      const btVal = Array.isArray(filters.bloodType) ? filters.bloodType.join(',') : filters.bloodType;
+      if (btVal) params.append('bloodType', btVal);
+    }
     if (filters?.crowdingLevel) params.append('crowdingLevel', filters.crowdingLevel);
 
     const response = await apiClient.get(`/bookings/locations?${params.toString()}`);

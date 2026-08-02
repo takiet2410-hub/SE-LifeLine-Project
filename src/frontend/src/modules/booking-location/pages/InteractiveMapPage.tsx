@@ -32,7 +32,9 @@ const DEFAULT_CENTER: [number, number] = [10.762622, 106.660172];
 
 export const InteractiveMapPage: React.FC = () => {
   const navigate = useNavigate();
-  const { updateData } = useScheduleContext();
+  const { data: scheduleData, updateData } = useScheduleContext();
+
+  const todayStr = new Date().toISOString().split('T')[0];
 
   // Map state
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -43,13 +45,25 @@ export const InteractiveMapPage: React.FC = () => {
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState('');
   const [radius, setRadius] = useState<number>(15);
-  const [selectedBloodType, setSelectedBloodType] = useState<string>('');
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedBloodTypes, setSelectedBloodTypes] = useState<string[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>(scheduleData?.date || todayStr);
   const [crowdingLevels, setCrowdingLevels] = useState<{ [key: string]: boolean }>({
     Low: true,
     Moderate: true,
     High: true,
   });
+
+  const handleToggleBloodType = (type: string) => {
+    if (type === 'ALL') {
+      setSelectedBloodTypes((prev) => prev.includes('ALL') ? [] : ['ALL']);
+    } else {
+      setSelectedBloodTypes((prev) => {
+        const next = prev.filter((t) => t !== 'ALL');
+        const next2 = next.includes(type) ? next.filter((t) => t !== type) : [...next, type];
+        return next2.length === 8 ? ['ALL'] : next2;
+      });
+    }
+  };
 
   // UI state
   const [locations, setLocations] = useState<any[]>([]);
@@ -74,7 +88,6 @@ export const InteractiveMapPage: React.FC = () => {
         filters.lng = userCoords[1];
       }
       if (selectedDate) filters.date = selectedDate;
-      if (selectedBloodType) filters.bloodType = selectedBloodType;
 
       const res = await searchLocations(filters);
       if (res.success && Array.isArray(res.data) && res.data.length > 0) {
@@ -140,7 +153,7 @@ export const InteractiveMapPage: React.FC = () => {
             rating: (4.8 + (idx % 3) * 0.1).toFixed(1),
             crowdingLevel,
             status: computedStatusStr,
-            bloodTypes: raw?.targetBloodGroups?.length ? raw.targetBloodGroups : ['A+', 'O+', 'B+'],
+            bloodTypes: (raw?.targetBloodGroups && raw.targetBloodGroups.length > 0) ? raw.targetBloodGroups : ['Tất cả các nhóm máu'],
             operatingHours: raw?.startDateTime
               ? `${new Date(raw.startDateTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${new Date(raw.endDateTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
               : '08:00 - 16:00',
@@ -189,7 +202,7 @@ export const InteractiveMapPage: React.FC = () => {
 
   useEffect(() => {
     fetchMapLocations();
-  }, [selectedDate, selectedBloodType, radius, userCoords]);
+  }, [selectedDate, radius, userCoords]);
 
   // Calculate exact numeric distance in km using Haversine formula
   const getDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -227,10 +240,30 @@ export const InteractiveMapPage: React.FC = () => {
       );
     }
 
-    if (selectedBloodType) {
-      result = result.filter((loc) =>
-        loc.bloodTypes.some((bt: string) => bt.toUpperCase() === selectedBloodType.toUpperCase())
-      );
+    if (selectedBloodTypes.length > 0) {
+      const isExplicitAllTypes = selectedBloodTypes.includes('ALL');
+      const normalizedSelected = selectedBloodTypes.map((t: string) => t.toUpperCase().trim());
+      
+      result = result.filter((loc: any) => {
+        const campaignTypes: string[] = (loc.bloodTypes || []).map((bt: string) => String(bt).toUpperCase().trim());
+        
+        const acceptsAll =
+          campaignTypes.length === 0 ||
+          campaignTypes.length >= 8 ||
+          campaignTypes.some((bt: string) => bt === 'ALL TYPES' || bt.includes('TẤT CẢ') || bt.includes('MỌI') || bt.includes('EVERYONE')) ||
+          (campaignTypes.some((bt: string) => bt.startsWith('A')) &&
+           campaignTypes.some((bt: string) => bt.startsWith('B')) &&
+           campaignTypes.some((bt: string) => bt.startsWith('O')) &&
+           campaignTypes.some((bt: string) => bt.startsWith('AB')));
+
+        if (isExplicitAllTypes) {
+          // User explicitly selected "Tất cả các nhóm máu" -> Only show campaigns that require ALL TYPES
+          return acceptsAll;
+        }
+
+        // Strict matching: only include campaigns that explicitly contain the selected blood types
+        return normalizedSelected.some((st: string) => campaignTypes.includes(st));
+      });
     }
 
     // Filter by crowding level
@@ -243,7 +276,7 @@ export const InteractiveMapPage: React.FC = () => {
     result.sort((a, b) => getDistanceNum(a.lat, a.lng) - getDistanceNum(b.lat, b.lng));
 
     setFilteredLocations(result);
-  }, [searchQuery, locations, selectedBloodType, crowdingLevels, userCoords, radius]);
+  }, [searchQuery, locations, selectedBloodTypes, crowdingLevels, userCoords, radius]);
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -509,7 +542,7 @@ export const InteractiveMapPage: React.FC = () => {
   // Reset Filters
   const handleResetFilters = () => {
     setRadius(15);
-    setSelectedBloodType('');
+    setSelectedBloodTypes([]);
     setSelectedDate('');
     setCrowdingLevels({ Low: true, Moderate: true, High: true });
     setSearchQuery('');
@@ -635,25 +668,47 @@ export const InteractiveMapPage: React.FC = () => {
 
             {/* Target Blood Type */}
             <div>
-              <label className="text-[13px] font-semibold text-[#5b403d] block mb-2">
-                Nhóm máu cần tìm
-              </label>
-              <div className="grid grid-cols-4 gap-1.5">
-                {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map((type) => (
-                  <button
-                    key={type}
-                    onClick={() =>
-                      setSelectedBloodType(selectedBloodType === type ? '' : type)
-                    }
-                    className={`h-9 rounded-lg border text-[12px] font-bold transition-all ${
-                      selectedBloodType === type
-                        ? 'border-[#93000b] bg-[#93000b] text-white shadow-sm'
-                        : 'border-[#dee2e6] bg-white text-[#271816] hover:border-[#93000b]/40'
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-[13px] font-semibold text-[#5b403d]">
+                  Nhóm máu cần tìm
+                </label>
+                {selectedBloodTypes.length > 0 && (
+                  <span className="text-[11px] font-bold text-[#93000b] bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
+                    Đã chọn ({selectedBloodTypes.length})
+                  </span>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleToggleBloodType('ALL')}
+                  className={`w-full py-2 px-3 rounded-lg border text-[12px] font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
+                    selectedBloodTypes.includes('ALL')
+                      ? 'border-[#93000b] bg-[#93000b] text-white shadow-sm'
+                      : 'border-[#dee2e6] bg-white text-[#271816] hover:border-[#93000b]/40'
+                  }`}
+                >
+                  Tất cả các nhóm máu
+                </button>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map((type) => {
+                    const isSelected = selectedBloodTypes.includes(type);
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => handleToggleBloodType(type)}
+                        className={`h-9 rounded-lg border text-[12px] font-bold transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-[#93000b] bg-[#93000b] text-white shadow-sm'
+                            : 'border-[#dee2e6] bg-white text-[#271816] hover:border-[#93000b]/40'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 

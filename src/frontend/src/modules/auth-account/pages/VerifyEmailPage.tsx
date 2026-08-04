@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { verifyEmail } from '../api/authAccountApi';
@@ -10,6 +10,7 @@ export function VerifyEmailPage() {
   const token = searchParams.get('token') ?? '';
   const [state, setState] = useState<VerificationState>('idle');
   const [message, setMessage] = useState('');
+  const calledRef = useRef(false);
 
   useEffect(() => {
     if (!token) {
@@ -18,7 +19,10 @@ export function VerifyEmailPage() {
       return;
     }
 
-    let isActive = true;
+    if (calledRef.current) {
+      return;
+    }
+    calledRef.current = true;
 
     async function runVerification() {
       setState('verifying');
@@ -26,28 +30,15 @@ export function VerifyEmailPage() {
 
       try {
         const response = await verifyEmail(token);
-
-        if (!isActive) {
-          return;
-        }
-
         setState('success');
         setMessage(response.message ?? 'Your account has been activated. You can now sign in.');
       } catch {
-        if (!isActive) {
-          return;
-        }
-
         setState('error');
         setMessage('The verification link is invalid or has expired.');
       }
     }
 
     void runVerification();
-
-    return () => {
-      isActive = false;
-    };
   }, [token]);
 
   return (

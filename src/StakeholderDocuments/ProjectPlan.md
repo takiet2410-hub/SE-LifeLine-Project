@@ -2,7 +2,7 @@
 > **Document**: Project Plan  
 > **Course**: CSC13002 - Introduction to Software Engineering
 > **Team**: Sanguine (Team 05)  
-> **Version**: 1.2 | **Date**: 11/07/2026  
+> **Version**: 1.3 | **Date**: 23/07/2026  
 
 *Author: Trần Anh Kiệt  |  Reviewer: Trịnh Khánh Linh  |  Editor: Trần Anh Kiệt*
 
@@ -18,6 +18,7 @@
    * [3.1 Team Structure](#31-team-structure)
    * [3.2 Team Roles and Responsibilities](#32-team-roles-and-responsibilities)
    * [3.3 Risk Management](#33-risk-management)
+   * [3.4 Task Review Process](#34-task-review-process)
 * [4. Project Plan](#4-project-plan)
    * [4.1 Project Schedule Overview](#41-project-schedule-overview)
    * [4.2 Detailed Sprint Plans](#42-detailed-sprint-plans)
@@ -36,6 +37,7 @@
 | 05/06/2026 | 1.0     | Initial draft – Project Plan (Roles, Responsibilities, Schedule, Build Plan)    | Trần Anh Kiệt |
 | 12/06/2026 | 1.1     | Initial draft – Project Plan (Introduction, Project Overview,  Risk Management) | Trần Anh Kiệt |
 | 11/07/2026 | 1.2     | Refined headings, Added due date for tasks | Trần Anh Kiệt |
+| 23/07/2026 | 1.3     | 2nd revision addressing TA feedback: added Task Review Process (Sec 3.4) with a dedicated reviewer per task; clarified task assignment (split combined/vague owner entries into individually-owned tasks with explicit scope) across Sec 4.2.2–4.2.5; rebalanced Sprint 5 workload by moving some Functional Groups forward into Sprint 4. See Changes.md for the full list. | Trần Anh Kiệt |
 
 # 1. Introduction
 
@@ -191,6 +193,15 @@ graph TD
 | R8 | System performance may degrade as the number of users, donation records, and blood requests increases.  | Low | Medium | Low | Optimize database queries, implement indexing strategies, and perform performance testing before deployment.  |
 | R9 | Requirements validation may be insufficient, resulting in features that are implemented correctly but do not solve the actual problem.  | Medium | High | High | Conduct prototype demonstrations, stakeholder reviews, and user acceptance testing throughout development.  |
 
+## 3.4 Task Review Process
+
+To ensure quality and avoid single-person blind spots, every task tracked in Jira is given two distinct people: an **Owner** (does the work) and a **Reviewer** (checks the work). The two roles are never the same person for a given task.
+
++ **Reviewer assignment rule**: For documentation tasks, the reviewer is normally the team's Business Analyst/QA lead (Linh) or the Project Manager (Kiệt) when Linh is the owner. For code/FG implementation tasks, the reviewer is a member who was *not* part of that FG's implementation team, so the review is an independent check rather than self-sign-off.
++ **Review workflow in Jira**: (1) Owner moves the task card to "In Review" and links the artifact/PR/doc. (2) Reviewer checks it against the task's stated deliverable/acceptance criteria and leaves comments directly on the Jira card. (3) If changes are needed, the card moves back to "In Progress"; if approved, the Reviewer moves it to "Done" and it is included in the next Scrum Meeting update. (4) Every task's Owner and Reviewer are now listed explicitly in the per-sprint task tables in Section 4.2.
++ **Sprint-level review**: In addition to per-task review, the Sprint Review Meeting at the end of each sprint is where the Reviewer of each major deliverable (UC Specs, Architecture Docs, each implemented FG) reports review outcomes to the whole team before the PA package is finalized.
++ **Code review specifics**: For FG implementation tasks, the Reviewer performs a lightweight code review (readability, adherence to the Spec Kit-generated spec, and a manual run-through of the feature) before the branch is merged into `main`.
+
 # 4. Project Plan
 
 ## 4.1 Project Schedule Overview
@@ -202,8 +213,8 @@ The project is organized into 5 Sprints, each corresponding to one Project Assig
 | 1      | 25 May – 07 Jun 2026 | PA1              | Project Proposal, App Survey, Team Contract, Tools Setup, Spec Kit Research                                 |
 | 2      | 08 Jun – 21 Jun 2026 | PA2              | Project Plan, Vision Document (all 14 FGs), Spec Kit Initialization, AI Usage Report                        |
 | 3      | 22 Jun – 12 Jul 2026 | PA3              | UC Model & Specs for all 14 FGs, UI Prototypes, Implement FG1 (1.1 User Account Mgmt), v0.1 Alpha           |
-| 4      | 13 Jul – 02 Aug 2026 | PA4              | Architecture Docs (C4 L1–L3, Deployment), Implement FG2 (1.2 Booking) + FG3 (2.1 Campaign Mgmt), v0.2 Beta |
-| 5      | 03 Aug – 22 Aug 2026 | PA5              | Implement FG4–FG14 (remaining 11 FGs), Test Plan & Execution (≥50 TCs), Reflective Report, Final Demo, v1.0 |
+| 4      | 13 Jul – 02 Aug 2026 | PA4              | Architecture Docs (C4 L1–L3, Deployment), Implement FG2 (1.2 Booking) + FG3 (2.1 Campaign Mgmt) + FG7 (1.6 Community, moved from PA5), Test Plan template draft, v0.2 Beta |
+| 5      | 03 Aug – 22 Aug 2026 | PA5              | Implement FG4–FG6, FG8–FG14 (remaining 10 FGs), Test Plan & Execution (≥50 TCs), Reflective Report, Final Demo, v1.0 |
 
 ## 4.2 Detailed Sprint Plans
 
@@ -262,21 +273,23 @@ Sprint 2 Goal: Produce the initial Project Plan and Vision Document covering all
 | AI Usage Report                                              | *AI usage log*                  |                   |           |           |           |           |           |           |                    |           |           |           | ✦         | ✦         |           |
 | Sprint Review Meeting                                        | *Review report*                 |                   |           |           |           |           |           |           |                    |           |           |           |           |           | ✦         |
 
-| Task | Owner | Due Date |
-| :------------------------------------------------------------------------------- | :----------------------- | :---- |
-| Project Plan – Intro, Project Overview | Kiệt (lead) | 12/06/2026 |
-| Project Plan – Project Organization, Schedule, Build Plan | Kiệt + all members | 12/06/2026 |
-| Vision Doc – Intro, Positioning, Problem Statement | Linh | 12/06/2026 |
-| Vision Doc – Stakeholders, User Summary | Linh | 14/06/2026 |
-| Vision Doc – Features: 1.1 User Account Mgmt, 1.2 Booking | Kiệt | 16/06/2026 |
-| Vision Doc – Features: 1.3 Q&A AI, 1.4 News & Notifications | Quý | 16/06/2026 |
-| Vision Doc – Features: 1.5 Donation Impact, 1.6 Community | Linh | 16/06/2026 |
-| Vision Doc – Features: 2.1 Campaign Mgmt, 2.2 Communication, 2.3 Blood Inventory | Triết | 16/06/2026 |
-| Vision Doc – Features: 3.1 SOS Hospital | Dương | 16/06/2026 |
-| Vision Doc – Features: 4.1 User Automations, 4.2 BC Automations, 4.3 Notification Service | Triết | 16/06/2026 |
-| Vision Doc – NFR + Workflow Diagrams (Mermaid) | Quý + Kiệt + Triết | 18/06/2026 |
-| Spec Kit GitHub setup + constitution.md | All members individually | 13/06/2026 |
-| AI Usage Report | Quý + All members | 20/06/2026 |
+| Task | Owner | Reviewer | Due Date |
+| :------------------------------------------------------------------------------- | :----------------------- | :---------- | :---- |
+| Project Plan – Sec 1 Introduction, Sec 2 Project Overview | Kiệt | Linh | 12/06/2026 |
+| Project Plan – Sec 3 Project Organization (Team Structure, Roles) | Kiệt | Triết | 12/06/2026 |
+| Project Plan – Sec 3.3 Risk Management | Kiệt | Linh | 12/06/2026 |
+| Project Plan – Sec 4 Schedule Overview & Build Plan | Kiệt | Triết | 12/06/2026 |
+| Vision Doc – Intro, Positioning, Problem Statement | Linh | Kiệt | 12/06/2026 |
+| Vision Doc – Stakeholders, User Summary | Linh | Quý | 14/06/2026 |
+| Vision Doc – Features: 1.1 User Account Mgmt, 1.2 Booking | Kiệt | Linh | 16/06/2026 |
+| Vision Doc – Features: 1.3 Q&A AI, 1.4 News & Notifications | Quý | Dương | 16/06/2026 |
+| Vision Doc – Features: 1.5 Donation Impact, 1.6 Community | Linh | Triết | 16/06/2026 |
+| Vision Doc – Features: 2.1 Campaign Mgmt, 2.2 Communication, 2.3 Blood Inventory | Triết | Kiệt | 16/06/2026 |
+| Vision Doc – Features: 3.1 SOS Hospital | Dương | Quý | 16/06/2026 |
+| Vision Doc – Features: 4.1 User Automations, 4.2 BC Automations, 4.3 Notification Service | Triết | Dương | 16/06/2026 |
+| Vision Doc – NFR + Workflow Diagrams (Mermaid) | Quý (Donor Booking flow) + Kiệt (SOS flow) + Triết (NFR list) | Linh | 18/06/2026 |
+| Spec Kit GitHub setup + constitution.md (each member sets up their own local clone + submits a screenshot) | All members, individually accountable for their own setup | Kiệt (verifies all 5 setups) | 13/06/2026 |
+| AI Usage Report – compile team log from each member's individual entries | Quý (compiles) | Kiệt | 20/06/2026 |
 
 Deliverables: PA2 submission – Project Plan (MD+PDF), Vision Document (MD+PDF), Spec Kit artifacts (constitution.md + init files), Meeting minutes, Jira screenshots, AI Usage Report, Git log.
 
@@ -317,39 +330,42 @@ Sprint 3 Goal: Deliver revised documents (Changes.md), complete use-case model a
 | Scrum Meeting #1                                                  | *Meeting minutes*                    |                    |           |           |           |           |           | ✦         |                        |           |           |           |           |           |           |                   |           |           |           |           |           |           |
 | Scrum Meeting #2                                                  | *Meeting minutes*                    |                    |           |           |           |           |           |           |                        |           |           |           |           |           | ✦         |                   |           |           |           |           |           |           |
 
-| Task | Owner | Due Date |
-| :--------------------------------------------------------------------------------- | :----------------------------------------- | :---- |
-| Revised Project Plan + Vision Doc (Changes.md) | Kiệt (plan), Linh (vision) | 25/06/2026 |
-| UC Diagrams – User Features 1.1–1.6 (Mermaid) | Linh, Kiệt , Quý | 28/06/2026 |
-| UC Diagrams – Blood Center 2.1–2.3 + Hospital 3.1 (Mermaid) | Triết, Dương | 28/06/2026 |
-| UC Diagrams – System Automations 4.1–4.3 (Mermaid) | Triết | 28/06/2026 |
-| UC Diagrams – Admin Features 5.1 (Mermaid) | Kiệt | 28/06/2026 |
-| UC Spec – 1.1 User Account Mgmt (Registration, OTP, Login, History) | Kiệt | 02/07/2026 |
-| UC Spec – 1.2 Donation Booking & Location Services | Kiệt | 02/07/2026 |
-| UC Spec – 1.3 Q&A AI (chatbot, eligibility, pre/post guidance, redirection) | Quý | 02/07/2026 |
-| UC Spec – 1.4 News, Notifications & SOS Emergency Alerts | Quý | 02/07/2026 |
-| UC Spec – 1.5 Donation Impact & Tracking (Journey, gamification, badges) | Linh | 03/07/2026 |
-| UC Spec – 1.6 Community (Fanpage Redirect, smart handling) | Linh | 01/07/2026 |
-| UC Spec – 2.1 Campaign & Donor Mgmt (event creation, QR scan, screening) | Triết | 03/07/2026 |
-| UC Spec – 2.2 Communication & Engagement Mgmt (CMS, broadcast) | Triết | 03/07/2026 |
-| UC Spec – 2.3 Blood Inventory & Emergency Coordination | Triết | 03/07/2026 |
-| UC Spec – 3.1 Emergency SOS Request Mgmt (Hospital) | Dương | 03/07/2026 |
-| UC Spec – 4.1 User Automations + 4.2 BC Automations + 4.3 Notification Service | Triết | 03/07/2026 |
-| UC Spec – 5.1 Admin Features | Kiệt | 03/07/2026 |
-| UI Prototypes for all UCs (Figma/v0/Bolt) | Triết (FE lead), each member for their UCs | 07/07/2026 |
-| FG1 Implementation – 1.1 User Account Mgmt (React + Node.js + MongoDB, Spec Kit) | Kiệt (BE) + Triết (FE) + Dương (DB) | 07/07/2026 |
-| Video demo FG1 (YouTube Unlisted) | All members | 10/07/2026 |
+| Task | Owner | Reviewer | Due Date |
+| :--------------------------------------------------------------------------------- | :----------------------------------------- | :---------- | :---- |
+| Revised Project Plan (Sec 1–4) + Changes.md | Kiệt | Linh | 23/07/2026 |
+| Revised Vision Doc (all sections) + Changes.md | Kiệt | Linh | 25/07/2026 |
+| UC Diagrams – User Features 1.1–1.6 (Mermaid) | Linh (1.1–1.3), Kiệt (1.4–1.5), Quý (1.6) | Triết | 28/06/2026 |
+| UC Diagrams – Blood Center 2.1–2.3 + Hospital 3.1 (Mermaid) | Triết (2.1–2.3), Dương (3.1) | Linh | 28/06/2026 |
+| UC Diagrams – System Automations 4.1–4.3 (Mermaid) | Triết | Dương | 28/06/2026 |
+| UC Diagrams – Admin Features 5.1 (Mermaid) | Kiệt | Linh | 28/06/2026 |
+| UC Spec – 1.1 User Account Mgmt (Registration, OTP, Login, History) | Kiệt | Linh | 02/07/2026 |
+| UC Spec – 1.2 Donation Booking & Location Services | Kiệt | Linh | 02/07/2026 |
+| UC Spec – 1.3 Q&A AI (chatbot, eligibility, pre/post guidance, redirection) | Quý | Linh | 02/07/2026 |
+| UC Spec – 1.4 News, Notifications & SOS Emergency Alerts | Quý | Linh | 02/07/2026 |
+| UC Spec – 1.5 Donation Impact & Tracking (Journey, gamification, badges) | Linh | Kiệt | 03/07/2026 |
+| UC Spec – 1.6 Community (Fanpage Redirect, smart handling) | Linh | Kiệt | 01/07/2026 |
+| UC Spec – 2.1 Campaign & Donor Mgmt (event creation, QR scan, screening) | Triết | Linh | 03/07/2026 |
+| UC Spec – 2.2 Communication & Engagement Mgmt (CMS, broadcast) | Triết | Linh | 03/07/2026 |
+| UC Spec – 2.3 Blood Inventory & Emergency Coordination | Triết | Linh | 03/07/2026 |
+| UC Spec – 3.1 Emergency SOS Request Mgmt (Hospital) | Dương | Linh | 03/07/2026 |
+| UC Spec – 4.1 User Automations + 4.2 BC Automations + 4.3 Notification Service | Triết | Linh | 03/07/2026 |
+| UC Spec – 5.1 Admin Features | Kiệt | Linh | 03/07/2026 |
+| UI Prototypes for all UCs (Figma/v0/Bolt) – Triết leads the FE design system; each member builds the prototype for the UCs they specced above | Triết (design system) + each member (own UCs) | Linh (UX consistency check) | 07/07/2026 |
+| FG1 Implementation – 1.1 User Account Mgmt: Backend API + auth logic (Node.js) | Kiệt | Quý | 07/07/2026 |
+| FG1 Implementation – 1.1 User Account Mgmt: Frontend UI + integration (React) | Triết | Quý | 07/07/2026 |
+| FG1 Implementation – 1.1 User Account Mgmt: MongoDB schema (User, OTP, Session) | Dương | Quý | 07/07/2026 |
+| Video demo FG1 (YouTube Unlisted, narrated) | Kiệt (compiles) + all members (narrate own part) | Linh | 10/07/2026 |
 
 Deliverables: PA3 submission – Changes.md, UC Model (MD+PDF), UC Specs + prototype screenshots for all 14 FGs (MD+PDF), Source code FG1 (no node_modules), Spec Kit artifacts, YouTube demo link, Meeting minutes, Jira screenshots, AI Usage Report, Git log.
 
 ### 4.2.4 Sprint 4 (PA4) – 13 July 2026 to 02 August 2026
 
-Sprint 4 Goal: Revise use-case specifications (all 14 FGs), produce complete software architecture documentation (C4 L1–L3, Deployment), implement FG2 (1.2 Donation Booking & Location) and FG3 (2.1 Blood Center Campaign & Donor Management) end-to-end using Spec Kit, and produce v0.2 Beta build.
+Sprint 4 Goal: Revise use-case specifications (all 14 FGs), produce complete software architecture documentation (C4 L1–L3, Deployment), and implement FG2 (1.2 Donation Booking & Location), FG3 (2.1 Blood Center Campaign & Donor Mgmt), FG5 (1.4 News, Notifications & SOS Emergency Alerts), FG8 (2.2 Communication & Engagement Mgmt), FG9 (2.3 Blood Inventory & Emergency Coordination), FG10 (3.1 Hospital SOS Request, Broadcast & Tracking), FG11 (4.1 User-Facing Automations), FG12 (4.2 Blood Center Automations), and FG13 (4.3 Notification Service) end-to-end using Spec Kit, and produce v0.2 Beta build.
 
 | TASK                                                           | OUTCOME                              | Week 8 (Jul 13–19) |           |           |           |           |           |           | Week 9 (Jul 20–26) |           |           |           |           |           |           | Week 10 (Jul 27–Aug 2) |           |           |           |           |           |           |
 | :------------------------------------------------------------- | :----------------------------------- | ------------------ | --------- | --------- | --------- | --------- | --------- | --------- | ------------------ | --------- | --------- | --------- | --------- | --------- | --------- | ----------------------- | --------- | --------- | --------- | --------- | --------- | --------- |
 |                                                                |                                      | **13/07**          | **14/07** | **15/07** | **16/07** | **17/07** | **18/07** | **19/07** | **20/07**          | **21/07** | **22/07** | **23/07** | **24/07** | **25/07** | **26/07** | **27/07**               | **28/07** | **29/07** | **30/07** | **31/07** | **01/08** | **02/08** |
-| Sprint Planning Meeting                                        | *Meeting minutes*                    | ✦                  |           |           |           |           |           |           |                    |           |           |           |           |           |           |                         |           |           |           |           |           |           |
+| Sprint Planning Meeting                                        | *Planning report*                    | ✦                  |           |           |           |           |           |           |                    |           |           |           |           |           |           |                         |           |           |           |           |           |           |
 | Revised UC Spec – all 14 FGs, address TA feedback (Changes.md) | *Updated UC specs + Changes.md*     | ✦                  | ✦         | ✦         | ✦         |           |           |           |                    |           |           |           |           |           |           |                         |           |           |           |           |           |           |
 | Architecture Doc – Tech Stack description                      | *Architecture doc section*           | ✦                  | ✦         | ✦         | ✦         |           |           |           |                    |           |           |           |           |           |           |                         |           |           |           |           |           |           |
 | C4 L1 – System Context Diagram (Mermaid) + explanation        | *Context diagram*                    |                    | ✦         | ✦         | ✦         | ✦         | ✦         |           |                    |           |           |           |           |           |           |                         |           |           |           |           |           |           |
@@ -357,82 +373,89 @@ Sprint 4 Goal: Revise use-case specifications (all 14 FGs), produce complete sof
 | C4 L3 – Component Diagram: Frontend (Mermaid)                  | *Component diagram FE*               |                    |           |           |           |           | ✦         | ✦         | ✦                  | ✦         | ✦         | ✦         |           |           |           |                         |           |           |           |           |           |           |
 | C4 L3 – Component Diagram: Backend (Mermaid)                   | *Component diagram BE*               |                    |           |           |           |           | ✦         | ✦         | ✦                  | ✦         | ✦         | ✦         |           |           |           |                         |           |           |           |           |           |           |
 | Deployment Diagram (Mermaid) + node descriptions              | *Deployment diagram*                 |                    |           |           |           |           |           |           | ✦                  | ✦         | ✦         | ✦         | ✦         |           |           |                         |           |           |           |           |           |           |
-| Implement FG2 – 1.2 Donation Booking & Location                | *Working code + Spec Kit artifacts* |                    |           | ✦         | ✦         | ✦         | ✦         | ✦         | ✦                  | ✦         | ✦         | ✦         | ✦         | ✦         | ✦         |                         |           |           |           |           |           |           |
-| Implement FG3 – 2.1 Blood Center Campaign & Donor Mgmt         | *Working code + Spec Kit artifacts* |                    |           |           |           |           |           | ✦         | ✦                  | ✦         | ✦         | ✦         | ✦         | ✦         | ✦         | ✦                       | ✦         | ✦         | ✦         |           |           |           |
+| Implement FG2 – 1.2 Donation Booking & Location (Spec Kit)     | *Working code + Spec Kit artifacts* | ✦                  | ✦         | ✦         | ✦         | ✦         | ✦         | ✦         | ✦                  | ✦         | ✦         | ✦         | ✦         | ✦         | ✦         | ✦                       | ✦         | ✦         | ✦         |           |           |           |
+| Implement FG3 – 2.1 Blood Center Campaign & Donor Mgmt (Spec Kit) | *Working code + Spec Kit artifacts* | ✦             | ✦         | ✦         | ✦         | ✦         | ✦         | ✦         | ✦                  | ✦         | ✦         | ✦         | ✦         | ✦         | ✦         | ✦                       | ✦         | ✦         | ✦         |           |           |           |
+| FG5 – 1.4 News, Notifications & SOS Emergency Alerts           | *Working code + artifacts*          |                    |           |           |           | ✦         | ✦         | ✦         | ✦                  | ✦         | ✦         |           |           |           |           |                         |           |           |           |           |           |           |
+| FG8 – 2.2 Communication & Engagement Mgmt                      | *Working code + artifacts*          |                    |           |           |           | ✦         | ✦         | ✦         | ✦                  | ✦         | ✦         | ✦         | ✦         |           |           |                         |           |           |           |           |           |           |
+| FG11 – 4.1 User-Facing Automations                             | *Working code + artifacts*          |                    |           |           | ✦         | ✦         | ✦         | ✦         | ✦                  | ✦         | ✦         | ✦         | ✦         | ✦         |           |                         |           |           |           |           |           |           |
+| FG12 – 4.2 Blood Center Automations + FG13 – 4.3 Notification Service | *Working code + artifacts*    |                    |           |           | ✦         | ✦         | ✦         | ✦         | ✦                  | ✦         | ✦         | ✦         | ✦         | ✦         |           |                         |           |           |           |           |           |           |
+| FG9 – 2.3 Blood Inventory & Emergency Coordination (Spec Kit)  | *Working code + artifacts*          |                    |           | ✦         | ✦         | ✦         | ✦         | ✦         | ✦                  | ✦         | ✦         | ✦         | ✦         |           |           |                         |           |           |           |           |           |           |
+| FG10 – 3.1 Hospital SOS Request, Broadcast & Tracking (Spec Kit) | *Working code + artifacts*        |                    |           |           | ✦         | ✦         | ✦         | ✦         | ✦                  | ✦         | ✦         | ✦         | ✦         | ✦         |           |                         |           |           |           |           |           |           |
 | Spec Kit generated test cases – FG2 & FG3                      | *Test case files*                    |                    |           |           |           |           |           |           |                    |           |           | ✦         | ✦         | ✦         | ✦         | ✦                       | ✦         | ✦         |           |           |           |           |
 | Video demo – FG2 & FG3 (YouTube Unlisted)                      | *YouTube link*                       |                    |           |           |           |           |           |           |                    |           |           |           |           |           |           |                         |           |           | ✦         | ✦         | ✦         |           |
-| AI Usage Report + Weekly Report                               | *Reports*                            |                    |           |           |           |           |           |           |                    |           |           |           |           |           |           |                         |           |           |           | ✦         | ✦         | ✦         |
+| AI Usage Report                                                | *Reports*                            |                    |           |           |           |           |           |           |                    |           |           |           |           |           |           |                         |           |           |           | ✦         | ✦         | ✦         |
 | Sprint Review Meeting                                          | *Review report*                      |                    |           |           |           |           |           |           |                    |           |           |           |           |           |           |                         |           |           |           |           |           | ✦         |
-| Scrum Meeting #1                                              | *Meeting minuutes*                   |                    |           |           |           |           |           | ✦         |                    |           |           |           |           |           |           |                         |           |           |           |           |           |           |
+| Scrum Meeting #1                                              | *Meeting minutes*                    |                    |           |           |           |           |           | ✦         |                    |           |           |           |           |           |           |                         |           |           |           |           |           |           |
 | Srcum Meeting #2                                              | *Meeting minutes*                    |                    |           |           |           |           |           |           |                    |           |           |           |           |           | ✦         |                         |           |           |           |           |           |           |
 
-| Task | Owner | Due Date |
-| :---- | :---- | :---- |
-| Revised UC Specs – all 14 FGs (Changes.md) | Linh (lead), all members review their own sections | 16/07/2026 |
-| Tech Stack description + C4 L1 System Context Diagram | Kiệt | 18/07/2026 |
-| C4 L2 Container Diagram + descriptions | Dương + Kiệt | 21/07/2026 |
-| C4 L3 Component Diagram – Frontend | Quý | 23/07/2026 |
-| C4 L3 Component Diagram – Backend | Kiệt | 23/07/2026 |
-| Deployment Diagram + node descriptions | Triết | 24/07/2026 |
-| FG2 – 1.2 Donation Booking & Location (Map, QR ticket, 84-day, Spec Kit) | Kiệt (BE) + Triết (FE) + Dương (DB) | 26/07/2026 |
-| FG3 – 2.1 Blood Center Campaign & Donor Mgmt (Event, QR scan, Screening, Spec Kit) | Triết (FE) + Kiệt (BE) + Dương (DB) | 30/07/2026 |
-| Include Spec Kit generated test cases (FG2, FG3) | All members | 29/07/2026 |
-| Video demo FG2 + FG3 (YouTube Unlisted) | All members | 01/08/2026 |
+| Task | Owner | Reviewer | Due Date |
+| :---- | :---- | :---- | :---- |
+| Revised UC Specs – all 14 FGs, address TA feedback (Changes.md) | Linh (lead, consolidates); each original spec owner revises their own section (see Sec 4.2.3 table for owners) | Kiệt | 16/07/2026 |
+| Tech Stack description + C4 L1 System Context Diagram | Kiệt | Dương | 18/07/2026 |
+| C4 L2 Container Diagram + descriptions | Dương (draft) + Kiệt (refine) | Triết | 21/07/2026 |
+| C4 L3 Component Diagram – Frontend | Quý | Triết | 23/07/2026 |
+| C4 L3 Component Diagram – Backend | Kiệt | Dương | 23/07/2026 |
+| Deployment Diagram + node descriptions | Triết | Kiệt | 24/07/2026 |
+| FG2 – 1.2 Donation Booking & Location: Backend API + Maps integration | Dương | Quý | 30/07/2026 |
+| FG2 – 1.2 Donation Booking & Location: Frontend (map UI, booking flow, QR e-ticket) | Quý | Dương | 30/07/2026 |
+| FG2 – 1.2 Donation Booking & Location: MongoDB schema (Booking, Location) | Dương | Quý | 30/07/2026 |
+| FG3 – 2.1 Blood Center Campaign & Donor Mgmt: Backend (event, QR check-in, eligibility logic) | Triết | Linh | 30/07/2026 |
+| FG3 – 2.1 Blood Center Campaign & Donor Mgmt: Frontend (campaign dashboard, check-in UI) | Linh | Triết | 30/07/2026 |
+| FG3 – 2.1 Blood Center Campaign & Donor Mgmt: MongoDB schema (Campaign, Session) | Dương | Triết | 30/07/2026 |
+| FG5 – 1.4 News, Notifications & SOS Emergency Alerts (push, email) | Kiệt (BE, lead) + Quý (FE) + Linh (FE) | Triết | 22/07/2026 |
+| FG8 – 2.2 Communication & Engagement Mgmt (CMS, automated reminders, broadcast) | Triết (FE+BE, lead) + Kiệt (BE) + Linh (FE) | Quý | 24/07/2026 |
+| FG9 – 2.3 Blood Inventory & Emergency Coordination (real-time tracking, auto SOS) | Kiệt (BE, lead) + Triết (BE) + Dương (DB) + Linh (FE) | Triết | 24/07/2026 |
+| FG10 – 3.1 Hospital SOS Request Mgmt (create, broadcast, supply confirm & track) | Dương (BE, lead) + Quý (FE) | Kiệt | 25/07/2026 |
+| FG11 – 4.1 User-Facing Automations (84-day rule, pre-screening form, e-ticket, SOS proximity alert) | Kiệt (BE, lead) + Triết (BE) + Quý (FE) | Dương | 25/07/2026 |
+| FG12 – 4.2 BC-Facing Automations (digital donor record, lifecycle comms, shelf life, SOS prioritization) | Triết (BE, lead) + Kiệt (BE) + Quý (FE) | Dương | 25/07/2026 |
+| FG13 – 4.3 Notification Service | Quý (lead) + Kiệt (BE) | Triết | 25/07/2026 |
+| Spec Kit generated test cases – FG2 & FG3 | Owner of each FG generates their own | Linh (QA lead consolidates & reviews) | 29/07/2026 |
+| Video demo FG2 + FG3 (YouTube Unlisted) | Kiệt (compiles) + all members (narrate own part) | Linh | 01/08/2026 |
 
-Deliverables: PA4 submission – Changes.md, Architecture doc (C4 L1–L3 + Deployment, MD+PDF), Source code FG2+FG3, Spec Kit artifacts, generated test cases, YouTube demo link, Meeting minutes, Jira screenshots, AI Usage Report, Git log.
+Deliverables: PA4 submission – Changes.md, Architecture doc (C4 L1–L3 + Deployment, MD+PDF), Source code FG2+FG3+FG5+FG8+FG9+FG10+FG11+FG12+FG13, Spec Kit artifacts, generated test cases, YouTube demo link, Meeting minutes, Jira screenshots, AI Usage Report, Git log.
+
 
 ### 4.2.5 Sprint 5 (PA5) – 03 August 2026 to 23 August 2026
 
-Sprint 5 Goal: Implement all remaining functional groups (FG4–FG14), review and refine all Spec Kit test cases, write and execute test plan (≥50 test cases across ≥5 use cases including AI feature testing), produce bug reports, compile reflective report, and deliver the final product demo (15 minutes live).
+Sprint 5 Goal: Implement the remaining 4 functional groups, review and refine all Spec Kit test cases, write and execute test plan (≥50 test cases across ≥5 use cases including AI feature testing), produce bug reports, compile reflective report, and deliver the final product demo (15 minutes live).
 
 | TASK                                                           | OUTCOME                     | Week 11 (Aug 3–9) |           |           |           |           |           |           | Week 12 (Aug 10–16) |           |           |           |           |           |           | Week 13 (Aug 17–23) |           |           |           |           |           |           |
 | :------------------------------------------------------------- | :-------------------------- | ----------------- | --------- | --------- | --------- | --------- | --------- | --------- | ------------------- | --------- | --------- | --------- | --------- | --------- | --------- | ------------------- | --------- | --------- | --------- | --------- | --------- | --------- |
 |                                                                |                             | **03/08**         | **04/08** | **05/08** | **06/08** | **07/08** | **08/08** | **09/08** | **10/08**           | **11/08** | **12/08** | **13/08** | **14/08** | **15/08** | **16/08** | **17/08**           | **18/08** | **19/08** | **20/08** | **21/08** | **22/08** | **23/08** |
-| Sprint Planning Meeting                                        | *Meeting minutes*           | ✦                 |           |           |           |           |           |           |                     |           |           |           |           |           |           |                     |           |           |           |           |           |           |
+| Sprint Planning Meeting                                        | *Planning report*           | ✦                 |           |           |           |           |           |           |                     |           |           |           |           |           |           |                     |           |           |           |           |           |           |
 | FG4 – 1.3 Q&A AI Chatbot                                      | *Working code + artifacts* | ✦                 | ✦         | ✦         | ✦         | ✦         | ✦         | ✦         | ✦                   | ✦         | ✦         |           |           |           |           |                     |           |           |           |           |           |           |
-| FG5 – 1.4 News, Notifications & SOS Emergency Alerts           | *Working code + artifacts* | ✦                 | ✦         | ✦         | ✦         | ✦         | ✦         | ✦         | ✦                   | ✦         | ✦         |           |           |           |           |                     |           |           |           |           |           |           |
 | FG6 – 1.5 Donation Impact & Tracking / Journey                 | *Working code + artifacts* |                   | ✦         | ✦         | ✦         | ✦         | ✦         | ✦         | ✦                   | ✦         | ✦         | ✦         |           |           |           |                     |           |           |           |           |           |           |
 | FG7 – 1.6 Community Fanpage Redirect                           | *Working code + artifacts* |                   | ✦         | ✦         | ✦         | ✦         | ✦         | ✦         |                     |           |           |           |           |           |           |                     |           |           |           |           |           |           |
-| FG8 – 2.2 Communication & Engagement Mgmt                      | *Working code + artifacts* |                   |           | ✦         | ✦         | ✦         | ✦         | ✦         | ✦                   | ✦         | ✦         | ✦         | ✦         |           |           |                     |           |           |           |           |           |           |
-| FG9 – 2.3 Blood Inventory & Emergency Coordination             | *Working code + artifacts* |                   |           | ✦         | ✦         | ✦         | ✦         | ✦         | ✦                   | ✦         | ✦         | ✦         | ✦         |           |           |                     |           |           |           |           |           |           |
-| FG10 – 3.1 Hospital SOS Request, Broadcast & Tracking          | *Working code + artifacts* |                   |           |           | ✦         | ✦         | ✦         | ✦         | ✦                   | ✦         | ✦         | ✦         | ✦         | ✦         |           |                     |           |           |           |           |           |           |
-| FG11 – 4.1 User-Facing Automations                             | *Working code + artifacts* |                   |           |           | ✦         | ✦         | ✦         | ✦         | ✦                   | ✦         | ✦         | ✦         | ✦         | ✦         |           |                     |           |           |           |           |           |           |
-| FG12 – 4.2 Blood Center Automations + FG13 – 4.3 Notification Service                           | *Working code + artifacts* |                   |           |           | ✦         | ✦         | ✦         | ✦         | ✦                   | ✦         | ✦         | ✦         | ✦         | ✦         |           |                     |           |           |           |           |           |           |
 | FG14 – 5.1 Administrator Features                             | *Working code + artifacts* |                   |           |           | ✦         | ✦         | ✦         | ✦         | ✦                   | ✦         | ✦         | ✦         | ✦         | ✦         |           |                     |           |           |           |           |           |           |
 | Review & refine all Spec Kit generated test cases              | *Refined test cases*        |                   |           |           |           | ✦         | ✦         | ✦         | ✦                   | ✦         | ✦         | ✦         |           |           |           |                     |           |           |           |           |           |           |
 | Test Plan document                                             | *Test plan*                 |                   |           |           | ✦         | ✦         | ✦         | ✦         | ✦                   |           |           |           |           |           |           |                     |           |           |           |           |           |           |
-| Write Test Cases (≥50, ≥5 use cases, incl. AI feature testing) | *Test case document*        |                   |           |           |           |           | ✦         | ✦         | ✦                   | ✦         | ✦         | ✦         | ✦         |           |           |                     |           |           |           |           |           |           |
+| Write Test Cases (≥50, ≥5 use cases, incl. AI feature testing) | *Test case document*        |                   |           |           |           |           | ✦         | ✦         | ✦                   | ✦         | ✦         | ✦         | ✦         |  ✦         |  ✦         |                     |           |           |           |           |           |           |
 | Test Execution – manual functional testing                     | *Test execution results*    |                   |           |           |           |           |           |           |                     |           | ✦         | ✦         | ✦         | ✦         | ✦         |                     |           |           |           |           |           |           |
-| Bug Report                                                     | *Bug report document*       |                   |           |           |           |           |           |           |                     |           |           |           | ✦         | ✦         | ✦         | ✦                   |           |           |           |           |           |           |
 | Final full-stack integration & QA                              | *Stable v1.0 build*         |                   |           |           |           |           |           |           |                     |           |           | ✦         | ✦         | ✦         | ✦         | ✦                   | ✦         | ✦         |           |           |           |           |
+| Bug Report                                                     | *Bug report document*       |                   |           |           |           |           |           |           |                     |           |           |           | ✦         | ✦         | ✦         | ✦                   |           |           |           |           |           |           |
 | Reflective Report – All members                                | *Reflective report*         |                   |           |           |           |           |           |           |                     |           |           |           |           |           | ✦         | ✦                   | ✦         | ✦         | ✦         |           |           |           |
 | Final Submission package (update all PA1–PA5 docs)             | *PA5-GroupXX.zip*           |                   |           |           |           |           |           |           |                     |           |           |           |           |           |           |                     | ✦         | ✦         | ✦         | ✦         | ✦         |           |
 | AI Usage Report (full project)                                 | *Complete AI log*           |                   |           |           |           |           |           |           |                     |           |           |           |           |           |           |                     |           | ✦         | ✦         | ✦         | ✦         |           |
-| Final Product Demo (15 min live, all members)                  | *Demo session*              |                   |           |           |           |           |           |           |                     |           |           |           |           |           |           |                     |           |           |           | ✦         | ✦         | ✦         |
+| Final Product Demo (15 min live, all members)                  | *Demo session*              |                   |           |           |           |           |           |           |                     |           |           |           |           |           |           |                     |           |           |           | ✦         | ✦         |           |
 | Sprint Review Meeting                                          | *Review report*             |                   |           |           |           |           |           |           |                     |           |           |           |           |           |           |                     |           |           |           |           | ✦         |           |
 | Scrum Meeting #1                                              | *Meeting minutes*           |                   |           |           |           |           |           | ✦         |                     |           |           |           |           |           |           |                     |           |           |           |           |           |           |
 | Scrum Meeting #2                                              | *Meeting minutes*           |                   |           |           |           |           |           |           |                     |           |           |           |           |           | ✦         |                     |           |           |           |           |           |           |
 
-| Task | Owner | Due Date |
-| :---- | :---- | :---- |
-| FG4 – 1.3 Q&A AI (conversational chatbot, eligibility, smart redirection) | Quý (AI+FE) + Dương (BE/Python) + Linh (FE) | 12/08/2026 |
-| FG5 – 1.4 News, Notifications & SOS Emergency Alerts (push, email) | Kiệt (BE) + Quý (FE) + Linh (FE) | 12/08/2026 |
-| FG6 – 1.5 Donation Impact & Tracking (statistics, badges, gamification, Journey) | Triết (FE) + Dương (DB) +Linh (BE + FE) | 13/08/2026 |
-| FG7 – 1.6 Community Fanpage Redirect (smart redirect, error handling) | Linh (FE) | 09/08/2026 |
-| FG8 – 2.2 Communication & Engagement Mgmt (CMS, automated reminders, broadcast) | Triết (FE+BE) + Kiệt (BE) + Linh (FE) | 14/08/2026 |
-| FG9 – 2.3 Blood Inventory & Emergency Coordination (real-time tracking, auto SOS) | Triết (BE) + Kiệt (BE) + Dương (DB) + Linh (FE) | 14/08/2026 |
-| FG10 – 3.1 Hospital SOS Request Mgmt (create, broadcast, supply confirm & track) | Dương (BE) + Quý (FE) | 15/08/2026 |
-| FG11 – 4.1 User-Facing Automations (84-day rule, pre-screening form, e-ticket, SOS proximity alert) | Kiệt (BE) + Triết(BE) + Quý (FE) | 15/08/2026 |
-| FG12 – 4.2 BC-Facing Automations (digital donor record, lifecycle comms, shelf life, SOS prioritization) + FG13 – 4.3 Notification Service | Triết(BE) + Kiệt (BE) + Quý(FE) | 15/08/2026 |
-| FG14 – 5.1 Administrator Features | Triết (BE) + Kiệt (BE) + Quý (FE) | 15/08/2026 |
-| Test Plan document | Linh (lead) | 10/08/2026 |
-| Test Cases (≥50 across ≥5 UCs), review & refine Spec Kit generated | All members (Linh leads QA) | 14/08/2026 |
-| Test Execution + Bug Report | Linh + all members | 17/08/2026 |
-| Reflective Report (all sections + individual reflection) | All members individually | 20/08/2026 |
-| Final submission package (update all PA1–PA5 docs) | Kiệt (lead) | 22/08/2026 |
-| Final Product Demo (15 min live, all members present each ≥1 feature) | All members | 23/08/2026 |
+| Task | Owner (lead named first) | Reviewer | Due Date |
+| :---- | :---- | :---- | :---- |
+| FG4 – 1.3 Q&A AI (conversational chatbot, eligibility, smart redirection) | Quý (AI+FE, lead) + Dương (BE/Python) + Linh (FE) | Kiệt | 12/08/2026 |
+| FG6 – 1.5 Donation Impact & Tracking (statistics, badges, gamification, Journey) | Triết (FE, lead) + Dương (DB) + Linh (BE+FE) | Linh's part reviewed by Quý; Triết/Dương's part reviewed by Kiệt | 13/08/2026 |
+| FG7 – 1.6 Community Fanpage Redirect (smart app-vs-browser redirect + error handling) | Triết | Quý | 09/08/2026 |
+| FG14 – 5.1 Administrator Features | Triết (BE, lead) + Kiệt (BE) + Quý (FE) | Linh | 15/08/2026 |
+| Test Plan document | Linh (lead) | Kiệt | 10/08/2026 |
+| Test Cases (≥50 across ≥5 UCs), review & refine Spec Kit generated | Linh (leads QA); each FG's Owner supplies their own Spec Kit-generated cases | Kiệt | 16/08/2026 |
+| Test Execution + Bug Report | Linh (leads execution); each FG Owner fixes bugs found in their own FG | Kiệt | 17/08/2026 |
+| Reflective Report (all sections + individual reflection) | All members, individually, one subsection each | Linh (consolidates & checks consistency) | 20/08/2026 |
+| Final submission package (update all PA1–PA5 docs) | Kiệt (lead) | Linh | 22/08/2026 |
+| Final Product Demo (15 min live, all members present each ≥1 feature) | All members, each presenting the FG(s) they owned | — (live TA evaluation) | 22/08/2026 |
 
-Deliverables: PA5 submission – Complete source code (all 14 FGs), all Spec Kit artifacts, Test Plan + Test Cases + Execution Results + Bug Report (MD+PDF), Reflective Report (MD+PDF), updated PA1–PA5 docs, AI Usage Report, Git log, live demo.
+Deliverables: PA5 submission – Complete source code (4 remaining FGs: FG4, FG6, FG7, FG14), all Spec Kit artifacts, Test Plan + Test Cases + Execution Results + Bug Report (MD+PDF), Reflective Report (MD+PDF), updated PA1–PA5 docs, AI Usage Report, Git log, live demo.
+
 
 ## 4.3 Build Plan
 
@@ -443,8 +466,8 @@ The following releases are planned across the 5 sprints. Tech stack: React + Tai
 | PA1 | – | Documentation | Project Proposal, Existing App Survey, Team Contract, Tools Setup |
 | PA2 | – | Documentation | Project Plan, Vision Document (all 14 FGs), Spec Kit Initialization |
 | PA3 | v0.1 – Alpha | First Working Build | UC Model + Specs + Prototypes for 14 FGs. FG1: 1.1 User Account Mgmt (React FE + Node.js BE + MongoDB) |
-| PA4 | v0.2 – Beta | Extended Build | FG2: 1.2 Donation Booking & Location. FG3: 2.1 Campaign & Donor Mgmt. Architecture docs (C4 L1–L3, Deployment). Generated test cases. |
-| PA5 | v1.0 – Final | Final Release | FG4–FG14: Q&A AI, Notifications, Journey, Community, Communication Mgmt, Blood Inventory, Hospital SOS, User Automations, BC Automations, Admin Features. Test plan, execution, bug report. Final demo. |
+| PA4 | v0.2 – Beta | Extended Build | FG2: 1.2 Donation Booking & Location. FG3: 2.1 Campaign & Donor Mgmt. FG5: 1.4 News, Notifications & SOS Alerts. FG8: 2.2 Communication & Engagement Mgmt. FG9: 2.3 Blood Inventory & Emergency Coordination. FG10: 3.1 Hospital SOS Request Mgmt. FG11: 4.1 User-Facing Automations. FG12: 4.2 BC-Facing Automations. FG13: 4.3 Notification Service. Architecture docs (C4 L1–L3, Deployment). Generated test cases. |
+| PA5 | v1.0 – Final | Final Release | FG4, FG6, FG7, FG14: Q&A AI, Donation Impact & Tracking/Journey, Community Fanpage Redirect, Admin Features. Test plan, execution, bug report. Final demo. |
 
 *Each build (PA3, PA4) is demonstrated via a YouTube (Unlisted) video demo with narration. The final v1.0 build is demonstrated live in the PA5 demo session.*
 
@@ -452,19 +475,20 @@ The following releases are planned across the 5 sprints. Tech stack: React + Tai
 
 The table below maps all 14 LifeLine functional groups (across all 5 feature sections) to their implementation sprint and responsible members.
 
-| FG       | Functional Group                                                                                                                                                                              | Sprint  | Lead(s)            | Tech Focus                                    |
-| :------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | :----------------- | :-------------------------------------------- |
-| **FG1**  | 1.1 User Account Mgmt – Registration (CCCD QR), OTP verification, Login, Password recovery, Profile Mgmt, Donation History & e-Certificates                                                   | **PA3** | Kiệt, Triết, Dương | React, Node.js, MongoDB,                      |
-| **FG2**  | 1.2 Donation Booking & Location – Interactive Map, Location Discovery, Appointment Scheduling, QR e-Ticket generation, Booking Confirmation notification                                      | **PA4** | Kiệt, Triết, Dương | React, Maps API, Node.js, MongoDB             |
-| **FG3**  | 2.1 Blood Center – Campaign & Donor Mgmt – Event creation, QR scan check-in, Eligibility evaluation (medical screening), Real-time profile updates, Session summary                           | **PA4** | Triết, Kiệt, Dương | React, Node.js, MongoDB, QR scan              |
-| **FG4**  | 1.3 Donor Guidance & Q&A AI – AI-powered FAQ, Donation eligibility assessment, Pre/post-donation guidance, Conversational chatbot (multi-turn), Smart feature redirection                    | **PA5** | Quý, Dương         | React, Python (LLM API), MongoDB              |
-| **FG5**  | 1.4 News, Notifications & Communication – News feed, Campaign announcements, Automated reminders (84-day eligibility), Notification preference management, SOS emergency alerts               | **PA5** | Kiệt, Quý          | React, Node.js, push notification service     |
-| **FG6**  | 1.5 Donation Impact & Tracking (Journey) – Donation timeline, Personal contribution statistics, Milestone badges & achievements, Gamification progress tracking (donor levels, virtual trees) | **PA5** | Triết, Dương       | React, Node.js, MongoDB                       |
-| **FG7**  | 1.6 Community – Donor community info display, Direct Facebook Fanpage link, Smart redirect (app vs browser), Error handling                                                                   | **PA5** | Triết              | React (redirect logic only)                   |
-| **FG8**  | 2.2 Blood Center – Communication & Engagement Mgmt – Content publishing (CMS), Emergency announcements, Automated lifecycle communications                                                    | **PA5** | Triết, Kiệt        | React, Node.js, MongoDB                       |
-| **FG9**  | 2.3 Blood Center – Blood Inventory & Emergency Coordination – Blood bag inventory tracking, Automated SOS processing (deduct stock, notify transport, <3 min)                                | **PA5** | Dương, Kiệt        | Python, Node.js, MongoDB                      |
-| **FG10** | 3.1 Hospital – Emergency SOS Request Mgmt – SOS request creation & validation, Emergency alert broadcast (push/email), Supply confirmation & tracking                                     | **PA5** | Dương, Quý         | Python (AI priority), Node.js, React, MongoDB |
-| **FG11** | 4.1 User-Facing Automations – 84-day interval validation, Pre-donation screening form generation, E-Ticket & QR generation, SOS proximity alerting                                            | **PA5** | Kiệt, Dương        | Node.js, Python, MongoDB                      |
-| **FG12** | 4.2 Blood Center-Facing Automations – Digital donor record generation, Automated lifecycle communications, Shelf life monitoring & expiration alerts, SOS request evaluation & prioritization | **PA5** | Dương, Kiệt        | Python, Node.js, MongoDB                      |
-| **FG13** | 4.3 Notification Service | **PA5** | Quý, Kiệt        | Python, Node.js, MongoDB                      |
-| **FG14** | 5.1 Administrator Features - User account management, Role and permission management, System activity monitoring, System configuration management                                            | **PA5** | Kiệt, Triết        | Python, Node.js, MongoDB                      |
+| FG       | Functional Group                                                                                                                                                                              | Sprint  | Lead (owner)            | Reviewer | Tech Focus                                    |
+| :------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | :----------------- | :------- | :-------------------------------------------- |
+| **FG1**  | 1.1 User Account Mgmt – Registration (CCCD QR), OTP verification, Login, Password recovery, Profile Mgmt, Donation History & e-Certificates                                                   | **PA3** | Kiệt (BE), Triết (FE), Dương (DB) | Quý | React, Node.js, MongoDB,                      |
+| **FG2**  | 1.2 Donation Booking & Location – Interactive Map, Location Discovery, Appointment Scheduling, QR e-Ticket generation, Booking Confirmation notification                                      | **PA4** | Kiệt (BE), Triết (FE), Dương (DB) | Quý | React, Maps API, Node.js, MongoDB             |
+| **FG3**  | 2.1 Blood Center – Campaign & Donor Mgmt – Event creation, QR scan check-in, Eligibility evaluation (medical screening), Real-time profile updates, Session summary                           | **PA4** | Triết (FE), Kiệt (BE), Dương (DB) | Linh | React, Node.js, MongoDB, QR scan              |
+| **FG7**  | 1.6 Community – Donor community info display, Direct Facebook Fanpage link, Smart redirect (app vs browser), Error handling — ***moved from PA5 to PA4 in v1.3*** | **PA4** | Triết              | Quý | React (redirect logic only)                   |
+| **FG4**  | 1.3 Donor Guidance & Q&A AI – AI-powered FAQ, Donation eligibility assessment, Pre/post-donation guidance, Conversational chatbot (multi-turn), Smart feature redirection                    | **PA5** | Quý (lead), Dương         | Kiệt | React, Python (LLM API), MongoDB              |
+| **FG5**  | 1.4 News, Notifications & Communication – News feed, Campaign announcements, Automated reminders (84-day eligibility), Notification preference management, SOS emergency alerts               | **PA5** | Kiệt (lead), Quý          | Triết | React, Node.js, push notification service     |
+| **FG6**  | 1.5 Donation Impact & Tracking (Journey) – Donation timeline, Personal contribution statistics, Milestone badges & achievements, Gamification progress tracking (donor levels, virtual trees) | **PA5** | Triết (lead), Dương       | Linh | React, Node.js, MongoDB                       |
+| **FG8**  | 2.2 Blood Center – Communication & Engagement Mgmt – Content publishing (CMS), Emergency announcements, Automated lifecycle communications                                                    | **PA5** | Triết (lead), Kiệt        | Quý | React, Node.js, MongoDB                       |
+| **FG9**  | 2.3 Blood Center – Blood Inventory & Emergency Coordination – Blood bag inventory tracking, Automated SOS processing (deduct stock, notify transport, <3 min)                                | **PA5** | Kiệt (lead), Dương        | Triết | Python, Node.js, MongoDB                      |
+| **FG10** | 3.1 Hospital – Emergency SOS Request Mgmt – SOS request creation & validation, Emergency alert broadcast (push/email), Supply confirmation & tracking                                     | **PA5** | Dương (lead), Quý         | Kiệt | Python (AI priority), Node.js, React, MongoDB |
+| **FG11** | 4.1 User-Facing Automations – 84-day interval validation, Pre-donation screening form generation, E-Ticket & QR generation, SOS proximity alerting                                            | **PA5** | Kiệt (lead), Dương        | Quý | Node.js, Python, MongoDB                      |
+| **FG12** | 4.2 Blood Center-Facing Automations – Digital donor record generation, Automated lifecycle communications, Shelf life monitoring & expiration alerts, SOS request evaluation & prioritization | **PA5** | Triết (lead), Kiệt        | Dương | Python, Node.js, MongoDB                      |
+| **FG13** | 4.3 Notification Service | **PA5** | Quý (lead), Kiệt        | Triết | Python, Node.js, MongoDB                      |
+| **FG14** | 5.1 Administrator Features - User account management, Role and permission management, System activity monitoring, System configuration management                                            | **PA5** | Triết (lead), Kiệt        | Linh | Python, Node.js, MongoDB                      |
+

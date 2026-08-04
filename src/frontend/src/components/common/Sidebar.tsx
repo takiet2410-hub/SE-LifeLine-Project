@@ -35,7 +35,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount = 3 }) => {
     navigate('/login');
   };
 
-  const navItems = [
+  const isHospital = user?.role === 'HospitalStaff' || user?.role?.toLowerCase().includes('hospital');
+
+  const navItems = isHospital ? [
+    {
+      to: '/hospital/sos-requests',
+      label: 'SOS Requests',
+      icon: Bell,
+    },
+    {
+      to: '/hospital/sos-reports',
+      label: 'SOS Reports',
+      icon: FileText,
+    }
+  ] : [
     {
       to: '/bc/campaigns',
       label: t('common.campaigns') || 'Campaign Management',
@@ -63,16 +76,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount = 3 }) => {
     <aside className="w-64 h-screen bg-[#1a1a2e] text-white flex flex-col shrink-0 selection:bg-[#93000b]/30">
       {/* Brand Header Logo */}
       <div className="h-[72px] flex items-center px-6 border-b border-white/10 shrink-0 justify-between">
-        <Link to="/bc/campaigns" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 bg-[#93000b] rounded-lg flex items-center justify-center transition-transform group-hover:scale-105 shadow-sm shadow-[#93000b]/40">
+        <Link to={isHospital ? "/hospital/sos-requests" : "/bc/campaigns"} className="flex items-center gap-2.5 group">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105 shadow-sm ${isHospital ? 'bg-emerald-700 shadow-emerald-700/40' : 'bg-[#93000b] shadow-[#93000b]/40'}`}>
             <LifeLineLogo className="w-5 h-6 text-white" />
           </div>
           <div>
             <span className="text-[19px] font-bold text-white tracking-tight leading-none block">
               LifeLine
             </span>
-            <span className="text-[9px] font-bold text-red-400 uppercase tracking-widest block mt-0.5">
-              Blood Center
+            <span className={`text-[9px] font-bold uppercase tracking-widest block mt-0.5 ${isHospital ? 'text-emerald-400' : 'text-red-400'}`}>
+              {isHospital ? 'Hospital' : 'Blood Center'}
             </span>
           </div>
         </Link>

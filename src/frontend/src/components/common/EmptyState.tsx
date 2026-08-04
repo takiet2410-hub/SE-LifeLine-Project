@@ -6,12 +6,14 @@ interface EmptyStateProps {
   message?: string;
   actionLabel?: string;
   onAction?: () => void;
+  icon?: React.ReactNode;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
   message,
   actionLabel,
   onAction,
+  icon,
 }) => {
   const { t } = useTranslation();
   const displayMessage = message || t('common.noData');
@@ -19,7 +21,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-12 text-center flex flex-col items-center justify-center my-4">
       <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
-        <Inbox className="w-8 h-8" />
+        {icon || <Inbox className="w-8 h-8" />}
       </div>
       <h4 className="text-base font-semibold text-slate-700">{displayMessage}</h4>
       <p className="text-xs text-slate-400 mt-1 max-w-sm">

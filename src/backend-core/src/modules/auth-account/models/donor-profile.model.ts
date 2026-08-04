@@ -9,7 +9,10 @@ export interface IDonorProfile extends Document {
   phoneNumber: string;
   permanentAddress: string;
   currentAddress?: Record<string, any>; // THÊM TRƯỜNG NÀY
-  location?: Record<string, any>;
+  location?: {
+    type: string;
+    coordinates: number[];
+  };
   bloodType: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'Unknown';
   lastDonationDate?: Date;
   totalDonations: number;
@@ -38,7 +41,10 @@ const donorProfileSchema = new Schema<IDonorProfile>({
   phoneNumber: { type: String, required: true },
   permanentAddress: { type: String, required: true },
   currentAddress: { type: Schema.Types.Mixed },
-  location: { type: Schema.Types.Mixed },
+  location: {
+    type: { type: String, enum: ['Point'], default: 'Point' },
+    coordinates: { type: [Number] }
+  },
   bloodType: { 
     type: String, 
     enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'],
@@ -70,5 +76,7 @@ const donorProfileSchema = new Schema<IDonorProfile>({
   timestamps: true,
   collection: 'donor_profiles'
 });
+
+donorProfileSchema.index({ location: '2dsphere' });
 
 export const DonorProfile = model<IDonorProfile>('DonorProfile', donorProfileSchema);

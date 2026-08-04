@@ -40,6 +40,41 @@ export class ArticleController {
     }
   }
 
+  static async getPublicArticles(req: Request, res: Response) {
+    try {
+      const { page, limit, category, search } = req.query;
+      const result = await ArticleService.getArticleList({
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+        category: category as string,
+        search: search as string,
+        isPublic: true
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: result.articles,
+        pagination: result.pagination
+      });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });
+    }
+  }
+
+  static async getPublicArticleById(req: Request, res: Response) {
+    try {
+      const articleId = req.params.articleId as string;
+      const article = await ArticleService.getArticleById(articleId, true);
+
+      return res.status(200).json({
+        success: true,
+        data: article
+      });
+    } catch (error: any) {
+      return res.status(404).json({ success: false, message: error.message || 'Article not found' });
+    }
+  }
+
   static async createArticle(req: Request, res: Response) {
     try {
       const parsed = CreateArticleSchema.parse({ body: req.body });

@@ -3,8 +3,11 @@ import { connectDB } from './utils/db.util';
 import { env } from './config/env.config';
 import dns from 'node:dns';
 dns.setServers(['8.8.8.8', '1.1.1.1']);
+import { seedMockLocationData } from './modules/sos-request/jobs/seed-mock-data';
+
 const startServer = async () => {
   await connectDB();
+  await seedMockLocationData();
   
   app.listen(env.PORT, () => {
     console.log(`🚀 Server listening on port ${env.PORT} in ${env.NODE_ENV} mode`);

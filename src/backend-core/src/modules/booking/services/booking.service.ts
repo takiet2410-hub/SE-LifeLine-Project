@@ -10,6 +10,7 @@ import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { DigitalDonorRecord } from '../../registration/models/digital-donor-record.model';
 import { sendBookingConfirmationEmail, sendBookingRejectionEmail } from '../../../utils/email.util';
 import { Campaign } from '../../campaign/models/campaign.model';
+import { notificationEvents, emitAppointmentConfirmed } from '../../notification/services/notification.events';
 
 export class BookingService {
   public static async searchLocations(filters: any) {

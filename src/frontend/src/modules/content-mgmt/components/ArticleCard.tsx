@@ -4,16 +4,20 @@ import type { Article } from '../types/article.types';
 
 interface ArticleCardProps {
   article: Article;
-  onSelect: (articleId: string) => void;
-  onEdit: (articleId: string) => void;
-  onDelete: (article: Article) => void;
+  onSelect?: (articleId: string) => void;
+  onClick?: () => void;
+  onEdit?: (articleId: string) => void;
+  onDelete?: (article: Article) => void;
+  variant?: 'admin' | 'public';
 }
 
 export const ArticleCard: React.FC<ArticleCardProps> = ({
   article,
   onSelect,
+  onClick,
   onEdit,
-  onDelete
+  onDelete,
+  variant = 'admin'
 }) => {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -33,8 +37,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     switch (cat) {
       case 'Alert':
         return 'bg-red-50 text-red-600 border-red-200';
-      case 'Educational':
-        return 'bg-purple-50 text-purple-600 border-purple-200';
+      case 'Health Tips':
+        return 'bg-green-50 text-green-700 border-green-100';
       case 'Campaign':
         return 'bg-amber-50 text-amber-600 border-amber-200';
       case 'News':
@@ -48,7 +52,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       {/* Cover image or placeholder */}
       <div
         className="h-44 bg-gray-100 relative overflow-hidden cursor-pointer"
-        onClick={() => onSelect(article._id)}
+        onClick={() => {
+          if (onClick) onClick();
+          else if (onSelect) onSelect(article._id);
+        }}
       >
         {article.coverImageUrl ? (
           <img
@@ -72,6 +79,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         </div>
 
         {/* 3-dot dropdown menu */}
+        {variant !== 'public' && onEdit && onDelete && (
         <div className="absolute top-3 right-3">
           <button
             onClick={(e) => {
@@ -111,13 +119,17 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Content body */}
       <div className="p-4 flex-1 flex flex-col justify-between">
         <div>
           <h3
-            onClick={() => onSelect(article._id)}
+            onClick={() => {
+              if (onClick) onClick();
+              else if (onSelect) onSelect(article._id);
+            }}
             className="text-base font-bold text-gray-900 line-clamp-2 hover:text-red-600 cursor-pointer transition-colors"
           >
             {article.title}

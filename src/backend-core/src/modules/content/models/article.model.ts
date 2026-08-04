@@ -1,64 +1,59 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type ArticleCategory = 'News' | 'Alert' | 'Educational' | 'Campaign';
-export type ArticleStatus = 'Draft' | 'Published' | 'Scheduled';
-export type TargetAudience = 'Donors' | 'Staff' | 'Hospitals';
+export type ArticleStatus = 'Draft' | 'Published' | 'Unpublished';
 
 export interface IArticle extends Document {
+  authorStaffId: mongoose.Types.ObjectId;
   title: string;
   bodyContent: string;
-  category: ArticleCategory;
+  imageUrls: string[];
   status: ArticleStatus;
-  coverImageUrl?: string;
-  publishedAt?: Date;
-  scheduledAt?: Date;
-  targetAudience: TargetAudience[];
-  authorStaffId: mongoose.Types.ObjectId;
-  authorName?: string;
-  viewsCount: number;
-  publicReachCount: number;
-  sharesCount: number;
-  readTimeMinutes: number;
+  category?: 'News' | 'Alert' | 'Educational' | 'Campaign';
+  targetAudience?: string[];
+  readTimeMinutes?: number;
+  viewsCount?: number;
+  performance?: {
+    reach?: number;
+    shares?: number;
+  };
+  scheduledAt?: Date | null;
+  publishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const ArticleSchema: Schema = new Schema({
+  authorStaffId: { type: Schema.Types.ObjectId, ref: 'StaffProfile', required: true, index: true },
   title: { type: String, required: true, trim: true, maxlength: 200 },
   bodyContent: { type: String, default: '' },
-  category: { 
-    type: String, 
-    enum: ['News', 'Alert', 'Educational', 'Campaign'], 
-    default: 'News', 
-    required: true 
-  },
+  imageUrls: { type: [String], default: [] },
   status: { 
     type: String, 
-    enum: ['Draft', 'Published', 'Scheduled'], 
+    enum: ['Draft', 'Published', 'Unpublished'], 
     default: 'Draft', 
-    required: true 
+    required: true,
+    index: true
   },
-  coverImageUrl: { type: String },
-  publishedAt: { type: Date },
-  scheduledAt: { type: Date },
-  targetAudience: { 
-    type: [String], 
-    enum: ['Donors', 'Staff', 'Hospitals'], 
-    default: ['Donors'] 
+  category: {
+    type: String,
+    enum: ['News', 'Alert', 'Educational', 'Campaign'],
+    default: 'News'
   },
-  authorStaffId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  authorName: { type: String, default: 'Dr. Sarah Chen' },
-  viewsCount: { type: Number, default: 0, min: 0 },
-  publicReachCount: { type: Number, default: 0, min: 0 },
-  sharesCount: { type: Number, default: 0, min: 0 },
-  readTimeMinutes: { type: Number, default: 1, min: 1 }
+  targetAudience: { type: [String], default: [] },
+  readTimeMinutes: { type: Number, default: 0 },
+  viewsCount: { type: Number, default: 0 },
+  performance: {
+    reach: { type: Number, default: 0 },
+    shares: { type: Number, default: 0 }
+  },
+  scheduledAt: { type: Date, default: null },
+  publishedAt: { type: Date, default: null }
 }, {
   timestamps: true,
   collection: 'articles'
 });
 
-ArticleSchema.index({ status: 1, category: 1, publishedAt: -1 });
-ArticleSchema.index({ authorStaffId: 1 });
 ArticleSchema.index({ title: 'text' });
+ArticleSchema.index({ status: 1, publishedAt: -1 });
 
 export const Article = mongoose.model<IArticle>('Article', ArticleSchema);

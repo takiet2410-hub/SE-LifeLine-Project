@@ -246,7 +246,7 @@ export const ArticleDetailPage: React.FC = () => {
                   >
                     <option value="News">News</option>
                     <option value="Alert">Alert</option>
-                    <option value="Educational">Educational</option>
+                    <option value="Health Tips">Health Tips</option>
                     <option value="Campaign">Campaign</option>
                   </select>
                 </div>

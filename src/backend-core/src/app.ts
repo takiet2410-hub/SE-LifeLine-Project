@@ -5,13 +5,21 @@ import { bookingRoutes } from './modules/booking';
 import { campaignRoutes } from './modules/campaign';
 import { registrationRoutes } from './modules/registration';
 import { bloodInventoryRoutes } from './modules/blood-inventory';
-import { articleRoutes, startScheduledPublisherJob } from './modules/content';
+import { articleRoutes, publicArticleRoutes, startScheduledPublisherJob } from './modules/content';
 import { setupSwagger } from './config/swagger.config';
+import sosRequestRoutes from './modules/sos-request/routes/sos-request.routes';
+import notificationRoutes from './modules/notification';
+import { startSOSEvaluationJob } from './modules/sos-request/jobs/sos-cron.job';
+import { seedMockLocationData } from './modules/sos-request/jobs/seed-mock-data';
 
 const app = express();
 
 // Start background scheduled article publisher
 startScheduledPublisherJob();
+// Start SOS Request Evaluation Cron Job
+startSOSEvaluationJob();
+// Seed mock data
+seedMockLocationData();
 
 // Enable CORS for frontend clients
 app.use((req, res, next) => {
@@ -41,6 +49,9 @@ app.use('/api/v1', registrationRoutes);
 app.use('/api/v1/campaigns', campaignRoutes);
 app.use('/api/v1/bc/inventory', bloodInventoryRoutes);
 app.use('/api/v1/bc/articles', articleRoutes);
+app.use('/api/v1/articles', publicArticleRoutes);
+app.use('/api/v1/hospital/sos-requests', sosRequestRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 app.use(errorHandler);
 

@@ -1,3 +1,14 @@
+export interface NotificationPreference {
+  sosEnabled: boolean;
+  appointmentEnabled: boolean;
+  campaignEnabled: boolean;
+  emailEnabled: boolean;
+  pushEnabled: boolean;
+  quietHoursStart: string | null;
+  quietHoursEnd: string | null;
+  timezone: string;
+}
+
 export interface CampaignData {
   _id: string;
   bloodCenterId: string;

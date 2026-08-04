@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, Globe, Menu, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
+import { apiService } from '../../services/apiClient';
 
 interface HeaderProps {
   onToggleMobileMenu?: () => void;
@@ -14,6 +15,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
   const location = useLocation();
   const { user } = useAuth();
   const userName = user?.fullName || 'BS. Nguyễn Văn A';
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const words = userName.trim().split(/\s+/);
   let initials = 'BC';
@@ -23,6 +25,18 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
     initials = words[0].substring(0, 2).toUpperCase();
   }
 
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const count = await apiService.getUnreadCount();
+        setUnreadCount(count);
+      } catch (err) {}
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   const toggleLanguage = () => {
     const nextLang = i18n.language === 'vi' ? 'en' : 'vi';
     i18n.changeLanguage(nextLang);
@@ -30,6 +44,18 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
 
   const getPageMeta = () => {
     const path = location.pathname;
+    if (path.includes('/hospital/sos-requests')) {
+      return {
+        title: 'SOS Requests Dashboard',
+        subtitle: 'MONITOR AND MANAGE EMERGENCY BLOOD REQUESTS',
+      };
+    }
+    if (path.includes('/hospital/sos-reports')) {
+      return {
+        title: 'SOS Reports',
+        subtitle: 'VIEW REPORTS AND ANALYTICS FOR SOS REQUESTS',
+      };
+    }
     if (path.includes('/inventory')) {
       return {
         title: 'Blood Inventory Management',
@@ -53,6 +79,9 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
       subtitle: 'COORDINATE MOBILE DONATION DRIVES & MONITOR CAPACITY',
     };
   };
+
+  const isHospital = user?.role === 'HospitalStaff' || user?.role?.toLowerCase().includes('hospital');
+
 
   const pageMeta = getPageMeta();
 
@@ -96,12 +125,16 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
 
         {/* SOS Alert Bell Quick Link */}
         <button
-          onClick={() => navigate('/bc/notifications')}
+          onClick={() => navigate(isHospital ? '/hospital/sos-requests' : '/bc/notifications')}
           className="relative p-2 text-[#6c757d] hover:text-[#271816] hover:bg-[#f8f9fa] rounded-full transition-colors cursor-pointer"
-          title={t('common.notifications') || 'Notifications'}
+          title="Notifications"
         >
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-2 w-2.5 h-2.5 bg-[#93000b] rounded-full ring-2 ring-white animate-pulse"></span>
+          {unreadCount > 0 && (
+            <span className="absolute top-0 right-0 min-w-[16px] h-4 bg-[#93000b] rounded-full ring-2 ring-white flex items-center justify-center px-1 text-[9px] font-bold text-white">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
         </button>
 
         {/* User Profile Avatar */}

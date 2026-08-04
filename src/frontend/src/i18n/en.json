@@ -26,6 +26,38 @@
     "success": "Success",
     "error": "An error occurred"
   },
+  "donorNav": {
+    "dashboard": "Dashboard",
+    "map": "Map",
+    "myAppointments": "My Appointments",
+    "newsFeed": "News Feed",
+    "notifications": "Notifications",
+    "sosAlerts": "SOS Alerts",
+    "myProfile": "My Profile",
+    "logout": "Log out"
+  },
+  "dashboardHeader": {
+    "title": {
+      "map": "Map",
+      "schedule": "Schedule Appointment",
+      "myAppointments": "My Appointments",
+      "profile": "My Profile & Donation Impact",
+      "news": "News & Information",
+      "notifications": "Notification Center",
+      "sosAlerts": "SOS Alerts",
+      "dashboard": "Dashboard"
+    },
+    "subtitle": {
+      "map": "FIND DONATION CENTERS AND ACTIVE CAMPAIGNS NEAR YOU",
+      "schedule": "BOOK A NEW DONATION OR SCREENING",
+      "myAppointments": "MANAGE YOUR LIFE-SAVING SCHEDULE",
+      "profile": "Track your life-saving journey and achievements",
+      "news": "LATEST UPDATES ON CAMPAIGNS AND HEALTH",
+      "notifications": "STAY UPDATED WITH YOUR LATEST MESSAGES",
+      "sosAlerts": "URGENT BLOOD REQUESTS IN YOUR AREA",
+      "dashboard": "OVERVIEW"
+    }
+  },
   "campaign": {
     "title": "Donation Campaign Management",
     "createNew": "Create New Campaign",

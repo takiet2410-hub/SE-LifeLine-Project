@@ -1,4 +1,3 @@
-import axios from 'axios';
 import type { 
   Article, 
   ArticleListResponse, 
@@ -6,19 +5,12 @@ import type {
   UpdateArticlePayload, 
   ContentStatsSummary 
 } from '../types/article.types';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('accessToken');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import { apiClient } from '../../../shared/api/apiClient';
 
 export const articleApi = {
   getArticles: async (params?: { page?: number; limit?: number; category?: string; status?: string; search?: string }): Promise<ArticleListResponse> => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/bc/articles`, {
-        headers: getAuthHeaders(),
+      const response = await apiClient.get(`/bc/articles`, {
         params
       });
       return response.data;
@@ -35,9 +27,7 @@ export const articleApi = {
 
   getArticleById: async (articleId: string): Promise<{ success: boolean; data: Article }> => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/bc/articles/${articleId}`, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiClient.get(`/bc/articles/${articleId}`);
       return response.data;
     } catch (error) {
       console.warn('Falling back to mock article details:', error);
@@ -48,9 +38,7 @@ export const articleApi = {
 
   createArticle: async (payload: CreateArticlePayload): Promise<{ success: boolean; message: string; data: Article }> => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/bc/articles`, payload, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiClient.post(`/bc/articles`, payload);
       return response.data;
     } catch (error: any) {
       console.warn('Backend unavailable, simulating article creation:', error);
@@ -79,9 +67,7 @@ export const articleApi = {
 
   updateArticle: async (articleId: string, payload: UpdateArticlePayload): Promise<{ success: boolean; message: string; data: Article }> => {
     try {
-      const response = await axios.put(`${API_BASE_URL}/bc/articles/${articleId}`, payload, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiClient.put(`/bc/articles/${articleId}`, payload);
       return response.data;
     } catch (error: any) {
       console.warn('Backend unavailable, simulating article update:', error);
@@ -96,9 +82,7 @@ export const articleApi = {
 
   deleteArticle: async (articleId: string): Promise<{ success: boolean; message: string; deletedArticleId: string }> => {
     try {
-      const response = await axios.delete(`${API_BASE_URL}/bc/articles/${articleId}`, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiClient.delete(`/bc/articles/${articleId}`);
       return response.data;
     } catch (error: any) {
       console.warn('Backend unavailable, simulating article deletion:', error);
@@ -113,9 +97,7 @@ export const articleApi = {
 
   getContentStats: async (): Promise<{ success: boolean; data: ContentStatsSummary }> => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/bc/articles/stats/summary`, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiClient.get(`/bc/articles/stats/summary`);
       return response.data;
     } catch (error) {
       return { success: true, data: mockContentStats };
@@ -126,13 +108,39 @@ export const articleApi = {
     const formData = new FormData();
     formData.append('image', file);
     try {
-      const response = await axios.post(`${API_BASE_URL}/bc/articles/upload-image`, formData, {
-        headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' }
+      const response = await apiClient.post(`/bc/articles/upload-image`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       return response.data;
     } catch (error) {
       console.warn('Using local ObjectURL preview fallback for image upload:', error);
       return { success: true, url: URL.createObjectURL(file) };
+    }
+  },
+
+  getPublicArticles: async (params?: { page?: number; limit?: number; category?: string; search?: string }): Promise<ArticleListResponse> => {
+    try {
+      const response = await apiClient.get(`/articles`, { params });
+      return response.data;
+    } catch (error) {
+      console.warn('Falling back to mock article list data:', error);
+      return {
+        success: true,
+        data: mockArticles.filter(a => a.status === 'Published'),
+        pagination: { total: mockArticles.length, page: 1, limit: 10, totalPages: 1 },
+        summary: mockContentStats
+      };
+    }
+  },
+
+  getPublicArticleById: async (articleId: string): Promise<{ success: boolean; data: Article }> => {
+    try {
+      const response = await apiClient.get(`/articles/${articleId}`);
+      return response.data;
+    } catch (error) {
+      console.warn('Falling back to mock article details:', error);
+      const found = mockArticles.find(a => a._id === articleId && a.status === 'Published') || mockArticles[0];
+      return { success: true, data: found };
     }
   }
 };
@@ -172,7 +180,7 @@ const mockArticles: Article[] = [
     _id: 'art-002',
     title: 'Những điều cần lưu ý trước và sau khi hiến máu toàn phần',
     bodyContent: '<p>Hiến máu là nghĩa cử cao đẹp. Để đảm bảo sức khỏe tốt nhất cho người hiến...</p>',
-    category: 'Educational',
+    category: 'Health Tips',
     status: 'Published',
     coverImageUrl: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800&auto=format&fit=crop&q=60',
     publishedAt: '2026-07-25T10:00:00.000Z',

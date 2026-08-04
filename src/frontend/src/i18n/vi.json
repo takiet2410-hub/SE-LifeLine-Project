@@ -26,6 +26,38 @@
     "success": "Thành công",
     "error": "Có lỗi xảy ra"
   },
+  "donorNav": {
+    "dashboard": "Tổng quan",
+    "map": "Bản đồ hiến máu",
+    "myAppointments": "Lịch hẹn của tôi",
+    "newsFeed": "Tin tức - Bài viết",
+    "notifications": "Thông báo",
+    "sosAlerts": "Cảnh báo SOS",
+    "myProfile": "Hồ sơ cá nhân",
+    "logout": "Đăng xuất"
+  },
+  "dashboardHeader": {
+    "title": {
+      "map": "Bản đồ",
+      "schedule": "Đặt lịch hiến máu",
+      "myAppointments": "Lịch hẹn của tôi",
+      "profile": "Hồ sơ & Đóng góp",
+      "news": "Tin tức & Thông tin",
+      "notifications": "Trung tâm thông báo",
+      "sosAlerts": "Cảnh báo SOS",
+      "dashboard": "Tổng quan"
+    },
+    "subtitle": {
+      "map": "TÌM KIẾM TRUNG TÂM VÀ CHIẾN DỊCH HIẾN MÁU GẦN BẠN",
+      "schedule": "ĐẶT LỊCH HIẾN MÁU HOẶC KHÁM SÀNG LỌC MỚI",
+      "myAppointments": "QUẢN LÝ LỊCH TRÌNH CỨU SỐNG NGƯỜI BỆNH CỦA BẠN",
+      "profile": "THEO DÕI HÀNH TRÌNH VÀ THÀNH TỰU HIẾN MÁU",
+      "news": "CẬP NHẬT MỚI NHẤT VỀ CHIẾN DỊCH VÀ SỨC KHỎE",
+      "notifications": "THEO DÕI CÁC THÔNG ĐIỆP MỚI NHẤT CỦA BẠN",
+      "sosAlerts": "CÁC YÊU CẦU MÁU KHẨN CẤP TRONG KHU VỰC",
+      "dashboard": "TỔNG QUAN"
+    }
+  },
   "campaign": {
     "title": "Quản lý chiến dịch hiến máu",
     "createNew": "Tạo chiến dịch mới",

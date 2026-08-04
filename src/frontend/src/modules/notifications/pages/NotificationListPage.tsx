@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Bell, Trash2, Clock, Hospital } from 'lucide-react';
+import { AlertTriangle, Bell, Trash2, Clock, Hospital, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
 import type { NotificationData } from '../../../services/mockData';
@@ -17,6 +17,10 @@ export const NotificationListPage: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const formatDateSafe = (dateStr?: string | Date) => {
     if (!dateStr) return 'N/A';
@@ -29,19 +33,50 @@ export const NotificationListPage: React.FC = () => {
     }
   };
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiService.getNotifications(typeFilter, statusFilter);
+      const params: any = {
+        type: typeFilter === 'All' ? undefined : typeFilter,
+        status: statusFilter === 'All' ? undefined : statusFilter,
+        page,
+        limit: 20,
+      };
+      // Remove undefined values
+      Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
+
+      const data = await apiService.getNotifications({
+        type: typeFilter === 'All' ? undefined : typeFilter,
+        status: statusFilter === 'All' ? undefined : statusFilter,
+        page,
+        limit: 20,
+      });
+      
       setNotifications(data);
+      // For pagination, we'd need backend to return pagination info
+      // For now, estimate from local data
+      setUnreadCount(data.filter((n) => n.readAt === null).length);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+      toast.error('Không thể tải danh sách thông báo');
     } finally {
       setLoading(false);
     }
-  };
+  }, [typeFilter, statusFilter, page]);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const count = await apiService.getUnreadCount();
+      setUnreadCount(count);
+    } catch (err) {
+      console.error('Failed to fetch unread count:', err);
+    }
+  }, []);
 
   useEffect(() => {
     fetchNotifications();
-  }, [typeFilter, statusFilter]);
+    fetchUnreadCount();
+  }, [fetchNotifications, fetchUnreadCount]);
 
   const handleConfirmDelete = async () => {
     if (!deleteTargetId) return;
@@ -49,6 +84,7 @@ export const NotificationListPage: React.FC = () => {
       await apiService.removeNotification(deleteTargetId);
       setNotifications((prev) => prev.filter((n) => n._id !== deleteTargetId));
       toast.success('Đã xóa thông báo khỏi danh sách!');
+      fetchUnreadCount();
     } catch (err) {
       toast.error('Xóa thông báo thất bại.');
     } finally {
@@ -56,7 +92,38 @@ export const NotificationListPage: React.FC = () => {
     }
   };
 
-  const unreadCount = notifications.filter((n) => n.readAt === null).length;
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await apiService.markNotificationAsRead(id);
+      setNotifications((prev) => prev.map((n) => n._id === id ? { ...n, readAt: new Date().toISOString() } : n));
+      fetchUnreadCount();
+    } catch (err) {
+      console.error('Failed to mark as read:', err);
+    }
+  };
+
+  const handleNotificationClick = (item: NotificationData) => {
+    if (item.readAt === null) {
+      handleMarkAsRead(item._id);
+    }
+    navigate(`/bc/notifications/${item._id}`);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
+
+
+
+  const clearFilters = () => {
+    setTypeFilter('All');
+    setStatusFilter('All');
+    setPage(1);
+  };
+
+  const hasFilters = typeFilter !== 'All' || statusFilter !== 'All';
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -82,11 +149,11 @@ export const NotificationListPage: React.FC = () => {
       {/* Filter Controls */}
       <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-wrap gap-3 items-center justify-between shadow-2xs">
         <div className="flex items-center gap-1.5 overflow-x-auto">
-          <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Loại thông báo:</span>
-          {['All', 'SOS', 'Campaign', 'Routine'].map((type) => (
+          <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Loại:</span>
+          {['All', 'SOS', 'Campaign', 'Routine', 'Appointment'].map((type) => (
             <button
               key={type}
-              onClick={() => setTypeFilter(type)}
+              onClick={() => { setTypeFilter(type); setPage(1); }}
               className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all shrink-0 cursor-pointer ${
                 typeFilter === type
                   ? type === 'SOS'
@@ -102,20 +169,30 @@ export const NotificationListPage: React.FC = () => {
 
         <div className="flex items-center gap-1.5">
           <span className="text-[12px] font-semibold text-[#6c757d] mr-1">Trạng thái:</span>
-          {['All', 'Unread'].map((st) => (
+          {['All', 'Unread', 'Read'].map((st) => (
             <button
               key={st}
-              onClick={() => setStatusFilter(st)}
+              onClick={() => { setStatusFilter(st); setPage(1); }}
               className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all cursor-pointer ${
                 statusFilter === st
                   ? 'bg-[#1a1a2e] text-white shadow-2xs'
                   : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
               }`}
             >
-              {st === 'All' ? 'Tất cả' : 'Chưa đọc'}
+              {st === 'All' ? 'Tất cả' : st === 'Unread' ? 'Chưa đọc' : 'Đã đọc'}
             </button>
           ))}
         </div>
+
+        {hasFilters && (
+          <button
+            onClick={clearFilters}
+            className="px-3 py-1.5 text-[12px] font-medium text-[#6c757d] hover:text-[#93000b] transition-colors flex items-center gap-1"
+          >
+            <X className="w-4 h-4" />
+            Xóa bộ lọc
+          </button>
+        )}
       </div>
 
       {/* Notifications List */}
@@ -124,111 +201,140 @@ export const NotificationListPage: React.FC = () => {
       ) : notifications.length === 0 ? (
         <EmptyState message="Không tìm thấy thông báo nào." />
       ) : (
-        <div className="space-y-3.5">
-          {notifications.map((item) => {
-            const isSOS = item.type === 'SOS';
-            const isUnread = item.readAt === null;
+        <>
+          <div className="space-y-3.5">
+            {notifications.map((item) => {
+              const isSOS = item.type === 'SOS';
+              const isUnread = item.readAt === null;
 
-            return (
-              <div
-                key={item._id}
-                onClick={() => navigate(`/bc/notifications/${item._id}`)}
-                className={`rounded-2xl p-5 border transition-all cursor-pointer relative group ${
-                  isSOS
-                    ? 'bg-red-50/70 border-red-300 border-l-4 border-l-[#93000b] shadow-xs hover:bg-red-100/70'
-                    : isUnread
-                    ? 'bg-white border-[#f1f3f5] border-l-4 border-l-[#1a1a2e] shadow-2xs hover:bg-slate-50'
-                    : 'bg-white border-[#f1f3f5] hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    {/* Icon */}
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                        isSOS
-                          ? 'bg-[#93000b] text-white shadow-sm animate-pulse'
-                          : 'bg-slate-100 text-[#1a1a2e]'
-                      }`}
-                    >
-                      {isSOS ? (
-                        <AlertTriangle className="w-5 h-5" />
-                      ) : (
-                        <Bell className="w-5 h-5" />
-                      )}
-                    </div>
-
-                    {/* Notification Details */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3
-                          className={`text-[15px] ${
-                            isSOS
-                              ? 'text-[#93000b] font-bold'
-                              : isUnread
-                              ? 'text-[#271816] font-bold'
-                              : 'text-[#271816] font-medium'
-                          }`}
-                        >
-                          {item.title}
-                        </h3>
-
-                        {/* Badge */}
-                        <span
-                          className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                            isSOS
-                              ? 'bg-[#93000b] text-white shadow-2xs'
-                              : 'bg-blue-50 text-blue-700 border border-blue-100'
-                          }`}
-                        >
-                          {isSOS ? '🚨 SOS EMERGENCY' : item.type}
-                        </span>
-                      </div>
-
-                      <p
-                        className={`text-[13px] ${
-                          isSOS ? 'text-[#93000b] font-medium' : 'text-[#5b403d]'
-                        } leading-relaxed`}
+              return (
+                <div
+                  key={item._id}
+                  onClick={() => handleNotificationClick(item)}
+                  className={`rounded-2xl p-5 border transition-all cursor-pointer relative group ${
+                    isSOS
+                      ? 'bg-red-50/70 border-red-300 border-l-4 border-l-[#93000b] shadow-xs hover:bg-red-100/70'
+                      : isUnread
+                      ? 'bg-white border-[#f1f3f5] border-l-4 border-l-[#1a1a2e] shadow-2xs hover:bg-slate-50'
+                      : 'bg-white border-[#f1f3f5] hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      {/* Icon */}
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                          isSOS
+                            ? 'bg-[#93000b] text-white shadow-sm animate-pulse'
+                            : 'bg-slate-100 text-[#1a1a2e]'
+                        }`}
                       >
-                        {item.body}
-                      </p>
+                        {isSOS ? (
+                          <AlertTriangle className="w-5 h-5" />
+                        ) : (
+                          <Bell className="w-5 h-5" />
+                        )}
+                      </div>
 
-                      <div className="flex items-center gap-4 text-[11px] text-[#6c757d] pt-1">
-                        <span className="flex items-center gap-1 font-semibold text-[#271816]">
-                          <Hospital className="w-3.5 h-3.5 text-[#93000b]" />
-                          {item.senderName}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-[#6c757d]" />
-                          {formatDateSafe(item.createdAt)}
-                        </span>
+                      {/* Notification Details */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3
+                            className={`text-[15px] ${
+                              isSOS
+                                ? 'text-[#93000b] font-bold'
+                                : isUnread
+                                ? 'text-[#271816] font-bold'
+                                : 'text-[#271816] font-medium'
+                            }`}
+                          >
+                            {item.title}
+                          </h3>
+
+                          {/* Badge */}
+                          <span
+                            className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                              isSOS
+                                ? 'bg-[#93000b] text-white shadow-2xs'
+                                : 'bg-blue-50 text-blue-700 border border-blue-100'
+                            }`}
+                          >
+                            {isSOS ? '🚨 SOS EMERGENCY' : item.type}
+                          </span>
+                        </div>
+
+                        <p
+                          className={`text-[13px] ${
+                            isSOS ? 'text-[#93000b] font-medium' : 'text-[#5b403d]'
+                          } leading-relaxed`}
+                        >
+                          {item.body}
+                        </p>
+
+                        <div className="flex items-center gap-4 text-[11px] text-[#6c757d] pt-1">
+                          <span className="flex items-center gap-1 font-semibold text-[#271816]">
+                            <Hospital className="w-3.5 h-3.5 text-[#93000b]" />
+                            {item.senderName || 'System'}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-[#6c757d]" />
+                            {item.createdAt ? format(new Date(item.createdAt), 'dd/MM/yyyy HH:mm') : 'N/A'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Actions: Delete Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteTargetId(item._id);
-                    }}
-                    className="p-2 text-[#a3a3a3] hover:text-[#93000b] hover:bg-white rounded-lg transition-colors cursor-pointer"
-                    title="Xóa thông báo"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    {/* Actions: Delete Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteTargetId(item._id);
+                      }}
+                      className="p-2 text-[#a3a3a3] hover:text-[#93000b] hover:bg-white rounded-lg transition-colors cursor-pointer"
+                      title="Xóa thông báo"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page <= 1 || loading}
+              className="p-2 border border-[#f1f3f5] rounded-lg text-[#6c757d] hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <span className="px-4 py-2 text-[13px] font-medium text-[#271816]">
+              Trang {page}
+            </span>
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={loading}
+              className="p-2 border border-[#f1f3f5] rounded-lg text-[#6c757d] hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              aria-label="Next page"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </>
       )}
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={deleteTargetId !== null}
         title="Xóa thông báo?"
-        message="Bạn có chắc chắn muốn xóa thông báo này khỏi hệ thống không?"
+        message={
+          notifications.find(n => n._id === deleteTargetId)?.type === 'SOS'
+            ? '⚠ Đây là thông báo khẩn cấp (SOS). Bạn có chắc chắn muốn xóa không? Hành động này không thể hoàn tác.'
+            : 'Bạn có chắc chắn muốn xóa thông báo này khỏi hệ thống không?'
+        }
         confirmLabel="Xóa Ngay"
         cancelLabel="Hủy"
         variant="danger"

@@ -11,6 +11,7 @@ import type { ArticleCategory, ArticleStatus, TargetAudience } from '../types/ar
 export const CreateArticlePage: React.FC = () => {
   const navigate = useNavigate();
 
+  const [draftId, setDraftId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [bodyContent, setBodyContent] = useState('');
   const [category, setCategory] = useState<ArticleCategory>('News');
@@ -30,15 +31,24 @@ export const CreateArticlePage: React.FC = () => {
     data: articleFormState,
     onSave: async (data) => {
       if (!data.title.trim()) return;
-      await articleApi.createArticle({
+      const payload = {
         title: data.title,
         bodyContent: data.bodyContent,
         category: data.category,
-        status: 'Draft',
+        status: 'Draft' as ArticleStatus,
         coverImageUrl: data.coverImageUrl,
         scheduledAt: data.scheduledAt,
         targetAudience: data.targetAudience
-      });
+      };
+      
+      if (draftId) {
+        await articleApi.updateArticle(draftId, payload);
+      } else {
+        const res = await articleApi.createArticle(payload);
+        if (res.success && res.data?._id) {
+          setDraftId(res.data._id);
+        }
+      }
     },
     enabled: true
   });
@@ -60,7 +70,7 @@ export const CreateArticlePage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const res = await articleApi.createArticle({
+      const payload = {
         title: title.trim(),
         bodyContent,
         category,
@@ -68,7 +78,14 @@ export const CreateArticlePage: React.FC = () => {
         coverImageUrl,
         scheduledAt,
         targetAudience
-      });
+      };
+
+      let res;
+      if (draftId) {
+        res = await articleApi.updateArticle(draftId, payload);
+      } else {
+        res = await articleApi.createArticle(payload);
+      }
 
       if (res.success) {
         markSaved();
@@ -190,7 +207,7 @@ export const CreateArticlePage: React.FC = () => {
             >
               <option value="News">News & Updates</option>
               <option value="Alert">Urgent Campaign Alert</option>
-              <option value="Educational">Donor Education & Health</option>
+              <option value="Health Tips">Donor Education & Health</option>
               <option value="Campaign">Campaign Announcement</option>
             </select>
           </div>

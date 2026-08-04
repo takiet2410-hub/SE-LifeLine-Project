@@ -13,22 +13,32 @@ export const ProtectedRoute: React.FC = () => {
   }
 
   const isBcRoute = location.pathname.startsWith('/bc');
+  const isHospitalRoute = location.pathname.startsWith('/hospital');
+  const isSosAlertsRoute = location.pathname.startsWith('/sos-alerts');
   const isDonorRoute =
     location.pathname.startsWith('/my-appointments') ||
     location.pathname.startsWith('/map') ||
-    location.pathname.startsWith('/profile');
+    location.pathname.startsWith('/profile') ||
+    isSosAlertsRoute;
 
   const userRole = user?.role || 'Donor';
   const roleLower = userRole.toLowerCase();
 
-  const isStaffRole =
+  const isBcStaffRole =
     userRole === 'BloodCenterStaff' ||
     userRole === 'Administrator' ||
-    userRole === 'HospitalStaff' ||
-    roleLower.includes('staff') ||
-    roleLower.includes('admin') ||
-    roleLower.includes('hospital') ||
     roleLower.includes('bloodcenter');
+
+  const isHospitalStaffRole =
+    userRole === 'HospitalStaff' ||
+    userRole === 'Hospital' ||
+    roleLower.includes('hospital');
+
+  const isAdminRole =
+    userRole === 'Administrator' ||
+    roleLower.includes('admin');
+
+  const isStaffRole = isBcStaffRole || isHospitalStaffRole || isAdminRole;
 
   const isDonorRole = userRole === 'Donor' || roleLower === 'donor';
 
@@ -38,15 +48,24 @@ export const ProtectedRoute: React.FC = () => {
     return <Navigate to="/my-appointments" replace />;
   }
 
-  // 2. Strict Access Control: Only Donors can access appointment booking & donor portal routes
+  // 2. Hospital Routes: Only Hospital Staff can access Hospital routes
+  if (isHospitalRoute && !isHospitalStaffRole && !isAdminRole) {
+    toast.error('Cảnh báo truy cập: Chỉ tài khoản Bệnh viện mới có quyền truy cập Cổng quản lý SOS.');
+    return isDonorRole ? <Navigate to="/my-appointments" replace /> : <Navigate to="/bc/campaigns" replace />;
+  }
+
+  // 3. Strict Access Control: Only Donors can access appointment booking & donor portal routes
   if (isDonorRoute && !isDonorRole) {
     toast.info('Tài khoản Cán bộ Y tế đã được tự động chuyển hướng đến Cổng quản lý đợt hiến máu.');
     return <Navigate to="/bc/campaigns" replace />;
   }
 
-  // 3. Fallback root/dashboard redirect based on role
+  // 4. Fallback root/dashboard redirect based on role
   if (location.pathname === '/' || location.pathname === '/dashboard') {
-    if (isStaffRole) {
+    if (isHospitalStaffRole) {
+      return <Navigate to="/hospital/sos-requests" replace />;
+    }
+    if (isBcStaffRole || isAdminRole) {
       return <Navigate to="/bc/campaigns" replace />;
     }
     return <Navigate to="/my-appointments" replace />;

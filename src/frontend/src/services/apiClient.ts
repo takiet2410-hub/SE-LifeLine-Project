@@ -3,6 +3,8 @@ import type {
   RegistrationData,
   ArticleData,
   BloodBagData,
+  NotificationData,
+  NotificationPreference,
 } from './mockData';
 import {
   initialCampaigns,
@@ -23,6 +25,128 @@ let bloodBags = [...initialBloodBags];
 const delay = (ms = 200) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const apiService = {
+
+
+  // ==================== NOTIFICATION APIs ====================
+  async getNotifications(params?: { type?: string; status?: string; page?: number; limit?: number }) {
+    const queryParams: any = {};
+    if (params?.type && params.type !== 'All') queryParams.type = params.type;
+    if (params?.status && params.status !== 'All') queryParams.status = params.status.toLowerCase();
+    if (params?.page) queryParams.page = params.page;
+    if (params?.limit) queryParams.limit = params.limit;
+
+    const res = await apiClient.get('/notifications', { params: queryParams });
+    const rawData = res.data?.data || res.data;
+    if (Array.isArray(rawData)) {
+      return rawData as NotificationData[];
+    }
+    return [];
+  },
+
+  async getNotificationById(id: string) {
+    const res = await apiClient.get(`/notifications/${id}`);
+    const rawData = res.data?.data || res.data;
+    if (rawData) return rawData as NotificationData;
+    return null;
+  },
+
+  async markNotificationAsRead(id: string) {
+    const res = await apiClient.patch(`/notifications/${id}/read`);
+    const rawData = res.data?.data || res.data;
+    if (rawData) return rawData as NotificationData;
+    return null;
+  },
+
+  async respondToSOS(notificationId: string, response: 'accepted' | 'declined') {
+    try {
+      const res = await apiClient.patch(`/notifications/${notificationId}/sos-response`, { response });
+      return res.data?.data || res.data;
+    } catch (err) {
+      console.warn('[apiService] Backend respondToSOS failed:', err);
+      throw err;
+    }
+  },
+
+  async markMultipleNotificationsAsRead(ids: string[]) {
+    try {
+      const res = await apiClient.patch('/notifications/read', { ids });
+      return res.data;
+    } catch (err) {
+      console.warn('[apiService] Backend markMultipleNotificationsAsRead failed, using fallback:', err);
+    }
+
+    await delay();
+    notifications = notifications.map((n) =>
+      ids.includes(n._id) ? { ...n, readAt: new Date().toISOString() } : n
+    );
+    return { modifiedCount: ids.length };
+  },
+
+  async removeNotification(id: string) {
+    try {
+      await apiClient.delete(`/notifications/${id}`);
+    } catch (err) {
+      console.warn('[apiService] Backend removeNotification failed, using fallback:', err);
+    }
+
+    await delay();
+    notifications = notifications.filter((n) => n._id !== id);
+  },
+
+  async getUnreadCount() {
+    try {
+      const res = await apiClient.get('/notifications/unread-count');
+      return res.data?.count || 0;
+    } catch (err) {
+      console.warn('[apiService] Backend getUnreadCount failed, using fallback:', err);
+    }
+
+    await delay();
+    return notifications.filter((n) => n.readAt === null).length;
+  },
+
+  async getNotificationPreferences() {
+    try {
+      const res = await apiClient.get('/notifications/preferences');
+      return (res.data?.data || res.data) as NotificationPreference;
+    } catch (err) {
+      console.warn('[apiService] Backend getNotificationPreferences failed, using fallback:', err);
+    }
+
+    await delay();
+    return {
+      sosEnabled: true,
+      appointmentEnabled: true,
+      campaignEnabled: true,
+      emailEnabled: true,
+      pushEnabled: true,
+      quietHoursStart: null,
+      quietHoursEnd: null,
+      timezone: 'Asia/Ho_Chi_Minh',
+    };
+  },
+
+  async updateNotificationPreferences(prefs: Partial<NotificationPreference>) {
+    try {
+      const res = await apiClient.patch('/notifications/preferences', prefs);
+      return (res.data?.data || res.data) as NotificationPreference;
+    } catch (err) {
+      console.warn('[apiService] Backend updateNotificationPreferences failed, using fallback:', err);
+    }
+
+    await delay();
+    return {
+      sosEnabled: true,
+      appointmentEnabled: true,
+      campaignEnabled: true,
+      emailEnabled: true,
+      pushEnabled: true,
+      quietHoursStart: null,
+      quietHoursEnd: null,
+      timezone: 'Asia/Ho_Chi_Minh',
+    };
+  },
+
   // ==================== CAMPAIGN APIs ====================
   async getCampaigns(params?: { search?: string; status?: string }) {
     try {
@@ -394,49 +518,6 @@ export const apiService = {
     if (idx === -1) return null;
     articles[idx] = { ...articles[idx], ...updates };
     return articles[idx];
-  },
-
-  // ==================== NOTIFICATION APIs ====================
-  async getNotifications(type?: string, status?: string) {
-    await delay();
-    let result = [...notifications];
-    if (type && type !== 'All') {
-      result = result.filter((n) => n.type === type);
-    }
-    if (status === 'Unread') {
-      result = result.filter((n) => n.readAt === null);
-    } else if (status === 'Read') {
-      result = result.filter((n) => n.readAt !== null);
-    }
-
-    const sosItems = result.filter((n) => n.type === 'SOS');
-    const normalItems = result.filter((n) => n.type !== 'SOS');
-    return [...sosItems, ...normalItems];
-  },
-
-  async getNotificationById(id: string) {
-    await delay();
-    const idx = notifications.findIndex((n) => n._id === id);
-    if (idx === -1) return null;
-    if (notifications[idx].readAt === null) {
-      notifications[idx] = {
-        ...notifications[idx],
-        readAt: new Date().toISOString(),
-      };
-    }
-    return notifications[idx];
-  },
-
-  async markNotificationAsRead(id: string) {
-    await delay();
-    notifications = notifications.map((n) =>
-      n._id === id ? { ...n, readAt: new Date().toISOString() } : n
-    );
-  },
-
-  async removeNotification(id: string) {
-    await delay();
-    notifications = notifications.filter((n) => n._id !== id);
   },
 
   // ==================== INVENTORY APIs ====================

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { verifyEmail } from '../api/authAccountApi';
@@ -10,6 +10,7 @@ export function VerifyEmailPage() {
   const token = searchParams.get('token') ?? '';
   const [state, setState] = useState<VerificationState>('idle');
   const [message, setMessage] = useState('');
+  const hasAttemptedRef = useRef(false);
 
   useEffect(() => {
     if (!token) {
@@ -17,6 +18,9 @@ export function VerifyEmailPage() {
       setMessage('Verification token is missing from the link.');
       return;
     }
+
+    if (hasAttemptedRef.current) return;
+    hasAttemptedRef.current = true;
 
     let isActive = true;
 

@@ -41,6 +41,10 @@ import { ArticleListPage } from './modules/content-mgmt/pages/ArticleListPage';
 import { CreateArticlePage } from './modules/content-mgmt/pages/CreateArticlePage';
 import { ArticleDetailPage } from './modules/content-mgmt/pages/ArticleDetailPage';
 
+// Public News Feed Module
+import { NewsFeedPage } from './modules/content-mgmt/pages/NewsFeedPage';
+import { PublicArticleDetailPage } from './modules/content-mgmt/pages/PublicArticleDetailPage';
+
 import { NotificationListPage } from './modules/notifications/pages/NotificationListPage';
 import { NotificationDetailPage } from './modules/notifications/pages/NotificationDetailPage';
 
@@ -56,6 +60,16 @@ import { AboutUsPage } from './modules/landing-page/pages/AboutUsPage';
 import { HowItWorksPage } from './modules/landing-page/pages/HowItWorksPage';
 import { FindLocationsPage } from './modules/landing-page/pages/FindLocationsPage';
 import { HealthTipsPage } from './modules/landing-page/pages/HealthTipsPage';
+
+// Hospital SOS Requests Module
+import { SOSDashboardPage } from './modules/sos-requests/pages/SOSDashboardPage';
+import { CreateSOSRequestPage } from './modules/sos-requests/pages/CreateSOSRequestPage';
+import { SOSRequestDetailPage } from './modules/sos-requests/pages/SOSRequestDetailPage';
+import { SOSReportsPage } from './modules/sos-requests/pages/SOSReportsPage';
+
+// User SOS Alerts Module
+import { SOSAlertsPage } from './modules/notifications/pages/SOSAlertsPage';
+import { DonorNotificationPage } from './modules/notifications/pages/DonorNotificationPage';
 
 function App() {
   return (
@@ -94,6 +108,10 @@ function App() {
           <Route path="/map" element={<InteractiveMapPage />} />
           <Route path="/my-appointments" element={<MyAppointmentPage />} />
           <Route path="/profile" element={<MyProfilePage />} />
+          <Route path="/notifications" element={<DonorNotificationPage />} />
+          <Route path="/sos-alerts" element={<SOSAlertsPage />} />
+          <Route path="/news" element={<NewsFeedPage />} />
+          <Route path="/news/:articleId" element={<PublicArticleDetailPage />} />
 
           {/* Booking Schedule Flow */}
           <Route path="/my-appointments/schedule" element={<ScheduleLayout />}>
@@ -130,6 +148,13 @@ function App() {
           <Route path="/bc/inventory/stock-out" element={<StockOutPage />} />
           <Route path="/bc/inventory/stats" element={<InventoryStatsPage />} />
           <Route path="/bc/inventory/:bagId" element={<BloodBagDetailPage />} />
+
+          {/* Hospital Routes */}
+          <Route path="/hospital" element={<Navigate to="/hospital/sos-requests" replace />} />
+          <Route path="/hospital/sos-requests" element={<SOSDashboardPage />} />
+          <Route path="/hospital/sos-requests/create" element={<CreateSOSRequestPage />} />
+          <Route path="/hospital/sos-requests/:id" element={<SOSRequestDetailPage />} />
+          <Route path="/hospital/sos-reports" element={<SOSReportsPage />} />
         </Route>
       </Route>
 

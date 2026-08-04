@@ -108,6 +108,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     setValidationError(null);
   };
 
+  const handleQuickFillHospital = () => {
+    setIdDocumentNumber('079088000456');
+    setPassword('StrongPass123!');
+    setSelectedRole('HospitalStaff');
+    setValidationError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
@@ -173,11 +180,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 type="button"
                 key={opt.id}
                 onClick={() => handleRoleSelect(opt.id)}
-                className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1 cursor-pointer select-none ${
-                  isSelected
-                    ? `${opt.activeBg} shadow-xs scale-[1.01]`
-                    : 'bg-[#fafafa] border-[#f1f3f5] text-[#271816] hover:bg-slate-50 hover:border-slate-200'
-                }`}
+                className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1 cursor-pointer select-none ${isSelected
+                  ? `${opt.activeBg} shadow-xs scale-[1.01]`
+                  : 'bg-[#fafafa] border-[#f1f3f5] text-[#271816] hover:bg-slate-50 hover:border-slate-200'
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <IconComponent className={`w-4 h-4 shrink-0 ${isSelected ? 'text-white' : 'text-[#93000b]'}`} />
@@ -232,6 +238,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               >
                 <Zap className="w-3 h-3 text-blue-700" />
                 <span>Mẫu Staff</span>
+              </button>
+              <span className="text-[#a3a3a3] text-[10px]">•</span>
+              <button
+                type="button"
+                onClick={handleQuickFillHospital}
+                className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer"
+                title="Tải nhanh tài khoản Mẫu Hospital"
+              >
+                <Zap className="w-3 h-3 text-emerald-700" />
+                <span>Mẫu Hospital</span>
               </button>
             </div>
           </div>

@@ -1,4 +1,4 @@
-export type ArticleCategory = 'News' | 'Alert' | 'Educational' | 'Campaign';
+export type ArticleCategory = 'News' | 'Alert' | 'Health Tips' | 'Campaign';
 export type ArticleStatus = 'Draft' | 'Published' | 'Scheduled';
 export type TargetAudience = 'Donors' | 'Staff' | 'Hospitals';
 

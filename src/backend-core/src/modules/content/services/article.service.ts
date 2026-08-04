@@ -24,18 +24,14 @@ export class ArticleService {
     const article = new Article({
       title: input.title,
       bodyContent: input.bodyContent || '',
-      category: input.category || 'News',
       status,
-      coverImageUrl: input.coverImageUrl,
-      publishedAt,
-      scheduledAt: input.scheduledAt ? new Date(input.scheduledAt) : undefined,
+      category: input.category || 'News',
       targetAudience: input.targetAudience || ['Donors'],
-      authorStaffId: new mongoose.Types.ObjectId(actorUserId),
-      authorName: 'Dr. Sarah Chen',
+      scheduledAt: input.scheduledAt ? new Date(input.scheduledAt) : null,
       readTimeMinutes,
-      viewsCount: 0,
-      publicReachCount: 0,
-      sharesCount: 0
+      imageUrls: input.coverImageUrl ? [input.coverImageUrl] : [],
+      publishedAt,
+      authorStaffId: new mongoose.Types.ObjectId(actorUserId)
     });
 
     await article.save();
@@ -59,19 +55,21 @@ export class ArticleService {
     category?: string;
     status?: string;
     search?: string;
+    isPublic?: boolean;
   }) {
     const page = Math.max(1, params?.page || 1);
     const limit = Math.max(1, params?.limit || 10);
     const skip = (page - 1) * limit;
 
     const query: any = {};
-
+    if (params?.isPublic) {
+      query.status = 'Published';
+    } else if (params?.status && params.status !== 'All') {
+      query.status = params.status;
+    }
+    
     if (params?.category && params.category !== 'All') {
       query.category = params.category;
-    }
-
-    if (params?.status && params.status !== 'All') {
-      query.status = params.status;
     }
 
     if (params?.search) {
@@ -106,32 +104,18 @@ export class ArticleService {
       throw new Error('Article not found');
     }
 
-    const article = await Article.findById(articleId);
+    const query: any = { _id: articleId };
+    if (isPublicView) {
+      query.status = 'Published';
+    }
+
+    const article = await Article.findOne(query).populate('authorStaffId', 'fullName role');
     if (!article) {
       throw new Error('Article not found');
     }
 
-    if (isPublicView) {
-      article.viewsCount = (article.viewsCount || 0) + 1;
-      article.publicReachCount = Math.max(article.viewsCount, (article.publicReachCount || 0) + 1);
-      await article.save();
-    }
-
     const articleObj = article.toObject();
-
-    const performance = {
-      viewsCount: article.viewsCount || 0,
-      publicReachCount: article.publicReachCount || 0,
-      sharesCount: article.sharesCount || 0,
-      engagementNote: (article.viewsCount > 100)
-        ? 'This article has 24% more engagement than monthly average'
-        : 'Steady engagement across target channels'
-    };
-
-    return {
-      ...articleObj,
-      performance
-    };
+    return articleObj;
   }
 
   static async updateArticle(
@@ -154,24 +138,23 @@ export class ArticleService {
     if (input.title !== undefined) article.title = input.title;
     if (input.bodyContent !== undefined) {
       article.bodyContent = input.bodyContent;
-      const wordsCount = input.bodyContent.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length;
+      const wordsCount = article.bodyContent.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length;
       article.readTimeMinutes = Math.max(1, Math.ceil(wordsCount / 200));
     }
-    if (input.category !== undefined) article.category = input.category;
+    if (input.category !== undefined) article.category = input.category as any;
+    if (input.targetAudience !== undefined) article.targetAudience = input.targetAudience;
+    if (input.coverImageUrl !== undefined) {
+      article.imageUrls = input.coverImageUrl ? [input.coverImageUrl] : [];
+    }
+    if (input.scheduledAt !== undefined) {
+      article.scheduledAt = input.scheduledAt ? new Date(input.scheduledAt) : null;
+    }
     if (input.status !== undefined) {
       article.status = input.status;
       if (input.status === 'Published' && !article.publishedAt) {
         article.publishedAt = new Date();
       }
     }
-    if (input.coverImageUrl !== undefined) article.coverImageUrl = input.coverImageUrl || undefined;
-    if (input.scheduledAt !== undefined) {
-      article.scheduledAt = input.scheduledAt ? new Date(input.scheduledAt) : undefined;
-      if (article.scheduledAt && article.scheduledAt > new Date()) {
-        article.status = 'Scheduled';
-      }
-    }
-    if (input.targetAudience !== undefined) article.targetAudience = input.targetAudience;
 
     await article.save();
 
@@ -218,14 +201,11 @@ export class ArticleService {
   static async getContentStats() {
     const articles = await Article.find({}).lean();
     const totalArticles = articles.length;
-
-    const publicReach = articles.reduce((sum, a) => sum + (a.publicReachCount || 0), 0);
-    const activeAlerts = articles.filter(a => a.category === 'Alert' && a.status === 'Published').length;
+    const published = articles.filter(a => a.status === 'Published').length;
 
     return {
       totalArticles,
-      publicReach,
-      activeAlerts
+      publishedArticles: published
     };
   }
 

@@ -1,12 +1,14 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Calendar, LayoutDashboard, Bell, Heart, LogOut, Map } from 'lucide-react';
+import { Calendar, LayoutDashboard, Bell, Heart, LogOut, Map, Newspaper, AlertTriangle } from 'lucide-react';
 import { LifeLineLogo } from '../../../modules/auth-account/components/LifeLineLogo';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export const SideNavBar: React.FC = () => {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const userName = user?.fullName || 'Unknown User';
   
   const words = userName.trim().split(/\s+/);
@@ -17,11 +19,13 @@ export const SideNavBar: React.FC = () => {
     initials = words[0].substring(0, 2).toUpperCase();
   }
   const navItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Map', path: '/map', icon: Map },
-    { name: 'My Appointments', path: '/my-appointments', icon: Calendar },
-    { name: 'Notifications', path: '/notifications', icon: Bell },
-    { name: 'My Profile', path: '/profile', icon: Heart },
+    { name: t('donorNav.dashboard'), path: '/dashboard', icon: LayoutDashboard },
+    { name: t('donorNav.map'), path: '/map', icon: Map },
+    { name: t('donorNav.myAppointments'), path: '/my-appointments', icon: Calendar },
+    { name: t('donorNav.newsFeed'), path: '/news', icon: Newspaper },
+    { name: t('donorNav.notifications'), path: '/notifications', icon: Bell },
+    { name: t('donorNav.sosAlerts'), path: '/sos-alerts', icon: AlertTriangle },
+    { name: t('donorNav.myProfile'), path: '/profile', icon: Heart },
   ];
 
   return (
@@ -47,10 +51,6 @@ export const SideNavBar: React.FC = () => {
               key={item.path}
               to={item.path}
               onClick={(e) => {
-                if (item.path === '/notifications') {
-                  e.preventDefault();
-                  toast.info('Tính năng Thông báo đang được phát triển!');
-                }
               }}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors ${
@@ -80,7 +80,7 @@ export const SideNavBar: React.FC = () => {
           <button
             onClick={logout}
             className="p-2 text-[#a3a3a3] hover:text-[#93000b] hover:bg-white/5 rounded-lg transition-colors"
-            title="Log out"
+            title={t('donorNav.logout')}
           >
             <LogOut className="w-4 h-4" />
           </button>

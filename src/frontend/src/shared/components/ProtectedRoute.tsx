@@ -16,6 +16,7 @@ export const ProtectedRoute: React.FC = () => {
   const isHospitalRoute = location.pathname.startsWith('/hospital');
   const isSosAlertsRoute = location.pathname.startsWith('/sos-alerts');
   const isDonorRoute =
+    location.pathname.startsWith('/dashboard') ||
     location.pathname.startsWith('/my-appointments') ||
     location.pathname.startsWith('/map') ||
     location.pathname.startsWith('/profile') ||
@@ -60,15 +61,15 @@ export const ProtectedRoute: React.FC = () => {
     return <Navigate to="/bc/campaigns" replace />;
   }
 
-  // 4. Fallback root/dashboard redirect based on role
-  if (location.pathname === '/' || location.pathname === '/dashboard') {
+  // 4. Fallback root redirect based on role
+  if (location.pathname === '/') {
     if (isHospitalStaffRole) {
       return <Navigate to="/hospital/sos-requests" replace />;
     }
     if (isBcStaffRole || isAdminRole) {
       return <Navigate to="/bc/campaigns" replace />;
     }
-    return <Navigate to="/my-appointments" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <Outlet />;

@@ -129,5 +129,97 @@
     "markAllRead": "Đánh dấu đã đọc",
     "unreadOnly": "Chưa đọc",
     "removeConfirm": "Bạn có chắc chắn muốn xóa thông báo này?"
+  },
+  "dashboard": {
+    "welcome": {
+      "title": "Chào mừng trở lại, {{name}}!",
+      "quote": "\"Mỗi giọt máu cho đi, một cuộc đời ở lại.\"",
+      "eligibility": "Điều kiện hiến máu",
+      "loading": "Đang tải...",
+      "timeMet": "Đã đủ thời gian chờ tối thiểu",
+      "timeMetShort": "Đủ thời gian",
+      "eligibleIn": "Có thể hiến máu sau {{days}} ngày"
+    },
+    "quickActions": {
+      "schedule": "Đặt lịch hiến máu",
+      "findHospital": "Tìm bệnh viện",
+      "history": "Lịch sử hiến"
+    },
+    "emergency": {
+      "title": "Cảnh báo khẩn cấp",
+      "needsBlood": "đang cần gấp nhóm máu:",
+      "action": "Hỗ trợ ngay",
+      "viewMap": "Xem bản đồ"
+    },
+    "upcoming": {
+      "title": "Lịch hẹn sắp tới",
+      "pending": "Chờ xác nhận",
+      "scheduled": "Sắp tới",
+      "noAppointment": "Bạn chưa có lịch hẹn hiến máu nào sắp tới.",
+      "bookNow": "Đặt lịch ngay",
+      "viewDetails": "Xem chi tiết"
+    },
+    "campaigns": {
+      "title": "Chiến dịch nổi bật",
+      "viewAll": "Xem tất cả",
+      "register": "Đăng ký"
+    },
+    "handbook": {
+      "title": "Cẩm nang hiến máu",
+      "preDonation": "Lưu ý trước khi hiến máu",
+      "postDonation": "Chăm sóc sau hiến máu",
+      "benefits": "Lợi ích của việc hiến máu"
+    },
+    "handbookContent": {
+      "preDonation": {
+        "title": "Lưu ý trước khi hiến máu",
+        "section1Title": "Chuẩn bị thể chất",
+        "section1Points": [
+          "Ngủ đủ giấc (ít nhất 6-8 tiếng) vào đêm trước ngày hiến máu.",
+          "Ăn nhẹ, không ăn đồ nhiều dầu mỡ trước khi hiến.",
+          "Uống nhiều nước (khoảng 500ml) trước khi hiến máu để giúp quá trình lấy máu dễ dàng hơn.",
+          "Tránh sử dụng rượu, bia, và các chất kích thích trong vòng 24 giờ trước khi hiến."
+        ],
+        "section2Title": "Lưu ý y tế",
+        "section2Points": [
+          "Mang theo Giấy tờ tùy thân (CCCD/CMND hoặc Hộ chiếu).",
+          "Đảm bảo bạn cảm thấy hoàn toàn khỏe mạnh, không bị cảm cúm hay ho.",
+          "Nếu đang sử dụng thuốc điều trị, hãy báo ngay cho bác sĩ khám sàng lọc.",
+          "Đảm bảo cân nặng đạt chuẩn (Nam ≥ 45kg, Nữ ≥ 42kg)."
+        ]
+      },
+      "postDonation": {
+        "title": "Chế độ dinh dưỡng sau hiến máu",
+        "section1Title": "Ngay sau khi hiến máu",
+        "section1Points": [
+          "Nghỉ ngơi tại chỗ ít nhất 15 phút, uống nhiều nước và ăn nhẹ do ban tổ chức cung cấp.",
+          "Chỉ đứng dậy khi cảm thấy thực sự thoải mái. Nếu thấy chóng mặt, hãy báo ngay cho nhân viên y tế.",
+          "Giữ băng gạc ở vị trí lấy máu ít nhất 4-6 tiếng để tránh nhiễm trùng."
+        ],
+        "section2Title": "Dinh dưỡng phục hồi (24-48 giờ tới)",
+        "section2Points": [
+          "Uống nhiều nước hơn bình thường (khoảng 2-3 lít/ngày) để bù lại lượng dịch đã mất.",
+          "Bổ sung thực phẩm giàu Sắt: thịt bò, gan, các loại đậu, rau bina, mộc nhĩ.",
+          "Tăng cường Vitamin C (cam, chanh, ổi) để giúp cơ thể hấp thụ Sắt tốt hơn.",
+          "Không tập thể dục mạnh hoặc khuân vác vật nặng bằng tay lấy máu trong 24 giờ đầu."
+        ]
+      },
+      "benefits": {
+        "title": "Lợi ích tuyệt vời của việc hiến máu",
+        "section1Title": "Lợi ích đối với sức khoẻ",
+        "section1Points": [
+          "Kích thích tuỷ xương sản sinh hồng cầu mới, giúp máu lưu thông tốt hơn.",
+          "Giảm nguy cơ ứ đọng sắt trong cơ thể, hỗ trợ bảo vệ hệ tim mạch và gan.",
+          "Cơ hội được kiểm tra sức khoẻ miễn phí: đo huyết áp, nhịp tim và sàng lọc các bệnh lây truyền qua đường máu.",
+          "Đốt cháy lượng calo nhất định, hỗ trợ quá trình trao đổi chất."
+        ],
+        "section2Title": "Giá trị nhân văn & xã hội",
+        "section2Points": [
+          "Mỗi lần hiến máu của bạn có thể cứu sống đến 3 người bệnh.",
+          "Góp phần bổ sung nguồn máu dự trữ quốc gia phục vụ cấp cứu và điều trị.",
+          "Nhận Giấy chứng nhận hiến máu tình nguyện (có giá trị bồi hoàn máu miễn phí tại các cơ sở y tế công lập khi cần thiết)."
+        ]
+      }
+    }
   }
 }

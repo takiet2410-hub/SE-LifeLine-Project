@@ -16,6 +16,7 @@ import {
 import { ProtectedRoute } from './shared/components/ProtectedRoute';
 
 // Citizen / Booking & Profile
+import { DashboardPage } from './modules/dashboard/pages/DashboardPage';
 import { DashboardLayout } from './shared/components/layout/DashboardLayout';
 import { MyAppointmentPage } from './modules/booking-location/pages/MyAppointmentPage';
 import { InteractiveMapPage } from './modules/booking-location/pages/InteractiveMapPage';
@@ -114,7 +115,7 @@ function App() {
             <DashboardLayout />
           </ScheduleProvider>
         }>
-          <Route path="/dashboard" element={<Navigate to="/my-appointments" replace />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/map" element={<InteractiveMapPage />} />
           <Route path="/my-appointments" element={<MyAppointmentPage />} />
           <Route path="/profile" element={<MyProfilePage />} />

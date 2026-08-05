@@ -6,8 +6,8 @@ export const createCampaignSchema = z
     description: z.string().min(1, 'Mô tả không được để trống'),
     venue: z.string().min(3, 'Tên địa điểm không được để trống'),
     fullAddress: z.string().min(3, 'Địa chỉ chi tiết không được để trống'),
-    startDateTime: z.string().min(1, 'Vui lòng chọn thời gian bắt đầu'),
-    endDateTime: z.string().min(1, 'Vui lòng chọn thời gian kết thúc'),
+    startDate: z.string().min(1, 'Vui lòng chọn ngày bắt đầu'),
+    endDate: z.string().min(1, 'Vui lòng chọn ngày kết thúc'),
     targetBloodGroups: z
       .array(z.string())
       .min(1, 'Chọn ít nhất 1 nhóm máu ưu tiên'),
@@ -32,10 +32,10 @@ export const createCampaignSchema = z
     ).min(1, 'Phải có ít nhất 1 khung giờ'),
   })
   .refine(
-    (data) => new Date(data.endDateTime) > new Date(data.startDateTime),
+    (data) => new Date(data.endDate) >= new Date(data.startDate),
     {
-      message: 'Thời gian kết thúc phải sau thời gian bắt đầu',
-      path: ['endDateTime'],
+      message: 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu',
+      path: ['endDate'],
     }
   );
 

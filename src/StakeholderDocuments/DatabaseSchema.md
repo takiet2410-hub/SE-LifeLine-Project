@@ -115,6 +115,8 @@ erDiagram
         array targetBloodGroups
         int capacity
         int registeredCount
+        array timeslots "Recurring pattern"
+        array dailyTimeslots "Expanded daily specific timeslots"
         string status "Draft|Active|Full|Closed|Cancelled"
         date createdAt
     }
@@ -369,6 +371,8 @@ Traced to BC-UC-01…03, LL-UC-06.
 | `startDateTime`, `endDateTime` | date | Schedule |
 | `targetBloodGroups` | array\<string\> | Configured per campaign |
 | `capacity`, `registeredCount` | int | Enforces registration limits (BC-UC-01, AF-04 in LL-UC-06 "Full Capacity") |
+| `timeslots` | array\<object\> | Recurring pattern template (HH:mm) for backward UI compatibility |
+| `dailyTimeslots` | array\<object\> | Expanded daily timeslots with ISODate objects for precise queryability |
 | `status` | enum(`Draft`,`Active`,`Full`,`Closed`,`Cancelled`) | Drives map marker color/crowding |
 
 ### 2.4 `Appointment` (collection: `appointments`)

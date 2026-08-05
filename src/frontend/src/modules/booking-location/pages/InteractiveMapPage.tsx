@@ -402,22 +402,24 @@ export const InteractiveMapPage: React.FC = () => {
       maxZoom: 16,
     });
 
-    // Add user center GPS marker
-    const userIcon = L.divIcon({
-      className: 'user-gps-marker',
-      html: `
-        <div style="position:relative; display:flex; align-items:center; justify-content:center;">
-          <div style="position:absolute; width:32px; height:32px; background:rgba(59,130,246,0.3); border-radius:50%; animation:ping 1.5s infinite;"></div>
-          <div style="width:20px; height:20px; background:#2563EB; border:3px solid white; border-radius:50%; box-shadow:0 0 10px rgba(37,99,235,0.8);"></div>
-        </div>
-      `,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
-    });
-    const userMarker = L.marker(center, { icon: userIcon, zIndexOffset: 2000 })
-      .addTo(map)
-      .bindPopup('<div style="font-weight:bold; font-size:13px; color:#1e3a8a;">📍 Vị trí trung tâm của bạn</div>');
-    markersRef.current.push(userMarker);
+    // Add user center GPS marker if GPS is enabled/active
+    if (userCoords) {
+      const userIcon = L.divIcon({
+        className: 'user-gps-marker',
+        html: `
+          <div style="position:relative; display:flex; align-items:center; justify-content:center;">
+            <div style="position:absolute; width:32px; height:32px; background:rgba(59,130,246,0.3); border-radius:50%; animation:ping 1.5s infinite;"></div>
+            <div style="width:20px; height:20px; background:#2563EB; border:3px solid white; border-radius:50%; box-shadow:0 0 10px rgba(37,99,235,0.8);"></div>
+          </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+      const userMarker = L.marker(userCoords, { icon: userIcon, zIndexOffset: 2000 })
+        .addTo(map)
+        .bindPopup('<div style="font-weight:bold; font-size:13px; color:#1e3a8a;">📍 Vị trí trung tâm GPS của bạn</div>');
+      markersRef.current.push(userMarker);
+    }
 
     // Render high-visibility markers for campaign locations strictly within radius
     filteredLocations.forEach((loc) => {
@@ -524,7 +526,7 @@ export const InteractiveMapPage: React.FC = () => {
         setUserCoords(coords);
         setPermissionDenied(false);
         setShowPermissionPrompt(false);
-        toast.success('Đã xác định vị trí hiện tại của bạn');
+        toast.success('Đã bật định vị GPS và xác định vị trí của bạn!');
 
         if (mapInstanceRef.current) {
           mapInstanceRef.current.flyTo(coords, 14);
@@ -538,6 +540,20 @@ export const InteractiveMapPage: React.FC = () => {
         setLoading(false);
       }
     );
+  };
+
+  // Toggle GPS positioning on/off
+  const handleToggleGps = () => {
+    if (userCoords) {
+      setUserCoords(null);
+      setPermissionDenied(true);
+      toast.info('Đã tắt định vị GPS. Hệ thống chuyển sang tìm kiếm vị trí mặc định / thủ công.');
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.flyTo(DEFAULT_CENTER, 13);
+      }
+    } else {
+      handleRequestLocation();
+    }
   };
 
   // Reset Filters
@@ -597,15 +613,44 @@ export const InteractiveMapPage: React.FC = () => {
 
         {/* Right Action Controls */}
         <div className="flex items-center gap-2">
-          {/* GPS Button */}
-          <button
-            onClick={() => setShowPermissionPrompt(true)}
-            className="flex items-center gap-2 px-3.5 py-2 bg-[#fff8f7] border border-[#f9dcd8] text-[#93000b] hover:bg-[#ffe9e6] rounded-xl text-[13px] font-semibold transition-all"
-            title="Định vị trí của tôi"
-          >
-            <Navigation className="w-4 h-4" />
-            <span className="hidden sm:inline">Vị trí của tôi</span>
-          </button>
+          {/* GPS Toggle Control */}
+          <div className="flex items-center gap-1 bg-[#f8f9fa] border border-[#dee2e6] rounded-xl p-1">
+            <button
+              onClick={handleToggleGps}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer ${
+                userCoords
+                  ? 'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700'
+                  : 'bg-white text-[#6c757d] hover:text-[#271816] border border-[#dee2e6]'
+              }`}
+              title={userCoords ? 'GPS đang BẬT. Nhấn để tắt định vị GPS' : 'GPS đang TẮT. Nhấn để bật định vị GPS'}
+            >
+              {userCoords ? (
+                <>
+                  <Navigation className="w-3.5 h-3.5 animate-pulse fill-white" />
+                  <span>GPS: BẬT</span>
+                </>
+              ) : (
+                <>
+                  <MapPinOff className="w-3.5 h-3.5 text-[#6c757d]" />
+                  <span>GPS: TẮT</span>
+                </>
+              )}
+            </button>
+            {userCoords && (
+              <button
+                onClick={() => {
+                  if (mapInstanceRef.current && userCoords) {
+                    mapInstanceRef.current.flyTo(userCoords, 14);
+                    toast.success('Đã canh giữa bản đồ về vị trí GPS của bạn');
+                  }
+                }}
+                className="p-1.5 hover:bg-emerald-100 text-emerald-700 rounded-lg transition-colors cursor-pointer"
+                title="Về vị trí GPS của tôi"
+              >
+                <Compass className="w-4 h-4" />
+              </button>
+            )}
+          </div>
 
           {/* Map vs List View Toggle */}
           <div className="bg-[#f8f9fa] border border-[#dee2e6] rounded-xl p-1 flex items-center">

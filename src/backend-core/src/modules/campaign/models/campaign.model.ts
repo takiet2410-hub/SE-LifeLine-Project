@@ -29,6 +29,12 @@ export interface ICampaign extends Document {
     capacity: number;
     registeredCount: number;
   }[];
+  dailyTimeslots?: {
+    startTime: Date;
+    endTime: Date;
+    capacity: number;
+    registeredCount: number;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -64,6 +70,12 @@ const CampaignSchema = new Schema<ICampaign>({
   timeslots: [{
     startTime: { type: String, required: true },
     endTime: { type: String, required: true },
+    capacity: { type: Number, required: true },
+    registeredCount: { type: Number, default: 0 }
+  }],
+  dailyTimeslots: [{
+    startTime: { type: Date, required: true },
+    endTime: { type: Date, required: true },
     capacity: { type: Number, required: true },
     registeredCount: { type: Number, default: 0 }
   }]

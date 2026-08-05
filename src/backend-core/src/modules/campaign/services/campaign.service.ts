@@ -151,8 +151,14 @@ export class CampaignService {
    * BC-UC-02: Create Donation Campaign
    */
   public static async createCampaign(data: any) {
-    // Validate campaign date is not in the past
-    const startDate = new Date(data.startDateTime);
+    // Parse dates
+    const startDate = new Date(data.startDate || data.startDateTime);
+    const endDate = new Date(data.endDate || data.endDateTime || startDate);
+
+    if (endDate.getTime() < startDate.getTime()) {
+      throw new Error('INVALID_DATE_RANGE');
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (startDate.getTime() < today.getTime()) {
@@ -169,7 +175,6 @@ export class CampaignService {
     const count = await Campaign.countDocuments();
     const campaignCode = data.campaignCode || `CMP-${year}-${String(count + 1).padStart(3, '0')}`;
 
-    // Auto-assign initial status
     const status = data.status || 'Upcoming';
 
     const slotCap = Math.max(5, Math.round((data.capacity || 100) / 5));
@@ -180,6 +185,36 @@ export class CampaignService {
       { startTime: '13:30', endTime: '15:00', capacity: slotCap, registeredCount: 0 },
       { startTime: '15:00', endTime: '16:30', capacity: slotCap, registeredCount: 0 },
     ];
+    const timeslotsPattern = data.timeslots && data.timeslots.length > 0 ? data.timeslots : defaultSlots;
+
+    let earliestTime = '23:59';
+    let latestTime = '00:00';
+    timeslotsPattern.forEach((slot: any) => {
+      if (slot.startTime < earliestTime) earliestTime = slot.startTime;
+      if (slot.endTime > latestTime) latestTime = slot.endTime;
+    });
+
+    // Start date at earliest time, end date at latest time (in local time mapped to UTC)
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+    const actualStartDateTime = new Date(`${startDateStr}T${earliestTime}:00`);
+    const actualEndDateTime = new Date(`${endDateStr}T${latestTime}:00`);
+
+    // Generate daily timeslots
+    const dailyTimeslots: any[] = [];
+    const currentDay = new Date(startDate.getTime());
+    while (currentDay.getTime() <= endDate.getTime()) {
+      const dateStr = currentDay.toISOString().split('T')[0];
+      for (const slot of timeslotsPattern) {
+        dailyTimeslots.push({
+          startTime: new Date(`${dateStr}T${slot.startTime}:00`),
+          endTime: new Date(`${dateStr}T${slot.endTime}:00`),
+          capacity: slot.capacity,
+          registeredCount: 0
+        });
+      }
+      currentDay.setDate(currentDay.getDate() + 1);
+    }
 
     const campaignPayload: any = {
       campaignCode,
@@ -187,20 +222,21 @@ export class CampaignService {
       description: data.description || data.name,
       venue: data.venue,
       fullAddress: data.fullAddress || data.venue || 'TP. Hồ Chí Minh',
-      startDateTime: startDate,
-      endDateTime: new Date(data.endDateTime),
+      startDateTime: actualStartDateTime,
+      endDateTime: actualEndDateTime,
       targetBloodGroups: data.targetBloodGroups || ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
       capacity: data.capacity,
       registeredCount: 0,
       targetUnitsGoal: data.targetUnitsGoal || (data.capacity ? Math.round(data.capacity * 0.8) : 80),
       contactPerson: data.contactPerson || { name: 'Cán bộ Kho máu', phone: '0909123456' },
       internalRemarks: data.internalRemarks,
-      timeslots: data.timeslots && data.timeslots.length > 0 ? data.timeslots : defaultSlots,
+      timeslots: timeslotsPattern,
+      dailyTimeslots,
       status
     };
 
-    if (data.bloodCenterId) {
-      campaignPayload.bloodCenterId = data.bloodCenterId;
+    if (data.bloodCenterId && mongoose.Types.ObjectId.isValid(data.bloodCenterId)) {
+      campaignPayload.bloodCenterId = new mongoose.Types.ObjectId(data.bloodCenterId);
     }
 
     // Geocode fullAddress / venue to map coordinates if location is not explicitly provided

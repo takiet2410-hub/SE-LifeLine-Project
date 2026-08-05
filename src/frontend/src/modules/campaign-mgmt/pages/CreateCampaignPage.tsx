@@ -32,8 +32,8 @@ export const CreateCampaignPage: React.FC = () => {
       description: '',
       venue: '',
       fullAddress: '',
-      startDateTime: '',
-      endDateTime: '',
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date().toISOString().split('T')[0],
       targetBloodGroups: ['O+', 'A+', 'B+'],
       capacity: 100,
       targetUnitsGoal: 100,
@@ -81,19 +81,42 @@ export const CreateCampaignPage: React.FC = () => {
     }
   };
 
+  // Auto calculate total capacity
+  React.useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name?.startsWith('timeslots') || name === 'startDate' || name === 'endDate') {
+        const slots = value.timeslots || [];
+        const start = value.startDate ? new Date(value.startDate as string) : null;
+        const end = value.endDate ? new Date(value.endDate as string) : null;
+        
+        let days = 1;
+        if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          const diffTime = Math.abs(end.getTime() - start.getTime());
+          days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        }
+
+        const dailyCapacity = slots.reduce((total, slot) => total + (Number(slot?.capacity) || 0), 0);
+        const totalCapacity = dailyCapacity * days;
+        
+        setValue('capacity', totalCapacity, { shouldValidate: true, shouldDirty: true });
+        
+        // Auto update targetUnitsGoal to keep it at 80%
+        setValue('targetUnitsGoal', Math.round(totalCapacity * 0.8), { shouldValidate: true, shouldDirty: true });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
+
   const onSubmit = async (data: CreateCampaignInput) => {
     try {
-      const startDate = new Date(data.startDateTime);
-      const endDate = new Date(data.endDateTime);
-      
       await apiService.createCampaign({
         bloodCenterId: 'bc-01',
         name: data.name,
         description: data.description || data.name,
         venue: data.venue,
         fullAddress: data.fullAddress,
-        startDateTime: startDate.toISOString(),
-        endDateTime: endDate.toISOString(),
+        startDate: data.startDate,
+        endDate: data.endDate,
         targetBloodGroups: data.targetBloodGroups,
         capacity: data.capacity,
         targetUnitsGoal: data.targetUnitsGoal,
@@ -192,32 +215,32 @@ export const CreateCampaignPage: React.FC = () => {
           </div>
 
           {/* Start Date */}
-          <FormField label="Thời gian bắt đầu" required error={errors.startDateTime?.message}>
+          <FormField label="NGÀY BẮT ĐẦU" required error={errors.startDate?.message}>
             <input
-              type="datetime-local"
-              {...register('startDateTime')}
+              type="date"
+              {...register('startDate')}
               className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
             />
           </FormField>
 
           {/* End Date */}
-          <FormField label="Thời gian kết thúc" required error={errors.endDateTime?.message}>
+          <FormField label="NGÀY KẾT THÚC" required error={errors.endDate?.message}>
             <input
-              type="datetime-local"
-              {...register('endDateTime')}
+              type="date"
+              {...register('endDate')}
               className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
             />
           </FormField>
 
           {/* Capacity */}
-          <FormField label="Chỉ tiêu người đăng ký" required error={errors.capacity?.message}>
+          <FormField label="Tổng chỉ tiêu (Tự động tính)" required error={errors.capacity?.message}>
             <div className="relative">
               <Users className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input
                 type="number"
+                readOnly
                 {...register('capacity', { valueAsNumber: true })}
-                placeholder="100"
-                className="w-full pl-9 pr-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                className="w-full pl-9 pr-3.5 py-2 text-sm border border-slate-200 rounded-lg bg-slate-100 text-slate-500 outline-none cursor-not-allowed font-medium"
               />
             </div>
           </FormField>

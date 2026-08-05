@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest src/modules/booking/__tests__ --verbose",
+    "test:booking:export": "cmd /c \"jest src/modules/booking/__tests__ --verbose > ../../docs/test/jest_booking_results.log 2>&1\""
   },
   "keywords": [],
   "author": "",

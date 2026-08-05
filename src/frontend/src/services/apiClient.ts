@@ -219,7 +219,7 @@ export const apiService = {
         contactPerson: data.contactPerson && data.contactPerson.name ? data.contactPerson : { name: 'Cán bộ Kho máu', phone: '0909123456' },
         timeslots: data.timeslots,
         status: data.status || 'Upcoming',
-        bloodCenterId: data.bloodCenterId,
+        ...(data.bloodCenterId && /^[0-9a-fA-F]{24}$/.test(data.bloodCenterId) ? { bloodCenterId: data.bloodCenterId } : {}),
       };
 
       const res = await apiClient.post('/campaigns', payload);

@@ -608,6 +608,22 @@ Verify
 
 ---
 
+### [X] T039 [US2]
+
+Real-time Timeslot Expiration Rule
+
+Implement `timeslotUtils.ts` and integrate into `Step1_LocationTime.tsx` & `InteractiveMapPage.tsx` to automatically disable timeslot selection and date booking when the current time passes the end time of the final timeslot on a campaign date.
+
+---
+
+### [X] T040 [US4]
+
+BloodCenter Staff Integration Operations
+
+Implement endpoints `/sync-bloodcenter`, `/confirm`, and `/reject` for BloodCenter staff processing, appointment approval/e-ticket issuance, and automated rejection email notification.
+
+---
+
 # Dependencies
 
 ```
@@ -641,11 +657,16 @@ US2
       ├── Screening Form
       ├── Appointment
       ├── Campaign Update
-      └── ETicket
+      ├── ETicket
+      └── Timeslot Expiration (T039)
       │
       ▼
 
 US3
+      │
+      ▼
+
+US4 (Staff Operations T040)
       │
       ▼
 
@@ -691,13 +712,14 @@ Verified
 - Appointment creation
 - Campaign capacity update
 - ETicket generation (SYS-UC-02)
+- Timeslot Expiration Validation (T039)
 - Transaction commit/rollback
 
 ---
 
 ## M5
 
-Appointment Management Completed
+Appointment Management & Staff Operations Completed
 
 ---
 
@@ -716,6 +738,7 @@ Production Ready
 5. User Story 2
 6. Validate
 7. User Story 3
-8. Documentation
-9. Testing
-10. Release
+8. User Story 4 (Staff Integration)
+9. Documentation
+10. Testing
+11. Release

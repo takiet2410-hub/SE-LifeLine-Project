@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 
 import { verifyEmail } from '../api/authAccountApi';
 
@@ -32,9 +32,10 @@ export function VerifyEmailPage() {
         const response = await verifyEmail(token);
         setState('success');
         setMessage(response.message ?? 'Your account has been activated. You can now sign in.');
-      } catch {
+      } catch (error: any) {
         setState('error');
-        setMessage('The verification link is invalid or has expired.');
+        const backendMsg = error?.response?.data?.message || 'The verification link is invalid or has expired.';
+        setMessage(backendMsg);
       }
     }
 
@@ -75,12 +76,12 @@ export function VerifyEmailPage() {
             </div>
 
             <div className="flex w-full flex-col gap-3">
-              <a
-                href="/register"
+              <Link
+                to={state === 'success' ? '/login' : '/register'}
                 className="flex h-12 w-full items-center justify-center rounded-lg bg-[#93000B] text-sm font-semibold leading-[14px] text-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10),0_2px_4px_-2px_rgba(0,0,0,0.10)]"
               >
                 {state === 'success' ? 'Continue to sign in' : 'Back to registration'}
-              </a>
+              </Link>
             </div>
           </div>
         </div>

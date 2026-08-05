@@ -110,17 +110,18 @@ export class AuthAccountService {
   }
 
   static async verifyEmail(token: string) {
-    // Tìm thẳng bằng token vì ta lưu chuỗi thường
     const user = await User.findOne({ 
-        verificationToken: token, 
-        accountStatus: 'PendingVerification' 
+      verificationToken: token 
     });
     
     if (!user) throw new Error('Invalid or expired token');
 
-    // Kiểm tra hết hạn (Nên có)
+    if (user.accountStatus === 'Active') {
+      return { message: 'Account is already verified. You can now sign in.' };
+    }
+
     if (user.verificationTokenExpiry && user.verificationTokenExpiry < new Date()) {
-        throw new Error('Token has expired');
+      throw new Error('Verification link has expired. Please request a new verification email.');
     }
 
     user.accountStatus = 'Active';
@@ -129,7 +130,7 @@ export class AuthAccountService {
     
     await user.save();
 
-    return { message: 'Account verified successfully' };
+    return { message: 'Account verified successfully. You can now sign in.' };
   }
 
   static async login(data: LoginInput) {

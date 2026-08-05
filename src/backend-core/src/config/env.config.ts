@@ -10,7 +10,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(10),
   BREVO_API_KEY: z.string().min(10).optional(),
   SENDER_EMAIL: z.string().email().default('noreply.lifeline@gmail.com'),
-  FRONTEND_URL: z.string().url().default('http://localhost:3000'), // Đổi thành URL frontend của bạn
+  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
 
   // THÊM 3 DÒNG NÀY VÀO SCHEMA:
   CLOUDINARY_CLOUD_NAME: z.string().default(''),

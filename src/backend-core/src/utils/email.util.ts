@@ -52,7 +52,7 @@ export const sendEmailViaBrevo = async (toEmail: string, subject: string, htmlCo
  * Hàm gửi xác thực tài khoản
  */
 export const sendVerificationEmail = async (email: string, token: string) => {
-  const verificationLink = `${env.FRONTEND_URL}/auth/verify-email?token=${token}`;
+  const verificationLink = `${env.FRONTEND_URL}/verify-email?token=${token}`;
   
   const subject = "[LifeLine] Kích hoạt tài khoản";
   const htmlContent = `

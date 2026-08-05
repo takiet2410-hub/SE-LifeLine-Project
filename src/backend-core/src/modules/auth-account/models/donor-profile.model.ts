@@ -42,7 +42,7 @@ const donorProfileSchema = new Schema<IDonorProfile>({
   permanentAddress: { type: String, required: true },
   currentAddress: { type: Schema.Types.Mixed },
   location: {
-    type: { type: String, enum: ['Point'], default: 'Point' },
+    type: { type: String, enum: ['Point'] },
     coordinates: { type: [Number] }
   },
   bloodType: { 

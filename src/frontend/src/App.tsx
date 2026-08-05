@@ -85,11 +85,14 @@ function App() {
 
       {/* 2. Public Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/auth/login" element={<Navigate to="/login" replace />} />
       <Route path="/bc/login" element={<Navigate to="/login" replace />} />
       <Route path="/bc-login" element={<Navigate to="/login" replace />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/register" element={<RegisterCitizenIdPage />} />
+      <Route path="/auth/register" element={<Navigate to="/register" replace />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
       <Route path="/verify-otp" element={<VerifyOTPPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/reset-success" element={<ResetSuccessPage />} />

@@ -2,7 +2,7 @@
 >**Document:** Use-Case Specification
 >**Course:** CSC13002 - Introduction to Software Engineering
 >**Team:** Sanguine (Group 05)
->**Version**: 1.0 | **Date**: 23/06/2026
+>**Version**: 1.1 | **Date**: 23/07/2026
 ---
 # Table Of Contents
 
@@ -174,9 +174,12 @@
 | Date       | Version | Description                                                                               | Author        |
 | :--------- | :------ | :---------------------------------------------------------------------------------------- | :------------ |
 | 23/06/2026 | 1.0     | Compiled Use Case Diagrams and Use Case Specifications (Pending UI prototypes insertion). | Trần Anh Kiệt |
+| 23/07/2026 | 1.1     | Refactored Use-Case models: removed invalid UI-navigation `<<extend>>` relationships across diagrams per instructor feedback. | Trần Anh Kiệt & Trần Minh Triết |
 # 1. Use-case Model
 ---
 ## Diagram 1 — User Features
+
+*Author: Trần Anh Kiệt  |  Reviewer: Trịnh Khánh Linh  |  Editor: Trần Anh Kiệt*
 
 > Covers sections **1.1 User Account Management**, **1.2 Donation Booking & Location Services**, **1.3 AI-Powered Conversational Support**, **1.4 News, Notifications & Communication**, **1.5 Donation Impact & Tracking**, **1.6 Community**.
 
@@ -239,7 +242,6 @@ graph LR
     end
 
     %% ── External reference use cases (declared as «include» targets  ──
-    %% ── inside LL-UC-07, but formally specified under System Features) ─
     subgraph EXT ["(Ref.) System Features — see System Features diagram"]
         SYSUC01["SYS-UC-01<br>Generate Pre-Donation<br>Screening Form"]
         SYSUC02["SYS-UC-02<br>Generate E-Ticket<br>& QR Code"]
@@ -274,25 +276,16 @@ graph LR
 
     %% ── Relationships ───────────────────────────────────
 
-    %% include
+    %% include (Bắt buộc phải chạy)
     UC07 -- "«include»" --> SYSUC01
     UC07 -- "«include»" --> SYSUC02
     UC07 -- "«include»" --> SYSUC03
 
-    %% extend  (arrow points from the extending UC to its base UC)
+    %% extend (Tùy chọn, có điều kiện, chèn vào luồng cơ sở)
     UC04 -. "«extend»" .-> UC02
-    UC07 -. "«extend»" .-> UC06
-    UC08 -. "«extend»" .-> UC07
     UC09 -. "«extend»" .-> UC08
     UC10 -. "«extend»" .-> UC08
-    UC06 -. "«extend»" .-> CBUC01
-    UC07 -. "«extend»" .-> CBUC01
-    NFUC02 -. "«extend»" .-> NFUC01
-    NTUC01 -. "«extend»" .-> NTUC02
     SOSUC02 -. "«extend»" .-> SOSUC01
-    DNUC01 -. "«extend»" .-> UC05
-    DNUC02 -. "«extend»" .-> UC05
-    DNUC03 -. "«extend»" .-> UC05
 
     %% ── Styling for out-of-scope reference nodes ────────
     classDef extRef fill:#f5f5f5,stroke:#999,stroke-dasharray: 4 3,color:#666;
@@ -304,10 +297,11 @@ graph LR
 ---
 ## Diagram 2 — Blood Center Staff Features
 
-> Covers sections **2.1 Blood Donation Campaign and Management**, **2.2 Content Management**, **2.3 Blood Inventory Management**.
+*Author: Trần Minh Triết  |  Reviewer: Trần Anh Kiệt  |  Editor: Trần Minh Triết*
+
+> Covers sections **2.2.1 Blood Donation Campaign and Management**, **2.2.2 Communication and User Engagement Management**, **2.2.3 Blood Inventory and Emergency Coordination Management**.
 
 ```mermaid
-
 %%{init: {'theme': 'default', 'themeVariables': {'fontSize': '14px'}}}%%
 graph LR
     %% ── Actor ───────────────────────────────────────────
@@ -335,8 +329,8 @@ graph LR
             BCUC11["BC-UC-11<br>View Notification Details"]
         end
 
-        %% ── 2.2.3 Blood Inventory Management ───────────────
-        subgraph INV ["2.2.3 Blood Inventory Management"]
+        %% ── 2.2.3 Blood Inventory and Emergency Coordination ──
+        subgraph INV ["2.2.3 Blood Inventory and Emergency Coordination Management"]
             BCUC12["BC-UC-12<br>View Blood Inventory"]
             BCUC13["BC-UC-13<br>Search Blood Bag"]
             BCUC14["BC-UC-14<br>View/Edit Blood Bag Status"]
@@ -365,34 +359,21 @@ graph LR
     BCS --- BCUC16
     BCS --- BCUC17
 
-    %% ── Relationships (per Related Use Cases fields) ─────
+    %% ── Relationships (per updated Related Use Cases fields) ─────
 
     %% 2.2.1 Blood Donation Campaign and Management
-    BCUC01 -. "«extend»" .-> BCUC02
-    BCUC03 -. "«extend»" .-> BCUC02
-    BCUC04 -. "«extend»" .-> BCUC03
-    BCUC05 -. "«extend»" .-> BCUC04
-    BCUC06 -. "«extend»" .-> BCUC04
-    BCUC07 -. "«extend»" .-> BCUC04
-    BCUC05 -. "«extend»" .-> BCUC06
+    BCUC06 -. "«extend»<br>EP: Search" .-> BCUC04
     BCUC07 -- "«include»" --> BCUC05
 
-    %% 2.2.2 Communication and User Engagement Management
-    BCUC08 -. "«extend»" .-> BCUC09
-    BCUC11 -. "«extend»" .-> BCUC10
-
-    %% 2.2.3 Blood Inventory Management
-    BCUC13 -. "«extend»" .-> BCUC12
-    BCUC14 -. "«extend»" .-> BCUC12
-    BCUC15 -. "«extend»" .-> BCUC12
-    BCUC16 -. "«extend»" .-> BCUC12
-    BCUC16 -. "«extend»" .-> BCUC13
-    BCUC17 -. "«extend»" .-> BCUC12
-
+    %% 2.2.3 Blood Inventory and Emergency Coordination Management
+    BCUC13 -. "«extend»<br>EP: Search" .-> BCUC12
+    BCUC13 -. "«extend»<br>EP: Search" .-> BCUC16
 ```
 
 ---
 ## Diagram 3 — Hospital Features
+
+*Author: Nguyễn Quốc Dương  |  Reviewer: Trần Anh Kiệt  |  Editor: Nguyễn Quốc Dương*
 
 > Covers section **3.1 Emergency Blood SOS Request Management**.
 
@@ -426,12 +407,9 @@ graph LR
 
     %% ── Relationships ───────────────────────────────────
 
-    %% include
+    %% include (Bắt buộc phải chạy khi Create SOS Request)
     HSUC01 -- "«include»" --> SYSUC04
 
-    %% extend  (arrow points from the extending UC to its base UC)
-    HSUC02 -. "«extend»" .-> HSUC01
-    HSUC03 -. "«extend»" .-> HSUC02
 
     %% ── Styling for out-of-scope reference nodes ────────
     classDef extRef fill:#f5f5f5,stroke:#999,stroke-dasharray: 4 3,color:#666;
@@ -441,6 +419,8 @@ graph LR
 
 ---
 ## Diagram 4 — System Automations
+
+*Author: Trần Anh Kiệt  |  Reviewer: Trịnh Khánh Linh  |  Editor: Trần Anh Kiệt*
 
 > Covers sections **4.1 User-Facing Automations** and **4.2 Blood Center-Facing Automations**.
 
@@ -511,218 +491,121 @@ graph LR
 ---
 ## Diagram 5 — Administrator Features
 
+*Author: Trần Anh Kiệt  |  Reviewer: Trần Đức Quý  |  Editor: Trần Anh Kiệt*
+
 > Covers section **5.1 Administrator Features**.
 
 ```mermaid
 
 %%{init: {'theme': 'default', 'themeVariables': {'fontSize': '14px'}}}%%
-
 graph LR
 
-    %% ── Actors ──────────────────────────────────────────
+    %% ── Actors ──────────────────────────────────────────
+    Admin(["👤 Administrator"])
 
-    Admin(["👤 Administrator"])
+    subgraph SYS ["LifeLine System"]
+        direction TB
 
-  
+        subgraph ADM ["5.1 Administrator Features"]
+            ADUC01["AD-UC-01<br>View/Search<br>User Accounts"]
+            ADUC02["AD-UC-02<br>Manage User Account"]
+            ADUC03["AD-UC-03<br>Manage Roles<br>& Permissions"]
+            ADUC04["AD-UC-04<br>Monitor System Activity"]
+            ADUC05["AD-UC-05<br>Manage System<br>Configuration"]
+            ADUC06["AD-UC-06<br>Manage Feature Toggles"]
+        end
+    end
 
-    subgraph SYS ["LifeLine System"]
-
-        direction TB
-
-  
-
-        subgraph ADM ["5.1 Administrator Features"]
-
-            ADUC01["AD-UC-01<br>View/Search<br>User Accounts"]
-
-            ADUC02["AD-UC-02<br>Manage User Account"]
-
-            ADUC03["AD-UC-03<br>Manage Roles<br>& Permissions"]
-
-            ADUC04["AD-UC-04<br>Monitor System Activity"]
-
-            ADUC05["AD-UC-05<br>Manage System<br>Configuration"]
-
-            ADUC06["AD-UC-06<br>Manage Feature Toggles"]
-
-        end
-
-    end
-
-  
-
-    %% ── Actor associations ──────────────────────────────
-
-    Admin --- ADUC01
-
-    Admin --- ADUC02
-
-    Admin --- ADUC03
-
-    Admin --- ADUC04
-
-    Admin --- ADUC05
-
-    Admin --- ADUC06
-
-  
-
-    %% ── Relationships ───────────────────────────────────
-
-    ADUC02 -. "«extend»" .-> ADUC01
-
-
-    ADUC06 -. "«extend»" .-> ADUC05
+    %% ── Actor associations ──────────────────────────────
+    Admin --- ADUC01
+    Admin --- ADUC02
+    Admin --- ADUC03
+    Admin --- ADUC04
+    Admin --- ADUC05
+    Admin --- ADUC06
 
 ```
 
 ---
 ## Full System Overview Diagram
 
-> High-level view of all actors and their primary functional groups within the LifeLine system.
+*Author: Trần Anh Kiệt  |  Reviewer: Trịnh Khánh Linh  |  Editor: Trần Anh Kiệt*
+
+> High-level view of all actors and their primary functional groups within the LifeLine system. Covers functional groups **2.1.1 → 2.5.1**. Individual use cases are omitted at this level — see Diagrams 1–5 for full detail.
 
 ```mermaid
-
 %%{init: {'theme': 'default', 'themeVariables': {'fontSize': '13px'}}}%%
-
 graph TB
 
-    %% ── Actors ──────────────────────────────────────────
+    %% ── Actors ──────────────────────────────────────────
+    Donor(["👤 Donor"])
+    BCS(["👤 Blood Center Staff"])
+    HS(["👤 Hospital Staff"])
+    Admin(["👤 Administrator"])
+    SYS_ACT(["⚙️ System<br>(Automated)"])
+    NE(["⚙️ Notification Engine<br>(supporting actor)"])
 
-    Donor(["👤 Donor"])
+    subgraph LL ["LifeLine System Boundary"]
+        direction LR
 
-    BCS(["👤 Blood Center Staff"])
+        subgraph UF ["2.1 User Features"]
+            UAM["2.1.1 User Account Management<br>(LL-UC-01 → LL-UC-05)"]
+            DBS["2.1.2 Donation Booking & Location Services<br>(LL-UC-06 → LL-UC-10)"]
+            AI["2.1.3 AI-Powered Conversational Support & Guidance<br>(CB-UC-01)"]
+            NNC["2.1.4 News, Notifications & Communication<br>(NF-UC-01..02, NT-UC-01..02,<br>SOS-UC-01..02)"]
+            DIT["2.1.5 Donation Impact & Tracking<br>(DN-UC-01 → DN-UC-03)"]
+            COM["2.1.6 Community<br>(CM-UC-01)"]
+        end
 
-    HS(["👤 Hospital Staff"])
+        subgraph BCF ["2.2 Blood Center Features"]
+            CAM["2.2.1 Blood Donation Campaign and Management<br>(BC-UC-01 → BC-UC-07)"]
+            CMS["2.2.2 Communication and User Engagement Management<br>(BC-UC-08 → BC-UC-11)"]
+            INV["2.2.3 Blood Inventory and Emergency Coordination Management<br>(BC-UC-12 → BC-UC-17)"]
+        end
 
-    Admin(["👤 Administrator"])
+        subgraph HSF ["2.3 Hospital Features"]
+            SOSM["2.3.1 Emergency Blood SOS Request Management<br>(HS-UC-01 → HS-UC-03)"]
+        end
 
-    SYS_ACT(["⚙️ System<br>(Automated)"])
+        subgraph SYSF ["2.4 System Features"]
+            UFA["2.4.1 User-Facing Automations<br>(SYS-UC-01, SYS-UC-02)"]
+            BCA["2.4.2 Blood Center-Facing Automations<br>(SYS-UC-03, SYS-UC-04)"]
+            NOTIF["2.4.3 Notification Service<br>(SYS-UC-05)"]
+        end
 
-    NE(["⚙️ Notification Engine"])
+        subgraph ADMF ["2.5 Administrator Features"]
+            ADMG["2.5.1 System and User Management<br>(AD-UC-01 → AD-UC-06)"]
+        end
+    end
 
-  
+    %% ── Actor → Feature Group ───────────────────────────
+    Donor --- UAM
+    Donor --- DBS
+    Donor --- AI
+    Donor --- NNC
+    Donor --- DIT
+    Donor --- COM
 
-    subgraph LL ["LifeLine System Boundary"]
+    BCS --- CAM
+    BCS --- CMS
+    BCS --- INV
 
-        direction LR
+    HS --- SOSM
 
-  
+    Admin --- ADMG
 
-        subgraph UF ["User Features (1.1 – 1.6)"]
-
-            UAM["1.1 User Account Management<br>(LL-UC-01 → LL-UC-05)"]
-
-            DBS["1.2 Donation Booking & Location<br>(LL-UC-06 → LL-UC-10)"]
-
-            AI["1.3 AI Chatbot<br>(CB-UC-01)"]
-
-            NNC["1.4 News, Notifications & SOS<br>(NF-UC-01..02, NT-UC-01..02,<br>SOS-UC-01..02)"]
-
-            DIT["1.5 Donation Impact & Tracking<br>(DN-UC-01 → DN-UC-03)"]
-
-            COM["1.6 Community<br>(CM-UC-01)"]
-
-        end
-
-  
-
-        subgraph BCF ["Blood Center Features (2.1 – 2.3)"]
-
-            CAM["2.1 Campaign Management<br>(BC-UC-01 → BC-UC-07)"]
-
-            CMS["2.2 Content Management<br>(BC-UC-08 → BC-UC-11)"]
-
-            INV["2.3 Blood Inventory Management<br>(BC-UC-12 → BC-UC-16)"]
-
-        end
-
-  
-
-        subgraph HSF ["Hospital Features (3.1)"]
-
-            SOSM["3.1 SOS Request Management<br>(HS-UC-01 → HS-UC-03)"]
-
-        end
-
-  
-
-        subgraph SYSF ["System Automations (4.1 – 4.3)"]
-
-            UFA["4.1 User-Facing Automations<br>(SYS-UC-01, SYS-UC-02)"]
-
-            BCA["4.2 BC-Facing Automations<br>(SYS-UC-03, SYS-UC-04)"]
-
-            NOTIF["4.3 Notification Service<br>(SYS-UC-05)"]
-
-        end
-
-  
-
-        subgraph ADMF ["Administrator Features (5.1)"]
-
-            ADMG["5.1 Admin Management<br>(AD-UC-01 → AD-UC-06)"]
-
-        end
-
-    end
-
-  
-
-    %% ── Actor → Feature Group ───────────────────────────
-
-    Donor --- UAM
-
-    Donor --- DBS
-
-    Donor --- AI
-
-    Donor --- NNC
-
-    Donor --- DIT
-
-    Donor --- COM
-
-  
-
-    BCS --- CAM
-
-    BCS --- CMS
-
-    BCS --- INV
-
-  
-
-    HS --- SOSM
-
-  
-
-    Admin --- ADMG
-
-  
-
-    SYS_ACT --- UFA
-
-    SYS_ACT --- BCA
-
+    SYS_ACT --- UFA
+    SYS_ACT --- BCA
     SYS_ACT --- NOTIF
 
-  
+    NE --- NNC
 
-    NE -. "triggers" .-> NNC
-
-    NE -. "triggers" .-> SOSM
-
-  
-
-    %% ── Cross-group dependencies ────────────────────────
-
-    DBS -. "triggers" .-> UFA
-
-    SOSM -. "triggers" .-> BCA
-
-    SOSM -. "broadcasts via" .-> NNC
-
+    %% ── Cross-group dependencies (per «include»/related-UC relations) ──
+    DBS -- "«include»" --> UFA
+    DBS -- "«include»" --> BCA
+    SOSM -- "«include»" --> BCA
+    BCA -- "«include»" --> NOTIF
+    NOTIF -. "broadcasts to" .-> NNC
 ```
 
 ---
@@ -730,6 +613,8 @@ graph TB
 ## 2.1 User Features
 
 ### 2.1.1 User Account Management
+
+*Author: Trần Anh Kiệt  |  Reviewer: Trịnh Khánh Linh  |  Editor: Trần Anh Kiệt*
 
 #### LL-UC-01: Register via Citizen ID
 
@@ -747,6 +632,7 @@ graph TB
 | **Special Requirements** | **Security:**<br>- Passwords must be stored using a strong hashing algorithm (e.g., bcrypt).<br>- Passwords must be at least 8 characters and include letters and digits.<br>- All registration traffic must be transmitted over HTTPS.<br>- Identity document data must be handled and stored securely. <br><br>**Performance:**<br>- QR Code extraction should complete within 5 seconds.<br>- Account creation should be completed within 3 seconds after submission.<br>- Verification emails must be sent within 60 seconds. <br><br>**Reliability:**<br>- Account information must not be partially saved if an error occurs during creation. <br><br>**Usability:**<br>- Pre-filled fields must be clearly labelled as auto-extracted and allow user correction.<br>- Required fields must be visually indicated. |
 | **Related Use Cases** | None |
 
+![alt text](UIPrototypePic/image.png)
 ---
 
 #### LL-UC-02: Login
@@ -763,7 +649,9 @@ graph TB
 | **Alternative Flows** | **AF-01: Incorrect Credentials (Step 4)** <br>1. System detects that the CCCD number or password does not match any account record. <br>2. System displays a generic error message: "Incorrect ID number or password." <br>3. User re-enters their credentials. <br>4. Return to Step 3. <br><br>**AF-02: Account Not Yet Verified (Step 4)** <br>1. System detects that the account associated with the entered credentials has not been email-verified. <br>2. System displays a message indicating the account is pending verification. <br>3. System offers a **Resend Verification Email** option. <br>4. Use case ends or user proceeds with email resend. <br><br>**AF-03: Account Suspended (Step 4)** <br>1. System detects that the account has been suspended by an Administrator. <br>2. System displays a message indicating the account is suspended and instructs the user to contact support. <br>3. Use case ends. <br><br>**AF-04: Missing Credentials (Step 3)** <br>1. User clicks **Login** without entering the ID number or password. <br>2. System highlights the missing fields with error messages. <br>3. User fills in the required fields. <br>4. Return to Step 3. <br><br>**AF-05: Too Many Failed Attempts (Step 4)** <br>1. System detects that the user has exceeded the maximum number of consecutive failed login attempts (e.g., 5 attempts). <br>2. System temporarily locks the account for a cooldown period and displays an appropriate message. <br>3. Use case ends until the lockout period expires. <br><br>**AF-06: User Forgot Password (Step 2)** <br>1. User clicks the **Forgot Password?** link on the login page. <br>2. Use case transitions to LL-UC-04: Reset Password. <br>3. Use case ends. |
 | **Postconditions** | **Success:**<br>- The user is authenticated and has an active session.<br>- The user is redirected to their personal dashboard. <br><br>**Failure:**<br>- No session is created.<br>- The user remains on the login page. |
 | **Special Requirements** | **Security:**<br>- All login traffic must be transmitted over HTTPS.<br>- Passwords must never be transmitted or logged in plaintext.<br>- Brute-force protection must be enforced (account lockout after repeated failures).<br>- Session tokens must expire after 30 minutes of inactivity (NFR-S05). <br><br>**Performance:**<br>- Login response must be returned within 2 seconds under normal operating conditions. <br><br>**Usability:**<br>- Error messages must not reveal whether the ID number or password was incorrect to prevent account enumeration. |
-| **Related Use Cases** | **Extended by:** Reset Password (LL-UC-04) |
+| **Related Use Cases** | **Extended by:** Reset Password (LL-UC-04) <br> *Extension Point: "Forgot Password", at Basic Flow Step 2 (immediately after the login page is displayed, before the actor enters their credentials); trigger condition: the actor selects the Forgot Password? link instead of entering their ID/password (see AF-06).* |
+
+![alt text](UIPrototypePic/image-1.png)
 
 ---
 
@@ -783,6 +671,7 @@ graph TB
 | **Special Requirements** | **Security:**<br>- Session tokens must be invalidated server-side upon logout to prevent replay attacks.<br>- Locally cached session data must be cleared from the browser. <br><br>**Performance:**<br>- Logout must be completed and redirect initiated within 1 second. |
 | **Related Use Cases** | None |
 
+![alt text](UIPrototypePic/image-2.png)
 ---
 
 #### LL-UC-04: Reset Password
@@ -799,7 +688,9 @@ graph TB
 | **Alternative Flows** | **AF-01: Contact Information Not Found (Step 5)** <br>1. System cannot find any account associated with the provided email or CCCD number. <br>2. System displays an error message: **"This ID number is not registered in our system."** or **“No account found with this contact information. Please try again.”** <br>3. User enters a different email or CCCD Number. <br>4. Return to Step 4. <br><br>**AF-02: OTP Not Received (Step 8)** <br>1. User does not receive the OTP within a reasonable time. <br>2. User clicks the **Resend Code** button. <br>3. System generates and sends a new OTP, invalidating the previous one. <br>4. Return to Step 7. <br><br>**AF-03: Invalid OTP Entered (Step 9)** <br>1. System detects that the entered OTP does not match or is incorrect. <br>2. System displays an error message indicating the OTP is invalid. <br>3. User re-enters the OTP or requests a new one. <br>4. Return to Step 8. <br><br>**AF-04: OTP Expired (Step 9)** <br>1. System detects that the OTP has exceeded its validity period (e.g., 10 minutes). <br>2. System displays an error message: "OTP has expired." <br>3. System prompts the user to request a new OTP. <br>4. Return to Step 4. <br><br>**AF-05: Too Many OTP Attempts (Step 9)** <br>1. System detects the user has entered an incorrect OTP too many consecutive times. <br>2. System invalidates the current OTP session and temporarily blocks further attempts. <br>3. System displays an appropriate message. <br>4. Use case ends. <br><br>**AF-06: New Password Fails Validation (Step 13)** <br>1. System detects the new password does not meet strength requirements, or the two password fields do not match. <br>2. System displays specific error messages next to the relevant fields. <br>3. User corrects the password input. <br>4. Return to Step 12. <br><br>**AF-07: User Cancels Reset (Any Step)** <br>1. User navigates away from the reset password flow before completion. <br>2. System discards the active OTP session. <br>3. Use case ends. |
 | **Postconditions** | **Success:**<br>- The user's account password is successfully updated.<br>- The old password is no longer valid.<br>- The user is redirected to the login page to authenticate with the new password. <br><br>**Failure:**<br>- The password is not changed.<br>- The user's account remains accessible with the original password. |
 | **Special Requirements** | **Security:**<br>- OTPs must be valid for a maximum of 10 minutes.<br>- OTPs must be invalidated immediately after successful use.<br>- All reset traffic must be transmitted over HTTPS.<br>- New passwords must meet the same strength requirements as during registration (minimum 8 characters, letters and digits). <br><br>**Performance:**<br>- OTP delivery must occur within 60 seconds of the request.<br>- Password update must be completed within 3 seconds of confirmation. <br><br>**Usability:**<br>- TThe system must clearly inform the user that the OTP has been sent exclusively to their registered email address. |
-| **Related Use Cases** | **Extend:** Login (LL-UC-02) |
+| **Related Use Cases** | **Extend:** Login (LL-UC-02) <br> *Extension Point: "Forgot Password" on LL-UC-02 (Basic Flow Step 2); triggered only when the actor clicks Forgot Password?. The login process remains complete and valid even if this extension is never executed.* |
+
+![alt text](UIPrototypePic/image-3.png)
 
 ---
 
@@ -817,11 +708,15 @@ graph TB
 | **Alternative Flows** | **AF-01: Invalid Field Input (Step 7)** <br>1. System detects invalid input (e.g., incorrect email format, phone number not meeting length requirements). <br>2. System highlights the invalid field(s) with error messages. <br>3. Donor corrects the invalid input. <br>4. Return to Step 6. <br><br>**AF-02: Duplicate Email Address (Step 7)** <br>1. System detects that the newly entered email address is already associated with another account. <br>2. System displays an error message next to the email field. <br>3. Donor enters a different email address. <br>4. Return to Step 6. <br><br>**AF-03: Missing Required Field (Step 7)** <br>1. System detects that a required field has been cleared or left empty. <br>2. System displays an error message indicating the required field(s). <br>3. Donor fills in the missing information. <br>4. Return to Step 6. <br><br>**AF-04: Donor Cancels Edit (Step 5)** <br>1. Donor clicks the **Cancel** button before saving changes. <br>2. System discards all unsaved modifications. <br>3. System returns the profile page to the read-only view. <br>4. Use case ends. <br><br>**AF-05: System Error on Save (Step 8)** <br>1. System encounters an error while saving the profile update. <br>2. System displays an error message and advises the user to retry. <br>3. Use case ends without saving changes. |
 | **Postconditions** | **Success:**<br>- The donor's profile information is updated in the database.<br>- The updated information is immediately reflected on the profile page and used for all subsequent platform operations (e.g., emergency alert targeting). <br><br>**Failure:**<br>- No profile data is changed.<br>- The previous profile information is retained. |
 | **Special Requirements** | **Security:**<br>- Identity-verified fields (full name, date of birth, ID number) extracted during registration must be read-only and cannot be modified through the profile page.<br>- All profile update traffic must be transmitted over HTTPS. <br><br>**Performance:**<br>- Profile updates must be processed and confirmed within 3 seconds. <br><br>**Usability:**<br>- Clearly distinguish read-only identity fields from editable contact fields.<br>- Key summary information (blood type, donation history, next eligible date) should be prominently displayed on the profile dashboard. |
-| **Related Use Cases** | **Extended by:** View Donation Timeline (DN-UC-01) <br>**Extended by:** View Achievement Progress (DN-UC-02) <br>**Extended by:** View Donor Level Progress (DN-UC-03) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-4.png)
 
 ---
 
 ### 2.1.2 Donation Booking & Location Services
+
+*Author: Trần Anh Kiệt  |  Reviewer: Trịnh Khánh Linh  |  Editor: Trần Anh Kiệt*
 
 #### LL-UC-06: Browse Interactive Map
 
@@ -837,7 +732,9 @@ graph TB
 | **Alternative Flows** | **AF-01: Location Permission Denied (Step 3)** <br>1. Donor denies the location permission request. <br>2. System displays a manual location input field (city, district, or address). <br>3. Donor enters their preferred location manually. <br>4. Return to Step 4. <br><br>**AF-02: No Donation Points Found in Area (Step 4 or Step 7)** <br>1. System finds no active donation points or campaigns within the selected area or matching the applied filters. <br>2. System displays an informational message: "No donation points found for the selected criteria." <br>3. System suggests expanding the search radius or adjusting filters. <br>4. Donor modifies the filters or search area. <br>5. Return to Step 7. <br><br>**AF-03: Map Service Unavailable (Step 4)** <br>1. The mapping service fails to load (network error or service outage). <br>2. System displays an error message and falls back to a text-based list view of available donation points. <br>3. Donor may browse the list view and click on an entry to view its details. <br>4. Use case continues from Step 9 via the list view. <br><br>**AF-04: Donation Point at Full Capacity (Step 9)** <br>1. Donor views the detail panel of a donation point that has reached its participant capacity. <br>2. System clearly indicates "Registration Closed – Full Capacity" on the detail panel. <br>3. The **Book Appointment** button is disabled for this location. <br>4. Donor returns to the map to select a different location. <br>5. Return to Step 8. |
 | **Postconditions** | **Success:**<br>- The donor has viewed available donation points and campaigns on the map.<br>- The donor may proceed to schedule an appointment at a selected location. <br><br>**Failure:**<br>- No donation points are displayed; the donor is informed and guided to adjust their search criteria. |
 | **Special Requirements** | **Performance:**<br>- Map data must load and display within 3 seconds under normal network conditions (NFR-P05).<br>- Filter updates must refresh the map view within 1 second. <br><br>**Usability:**<br>- Map markers must be visually distinguishable by crowding level (e.g., color-coded: green = low, yellow = moderate, red = near capacity).<br>- The map must be fully responsive on mobile, tablet, and desktop (NFR-U01). <br><br>**Reliability:**<br>- Campaign data displayed on the map must reflect live availability, not cached data older than 60 seconds. |
-| **Related Use Cases** | **Extended by:** Schedule Appointment (LL-UC-07) <br> **Extend:** Interact with AI Chatbot (CB-UC-01)|
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-5.png)
 
 ---
 
@@ -855,7 +752,9 @@ graph TB
 | **Alternative Flows** | **AF-01: 84-Day Waiting Period Not Met (Step 3)** <br>1. System determines that fewer than 84 days have passed since the donor's last donation. <br>2. System blocks the booking and displays an error message indicating the date from which the donor will next be eligible. <br>3. Use case ends. <br><br>**AF-02: Duplicate Booking Detected (Step 4)** <br>1. System detects that the donor already has an existing confirmed appointment for an overlapping period. <br>2. System displays a warning message indicating the conflicting existing appointment. <br>3. Donor is redirected to view their existing appointment (LL-UC-08). <br>4. Use case ends. <br><br>**AF-03: Health Screening Form Incomplete (Step 6)** <br>1. Donor attempts to proceed without completing all required fields on the health screening form. <br>2. System highlights the missing required fields. <br>3. Donor completes the missing fields. <br>4. Return to Step 6. <br><br>**AF-04: Selected Time Slot Becomes Unavailable (Step 9)** <br>1. Between the donor selecting the time slot and confirming, the slot is taken by another donor. <br>2. System detects the slot is no longer available during the save operation. <br>3. System displays a message: "This time slot is no longer available." <br>4. System returns the donor to the time slot selection view with updated availability. <br>5. Return to Step 2. <br><br>**AF-05: Campaign Reaches Full Capacity Before Confirmation (Step 9)** <br>1. The selected campaign reaches its participant capacity between the donor's selection and confirmation. <br>2. System detects the capacity is full during the save operation. <br>3. System displays a message: "This campaign is now fully booked." <br>4. System redirects the donor to the map view to find an alternative location. <br>5. Return to LL-UC-06. <br><br>**AF-06: Donor Cancels Booking (Any Step Before Step 8)** <br>1. Donor clicks the **Cancel** button at any step of the booking process. <br>2. System discards all entered information and the generated health screening form. <br>3. System returns the donor to the map view or campaign list. <br>4. Use case ends. <br><br>**AF-07: System Error on Save (Step 9)** <br>1. System encounters an error while attempting to save the appointment record. <br>2. System displays an error message and advises the donor to retry. <br>3. No partial booking is saved. <br>4. Use case ends. |
 | **Postconditions** | **Success:**<br>- A confirmed appointment record is created and stored in the database.<br>- The selected time slot and campaign capacity are updated to reflect the new booking.<br>- A personalized e-ticket with a unique QR code is generated and delivered to the donor.<br>- The appointment is visible in the donor's dashboard and donation timeline.<br>- A completed health screening form record is linked to the appointment. <br><br>**Failure:**<br>- No appointment is created.<br>- No e-ticket is generated.<br>- Campaign capacity and time slot availability remain unchanged. |
 | **Special Requirements** | **Business Rules:**<br>- The 84-day (12-week) waiting period between donations must be strictly enforced and cannot be overridden by the donor.<br>- A donor may not hold more than one confirmed upcoming appointment at a time. <br><br>**Security:**<br>- QR codes on e-tickets must be unique and cryptographically signed to prevent forgery. <br><br>**Performance:**<br>- Appointment confirmation and e-ticket generation must complete within 5 seconds (NFR-P01).<br>- Confirmation email must be delivered within 1 minute of booking (NFR-P03). <br><br>**Reliability:**<br>- Appointment records must not be partially saved if an error occurs during the transaction (NFR-R04).<br>- Time slot availability must be checked in real time immediately before the final save to prevent double-booking. |
-| **Related Use Cases** | **Include:** Generate Pre-Donation Screening Form (SYS-UC-01) <br>**Include:** Generate E-Ticket & QR Code (SYS-UC-02) <br>**Include:** Generate Digital Donor Record (SYS-UC-03) <br>**Extend:** Browse Interactive Map (LL-UC-06) <br> **Extend:** Interact with AI Chatbot (CB-UC-01) <br> **Extended by**: View Appointment Details (LL-UC-08) |
+| **Related Use Cases** | **Include:** Generate Pre-Donation Screening Form (SYS-UC-01) <br>**Include:** Generate E-Ticket & QR Code (SYS-UC-02) <br>**Include:** Generate Digital Donor Record (SYS-UC-03) |
+
+![alt text](UIPrototypePic/image-6.png)
 
 ---
 
@@ -873,7 +772,9 @@ graph TB
 | **Alternative Flows** | **AF-01: No Appointments Found (Step 2)** <br>1. The donor has no appointment records in the system (neither upcoming nor past). <br>2. System displays an informational message: "You have no scheduled appointments." <br>3. System provides a shortcut link to the booking flow. <br>4. Use case ends. <br><br>**AF-02: Appointment Has Been Cancelled (Step 4)** <br>1. The donor views an appointment that was previously cancelled (by the donor or by the organization). <br>2. System displays the appointment with a "Cancelled" status badge. <br>3. The user cannot interact other buttons like cancel button or download QR code button. <br>4. Use case ends. <br><br>**AF-03: Appointment Record Not Found (Step 4)** <br>1. System cannot retrieve the appointment record (e.g., deleted or invalid ID). <br>2. System displays an error message. <br>3. Donor is returned to the appointment list. <br>4. Use case ends. |
 | **Postconditions** | **Success:**<br>- The donor has successfully viewed the full details of the selected appointment. <br><br>**Failure:**<br>- No appointment details are displayed; the donor is returned to the appointments list. |
 | **Special Requirements** | **Security:**<br>- A donor may only view their own appointment records.<br>- Appointment data must be transmitted over HTTPS. <br><br>**Performance:**<br>- Appointment detail page must load within 3 seconds (NFR-P05). <br><br>**Usability:**<br>- Appointment status should be clearly and prominently indicated using color-coded badges (e.g., green = Confirmed, grey = Completed, red = Cancelled). |
-| **Related Use Cases** | **Extended by:** Download E-Ticket (LL-UC-10) <br>**Extended by:** Cancel Appointment (LL-UC-09) <br> **Extend**: Schedule Appointment (LL-UC-07)|
+| **Related Use Cases** | **Extended by:** Download E-Ticket (LL-UC-10) <br> *Extension Point: "Download Ticket", at Basic Flow Step 6 (when the donor is viewing details and can choose to download the e-ticket); condition: the e-ticket already exists and the appointment is not canceled.* <br>**Extended by:** Cancel Appointment (LL-UC-09) <br> *Extension Point: "Cancel Action", at Basic Flow Step 6; condition: the appointment is in a Confirmed/Upcoming status.* |
+
+![alt text](UIPrototypePic/image-7.png)
 
 ---
 
@@ -891,7 +792,9 @@ graph TB
 | **Alternative Flows** | **AF-01: Donor Declines Confirmation (Step 3)** <br>1. Donor clicks **No, Keep Appointment** in the confirmation dialog. <br>2. System closes the dialog and returns to the appointment detail view without making any changes. <br>3. Use case ends. <br><br>**AF-02: Cancellation Deadline Passed (Step 1)** <br>1. System detects that the appointment is within the cancellation deadline window (e.g., less than 24 hours before the scheduled time). <br>2. System displays a warning message: "This appointment cannot be cancelled as it is less than 24 hours away. Please contact the donation center directly." <br>3. The **Cancel Appointment** button is disabled. <br>4. Use case ends. <br><br>**AF-03: Appointment Already Cancelled (Step 1)** <br>1. System detects that the appointment has already been cancelled. <br>2. The **Cancel Appointment** button is not displayed; the appointment shows a "Cancelled" status. <br>3. Use case does not trigger. <br><br>**AF-04: System Error on Cancellation (Step 4)** <br>1. System encounters an error while updating the appointment status. <br>2. System displays an error message and advises the donor to retry. <br>3. No changes are made to the appointment record. <br>4. Use case ends. |
 | **Postconditions** | **Success:**<br>- The appointment status is updated to "Cancelled" in the database.<br>- The reserved time slot is released and becomes available to other donors.<br>- The campaign's confirmed registration count is decremented.<br>- A cancellation confirmation notification is sent to the donor. <br><br>**Failure:**<br>- The appointment status remains "Confirmed".<br>- The time slot remains reserved and the capacity count is unchanged. |
 | **Special Requirements** | **Business Rules:**<br>- A specific cancellation deadline policy (e.g., no cancellation within 24 hours of the appointment) must be enforced to ensure blood center planning reliability. <br><br>**Performance:**<br>- Cancellation must be processed and confirmed within 3 seconds. <br><br>**Reliability:**<br>- Time slot availability must be immediately restored upon cancellation to minimize donor displacement. |
-| **Related Use Cases** | **Extend:** View Appointment Details (LL-UC-08) |
+| **Related Use Cases** | **Extend:** View Appointment Details (LL-UC-08) <br> *Extension Point: "Cancel Action" on LL-UC-08 (Basic Flow Step 6); LL-UC-08 remains complete and meaningful even if the donor never cancels; it is invoked from exactly one single location (the Cancel button on the details page), with no other independent entry points.*|
+
+![alt text](UIPrototypePic/image-8.png)
 
 ---
 
@@ -909,10 +812,15 @@ graph TB
 | **Alternative Flows** | **AF-01: E-Ticket Record Not Found (Step 2)** <br>1. System cannot retrieve the e-ticket record for the appointment (e.g., generation failure during booking). <br>2. System displays an error message and offers the option to regenerate the e-ticket. <br>3. System attempts to regenerate the e-ticket for the appointment. <br>4. If successful, return to Step 3. <br>5. If regeneration fails, system advises the donor to contact support. <br>6. Use case ends. <br><br>**AF-02: File Generation Error (Step 5)** <br>1. System encounters an error while generating the e-ticket file in the selected format. <br>2. System displays an error message and suggests selecting an alternative format or retrying. <br>3. Donor may select a different format or retry. <br>4. Return to Step 4. <br><br>**AF-03: Appointment is Cancelled (Step 1)** <br>1. The appointment associated with the e-ticket has been cancelled. <br>2. System displays the **Download E-Ticket** option as disabled or absent, with a label indicating "Appointment Cancelled." <br>3. Use case does not trigger. |
 | **Postconditions** | **Success:**<br>- The e-ticket file is successfully downloaded to the donor's device in the selected format.<br>- The donor has a portable record of their appointment and QR code for check-in use. <br><br>**Failure:**<br>- No file is downloaded.<br>- The donor is informed of the error and advised on next steps. |
 | **Special Requirements** | **Security:**<br>- The QR code embedded in the e-ticket must be cryptographically signed to prevent forgery and duplication.<br>- E-ticket downloads must only be accessible to the authenticated donor who owns the appointment. <br><br>**Performance:**<br>- E-ticket file generation and download initiation must complete within 5 seconds. <br><br>**Usability:**<br>- The e-ticket must be clearly formatted and legible when printed or displayed on a mobile screen.<br>- The QR code must be of sufficient resolution for reliable scanning at the check-in counter. |
-| **Related Use Cases** | **Extend:** View Appointment Details (LL-UC-08) |
+| **Related Use Cases** | **Extend:** View Appointment Details (LL-UC-08) <br> *Extension Point: "Download Ticket" on LL-UC-08 (Basic Flow Step 6); invoked from exactly one location (the Download E-Ticket button on the details page, see Precondition #2 and Trigger); condition: the e-ticket has been generated and the appointment is not Cancelled (see AF-03).* |
+
+![alt text](UIPrototypePic/image-9.png)
+
 ---
 
 ### 2.1.3 AI-Powered Conversational Support & Guidance
+
+*Author: Trần Đức Quý  |  Reviewer: Trần Anh Kiệt  |  Editor: Trần Đức Quý*
 #### CB-UC-01: Interact with AI Chatbot
 
 | Field | Content |
@@ -927,10 +835,14 @@ graph TB
 | **Alternative Flows** | **AF-01: AI Cannot Determine Answer / Fallback (Step 6)**<br>1. AI cannot retrieve sufficient context to answer.<br>2. System displays a standardized fallback message: "Xin lỗi, tôi chưa có đủ thông tin để trả lời câu hỏi này. Bạn có thể thử:".<br>3. System provides specific quick-reply options as bullet points: "Định dạng lại câu hỏi của bạn", "Đặt câu hỏi chung về hiến máu", "Liên hệ hỗ trợ trực tiếp".<br>4. Donor selects an option or rephrases.<br>5. Return to Step 5.<br><br>**AF-02: Personalized Guidance for Authenticated Donor (Step 4)**<br>1. An authenticated donor asks about their eligibility or next donation.<br>2. System identifies the donor and retrieves their profile/history.<br>3. AI generates a personalized response displaying a card with: Nhóm máu (e.g., O+), Lần hiến máu cuối, Cần sau 84 ngày - Đủ điều kiện, and bulleted guidance ("Hướng dẫn trước khi hiến máu").<br>4. System displays the tailored guidance.<br>5. Return to Step 7.<br><br>**AF-03: Platform Feature Navigation via Rich Card (Step 6)**<br>1. The AI determines the user is looking for nearby campaigns.<br>2. System displays a response featuring a rich **Campaign Card** with details (e.g., "Central City Hospital", 1.5km, time).<br>3. The card includes an action button: "**Đăng ký**" (Book Appointment).<br>4. Donor clicks the action button.<br>5. System navigates the donor directly to the corresponding booking or details page.<br>6. Use case ends.<br><br>**AF-04: Chatbot Service Maintenance / Unavailable (Step 2)**<br>1. System detects the AI chatbot service is undergoing maintenance.<br>2. System displays a full-screen maintenance overlay message with a robot icon: "Chatbot đang bảo trì. Chúng tôi đang nâng cấp hệ thống để phục vụ bạn tốt hơn. Vui lòng quay lại sau ít phút."<br>3. A red "**Thử lại**" (Retry) button is provided.<br>4. Donor may click retry or navigate away.<br>5. Use case ends.<br><br>**AF-05: Conversation Timeout / Preserved Context (Step 7)**<br>1. Donor is inactive for an extended period.<br>2. System detects the session timeout.<br>3. System disables the text input field (greyed out) and displays a divider "Khởi tạo cuộc hội thoại mới".<br>4. System *preserves the full conversation history visually* but requires the user to start a new chat session. |
 | **Postconditions** | **Success:**<br>- Donor receives information.<br>- Context is visually preserved even if session ends.<br>**Failure:**<br>- A maintenance or error message is displayed. |
 | **Special Requirements** | **Usability:** The interface must support full-screen chat with visible context preservation. Quick-action buttons (booking, directions) must be prominent in rich cards. Maintenance and Fallback screens must provide clear calls-to-action matching the UI exact texts. |
-| **Related Use Cases** | **Extended by:** Schedule Appointment (LL-UC-07) <br> **Extended by:** Browse Interactive Map (LL-UC-06)|
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-10.png)
 
 ---
 ### 2.1.4: News, Notifications & Communication
+
+*Author: Trần Đức Quý  |  Reviewer: Trần Anh Kiệt  |  Editor: Trần Đức Quý*
 #### NF-UC-01: Browse News Feed
 
 | Field | Content |
@@ -945,7 +857,9 @@ graph TB
 | **Alternative Flows** | **AF-01: No Published Articles (Step 2)**<br>1. System finds no articles.<br>2. System displays a specific empty state graphic with the heading "Chưa có bài viết nào" and body text "Hiện tại chưa có bài viết nào được xuất bản. Hãy quay lại sau nhé!".<br>3. Use case ends.<br><br>**AF-02: No Articles Match Filter (Step 6)**<br>1. System finds no articles matching the selected category.<br>2. System displays a specific "Không tìm thấy bài viết" (No articles found) graphic and message identifying the specific empty category (e.g., "Không có bài viết nào trong danh mục 'Campaigns'.").<br>3. System provides two action links: "**Xóa bộ lọc**" (Clear Filter) and "**Xem tất cả ->**" (View All).<br>4. Donor clicks an option.<br>5. Return to Step 5 (with updated filter state). |
 | **Postconditions** | **Success:** Filtered list of articles is displayed.<br>**Failure:** Empty state message or error is displayed. |
 | **Special Requirements** | **Usability:** Filtering tabs must provide immediate visual feedback (active state). Article cards must emphasize the category tag and "Read Full Article" link. The empty filter state must clearly identify *which* category is empty. |
-| **Related Use Cases** | **Extended by:** View Article Details (NF-UC-02) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-11.png)
 
 ---
 #### NF-UC-02: View Article Details
@@ -962,7 +876,9 @@ graph TB
 | **Alternative Flows** | **AF-01: Article Not Found / 404 Modal (Step 2)**<br>1. System cannot locate the requested article (e.g., it was unpublished after selection).<br>2. System does *not* display a new page but rather a prominent **"Article Not Found" Modal Overlay** on top of the blurred current screen.<br>3. The modal displays an image icon and the message "This article has been removed or is no longer published. (Error 404)".<br>4. The modal provides a distinct red "**<- Back to News Feed**" button.<br>5. Donor clicks the button.<br>6. Modal closes, and the donor is confirmed to be on the News Feed page.<br>7. Use case ends. |
 | **Postconditions** | **Success:** Article is displayed.<br>**Failure:** 404 modal with return option is displayed. |
 | **Special Requirements** | **Usability:** The "Article Not Found" state must be presented as a centered modal overlay to provide clear feedback without full context loss. The modal must have a single, clear path back to the feed. |
-| **Related Use Cases** | **Extend:** Browse News Feed (NF-UC-01) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-12.png)
 
 ---
 #### NT-UC-01: Receive Routine Notification
@@ -979,7 +895,9 @@ graph TB
 | **Alternative Flows** | **AF-01: Donor Has Disabled Notification Type (Step 3)**<br>1. Donor has disabled the specific notification type in their preferences.<br>2. System skips notification delivery for this donor.<br>3. Use case ends.<br><br>**AF-02: Delivery Failure Fallback (Step 5)**<br>1. System detects a delivery failure for a notification (e.g., email service down).<br>2. System displays a yellow warning banner at the top of the notification list: "1 notification being resent...".<br>3. The specific notification card displays an inline red error message (e.g., "Email delivery failed — sent via push instead").<br>4. System attempts automatic redelivery in the background.<br>5. Use case continues. |
 | **Postconditions** | **Success:** Notification is delivered and displayed in the Notification Center.<br>**Failure / Fallback:** A delivery error banner and inline error text are displayed while the system retries. |
 | **Special Requirements** | **Usability:** Notifications must be visually categorized by icons to distinguish routine alerts from SOS alerts easily. |
-| **Related Use Cases** | **Extend:** Manage Notification Preferences (NT-UC-02) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-13.png)
 
 ---
 #### NT-UC-02: Manage Notification Preferences
@@ -996,7 +914,9 @@ graph TB
 | **Alternative Flows** | **AF-01: Toggle Save Failure (Step 6)**<br>1. System fails to save the updated preference due to a connection issue.<br>2. The toggle visually reverts to its previous state without changing the configuration.<br>3. Use case ends. |
 | **Postconditions** | **Success:** Notification preferences are updated immediately.<br>**Failure:** Toggle reverts, preferences unchanged. |
 | **Special Requirements** | **Usability:** Preference toggles must be integrated directly into the bottom of the Notification Center sidebar for quick access. Changes must be saved automatically upon toggle interaction. |
-| **Related Use Cases** | **Extended by:** Receive Routine Notification (NT-UC-01) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-14.png)
 
 ---
 #### SOS-UC-01: Receive SOS Emergency Alert
@@ -1013,7 +933,10 @@ graph TB
 | **Alternative Flows** | **AF-01: Alert Dispatch/Delivery Failure (Step 3)**<br>1. System encounters an error while preparing or dispatching the SOS alert (e.g., service or channel failure).<br>2. System logs the failure internally for monitoring.<br>3. No alert is delivered to the donor; use case ends without donor awareness. *(No UI artifact — failure is not surfaced to the Donor.)* |
 | **Postconditions** | **Success:** SOS alert is delivered and formatted urgently in UI.<br>**Failure:** Delivery failed. |
 | **Special Requirements** | **Usability:** In-app, SOS alerts must be visually distinct from routine notifications using red text/icons and specific terminology ("Critical SOS Alert"). |
-| **Related Use Cases** | **Extended by:** Respond to SOS Emergency Alert (SOS-UC-02)|
+| **Related Use Cases** | **Extended by:** Respond to SOS Emergency Alert (SOS-UC-02) <br> *Extension Point: "Donor Action", at Basic Flow Step 5 of SOS-UC-01; triggered when the Donor clicks on the warning notification instead of dismissing it.*|
+
+![alt text](UIPrototypePic/image-15.png)
+
 ---
 #### SOS-UC-02: Respond to SOS Emergency Alert
 
@@ -1029,9 +952,14 @@ graph TB
 | **Alternative Flows** | **AF-01: Donor Declines / Dismisses (Step 5)**<br>1. Donor clicks the **Dismiss** button.<br>2. System collapses the alert, preserving it in the list.<br>3. Use case ends.<br><br>**AF-02: Donor Ineligible Upon Final Verification (Step 6)**<br>1. System re-verification reveals the donor is actually ineligible.<br>2. System displays a dedicated **Yellow warning panel screen**.<br>3. Screen displays an alert icon with "**Not Eligible to Donate**".<br>4. System shows the specific reason (e.g., "Last donation 20/05/2026. You need to wait 36 more days.") and the "**Next eligible: 12/08/2026**" box.<br>5. A visual **Progress Bar** (e.g., 48/84 days) is shown to illustrate the waiting period.<br>6. An "**Understood**" button is provided at the bottom.<br>7. Use case ends.<br><br>**AF-03: SOS Request Already Fulfilled (Step 6)**<br>1. System detects request fulfilled.<br>2. System displays a confirmation screen with a green shield icon and heading "Emergency Request Fulfilled".<br>3. System displays body text: "Thank you! This emergency blood request has collected enough blood bags from other volunteers. Your readiness is a great motivation for the medical team."<br>4. A "Back to List" button is provided.<br>5. Use case ends.<br><br>**AF-04: Call Hospital (Step 9)**<br>1. Donor clicks the **"Call Hospital"** button.<br>2. System launches the external phone dialer application with the hospital's priority number pre-filled.<br>3. Use case continues at Step 9.<br><br>**AF-05: Get Directions (Step 9)**<br>1. Donor clicks the **"Get Directions"** button.<br>2. System launches external map application.<br>3. Use case continues at Step 9. |
 | **Postconditions** | **Success:** Response recorded, clear "Next Steps" with map/call actions are displayed.<br>**Ineligible:** Yellow warning panel with progress bar and next eligible date is displayed. |
 | **Special Requirements** | **Usability:** The response interface must provide immediate visual confirmation of the location map. The confirmation screen must prioritize the two action buttons (Directions, Call Hospital). The Ineligible state *must* include the visual progress bar and exact date. |
-| **Related Use Cases** | **Extend:** Receive SOS Emergency Alert (SOS-UC-01) |
+| **Related Use Cases** | **Extend:** Receive SOS Emergency Alert (SOS-UC-01) <br> *Extension Point: "Donor Action", at Basic Flow Step 5 of SOS-UC-01; triggered when the Donor clicks on the warning notification instead of dismissing it.* |
+
+![alt text](UIPrototypePic/image-16.png)
+
 ---
 ### 2.1.5. Donation Impact & Tracking
+
+*Author: Trịnh Khánh Linh  |  Reviewer: Trần Anh Kiệt  |  Editor: Trịnh Khánh Linh*
 #### DN-UC-01: View Donation Timeline
 
 | Field |  Content |
@@ -1046,7 +974,9 @@ graph TB
 | **Alternative Flows**                  | **AF-01: No Donation History Available (Step 3)**<br>1. System finds no donation history records. <br>2. System displays a message indicating that no donation activities are available.<br>3. Donor remains on the **Donation Timeline** tab.<br>4. Use case ends.<br><br>**AF-02: Data Retrieval Failure (Step 3)**<br>1. System fails to retrieve donation history data.<br>2. System displays an error message.<br>3. Donor clicks the **Retry** button.<br>4. If the operation succeeds, the system resumes the Basic Flow at Step **4**.<br>5. Otherwise, the donor remains on the **Donation Timeline** tab.<br>6. Use case ends.|
 | **Postconditions**| **Success:**  <br>- Donation timeline is displayed.  <br>- Donor can review their donation journey.  <br>**Failure:**  <br>- Donation timeline is not displayed.  <br>- Donor cannot access donation history information.|
 | **Special Requirements**               | **Security:** Only authenticated donors can access their donation timeline.  <br>**Performance:** Donation timeline should load within 3 seconds.  <br>**Usability:** Timeline information should be presented in a clear chronological format.  <br>**Reliability:** Timeline data must accurately reflect donor activities.|
-| **Related Use Cases**| **Extend**: Manage Profile (LL-UC-05)|
+| **Related Use Cases**| None|
+
+![alt text](UIPrototypePic/image-20.png)
 
 ---
 #### DN-UC-02: View Achievement Progress
@@ -1063,7 +993,9 @@ graph TB
 | **Alternative Flows**| **AF-01: No Achievements Earned (Step 3)**<br>1. System finds no earned achievements.<br>2. System displays a message encouraging the donor to participate in future donation activities.<br>3. Donor remains on the **Achievements** tab.<br>4. Use case ends.<br><br>**AF-02: Data Retrieval Failure (Step 3)**<br>1. System fails to retrieve achievement information.<br>2. System displays an error message.<br>3. Donor clicks the **Retry** button.<br>4. If the operation succeeds, the system resumes the Basic Flow at Step **4**.<br>5. Otherwise, the donor remains on the **Achievements** tab.<br>1. Use case ends. |
 | **Postconditions**| **Success:**  <br>- Achievement information is displayed.  <br>- Donor can review earned badges and milestones.  <br>**Failure:**  <br>- Achievement information is not displayed.|
 | **Special Requirements**| **Security:** Only authenticated donors can access their achievements.  <br>**Performance:** Achievement information should load within 3 seconds.  <br>**Usability:** Earned and locked badges should be visually distinguishable.  <br>**Reliability:** Achievement data must accurately reflect donor activities.|
-| **Related Use Cases**| **Extend**: Manage Profile (LL-UC-05)|
+| **Related Use Cases**| None|
+
+![alt text](UIPrototypePic/image-19.png)
 
 ---
 #### DN-UC-03: View Donor Level Progress
@@ -1080,10 +1012,14 @@ graph TB
 | **Alternative Flows**| **AF-01: Data Retrieval Failure (Step 3)**<br>1. System fails to retrieve donor level information.<br>2. System displays an error message.<br>3. Donor clicks the **Retry** button.<br>4. If the operation succeeds, the system resumes the Basic Flow at Step **4**.<br>5. Otherwise, the donor remains on the **Donor Level** tab.<br>6. Use case ends. |
 | **Postconditions**| **Success:**  <br>- Donor level information is displayed.  <br>- Donor can review progress toward higher levels.  <br>**Failure:**  <br>- Level information is not displayed.|
 | **Special Requirements**| **Security:** Only authenticated donors can access their level information.  <br>**Performance:** Level information should load within 3 seconds.  <br>**Usability:** Progress indicators should be easy to understand and visually appealing.  <br>**Reliability:** Experience points and levels must be calculated accurately.|
-| **Related Use Cases**| **Extend**: Manage Profile (LL-UC-05)|
+| **Related Use Cases**| None|
+
+![alt text](UIPrototypePic/image-18.png)
 
 ---
 ### 2.1.6. Community
+
+*Author: Trịnh Khánh Linh  |  Reviewer: Trần Anh Kiệt  |  Editor: Trịnh Khánh Linh*
 #### CM-UC-01: Access Facebook Fanpage
 
 | Field| Content|
@@ -1099,14 +1035,20 @@ graph TB
 | **Postconditions**| **Success:**  <br>- Donor is redirected to the official Facebook fanpage.  <br>**Failure:**  <br>- Donor cannot access the Facebook fanpage.|
 | **Special Requirements**| **Security:** The system must redirect users only to the official Facebook fanpage URL.  <br>**Performance:** Redirection should be initiated within 1 second.  <br>**Usability:** The Facebook link should be clearly visible and easy to access.  <br>**Reliability:** The configured fanpage URL must remain valid and accessible.                                                                                      |
 | **Related Use Cases**| None|
+
+![alt text](UIPrototypePic/image-17.png)
+
 ---
 ## 2.2 Blood Center Features
 
+*Author: Trần Minh Triết  |  Reviewer: Trần Anh Kiệt  |  Editor: Trần Minh Triết*
+
 ### 2.2.1 Blood Donation Campaign and Management
+
 #### BC-UC-01: Create Donation Campaign
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-01 |
 | **Use Case Name** | Create Donation Campaign |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1117,13 +1059,16 @@ graph TB
 | **Alternative Flows** | **AF-01: Missing Required Information (Step 6)**<br>1. System detects missing required fields.<br>2. System highlights the missing fields.<br>3. Staff completes the missing information.<br>4. Return to Step 5.<br>    <br>**AF-02: Staff Cancels Campaign Creation (Step 4)**<br>1. Staff clicks the **Cancel** button or presses **Esc** before saving.<br>2. System displays a confirmation dialog<br>3. Staff selects:<br>    - **Continue Editing** → Return to the campaign creation form.<br>    - **Discard Changes** → System discards all unsaved information and returns to the Campaign page.<br>4. Use case ends.<br>    <br>**AF-03: Campaign Creation Failed (Step 7)**<br>1. System is unable to create the campaign.<br>2. System displays a campaign creation failure message.<br>3. System retains the entered campaign information.<br>4. Staff may review the information and retry the operation.<br>5. Use case ends. |
 | **Postconditions** | **Success:**<br>- A new donation campaign is created.<br>- Campaign information is stored in the system.<br>- The campaign becomes available in the campaign list.<br>**Failure:**<br>- No campaign is created.<br>- No campaign information is stored. |
 | **Special Requirements** | **Security:**<br>- Only authorized staff can create campaigns.<br>- All campaign creation activities must be logged.<br>**Performance:**<br>- Campaign creation should be completed within 3 seconds.<br>- Validation results should be displayed immediately.<br>**Usability:**<br>- Required fields must be clearly indicated.<br>- Validation messages should be easy to understand.<br>**Reliability:**<br>- Campaign information must not be partially saved if an error occurs. |
-| **Related Use Cases** | **Extend:** View Donation Campaign List (BC-UC-02) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-21.png)
 
 ---
+
 #### BC-UC-02: View Donation Campaign List
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-02 |
 | **Use Case Name** | View Donation Campaign List |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1134,13 +1079,16 @@ graph TB
 | **Alternative Flows** | **AF-01: No Campaign Available (Step 2)**<br>1. System finds no campaign records.<br>2. System displays an empty campaign list message.<br>3. Staff may create a new campaign.<br>4. Use case ends.<br><br>**AF-02: Sort Campaign List (Step 4)**<br>1. Staff selects a sorting option such as campaign date, location, or status.<br>2. System sorts the campaign list accordingly.<br>3. System displays the updated campaign list.<br>4. Return to Step 4.<br><br>**AF-03: Access Campaign Details (Step 4)**<br>1. Staff selects a campaign from the list.<br>2. System opens the selected campaign details page.<br>3. Use case continues in **"Use-case: View/Edit Donation Campaign Details"**. |
 | **Postconditions** | **Success:**<br>- Campaign list is displayed.<br>- Staff can view campaign information.<br>- Staff may proceed to campaign details.<br>**Failure:**<br>- Campaign information is not displayed.<br>- Staff cannot access campaign data. |
 | **Special Requirements** | **Security:** Only authorized staff can view campaign information. Access to campaign data must be logged.<br>**Performance:** Campaign list should load within 3 seconds. Pagination should be supported for large datasets.<br>**Usability:** Campaign information should be displayed clearly. Search and filtering options should be available.<br>**Reliability:** Campaign data must be retrieved accurately. |
-| **Related Use Cases** | **Extended by:** View/Edit Donation Campaign Details (BC-UC-03)<br>**Extended by:** Create Donation Campaign (BC-UC-01) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-22.png)
 
 ---
+
 #### BC-UC-03: View/Edit Donation Campaign Details
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-03 |
 | **Use Case Name** | View/Edit Donation Campaign Details |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1151,13 +1099,16 @@ graph TB
 | **Alternative Flows** | **AF-01: Campaign Detailed Not Found (Step 2)**<br>1. System cannot locate the selected campaign.<br>2. System displays an error message.<br>3. Staff returns to the campaign list or reload detail by clicking the **Retry button**.<br>4. Use case ends.<br><br>**AF-02: Access Registration List (Step 3)**<br>1. Staff click the 'Registration List' button<br>2. Use case continue with **Use-case: View Donor Registration List**<br><br>**AF-03: Staff Cancels Editing (Step 6)**<br>1. Staff clicks the **Cancel** button or presses **Esc** before saving.<br>2. System displays a confirmation dialog<br>3. Staff selects:<br>    - **Continue Editing** → Return to **Step 5**.<br>    - **Discard Changes** → System discards all unsaved information and returns to **Step 3**.<br>4. Use case ends.<br><br>**AF-04: Update Failure (Step 9)**<br>1. System fails to save campaign changes.<br>2. System displays an error message.<br>3. No changes are saved.<br>4. Use case ends. |
 | **Postconditions** | **Success:**<br>- Campaign details are displayed.<br>- Campaign information is updated successfully.<br>- Changes are stored in the system.<br>**Failure:**<br>- Campaign information remains unchanged.<br>- No update is stored. |
 | **Special Requirements** | **Security:** Only authorized staff can edit campaign information. All campaign modifications must be logged.<br>**Performance:** Campaign details should load within 3 seconds. Updates should be processed within 3 seconds.<br>**Usability:** Campaign information should be easy to read. Validation errors should clearly identify affected fields.<br>**Reliability:** Campaign information must remain consistent after updates. |
-| **Related Use Cases** | **Extend:** View Donation Campaign List (BC-UC-02)<br>**Extended by:** View Donor Registration List (BC-UC-04) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-23.png)
 
 ---
+
 #### BC-UC-04: View Donor Registration List
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-04 |
 | **Use Case Name** | View Donor Registration List |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1168,13 +1119,16 @@ graph TB
 | **Alternative Flows** | **AF-01: No Registration Records (Step 4)**<br>1. System finds no registration records for the selected campaign.<br>2. System displays an empty list message.<br>3. Staff remains on the registration list page.<br>4. Use case ends.<br><br>**AF-02: Search Donor Registration (Step 1)**<br>1. Staff use Search bar or Filter<br>2. Use case continue with **Use-case: Search Donor Registration**<br><br>**AF-03: Open Registration Details (Step 6)**<br>1. Staff selects a registration record from the list.<br>2. System opens the registration details page.<br>3. Use case continues in **"Use-case: View/Edit Donor Registration Details"**.<br><br>**AF-04: Access QR Code Scan & Verification (Step 6)**<br>1. Staff clicks the **QR SCAN** button.<br>2. System opens the **QR Code Scan & Verification** page.<br>3. Use case continues in **"Use-case: QR Code Scan & Verification"**. |
 | **Postconditions** | **Success:**<br>- Registration records are displayed.<br>- Staff can access donor registration details.<br>- Staff can search registration records.<br>**Failure:**<br>- Registration records are not displayed.<br>- Staff cannot access registration information. |
 | **Special Requirements** | **Security:** Only authorized staff can access donor registration information. All access activities must be logged.<br>**Performance:** Registration list should load within 3 seconds. Pagination should be supported for large datasets.<br>**Usability:** Registration information should be easy to read. Sorting and filtering should be available.<br>**Reliability:** Registration data must be displayed accurately. |
-| **Related Use Cases** | **Extend:** View/Edit Donation Campaign Details (BC-UC-03)  <br>**Extended by:** Search Donor Registration (BC-UC-06) <br>**Extended by:** View/Edit Donor Registration Details (BC-UC-05)<br>**Extended by:** QR Code Scan & Verification (BC-UC-07) |
+| **Related Use Cases** | **Extended by:** Search Donor Registration (BC-UC-06)<br>*Extension Point: "Search" — inserted after Step 1, activated when staff enters a keyword or selects a filter.* |
+
+![alt text](UIPrototypePic/image-24.png)
 
 ---
+
 #### BC-UC-05: View/Edit Donor Registration Details
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-05 |
 | **Use Case Name** | View/Edit Donor Registration Details |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1185,13 +1139,16 @@ graph TB
 | **Alternative Flows** | **AF-01: Registration Record Not Found (Step 2)**<br>1. System cannot locate the registration record.<br>2. System displays an error message.<br>3. Staff returns to the previous page.<br>4. Use case ends.<br><br>**AF-02: Staff Cancels Editing (Step 4)**<br>1. Staff clicks the **Cancel** button or presses **Esc** before saving.<br>2. System displays a confirmation dialog<br>3. Staff selects:<br>    - **Continue Editing** → Return to **Step 5**.<br>    - **Discard Changes** → System discards all unsaved information and returns to **Step 4**.<br>4. Use case ends.<br><br>**AF-03: Update Failure (Step 9)**<br>1. System fails to save campaign changes.<br>2. System displays an error message.<br>3. No changes are saved.<br>4. Use case ends.<br> |
 | **Postconditions** | **Success:**<br>- Donor registration details are displayed.<br>- Screening information is recorded.<br>- Donor status is updated successfully.<br>**Failure:**<br>- Registration information remains unchanged.<br>- No updates are stored. |
 | **Special Requirements** | **Security:** Only authorized staff can access donor medical screening information. All modifications must be logged for auditing purposes.**Performance:** Registration details should load within 3 seconds. Updates should be saved within 3 seconds.<br>**Usability:** Screening fields should be clearly labeled. Status selection should use predefined options.<br>**Reliability:** Registration and screening information must remain consistent after updates. |
-| **Related Use Cases** | **Extend:** View Donor Registration List (BC-UC-04)<br>**Included by:** QR Code Scan & Verification (BC-UC-07) <br> **Extend**: Search Donor Registration (BC-UC-06)|
+| **Related Use Cases** | **Included by:** QR Code Scan & Verification (BC-UC-07) |
+
+![alt text](UIPrototypePic/image-25.png)
 
 ---
+
 #### BC-UC-06: Search Donor Registration
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-06 |
 | **Use Case Name** | Search Donor Registration |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1202,31 +1159,38 @@ graph TB
 | **Alternative Flows** | **AF-01: No Matching Results (Step 6)**<br>1. System finds no matching registration records.<br>2. System displays a "No matching records found" message.<br>3. Staff may enter a different search keyword.<br>4. Return to Step 2. |
 | **Postconditions** | **Success:**<br>- Matching registration records are displayed.<br>- Staff can locate a donor registration record quickly.<br>- Staff may access donor registration details.<br>**Failure:**<br>- Search results are not displayed.<br>- Registration records cannot be retrieved. |
 | **Special Requirements** | **Security:** Search access must follow staff authorization rules. Search activities must be logged.<br>**Performance:** Search suggestions should appear within 1 second. Search results should be returned within 2 seconds.<br>**Usability:** The search bar should support auto-suggestion by registration ID. Search results should update clearly and be easy to navigate.<br>**Reliability:** Search results and suggestions must accurately reflect stored registration data. |
-| **Related Use Cases** | **Extend:** View Donor Registration List (BC-UC-04) <br> **Extended by**: View/Edit Donor Registration Details (BC-UC-05) |
+| **Related Use Cases** | **Extend:** View Donor Registration List (BC-UC-04)<br>*Extension Point: "Search" — inserted after Step 1 of BC-UC-04, activated when staff enters a keyword or selects a filter.* |
+
+![alt text](UIPrototypePic/image-26.png)
 
 ---
+
 #### BC-UC-07: QR Code Scan & Verification
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-07 |
 | **Use Case Name** | QR Code Scan & Verification |
 | **Primary Actor(s)** | Blood Center Staff |
 | **Description** | Allows blood center staff to verify donor registrations by scanning the QR code on a donor's registration ticket and retrieving the associated registration record. |
 | **Preconditions** | 1. Staff is authenticated and logged into the system.<br>2. Staff has permission to access donor registration information.<br>3. QR scanning service is available.<br>4. The donor possesses a valid QR code. |
 | **Trigger** | Staff scans a donor QR code on the QR Verification page. |
-| **Basic Flow (Main Success Scenario)** | **1.** Staff clicks the QR Verification button in Registration List page.<br>**2.** System activates the QR scanner.<br>**3.** Staff scans the donor QR code.<br>**4.** System decodes the QR code.<br>**5.** System validates the QR code information.<br>**6.** System retrieves the corresponding donor registration record.<br>**7.** System opens the donor registration record.<br>**8.** Use case ends successfully. |
+| **Basic Flow (Main Success Scenario)** | 1. Staff clicks the QR Verification button in the Registration List page (**Use-case: View Donor Registration List**).<br>**2.** System activates the QR scanner.<br>**3.** Staff scans the donor QR code.<br>**4.** System decodes the QR code.<br>**5.** System validates the QR code information.<br>**6.** System retrieves the corresponding donor registration record.<br>**7.** System opens the donor registration record.<br>**8.** Use case ends successfully. |
 | **Alternative Flows** | **AF-01: Invalid QR Code (Step 4)**<br>1. System cannot decode the QR code.<br>2. System displays an invalid QR code message.<br>3. Staff may scan again by **Retry** button.<br>4. Return to Step 3.<br><br>**AF-02: Registration Record Not Found (Step 6)**<br>1. System cannot find a matching registration record.<br>2. System displays an error message.<br>3. Staff may scan another QR code.<br>4. Use case ends.<br><br>**AF-03: Scanner Service Failure (Step 2)**<br>1. System fails to activate the scanner.<br>2. System displays an error message.<br>3. Staff may retry the operation by **Retry** button.<br>4. Use case ends. |
 | **Postconditions** | **Success:**<br>- The donor registration record is retrieved.<br>- The registration record is opened for staff review.<br>**Failure:**<br>- No registration record is retrieved.<br>- Verification is not completed. |
 | **Special Requirements** | **Security:** Only authorized staff can perform QR verification. All verification activities must be logged.<br>**Performance:** QR decoding and record retrieval should be completed within 3 seconds.<br>**Usability:** The scanner interface should provide clear scanning instructions and feedback messages.<br>**Reliability:** QR code validation and record retrieval must be accurate and consistent. |
-| **Related Use Cases** | **Extend:** View Donor Registration List (BC-UC-04)<br>**Include:** View/Edit Donor Registration Details (BC-UC-05) |
+| **Related Use Cases** | **Include:** View/Edit Donor Registration Details (BC-UC-05) |
+
+![alt text](UIPrototypePic/image-27.png)
 
 ---
+
 ### 2.2.2 Communication and User Engagement Management
+
 #### BC-UC-08: Create and Publish Article
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-08 |
 | **Use Case Name** | Create Article |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1237,13 +1201,16 @@ graph TB
 | **Alternative Flows** | **AF-01: Missing Required Information (Step 6)**<br>1. System detects missing required fields.<br>2. System highlights the missing fields.<br>3. Staff completes the information.<br>4. Return to Step 5.<br><br>**AF-02: Save Article as Draft (Step 5)**<br>1. Staff clicks the **Draft** button instead of **Published**.<br>2. System validates the entered information.<br>3. System saves the article with Draft status.<br>4. System displays a success message.<br>5. Use case ends.<br><br>**AF-03: Staff Cancels Article Creation (Step 4)**<br>1. Staff clicks the **Cancel** button or presses **Esc** before saving.<br>2. System displays a confirmation dialog<br>3. Staff selects:<br>    - **Continue Editing** → Return to the article creation form.<br>    - **Discard Changes** → System discards all unsaved information and returns to **Step 1**.<br>4. Use case ends.<br><br>**AF-04: Publishing Failure (Step 7)**<br>1. System fails to publish the article.<br>2. System displays an error message.<br>3. Staff may retry the operation.<br>4. Use case ends. |
 | **Postconditions** | **Success:**<br>- A new article is created.<br>- The article is published and visible to users.<br>**Failure:**<br>- No article is published.<br>- Article information is not saved. |
 | **Special Requirements** | **Security:** Only authorized staff can publish content. All publishing activities must be logged.<br>**Performance:** Publishing should complete within 3 seconds.<br>**Usability:** Rich-text editing should be supported. Required fields should be clearly indicated.<br>**Reliability:** Published content must be stored accurately. |
-| **Related Use Cases** | **Extend**: View/Edit Article (BC-UC-09) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-28.png)
 
 ---
+
 #### BC-UC-09: View/Edit Article
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-09 |
 | **Use Case Name** | View/Edit Article |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1254,13 +1221,16 @@ graph TB
 | **Alternative Flows** | **AF-01: Article Not Found (Step 4)**<br>1. System cannot retrieve the selected article.<br>2. System displays an error message.<br>3. Staff returns to the article list.<br>4. Use case ends.<br><br>**AF-02: Staff Cancels Editing (Step 8)**<br>1. Staff clicks the Cancel button before saving changes.<br>2. System discards all unsaved modifications.<br>3. System displays the original article content.<br>4. Use case ends.<br><br>**AF-03: Update Failure (Step 11)**<br>1. System fails to save the article changes.<br>2. System displays an error message.<br>3. No changes are saved.<br>4. Use case ends. |
 | **Postconditions** | **Success:**<br>- Article details are displayed.<br>- Updated content is saved successfully.<br>**Failure:**<br>- No changes are saved.<br>- Article information remains unchanged. |
 | **Special Requirements** | **Security:** Only authorized staff can modify articles. All modifications must be logged.<br>**Performance:** Article details should load within 3 seconds.<br>**Usability:** Editing tools should be intuitive and easy to use.**Reliability:** Article content must remain consistent after updates. |
-| **Related Use Cases** | **Extended by**: Create and Publish Article (BC-UC-08) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-29.png)
 
 ---
+
 #### BC-UC-10: View Notification List
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-10 |
 | **Use Case Name** | View Notification List |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1271,13 +1241,16 @@ graph TB
 | **Alternative Flows** | **AF-01: No Notifications Available (Step 2)**<br>1. System finds no notifications.<br>2. System displays an empty notification list message.<br>3. Staff remains on the Notification page.<br>4. Use case ends.<br>**AF-02: Filter Notifications (Step 5)**<br>1. Staff filters notifications by type (Normal or SOS) or status.<br>2. System displays matching notifications.<br>3. Staff reviews the filtered list.<br>4. Return to Step 5.<br>**AF-03: Open Notification Details (Step 6)**<br>1. Staff selects a notification.<br>2. System opens the selected notification.<br>3. Use case continues in **Use-case: View Notification Details**.<br>**AF-04: Remove Notification (Step 4)**<br>1. Staff clicks the **Remove** button.<br>2. System displays a confirmation dialog.<br>3. Staff confirms the removal.<br>4. System removes the notification from the notification list.<br>5. System returns to the Notification List.<br>6. Use case ends. |
 | **Postconditions** | **Success:**<br>- Notification list is displayed.<br>- Staff can access notification details.<br>**Failure:**<br>- Notifications are not displayed.<br>- Staff cannot access notification information. |
 | **Special Requirements** | **Security:** Only authorized staff can access received notifications.<br>**Performance:** Notification list should load within 3 seconds.<br>**Usability:** SOS notifications should be visually distinguishable from normal notifications.<br>**Reliability:** Notifications must be displayed accurately and in chronological order. |
-| **Related Use Cases** | **Extended by:** View Notification Details (BC-UC-11) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-30.png)
 
 ---
+
 #### BC-UC-11: View Notification Details
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-11 |
 | **Use Case Name** | View Notification Details |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1288,14 +1261,18 @@ graph TB
 | **Alternative Flows** | **AF-01: Notification Not Found (Step 2)**<br>1. System cannot locate the selected notification.<br>2. System displays an error message.<br>3. Staff returns to the notification list.<br>4. Use case ends. |
 | **Postconditions** | **Success:**<br>- Notification details are displayed.<br>- Notification is marked as read.<br>- Staff can access related request information.<br>**Failure:**<br>- Notification details are not displayed.<br>- Notification status remains unchanged. |
 | **Special Requirements** | **Security:** Only authorized staff can access notification details.<br>**Performance:** Notification details should load within 3 seconds.<br>**Usability:** SOS notifications should clearly highlight emergency information and required blood types.<br>**Reliability:** Notification information must be displayed accurately and completely. |
-| **Related Use Cases** | **Extend:** View Notification List (BC-UC-10) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-31.png)
 
 ---
+
 ### 2.2.3 Blood Inventory and Emergency Coordination Management
+
 #### BC-UC-12: View Blood Inventory
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-12 |
 | **Use Case Name** | View Blood Inventory |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1306,13 +1283,16 @@ graph TB
 | **Alternative Flows** | **AF-01: Access Blood Inventory Statistics (Step 6)**<br>1. Staff clicks the **Statistics** button.<br>2. System opens the **Blood Inventory Statistics** page.<br>3. Use case continues in **"Use Case: View Blood Inventory Statistics"**.<br><br>**AF-02: Access Search Blood Bag (Step 6)**<br>1. Staff enters search criteria or clicks the **Search** function.<br>2. System performs the search and displays the matching blood bags.<br>3. Use case continues in **"Use Case: Search Blood Bag"**.<br><br>**AF-03: Access View/Edit Blood Bag Status (Step 6)**<br>1. Staff selects a blood bag from the inventory list.<br>2. System opens the **Blood Bag Details** page.<br>3. Use case continues in **"Use Case: View/Edit Blood Bag Status"**.<br><br>**AF-04: Access Stock In (Step 6)**<br>1. Staff clicks the **Stock In** button.<br>2. System opens the **Stock In** page.<br>3. Use case continues in **"Use Case: Stock In"**.<br><br>**AF-05: Access Stock Out (Step 6)**<br>1. Staff clicks the **Stock Out** button.<br>2. System opens the **Stock Out** page.<br>3. Use case continues in **"Use Case: Stock Out"**.nds.<br><br>**AF-06: No Inventory Data Available (Step 4)**<br>1. System finds no blood inventory records.<br>2. System displays the message **"No inventory data available."**<br>3. Use case ends. |
 | **Postconditions** | **Success:**<br>- Inventory page is displayed successfully with the latest inventory information.<br>**Failure:**<br>- Inventory page cannot be displayed. |
 | **Special Requirements** | **Security:**<br>- Only authorized staff can access inventory management.<br>**Performance:**<br>- Inventory data must load within 3 seconds.<br>**Usability:**<br>- Blood bag information must be clearly presented in a searchable and readable table.<br>**Reliability:**<br>- Displayed inventory information must accurately reflect the latest inventory data. |
-| **Related Use Cases** | **Extended by:** View Blood Inventory Statistics (BC-UC-17)<br>**Extended by:** Search Blood Bag (BC-UC-13)<br>**Extended by:** View/Edit Blood Bag Status (BC-UC-14)<br>**Extended by:** Stock In (BC-UC-15)<br>**Extended by:** Stock Out (BC-UC-16) |
+| **Related Use Cases** | **Extended by:** Search Blood Bag (BC-UC-13)<br>*Extension Point: "Search" — inserted after Step 6, activated when staff enters a keyword or selects a filter.* |
+
+![alt text](UIPrototypePic/image-32.png)
 
 ---
+
 #### BC-UC-13: Search Blood Bag
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-13 |
 | **Use Case Name** | Search Blood Bag |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1323,13 +1303,16 @@ graph TB
 | **Alternative Flows** | **AF-01: No Results Found (Step 5)**<br>1. System finds no blood bags matching the criteria.<br>2. System displays a message: "No matching blood bags found."<br>3. Staff may adjust the search criteria and return to Step 3, or the use case ends.<br><br>**AF-02: Staff Cancels Search (Step 3)**<br>1. Staff clicks the clear icon before searching.<br>2. System clears the entered criteria.<br>3. System returns to the default inventory list view.<br>4. Use case ends. |
 | **Postconditions** | **Success:**<br>- The list of blood bags matching the search criteria is displayed.<br>**Failure:**<br>- No results are returned, or a search error is displayed. |
 | **Special Requirements** | **Security:**<br>- Only authorized staff can search detailed blood bag data.<br>**Performance:**<br>- Search results must be returned within 2 seconds.<br>**Usability:**<br>- The system should support real-time filtering and keyword suggestions.<br>- Search filters must be clearly labeled and easy to combine.<br>**Reliability:**<br>- Search results must accurately reflect the current state of the inventory. |
-| **Related Use Cases** | **Extend:** View Blood Inventory (BC-UC-12) <br> **Extended by**: Stock Out (BC-UC-16) |
+| **Related Use Cases** | **Extend:** View Blood Inventory (BC-UC-12)<br>*Extension Point: "Search" — inserted after Step 6 of BC-UC-12, activated when staff enters a keyword or selects a filter.*<br><br>**Extend:** Stock Out (BC-UC-16)<br>*Extension Point: "Search" — inserted after Step 3 of BC-UC-16, activated when staff enters a keyword or selects filter criteria to narrow down the blood bag list before selection.* |
+
+![alt text](UIPrototypePic/image-33.png)
 
 ---
+
 #### BC-UC-14: View/Edit Blood Bag Status
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-14 |
 | **Use Case Name** | View/Edit Blood Bag Status |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1340,13 +1323,15 @@ graph TB
 | **Alternative Flows** | **AF-01: Blood Bag Not Found (Step 2)**<br>1. System cannot locate the selected blood bag.<br>2. System displays an error message.<br>3. Use case ends.<br><br>**AF-02: Blood Bag Has Expired (Step 5)**<br>1. Staff clicks the **Edit Status** button.<br>2. System detects that the blood bag status is **Expired**.<br>3. System displays a notification: **"The status of an expired blood bag cannot be changed."**<br>4. System keeps the blood bag details in view-only mode.<br>5. Use case ends.<br><br>**AF-03: Staff Cancels Status Update (Step 7)**<br>1. Staff clicks the **Esc** button or **Cancel** button before saving.<br>2. System displays a confirmation dialog asking whether to discard the unsaved status change.<br>3. Staff confirms the cancellation.<br>4. System discards the selected status change.<br>5. System returns to the blood bag detail page.<br>6. Use case ends.<br><br>**AF-04: System Error on Save (Step 10)**<br>1. System fails to update the blood bag status.<br>2. System displays an error message.<br>3. No changes are saved.<br>4. Use case ends. |
 | **Postconditions** | **Success:**<br>- The blood bag information is displayed.<br>- If updated, the new blood bag status is saved successfully.<br>- The status change is recorded in the audit log.<br>**Failure:**<br>- The blood bag status remains unchanged. |
 | **Special Requirements** | **Security:**<br>- Only authorized staff can update blood bag status.<br>- All status changes must be logged with the staff identity, previous status, new status, and timestamp.<br>**Performance:**<br>- Blood bag details should be displayed within 2 seconds.<br>- Status updates should be completed within 2 seconds.<br>**Usability:**<br>- Blood bag information must be displayed in a clear, read-only format.- Only valid status transitions should be selectable.<br>- Status history should be displayed in chronological order.<br>**Reliability:**- The status must not be partially updated if an error occurs. |
-| **Related Use Cases** | **Extend:** View Blood Inventory (BC-UC-12) |
+| **Related Use Cases** | None |
 
+![alt text](UIPrototypePic/image-34.png)
 ---
+
 #### BC-UC-15: Stock In
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-15 |
 | **Use Case Name** | Stock In |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1357,30 +1342,36 @@ graph TB
 | **Alternative Flows** | **AF-01: Missing Required Information (Step 7)**<br>1. System detects that one or more required fields are missing in one or more blood bag entries.<br>2. System highlights the affected fields and displays validation messages.<br>3. Staff completes the required information.<br>4. Return to Step 6.<br><br>**AF-02: Invalid Blood Bag Information (Step 7)**<br>1. System detects invalid information in one or more blood bag entries (e.g., negative volume or expiry date earlier than the collection date).<br>2. System displays validation error messages for the affected entries.<br>3. Staff corrects the information.<br>4. Return to Step 6.<br><br>**AF-03: Staff Cancels Stock In (Step 6)**<br>1. Staff clicks the **Cancel** button or presses the **Esc** key before submitting.<br>2. System displays a confirmation dialog asking whether to discard all unsaved blood bag entries.<br>3. Staff confirms the cancellation.<br>4. System discards all unsaved information.<br>5. System returns to the Inventory page.<br>6. Use case ends. |
 | **Postconditions** | **Success:**<br>- A new blood bag is successfully added to the inventory.<br>- A unique Blood Bag ID is generated.<br>- The blood bag status is automatically set to <br>**Available**.**Failure:**<br>- No blood bag is added to the inventory. |
 | **Special Requirements** | **Security:**<br>- Only authorized staff can perform stock-in operations.<br>- All stock-in activities must be logged.<br>**Performance:**<br>- A stock-in operation should be completed within 3 seconds.<br>**Usability:**<br>- Required fields must be clearly indicated.<br>- Blood Bag ID and initial status are generated automatically and displayed after successful stock-in.<br>- Validation messages should be clear and easy to understand.<br>**Reliability:**<br>- Each Blood Bag ID must be unique.<br>- The blood bag record must not be partially saved if an error occurs. |
-| **Related Use Cases** | **Extend:** View Blood Inventory (BC-UC-12) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-35.png)
 
 ---
+
 #### BC-UC-16: Stock Out
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-16 |
 | **Use Case Name** | Stock Out |
 | **Primary Actor(s)** | Blood Center Staff |
 | **Description** | Allows blood center staff to remove one or more blood bags from the inventory by selecting them from the inventory list. Staff specifies the stock-out reason, and the system updates the inventory records. |
 | **Preconditions** | 1. Staff is authenticated and logged into the system.<br>2. Staff has permission to perform stock-out operations.<br>3. The blood bag(s) to be removed exist in the inventory and have a valid status for stock-out (e.g., "Available"). |
 | **Trigger** | Staff clicks the **Stock Out** button on the Inventory page. |
-| **Basic Flow (Main Success Scenario)** | **1.** Staff opens the Inventory page.  <br>**2.** Staff clicks the **Stock Out** button.  <br>**3.** System displays the list of blood bags eligible for stock-out.  <br>**4.** Staff searches and/or filters the blood bag list by blood bag ID, blood type, collection date, expiry date, donor source, or storage location.  <br>**5.** System updates the displayed blood bag list according to the search keyword and selected filters.  <br>**6.** Staff selects one or more blood bags from the list.  <br>**7.** Staff enters the stock-out reason (e.g., Dispatch, Disposal, Transfer) and any required additional information.  <br>**8.** Staff clicks the **Confirm Stock Out** button.  <br>**9.** System validates the selected blood bags and the entered information.  <br>**10.** System updates the selected blood bags' status and removes them from the available inventory.  <br>**11.** System records the stock-out transaction in the audit log.  <br>**12.** System displays a success message.  <br>**13.** System returns to the Inventory page with the updated inventory list. <br>**14.** Use case ends successfully. |
-| **Alternative Flows** | **AF-01: Missing Required Information (Step 7)**<br>1. System detects a missing stock-out reason or recipient information.<br>2. System highlights the missing fields.<br>3. Staff completes the missing information.<br>4. Return to Step 6.<br><br>**AF-02: Staff Cancels Stock-Out (Step 5)**<br>1. Staff clicks the 'esc' button before confirming.<br>2. System discards the unsaved information.<br>3. System returns to the Inventory page.<br>4. Use case ends.<br><br>**AF-03: Search/Filter Blood Bags (Step 4)**<br>1. Staff enters a blood bag ID or selects one or more filter criteria.<br>2. Use case continues in **"Use-case: Search/Filter Blood Bag"**.<br>3. Upon completion, the system returns to the Stock Out page with the matching blood bags displayed.<br>4. Return to Step 5. |
+| **Basic Flow (Main Success Scenario)** | **1.** Staff opens the Inventory page.  <br>**2.** Staff clicks the **Stock Out** button.  <br>**3.** System displays the list of blood bags eligible for stock-out.  <br>**4.** Staff selects one or more blood bags from the list.  <br>**5.** Staff enters the stock-out reason (e.g., Dispatch, Disposal, Transfer) and any required additional information.  <br>**6.** Staff clicks the **Confirm Stock Out** button.  <br>**7.** System validates the selected blood bags and the entered information.  <br>**8.** System updates the selected blood bags' status and removes them from the available inventory.  <br>**9.** System records the stock-out transaction in the audit log.  <br>**10.** System displays a success message.  <br>**11.** System returns to the Inventory page with the updated inventory list.  **12.** Use case ends successfully. |
+| **Alternative Flows** | **AF-01: Missing Required Information (Step 7)**<br>1. System detects a missing stock-out reason or recipient information.<br>2. System highlights the missing fields.<br>3. Staff completes the missing information.<br>4. Return to Step 6.<br><br>**AF-02: Staff Cancels Stock-Out (Step 5)**<br>1. Staff clicks the 'esc' button before confirming.<br>2. System discards the unsaved information.<br>3. System returns to the Inventory page.<br>4. Use case ends. |
 | **Postconditions** | **Success:**<br>- The blood bag(s) are successfully removed from inventory.<br>- The blood bag status and inventory count are updated.<br>- The stock-out transaction is logged.<br>**Failure:**<br>- No blood bags are removed from inventory. |
 | **Special Requirements** | **Security:**<br>- Only authorized staff can perform stock-out operations.<br>- All stock-out transactions must be fully logged (staff identity, timestamp, reason).<br>**Performance:**<br>- A stock-out operation must be completed within 3 seconds.<br>**Usability:**<br>- The FEFO suggestion list should be clearly presented to minimize manual selection effort.<br>- Ineligible blood bags should be visually distinguished or excluded from selection.<br>**Reliability:**<br>- The inventory count must remain consistent and must not be partially updated if an error occurs. |
-| **Related Use Cases** | **Extend:** View Blood Inventory (BC-UC-12) <br> **Extend**: Search Blood Bag (BC-UC-13) |
+| **Related Use Cases** | **Extended by:** Search Blood Bag (BC-UC-13)  <br>*Extension Point: "Search" — inserted after Step 3, activated when staff enters a keyword or selects filter criteria to narrow down the blood bag list before selection.* |
+
+![alt text](UIPrototypePic/image-36.png)
 
 ---
+
 #### BC-UC-17: View Blood Inventory Statistics
 
 | Field | Content |
-| ---- | ---- |
+| --- | --- |
 | **Use Case ID** | BC-UC-17 |
 | **Use Case Name** | View Blood Inventory Statistics |
 | **Primary Actor(s)** | Blood Center Staff |
@@ -1391,10 +1382,14 @@ graph TB
 | **Alternative Flows** | **AF-01: Low Stock Warning Detected (Step 8)**<br>1. System detects one or more blood types below the configured safety threshold.<br>2. System highlights the affected blood type(s) with a visual warning indicator.<br>3. Return to Step 9.<br><br>**AF-02: Near-Expiry Warning (Step 8)**<br>1. System detects blood units approaching their expiry date.<br>2. System displays a visual warning indicating the number of near-expiry blood units.<br>3. Return to Step 9.<br><br>**AF-03: Change Chart Display Mode (Step 9)**<br>1. Staff selects a different chart display mode (Units, Volume, or Near Expiry).<br>2. System updates the chart according to the selected mode.<br>3. System preserves the current inventory statistics and summary information.<br>4. Staff reviews the updated chart.<br>5. Return to Step 9. |
 | **Postconditions** | **Success:**<br>- Staff successfully views accurate and up-to-date inventory statistics.<br><br>**Failure:**<br>- No statistical data is displayed. |
 | **Special Requirements** | **Security:**<br>- Only authorized staff can view inventory statistics.<br>**Performance:**<br>- Statistical data must load within 3 seconds.<br>**Usability:**<br>- Data must be presented through clear, easy-to-read charts and tables.<br>- Warning indicators (low stock and near-expiry) must be visually distinguishable at a glance.<br>**Reliability:**<br>- Statistics must accurately reflect the actual inventory data at the time of query. |
-| **Related Use Cases** | **Extend:** View Blood Inventory (BC-UC-12) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-37.png)
+
 ---
 ## 2.3 Hospital Features
 
+*Author: Nguyễn Quốc Dương  |  Reviewer: Trần Anh Kiệt  |  Editor: Nguyễn Quốc Dương*
 ### 2.3.1 Emergency Blood SOS Request Management
 #### HS-UC-01: Create SOS Request
 
@@ -1409,7 +1404,9 @@ graph TB
 | **Alternative Flows** | **AF-1 Missing Required Information (Step 8)**<br>1. The system detects missing required fields.<br>2. The system highlights the missing fields and displays validation messages.<br>3. Hospital Staff completes the required information.<br>4. Resume at Step 7.<br><br>**AF-2 Invalid Input Data (Step 8)**<br>1. The system detects invalid values.<br>2. The system displays validation error messages.<br>3. Hospital Staff updates the invalid information.<br>4. Resume at Step 7.<br><br>**AF-3 User Cancels Operation (Step 5-7)**<br>1. Hospital Staff clicks Cancel or closes the form.<br>2. The system asks for confirmation if unsaved changes exist.<br>3. Hospital Staff confirms the cancellation.<br>4. The system discards unsaved information.<br>5. The system returns to the SOS Request List.<br>6. The use case ends.<br><br>**AF-4 System Failure**<br>1. The system encounters an unexpected error.<br>2. The system displays an error message.<br>3. No SOS request is created.<br>4. The use case ends. |
 | **Postconditions** | **Success:**  <br>• SOS request is successfully stored.  <br>• A unique Request ID is generated.  <br>• Request status is set to Pending.  <br>  <br>**Failure:**  <br>• No SOS request is created. |
 | **Special Requirements** | • SOS request submission shall be processed within 5 seconds (NFR-P-01).  <br>• All SOS request activities shall be logged for auditing purposes (NFR-S-04).  <br>• Emergency request records shall not be lost due to system failures (NFR-R-04).  <br>• The interface shall support desktop, tablet, and mobile devices (NFR-U-01).  <br>• Communication shall be secured using HTTPS/TLS encryption (NFR-S-01). |
-| **Related Use Cases** | **Include:** Evaluate & Prioritize SOS Request (SYS-UC-04)<br>**Extended by:** Monitor SOS Request (HS-UC-02) |
+| **Related Use Cases** | **Include:** Evaluate & Prioritize SOS Request (SYS-UC-04) |
+
+![alt text](UIPrototypePic/image-39.png)
 
 ---
 #### HS-UC-02: Monitor SOS Request
@@ -1425,7 +1422,9 @@ graph TB
 | **Alternative Flows** | **AF-1 No Active Requests (Step 2)**<br>1. The system finds no active SOS requests.<br>2. The system displays an informational message.<br>3. Hospital Staff remains on the SOS Request List.<br>4. The use case ends.<br><br>**AF-2 Data Retrieval Failure (Step 5)**<br>1. The system cannot retrieve request information.<br>2. The system displays an error message.<br>3. Hospital Staff clicks Retry.<br>4. If retrieval succeeds, resume at Step 5.<br>5. Otherwise, the use case ends. |
 | **Postconditions** | • No data is modified.  <br>• Hospital Staff obtains updated SOS request information. |
 | **Special Requirements** | • User-facing pages shall load within 3 seconds for 95% of requests (NFR-P-05).  <br>• User sessions shall expire after 30 minutes of inactivity (NFR-S-05).  <br>• The interface shall support desktop, tablet, and mobile devices (NFR-U-01).  <br>• The system shall support Chrome, Edge, Firefox, and Safari (NFR-U-04). |
-| **Related Use Cases** | **Extend:** Create SOS Request (HS-UC-01)<br>**Extended by:** View SOS Reports (HS-UC-03) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-38.png)
 
 ---
 #### HS-UC-03: View SOS Reports
@@ -1441,10 +1440,14 @@ graph TB
 | **Alternative Flows** | **AF-1 No Matching Data (Step 5)**<br>1. The system finds no data matching the selected criteria.<br>2. The system displays a No data found message.<br>3. Hospital Staff modifies the report criteria.<br>4. Resume at Step 4.<br><br>**AF-2 Report Generation Failure (Step 5)**<br>1. The system encounters an error.<br>2. The system displays an error message.<br>3. Hospital Staff clicks Retry.<br>4. Resume at Step 4. |
 | **Postconditions** | • Requested report is displayed successfully.  <br>• No operational data is modified. |
 | **Special Requirements** | • Report pages shall load within 3 seconds under normal conditions (NFR-P-05).  <br>• Access to reports shall be controlled through role-based access control (NFR-S-02).  <br>• Sensitive information shall only be visible to authorized users (NFR-S-03).  <br>• The interface shall support both English and Vietnamese languages (NFR-U-02).  <br>• The system shall support Chrome, Edge, Firefox, and Safari (NFR-U-04). |
-| **Related Use Cases** | **Extend:** Monitor SOS Request (HS-UC-02) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-40.png)
 
 ---
 ## 2.4 System Features
+
+*Author: Trần Anh Kiệt  |  Reviewer: Trịnh Khánh Linh  |  Editor: Trần Anh Kiệt*
 ### 2.4.1 User-Facing Automations
 #### SYS-UC-01: Generate Pre-Donation Screening Form
 
@@ -1534,6 +1537,8 @@ graph TB
 
 ---
 ## 2.5 Administrator Features
+
+*Author: Trần Đức Quý  |  Reviewer: Trần Anh Kiệt  |  Editor: Trần Đức Quý*
 ### 2.5.1 System and User Management
 #### AD-UC-01: View/Search User Accounts
 
@@ -1549,7 +1554,9 @@ graph TB
 | **Alternative Flows** | **AF-01: No User Accounts Found (Step 2)** <br>1. System finds no user account records. <br>2. System displays an empty list message. <br>3. Use case ends. <br><br>**AF-02: No Matching Results (Step 5)** <br>1. System finds no accounts matching the search/filter criteria. <br>2. System displays a "No matching accounts found" message and an empty state icon. <br>3. Administrator may modify criteria or click the **Clear Filters** button. <br>4. Return to Step 4. <br><br>**AF-03: Data Retrieval Failure (Step 2)** <br>1. System fails to retrieve user account data. <br>2. System displays an error message. <br>3. Administrator may retry the operation. <br>4. Use case ends. <br><br>**AF-04: Export User Accounts List (Step 3)** <br>1. Administrator clicks the **Export CSV** button. <br>2. System generates a downloadable CSV file containing the current view of user accounts. <br>3. Administrator downloads the file. <br>4. Use case continues at Step 3. |
 | **Postconditions** | **Success:** <br>- User account list is displayed (filtered or unfiltered). <br>- Administrator can access individual accounts for management. <br>**Failure:** <br>- User account list is not displayed. |
 | **Special Requirements** | **Security:** Only administrators with "User Management" permission can access the user list. All access to user data must be logged. <br>**Performance:** The list should load within 3 seconds. Filter changes should update within 1 second. Pagination for datasets exceeding 50 records per page. <br>**Usability:** The list should support column sorting. Status indicators should use clear visual styling (green = Active, red = Suspended). Multiple filters should be combinable with active filters clearly displayed. <br>**Reliability:** Account data must accurately reflect the current state. |
-| **Related Use Cases** | **Extended by:** Manage User Account (AD-UC-02) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-41.png)
 
 ---
 #### AD-UC-02: Manage User Account
@@ -1566,7 +1573,9 @@ graph TB
 | **Alternative Flows** | **AF-01: Edit User Account (Step 1)** <br>1. Administrator clicks the Edit icon on an existing account from the list. <br>2. System displays the edit form with current details (full name, ID, email, role, etc.). <br>3. Administrator modifies desired fields or changes the assigned role via radio cards. <br>4. Administrator clicks **Save Account**. <br>5. System validates the updated information. <br>6. System saves the changes and logs the modification with before/after values. <br>7. System displays a success message. <br>8. Use case ends. <br><br>**AF-02: Delete Account (Step 1)** <br>1. Administrator clicks the Delete icon on an account from the list. <br>2. System displays a critical confirmation dialog warning this is irreversible, showing data that will be deleted vs. retained. <br>3. Administrator selects a reason from the "Reason for deletion" dropdown and types the exact account username as confirmation. <br>4. Administrator clicks **Confirm Delete**. <br>5. System invalidates active sessions, deletes the account and personal data, and anonymizes donation history per retention policy. <br>6. System logs the deletion with full audit trail. <br>7. Use case ends. <br><br>**AF-03: Missing or Invalid Information (Step 5)** <br>1. System detects missing required fields, invalid formats, or duplicate ID/email. <br>2. System highlights the fields with validation messages. <br>3. Administrator corrects the information. <br>4. Return to Step 4. <br><br>**AF-04: Cannot Delete Own Account (AF-02)** <br>1. Administrator attempts to delete their own account. <br>2. System blocks the operation and displays an error message. <br>3. Use case ends. <br><br>**AF-05: Account Has Pending Operations (AF-02, Step 2)** <br>1. System detects the account has active pending operations (e.g., upcoming appointments). <br>2. System displays a warning listing the pending operations. <br>3. Administrator must resolve them before proceeding. <br>4. Use case ends. <br><br>**AF-06: System Error (Step 6)** <br>1. System fails to create/update/delete the account. <br>2. System displays an error message. No changes are saved. <br>3. Use case ends. |
 | **Postconditions** | **Success:** <br>- Account is created, updated, or deleted as intended. <br>- All actions are logged for audit with administrator identity and timestamp. <br>- If deleted, personal data is removed and donation history is anonymized. <br>**Failure:** <br>- No changes are made to the account. |
 | **Special Requirements** | **Security:** Only administrators can manage accounts. Initial passwords must meet minimum complexity requirements. Account deletion requires multi-step confirmation (reason + confirmation phrase). Administrators cannot delete their own account. All actions must be logged with full audit trail. <br>**Performance:** Account operations should complete within 3 seconds. Session invalidation should occur within 5 seconds. <br>**Usability:** Required fields must be clearly indicated. Role selection should display role descriptions via radio cards. Deletion confirmation must clearly communicate irreversibility. <br>**Reliability:** All operations must be atomic — no partial records stored on error. |
-| **Related Use Cases** | **Extend:** View/Search User Accounts (AD-UC-01)|
+| **Related Use Cases** | None|
+
+![alt text](UIPrototypePic/image-43.png)
 
 ---
 #### AD-UC-03: Manage Roles & Permissions
@@ -1585,6 +1594,8 @@ graph TB
 | **Special Requirements** | **Security:** System-protected roles must not be deletable. Role modifications must take immediate effect including updating active sessions. All role changes must be logged with before/after values. <br>**Performance:** Role data should load within 3 seconds. Permission changes should propagate within 10 seconds. <br>**Usability:** Permissions should be grouped by category with clear descriptions. Changes from the current configuration should be highlighted before saving. <br>**Reliability:** Role changes must be atomic. |
 | **Related Use Cases** |None|
 
+![alt text](UIPrototypePic/image-42.png)
+
 ---
 #### AD-UC-04: Monitor System Activity
 
@@ -1602,6 +1613,8 @@ graph TB
 | **Special Requirements** | **Security:** Activity logs must be immutable — no user (including administrators) can modify or delete log entries. Access to activity logs must itself be logged. Logs must be retained per compliance requirements. <br>**Performance:** Activity logs should load within 3 seconds. Dashboard should load within 5 seconds. Filter changes should update within 1 second. <br>**Usability:** Log entries should be color-coded by severity or action type. Failed actions should be highlighted in red (e.g., Failure). Dashboard widgets should use clear charts and graphs. Key metrics should be visible at a glance. <br>**Reliability:** Activity log data must be accurate, complete, and tamper-proof. Dashboard metrics must be calculated accurately. |
 | **Related Use Cases** | None |
 
+![alt text](UIPrototypePic/image-44.png)
+
 ---
 #### AD-UC-05: Manage System Configuration
 
@@ -1617,8 +1630,8 @@ graph TB
 | **Alternative Flows** | **AF-01: View Only (Step 4)** <br>1. Administrator reviews configurations without modifying inputs. <br>2. No changes are made. <br>3. Use case ends. <br><br>**AF-02: Invalid Configuration Value (Step 5)** <br>1. System detects the value is outside the acceptable range or format. <br>2. System reverts to the previous value and displays a validation error with the acceptable range. <br>3. Administrator corrects the value. <br>4. Return to Step 4. <br><br>**AF-03: Critical Configuration Warning (Step 5)** <br>1. System detects the change affects a critical parameter (e.g., 84-day interval). <br>2. System displays a warning dialog explaining the potential impact. <br>3. Administrator acknowledges and confirms. <br>4. Use case continues at Step 5. <br><br>**AF-04: Save Failure (Step 5)** <br>1. System fails to automatically save the configuration change due to a connection error. <br>2. System displays an error toast message and the field reverts to its prior state. <br>3. Use case ends. |
 | **Postconditions** | **Success:** <br>- Configuration values are displayed and/or updated via auto-save. <br>- Changes are applied to the platform. <br>- All changes are logged with before/after audit trail. <br>**Failure:** <br>- Configuration values remain unchanged. |
 | **Special Requirements** | **Security:** Only authorized administrators can modify configurations. All changes must be logged with before/after values. <br>**Performance:** Configuration data should load within 3 seconds. Real-time configuration changes should propagate within 10 seconds. <br>**Usability:** Configurations should be clearly categorized. Changes must automatically trigger a save state without needing an explicit submit button. <br>**Reliability:** Configuration changes must be atomic. If a change cannot be applied, it must be rolled back visually. |
-| **Related Use Cases** | **Extended by:** Manage Feature Toggles (AD-UC-06) |
-
+| **Related Use Cases** | None |
+![alt text](UIPrototypePic/image-45.png)
 ---
 #### AD-UC-06: Manage Feature Toggles
 
@@ -1634,4 +1647,6 @@ graph TB
 | **Alternative Flows** | **AF-01: Administrator Cancels Toggle Change (Step 5 - via AF-02 Modal)** <br>1. Administrator clicks **Cancel** on the confirmation dialog. <br>2. The feature toggle state remains unchanged. <br>3. Use case ends. <br><br>**AF-02: Feature Has Active Dependencies (Step 5)** <br>1. System detects the feature being disabled has dependent features currently enabled. <br>2. System displays a warning modal listing the specific "AFFECTED SERVICES" (e.g., Automated Triage Service, Smart Campaign Recommendations, Donor FAQ Auto-responder) and the potential impact. <br>3. Administrator reviews the warning. <br>4. Administrator decides to proceed by clicking **Proceed & Disable** or cancels by clicking **Cancel**. <br>5. If proceeding, use case continues at Step 6. If cancelling, use case ends. <br><br>**AF-03: Toggle Change Failure (Step 6)** <br>1. System fails to apply the feature toggle change. <br>2. System displays an error message. Feature state remains unchanged. <br>3. Use case ends. |
 | **Postconditions** | **Success:** <br>- Feature toggle state is updated and applied immediately. <br>- Users experience the enabled/disabled feature in real-time. <br>- The action is logged for audit. <br>**Failure:** <br>- Feature toggle state remains unchanged. |
 | **Special Requirements** | **Security:** Only authorized administrators can manage feature toggles. Toggle changes to security-critical features should require additional confirmation. All changes must be logged. <br>**Performance:** Toggle state changes should propagate to all platform instances within 10 seconds. <br>**Usability:** Feature descriptions should clearly explain what each toggle controls. Dependencies between features should be clearly indicated via an impact warning modal. Toggles should provide immediate visual feedback. <br>**Reliability:** Toggle changes must be atomic. The system must handle feature toggle state consistently across all services. |
-| **Related Use Cases** | **Extend:** Manage System Configuration (AD-UC-05) |
+| **Related Use Cases** | None |
+
+![alt text](UIPrototypePic/image-46.png)

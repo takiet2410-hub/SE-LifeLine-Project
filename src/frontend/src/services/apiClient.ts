@@ -198,23 +198,44 @@ export const apiService = {
     return campaigns.find((c) => c._id === id) || null;
   },
 
-  async createCampaign(data: Omit<CampaignData, '_id' | 'registeredCount' | 'createdAt' | 'location'> & { location?: any }) {
+  async createCampaign(data: any) {
     try {
-      const res = await apiClient.post('/campaigns', {
-        ...data,
-        targetUnitsGoal: data.capacity ? Math.round(data.capacity * 0.8) : 80,
-        contactPerson: { name: 'Cán bộ Kho máu', phone: '0909123456' },
-      });
+      const normalizedBloodGroups = (data.targetBloodGroups || []).map((bg: string) =>
+        bg === 'All Types' ? 'ALL TYPES' : bg
+      );
+
+      const payload = {
+        name: data.name,
+        description: data.description || data.name,
+        venue: data.venue,
+        fullAddress: data.fullAddress || data.venue,
+        startDate: data.startDate || data.startDateTime,
+        startDateTime: data.startDateTime || data.startDate,
+        endDate: data.endDate || data.endDateTime || data.startDate || data.startDateTime,
+        endDateTime: data.endDateTime || data.endDate || data.startDate || data.startDateTime,
+        targetBloodGroups: normalizedBloodGroups.length > 0 ? normalizedBloodGroups : ['ALL TYPES'],
+        capacity: Number(data.capacity) || 100,
+        targetUnitsGoal: Number(data.targetUnitsGoal) || (data.capacity ? Math.round(Number(data.capacity) * 0.8) : 80),
+        contactPerson: data.contactPerson && data.contactPerson.name ? data.contactPerson : { name: 'Cán bộ Kho máu', phone: '0909123456' },
+        timeslots: data.timeslots,
+        status: data.status || 'Upcoming',
+        bloodCenterId: data.bloodCenterId,
+      };
+
+      const res = await apiClient.post('/campaigns', payload);
       if (res.data) {
         return res.data as CampaignData;
       }
     } catch (err) {
       console.warn('[apiService] Backend createCampaign failed, using fallback:', err);
+      throw err;
     }
 
     await delay();
     const newCampaign: CampaignData = {
       ...data,
+      startDateTime: data.startDate || data.startDateTime || new Date().toISOString(),
+      endDateTime: data.endDate || data.endDateTime || new Date().toISOString(),
       location: data.location || { type: 'Point', coordinates: [106.660172, 10.755498] },
       _id: `cam-${Date.now()}`,
       registeredCount: 0,

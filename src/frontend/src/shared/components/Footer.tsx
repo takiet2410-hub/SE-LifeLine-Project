@@ -34,10 +34,10 @@ export const Footer: React.FC = () => {
         <div className="flex flex-col gap-6">
           <h4 className="font-bold text-base text-white">Quick Links</h4>
           <ul className="flex flex-col gap-4 text-[#8E8EA0] text-base">
-            <li><Link to="/about" className="hover:text-white transition">About Us</Link></li>
-            <li><Link to="/how-it-works" className="hover:text-white transition">How It Works</Link></li>
-            <li><Link to="/find-locations" className="hover:text-white transition">Find Locations</Link></li>
-            <li><Link to="/health-tips" className="hover:text-white transition">Health Tips</Link></li>
+            <li><Link to="/about" onClick={() => window.scrollTo(0, 0)} className="hover:text-white transition">About Us</Link></li>
+            <li><Link to="/how-it-works" onClick={() => window.scrollTo(0, 0)} className="hover:text-white transition">How It Works</Link></li>
+            <li><Link to="/find-locations" onClick={() => window.scrollTo(0, 0)} className="hover:text-white transition">Find Locations</Link></li>
+            <li><Link to="/health-tips" onClick={() => window.scrollTo(0, 0)} className="hover:text-white transition">Health Tips</Link></li>
           </ul>
         </div>
 
@@ -45,10 +45,10 @@ export const Footer: React.FC = () => {
         <div className="flex flex-col gap-6">
           <h4 className="font-bold text-base text-white">Resources</h4>
           <ul className="flex flex-col gap-4 text-[#8E8EA0] text-base">
-            <li><Link to="/eligibility" className="hover:text-white transition">Eligibility Requirements</Link></li>
-            <li><Link to="/tips" className="hover:text-white transition">Pre-donation Tips</Link></li>
-            <li><Link to="/care" className="hover:text-white transition">Post-donation Care</Link></li>
-            <li><Link to="/faq" className="hover:text-white transition">FAQ</Link></li>
+            <li><Link to="/how-it-works#eligibility" className="hover:text-white transition">Eligibility Requirements</Link></li>
+            <li><Link to="/health-tips#pre-donation" className="hover:text-white transition">Pre-donation Tips</Link></li>
+            <li><Link to="/health-tips#post-donation" className="hover:text-white transition">Post-donation Care</Link></li>
+            <li><Link to="/health-tips#faq" className="hover:text-white transition">FAQ</Link></li>
           </ul>
         </div>
 
@@ -59,12 +59,12 @@ export const Footer: React.FC = () => {
             <li className="flex items-start gap-3">
               <span className="mt-1">📍</span>
               <a
-                href="https://www.google.com/maps/search/?api=1&query=123+Nguyen+Van+Linh,+District+7,+Ho+Chi+Minh+City,+Vietnam"
+                href="https://www.google.com/maps/search/?api=1&query=227+Nguyen+Van+Cu,+District+5,+Ho+Chi+Minh+City,+Vietnam"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-white transition cursor-pointer"
               >
-                123 Nguyen Van Linh, District 7<br />Ho Chi Minh City, Vietnam
+                227 Nguyen Van Cu, District 5<br />Ho Chi Minh City, Vietnam
               </a>
             </li>
             <li className="flex items-center gap-3">
@@ -82,8 +82,8 @@ export const Footer: React.FC = () => {
       <div className="max-w-[1280px] mx-auto mt-16 pt-8 border-t border-[#2A2A3E] flex flex-col md:flex-row justify-between items-center gap-4 text-[#8E8EA0] text-sm">
         <p>© 2026 LifeLine. All rights reserved.</p>
         <div className="flex gap-6">
-          <Link to="/privacy" className="hover:text-white transition">Privacy Policy</Link>
-          <Link to="/terms" className="hover:text-white transition">Terms of Service</Link>
+          <Link to="/privacy" onClick={() => window.scrollTo(0, 0)} className="hover:text-white transition">Privacy Policy</Link>
+          <Link to="/terms" onClick={() => window.scrollTo(0, 0)} className="hover:text-white transition">Terms of Service</Link>
         </div>
       </div>
     </footer>

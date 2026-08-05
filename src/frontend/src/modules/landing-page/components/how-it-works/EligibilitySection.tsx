@@ -38,7 +38,7 @@ export const EligibilitySection: React.FC = () => {
   ];
 
   return (
-    <section className="flex pt-12 pb-20 px-6 lg:px-24 flex-col items-center bg-[#F8F9FA] w-full">
+    <section id="eligibility" className="flex pt-12 pb-20 px-6 lg:px-24 flex-col items-center bg-[#F8F9FA] w-full scroll-mt-24">
       <div className="flex max-w-[1280px] flex-col items-center gap-12 w-full">
         <div className="flex flex-col items-center gap-4 w-full max-w-[768px] text-center">
           <h2 className="text-[#271816] font-inter text-3xl font-bold leading-tight">

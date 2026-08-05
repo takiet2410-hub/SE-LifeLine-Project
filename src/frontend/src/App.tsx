@@ -71,9 +71,12 @@ import { SOSReportsPage } from './modules/sos-requests/pages/SOSReportsPage';
 import { SOSAlertsPage } from './modules/notifications/pages/SOSAlertsPage';
 import { DonorNotificationPage } from './modules/notifications/pages/DonorNotificationPage';
 
+import { ScrollToTop } from './shared/components/ScrollToTop';
+
 function App() {
   return (
     <>
+      <ScrollToTop />
       <Toaster position="top-right" />
       <Routes>
       {/* 1. Public Landing Pages */}
@@ -82,6 +85,10 @@ function App() {
       <Route path="/how-it-works" element={<HowItWorksPage />} />
       <Route path="/find-locations" element={<FindLocationsPage />} />
       <Route path="/health-tips" element={<HealthTipsPage />} />
+      <Route path="/eligibility" element={<Navigate to="/how-it-works#eligibility" replace />} />
+      <Route path="/tips" element={<Navigate to="/health-tips#pre-donation" replace />} />
+      <Route path="/care" element={<Navigate to="/health-tips#post-donation" replace />} />
+      <Route path="/faq" element={<Navigate to="/health-tips#faq" replace />} />
 
       {/* 2. Public Auth Routes */}
       <Route path="/login" element={<LoginPage />} />

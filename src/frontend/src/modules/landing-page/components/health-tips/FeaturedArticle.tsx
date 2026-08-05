@@ -7,7 +7,7 @@ const FeaturedArticle: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-12">
+    <div id="pre-donation" className="bg-white rounded-2xl shadow-sm overflow-hidden mb-12 scroll-mt-24">
       <div className="md:flex">
         <div className="md:w-1/2 h-64 md:h-auto bg-red-50 relative">
           {/* Placeholder for actual image */}

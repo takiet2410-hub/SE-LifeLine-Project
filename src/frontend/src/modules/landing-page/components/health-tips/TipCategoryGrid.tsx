@@ -7,7 +7,7 @@ const TipCategoryGrid: React.FC = () => {
   const { t } = useTranslation('landing');
 
   return (
-    <div className="mb-16">
+    <div id="post-donation" className="mb-16 scroll-mt-24">
       <div className="text-center mb-10">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">
           {t('healthTips.categories.sectionTitle', 'Essential Health Guidelines')}

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useScheduleContext } from '../../context/ScheduleContext';
-import { MapPin, CalendarDays, Clock, ArrowRight, ArrowLeft, Loader2, Sparkles, Building2, CheckCircle2 } from 'lucide-react';
+import { MapPin, CalendarDays, Clock, ArrowRight, ArrowLeft, Loader2, Sparkles, Building2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { searchLocations } from '../../api/bookingApi';
+import { isSlotPassed, areAllSlotsPassedOnDate, getFirstAvailableSlot } from '../../utils/timeslotUtils';
 
 interface LocationOption {
   id: string;
@@ -119,12 +120,15 @@ export const Step1_LocationTime: React.FC = () => {
             });
           }
 
-          // 2. Determine time slot to select: ALWAYS prioritize data.timeSlot if provided!
-          if (data.timeSlot && (data.date === selectedDate || !data.date)) {
+          // 2. Determine time slot to select: prioritize valid, non-passed, non-full slots!
+          const isDataTimeSlotValid = data.timeSlot && data.date === selectedDate && !isSlotPassed(selectedDate, data.timeSlot.split('-')[1]?.trim() || '23:59');
+          if (isDataTimeSlotValid) {
             setSelectedTime(data.timeSlot);
           } else if (targetLocObj && targetLocObj.timeSlots && targetLocObj.timeSlots.length > 0) {
-            const availSlot = targetLocObj.timeSlots.find(s => (s.capacity - s.registeredCount) > 0) || targetLocObj.timeSlots[0];
-            setSelectedTime(`${availSlot.startTime} - ${availSlot.endTime}`);
+            const availSlot = getFirstAvailableSlot(selectedDate, targetLocObj.timeSlots);
+            setSelectedTime(availSlot ? `${availSlot.startTime} - ${availSlot.endTime}` : '');
+          } else {
+            setSelectedTime('');
           }
         } else {
           setLocations([]);
@@ -160,8 +164,10 @@ export const Step1_LocationTime: React.FC = () => {
     setSelectedLoc(locId);
     const targetLocObj = locations.find(l => l.id === locId);
     if (targetLocObj && targetLocObj.timeSlots && targetLocObj.timeSlots.length > 0) {
-      const availSlot = targetLocObj.timeSlots.find(s => s.registeredCount < s.capacity) || targetLocObj.timeSlots[0];
-      setSelectedTime(`${availSlot.startTime} - ${availSlot.endTime}`);
+      const availSlot = getFirstAvailableSlot(selectedDate, targetLocObj.timeSlots);
+      setSelectedTime(availSlot ? `${availSlot.startTime} - ${availSlot.endTime}` : '');
+    } else {
+      setSelectedTime('');
     }
   };
 
@@ -185,6 +191,7 @@ export const Step1_LocationTime: React.FC = () => {
 
   const isFormComplete = selectedLoc && selectedDate && selectedTime;
   const currentSelectedLocationObj = locations.find(l => l.id === selectedLoc);
+  const allSlotsPassedForDate = currentSelectedLocationObj ? areAllSlotsPassedOnDate(selectedDate, currentSelectedLocationObj.timeSlots) : false;
 
   return (
     <div className="flex flex-col gap-6">
@@ -244,6 +251,7 @@ export const Step1_LocationTime: React.FC = () => {
             <div className="flex flex-col gap-3 max-h-[460px] overflow-y-auto pr-1">
               {locations.map((loc) => {
                 const isSelected = selectedLoc === loc.id;
+                const locAllPassed = areAllSlotsPassedOnDate(selectedDate, loc.timeSlots);
                 return (
                   <div
                     key={loc.id}
@@ -268,9 +276,15 @@ export const Step1_LocationTime: React.FC = () => {
                           <Building2 className="w-4 h-4 text-[#93000b] shrink-0" />
                           {loc.name}
                         </span>
-                        <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full shrink-0">
-                          Gần bạn
-                        </span>
+                        {locAllPassed ? (
+                          <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded-full shrink-0">
+                            Đã hết giờ nhận
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full shrink-0">
+                            Gần bạn
+                          </span>
+                        )}
                       </div>
                       <p className="text-[12px] text-[#6c757d] leading-snug">{loc.address}</p>
 
@@ -322,28 +336,44 @@ export const Step1_LocationTime: React.FC = () => {
                   <p className="text-[12px] text-[#6c757d]">
                     Khung giờ có sẵn tại <span className="font-bold text-[#271816]">{currentSelectedLocationObj.name}</span>:
                   </p>
+
+                  {allSlotsPassedForDate && (
+                    <div className="p-3.5 bg-[#fff1f2] border border-[#fecdd3] rounded-xl text-[13px] text-[#991b1b] font-medium flex items-center gap-2.5">
+                      <AlertCircle className="w-5 h-5 text-[#93000b] shrink-0" />
+                      <span>
+                        Đã qua khung giờ tiếp nhận cuối cùng trong ngày ({selectedDate === todayStr ? 'hôm nay' : selectedDate}). Vui lòng chọn ngày tiếp theo để đặt lịch.
+                      </span>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-3">
                     {(currentSelectedLocationObj.timeSlots || defaultSlots).map((slot, index) => {
                       const slotLabel = `${slot.startTime} - ${slot.endTime}`;
                       const isSelected = selectedTime === slotLabel;
                       const isFull = slot.registeredCount >= slot.capacity;
+                      const isPassed = isSlotPassed(selectedDate, slot.endTime);
+                      const isDisabled = isFull || isPassed;
 
                       return (
                         <button
                           key={index}
                           type="button"
                           onClick={() => setSelectedTime(slotLabel)}
-                          disabled={isFull}
+                          disabled={isDisabled}
                           className={`py-3 px-3 border rounded-xl text-[13px] font-bold transition-all text-center cursor-pointer ${
                             isSelected
                               ? 'border-[#93000b] bg-[#93000b] text-white shadow-sm'
-                              : isFull
-                                ? 'border-[#dee2e6] bg-[#f8f9fa] text-[#6c757d] cursor-not-allowed opacity-60'
+                              : isDisabled
+                                ? 'border-[#dee2e6] bg-[#f8f9fa] text-[#a3a3a3] cursor-not-allowed opacity-60'
                                 : 'border-[#dee2e6] bg-white text-[#271816] hover:border-[#93000b]/50'
                           }`}
                         >
                           {slotLabel}
-                          {isFull && <span className="block text-[10px] text-red-600 font-normal mt-0.5">(Hết chỗ)</span>}
+                          {isPassed ? (
+                            <span className="block text-[10px] text-amber-700 font-normal mt-0.5">(Đã qua giờ)</span>
+                          ) : isFull ? (
+                            <span className="block text-[10px] text-red-600 font-normal mt-0.5">(Hết chỗ)</span>
+                          ) : null}
                         </button>
                       );
                     })}

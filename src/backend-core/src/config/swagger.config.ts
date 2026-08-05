@@ -6,9 +6,9 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'LifeLine Auth & Account API',
+      title: 'LifeLine Blood Donation Platform API',
       version: '1.0.0',
-      description: 'API for LifeLine authentication and account management'
+      description: 'Comprehensive REST API documentation for LifeLine system modules (Auth, Campaign, Booking, Registration, Inventory, Notification, SOS Requests, and Content).'
     },
     components: {
       securitySchemes: {
@@ -21,7 +21,11 @@ const options: swaggerJsdoc.Options = {
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: ['./src/modules/**/*.routes.ts'], // Adjust path as needed
+  apis: [
+    './src/modules/**/*.routes.ts',
+    './src/modules/**/routes/*.ts',
+    './src/modules/**/*.ts'
+  ],
 };
 
 const swaggerSpec = swaggerJsdoc(options);

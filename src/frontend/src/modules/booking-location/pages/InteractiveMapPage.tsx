@@ -26,6 +26,7 @@ import {
 import { searchLocations, type BackendCampaign } from '../api/bookingApi';
 import { useScheduleContext } from '../context/ScheduleContext';
 import { toast } from 'sonner';
+import { isSlotPassed, areAllSlotsPassedOnDate } from '../utils/timeslotUtils';
 
 // HCMC Coordinates fallback
 const DEFAULT_CENTER: [number, number] = [10.762622, 106.660172];
@@ -757,6 +758,7 @@ export const InteractiveMapPage: React.FC = () => {
                 <input
                   type="date"
                   value={selectedDate}
+                  min={todayStr}
                   onChange={(e) => setSelectedDate(e.target.value)}
                   className="w-full h-10 pl-9 pr-3 bg-white border border-[#dee2e6] rounded-xl text-[13px] font-medium text-[#271816] focus:border-[#93000b] focus:ring-1 focus:ring-[#93000b] outline-none"
                 />
@@ -995,22 +997,47 @@ export const InteractiveMapPage: React.FC = () => {
                 <span className="text-[12px] font-bold text-[#6c757d] uppercase block mb-2">
                   Khung giờ hiến khả dụng
                 </span>
+
+                {areAllSlotsPassedOnDate(selectedDate || todayStr, selectedLocation.timeslots) && (
+                  <div className="mb-3 p-3 bg-[#fff1f2] border border-[#fecdd3] rounded-xl text-[12px] text-[#991b1b] font-medium flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-[#93000b] shrink-0" />
+                    <span>Đã qua khung giờ cuối cùng trong ngày ({selectedDate === todayStr ? 'hôm nay' : selectedDate}). Vui lòng đổi ngày khác.</span>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-2">
-                  {selectedLocation.timeslots && selectedLocation.timeslots.length > 0 ? selectedLocation.timeslots.map((slot: any, i: number) => (
-                    <div
-                      key={i}
-                      onClick={() => handleStartBooking(selectedLocation, `${slot.startTime} - ${slot.endTime}`)}
-                      className="p-3 border border-[#dee2e6] hover:border-[#93000b] hover:bg-[#fff8f7] rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all group"
-                      title="Nhấn để đặt lịch khung giờ này"
-                    >
-                      <span className="font-semibold text-[#271816] group-hover:text-[#93000b]">
-                        {slot.startTime} - {slot.endTime}
-                      </span>
-                      <span className="text-[11px] font-bold text-[#16a34a] flex items-center gap-0.5">
-                        Còn {slot.capacity - slot.registeredCount} chỗ
-                      </span>
-                    </div>
-                  )) : (
+                  {selectedLocation.timeslots && selectedLocation.timeslots.length > 0 ? selectedLocation.timeslots.map((slot: any, i: number) => {
+                    const slotLabel = `${slot.startTime} - ${slot.endTime}`;
+                    const isPassed = isSlotPassed(selectedDate || todayStr, slot.endTime);
+                    const isFull = slot.registeredCount >= slot.capacity;
+                    const isDisabled = isPassed || isFull;
+
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => !isDisabled && handleStartBooking(selectedLocation, slotLabel)}
+                        className={`p-3 border rounded-xl flex items-center justify-between text-[12px] transition-all ${
+                          isDisabled
+                            ? 'border-[#dee2e6] bg-[#f8f9fa] opacity-60 cursor-not-allowed'
+                            : 'border-[#dee2e6] hover:border-[#93000b] hover:bg-[#fff8f7] cursor-pointer group'
+                        }`}
+                        title={isPassed ? 'Khung giờ này đã qua' : isFull ? 'Khung giờ này đã đủ chỉ tiêu' : 'Nhấn để đặt lịch khung giờ này'}
+                      >
+                        <span className={`font-semibold ${isDisabled ? 'text-[#a3a3a3]' : 'text-[#271816] group-hover:text-[#93000b]'}`}>
+                          {slotLabel}
+                        </span>
+                        {isPassed ? (
+                          <span className="text-[11px] font-bold text-amber-700">Đã qua giờ</span>
+                        ) : isFull ? (
+                          <span className="text-[11px] font-bold text-red-600">Hết chỗ</span>
+                        ) : (
+                          <span className="text-[11px] font-bold text-[#16a34a] flex items-center gap-0.5">
+                            Còn {slot.capacity - slot.registeredCount} chỗ
+                          </span>
+                        )}
+                      </div>
+                    );
+                  }) : (
                     <div className="col-span-2 text-[12px] text-[#6c757d] italic p-2 text-center bg-[#f8f9fa] rounded-xl border border-dashed border-[#dee2e6]">
                       Chưa có dữ liệu khung giờ từ hệ thống
                     </div>
@@ -1028,7 +1055,8 @@ export const InteractiveMapPage: React.FC = () => {
               </button>
               <button
                 onClick={() => handleStartBooking(selectedLocation)}
-                className="px-6 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white rounded-xl text-[14px] font-bold shadow-sm transition-all flex items-center gap-2"
+                disabled={areAllSlotsPassedOnDate(selectedDate || todayStr, selectedLocation.timeslots)}
+                className="px-6 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white rounded-xl text-[14px] font-bold shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Đặt lịch hiến máu ngay
                 <ChevronRight className="w-4 h-4" />

@@ -75,12 +75,8 @@ router.get('/', validateRequest(QueryCampaignSchema), CampaignController.listCam
  *               - name
  *               - venue
  *               - fullAddress
- *               - startDateTime
- *               - endDateTime
  *               - targetBloodGroups
  *               - capacity
- *               - targetUnitsGoal
- *               - contactPerson
  *             properties:
  *               name:
  *                 type: string
@@ -90,15 +86,27 @@ router.get('/', validateRequest(QueryCampaignSchema), CampaignController.listCam
  *                 type: string
  *               fullAddress:
  *                 type: string
+ *               startDate:
+ *                 type: string
+ *                 description: Start date in YYYY-MM-DD format
+ *                 example: "2026-08-10"
  *               startDateTime:
  *                 type: string
+ *                 description: ISO date string or YYYY-MM-DD
+ *                 example: "2026-08-10T07:30:00.000Z"
+ *               endDate:
+ *                 type: string
+ *                 description: End date in YYYY-MM-DD format
+ *                 example: "2026-08-10"
  *               endDateTime:
  *                 type: string
+ *                 description: ISO date string or YYYY-MM-DD
+ *                 example: "2026-08-10T16:30:00.000Z"
  *               targetBloodGroups:
  *                 type: array
  *                 items:
  *                   type: string
- *                   enum: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-', 'ALL TYPES']
+ *                   enum: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-', 'ALL TYPES', 'All Types']
  *               capacity:
  *                 type: integer
  *               targetUnitsGoal:
@@ -113,6 +121,8 @@ router.get('/', validateRequest(QueryCampaignSchema), CampaignController.listCam
  *               internalRemarks:
  *                 type: string
  *               status:
+ *                 type: string
+ *               bloodCenterId:
  *                 type: string
  *               timeslots:
  *                 type: array

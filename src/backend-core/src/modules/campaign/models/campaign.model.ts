@@ -21,7 +21,7 @@ export interface ICampaign extends Document {
     phone: string;
   };
   internalRemarks?: string;
-  status: 'Draft' | 'Upcoming' | 'Registration Pending' | 'Active' | 'Full' | 'Completed' | 'Cancelled';
+  status: 'Draft' | 'Upcoming' | 'Active' | 'Completed' | 'Cancelled';
   bloodCenterId?: mongoose.Types.ObjectId;
   timeslots?: {
     startTime: string;
@@ -30,8 +30,9 @@ export interface ICampaign extends Document {
     registeredCount: number;
   }[];
   dailyTimeslots?: {
-    startTime: Date;
-    endTime: Date;
+    dateStr?: string;
+    startTime: string;
+    endTime: string;
     capacity: number;
     registeredCount: number;
   }[];
@@ -62,7 +63,7 @@ const CampaignSchema = new Schema<ICampaign>({
   internalRemarks: { type: String },
   status: {
     type: String,
-    enum: ['Draft', 'Upcoming', 'Registration Pending', 'Active', 'Full', 'Completed', 'Cancelled'],
+    enum: ['Draft', 'Upcoming', 'Active', 'Completed', 'Cancelled'],
     default: 'Upcoming',
     index: true
   },
@@ -74,8 +75,9 @@ const CampaignSchema = new Schema<ICampaign>({
     registeredCount: { type: Number, default: 0 }
   }],
   dailyTimeslots: [{
-    startTime: { type: Date, required: true },
-    endTime: { type: Date, required: true },
+    dateStr: { type: String, required: true },
+    startTime: { type: String, required: true },
+    endTime: { type: String, required: true },
     capacity: { type: Number, required: true },
     registeredCount: { type: Number, default: 0 }
   }]

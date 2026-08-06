@@ -108,11 +108,25 @@ export const RegistrationListPage: React.FC = () => {
     },
     {
       header: 'Giờ hẹn tiếp nhận',
-      accessor: (row: RegistrationData) => (
-        <span className="text-[12px] text-[#271816] font-semibold">
-          {formatDateSafe(row.appointmentDate)}
-        </span>
-      ),
+      accessor: (row: RegistrationData) => {
+        const dateFormatted = formatDateSafe(row.appointmentDate).split(' ')[0];
+        const timeSlotStr = row.timeSlot || (row as any).appointmentTime || (row as any).time;
+
+        return (
+          <div className="space-y-0.5">
+            <p className="text-[12px] text-[#271816] font-bold">{dateFormatted}</p>
+            {timeSlotStr ? (
+              <span className="inline-block px-2 py-0.5 text-[10px] font-extrabold bg-red-50 text-red-700 rounded border border-red-200">
+                {timeSlotStr}
+              </span>
+            ) : (
+              <span className="text-[11px] text-[#6c757d]">
+                {formatDateSafe(row.appointmentDate).split(' ')[1] || '---'}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       header: 'Trạng thái',
@@ -142,7 +156,13 @@ export const RegistrationListPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-6 rounded-2xl shadow-xs">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/bc/campaigns')}
+            onClick={() => {
+              if (campaignId && campaignId !== 'all') {
+                navigate(`/bc/campaigns/${campaignId}`);
+              } else {
+                navigate('/bc/campaigns');
+              }
+            }}
             className="p-2 rounded-xl text-[#6c757d] hover:text-[#271816] hover:bg-slate-100 transition-colors cursor-pointer"
             title="Quay lại Quản lý Chiến dịch"
           >

@@ -21,7 +21,8 @@ export const createCampaignSchema = z
       name: z.string().min(2, 'Tên người liên hệ không được để trống'),
       phone: z.string().min(10, 'Số điện thoại không hợp lệ'),
     }),
-    status: z.enum(['Draft', 'Upcoming', 'Registration Pending', 'Active', 'Full', 'Completed', 'Cancelled']),
+    status: z.enum(['Draft', 'Upcoming', 'Active', 'Completed', 'Cancelled']).optional().default('Upcoming'),
+    isDraft: z.boolean().optional(),
     timeslots: z.array(
       z.object({
         startTime: z.string(),
@@ -29,7 +30,16 @@ export const createCampaignSchema = z
         capacity: z.number().positive(),
         registeredCount: z.number().default(0),
       })
-    ).min(1, 'Phải có ít nhất 1 khung giờ'),
+    ).optional(),
+    dailyTimeslots: z.array(
+      z.object({
+        dateStr: z.string().optional(),
+        startTime: z.string(),
+        endTime: z.string(),
+        capacity: z.number().positive(),
+        registeredCount: z.number().default(0),
+      })
+    ).optional(),
   })
   .refine(
     (data) => new Date(data.endDate) >= new Date(data.startDate),

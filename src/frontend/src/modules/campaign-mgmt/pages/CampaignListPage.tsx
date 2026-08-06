@@ -286,8 +286,7 @@ export const CampaignListPage: React.FC = () => {
             { id: 'Draft', label: 'Bản nháp' },
             { id: 'Upcoming', label: 'Sắp diễn ra' },
             { id: 'Active', label: 'Đang mở' },
-            { id: 'Full', label: 'Đã đủ' },
-            { id: 'Completed', label: 'Đã xong' },
+            { id: 'Completed', label: 'Đã hoàn thành' },
             { id: 'Cancelled', label: 'Đã hủy' },
           ].map((st) => (
             <button

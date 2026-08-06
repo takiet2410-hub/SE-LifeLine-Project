@@ -413,7 +413,9 @@ export const RegistrationDetailPage: React.FC = () => {
                 <span className="text-[#93000b] font-medium flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
                   <Clock className="w-4 h-4 text-[#93000b]" /> Giờ hẹn tiếp nhận
                 </span>
-                <p className="text-[#93000b] font-bold text-[14px]">08:30 - 10:00 AM</p>
+                <p className="text-[#93000b] font-bold text-[14px]">
+                  {registration.timeSlot || (registration as any).appointmentTime || '07:30 - 11:30'}
+                </p>
               </div>
             </div>
           </div>
@@ -670,7 +672,9 @@ export const RegistrationDetailPage: React.FC = () => {
                   <span className="text-[#6c757d] font-medium flex items-center gap-1.5">
                     <Clock className="w-4 h-4 text-[#6c757d]" /> Giờ hẹn tiếp nhận
                   </span>
-                  <span className="text-[#93000b] font-bold">08:30 - 10:00 AM</span>
+                  <span className="text-[#93000b] font-bold">
+                    {registration.timeSlot || (registration as any).appointmentTime || '07:30 - 11:30'}
+                  </span>
                 </div>
               </div>
             </div>

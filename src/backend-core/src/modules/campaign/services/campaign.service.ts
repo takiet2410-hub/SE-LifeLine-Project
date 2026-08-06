@@ -48,6 +48,28 @@ const geocodeAddress = async (addressStr?: string): Promise<[number, number] | n
   return [106.660172, 10.762622];
 };
 
+const getMinsBetween = (sStr: string, eStr: string): number => {
+  if (!sStr || !eStr) return 0;
+  const sTime = sStr.includes('T') ? sStr.split('T')[1].substring(0, 5) : sStr;
+  const eTime = eStr.includes('T') ? eStr.split('T')[1].substring(0, 5) : eStr;
+  const [h1, m1] = sTime.split(':').map(Number);
+  const [h2, m2] = eTime.split(':').map(Number);
+  if (isNaN(h1) || isNaN(m1) || isNaN(h2) || isNaN(m2)) return 0;
+  return (h2 * 60 + m2) - (h1 * 60 + m1);
+};
+
+const validateTimeslotsMinDuration = (slots: any[]) => {
+  if (!slots || !Array.isArray(slots)) return;
+  for (const slot of slots) {
+    const sTime = typeof slot.startTime === 'string' ? slot.startTime : '';
+    const eTime = typeof slot.endTime === 'string' ? slot.endTime : '';
+    const mins = getMinsBetween(sTime, eTime);
+    if (mins < 30) {
+      throw new Error(`Khung giờ (${sTime} - ${eTime}) phải có thời lượng trễ hơn ít nhất 30 phút!`);
+    }
+  }
+};
+
 export class CampaignService {
   /**
    * BC-UC-01: View Campaign List
@@ -62,7 +84,8 @@ export class CampaignService {
 
     // Filter by location / search keyword (venue, fullAddress, or name)
     if (query.location && query.location.trim() !== '') {
-      const searchRegex = new RegExp(query.location.trim(), 'i');
+      const escapedQuery = query.location.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escapedQuery, 'i');
       filterQuery.$or = [
         { venue: searchRegex },
         { fullAddress: searchRegex },
@@ -111,7 +134,7 @@ export class CampaignService {
       const percentage = Math.min(100, Math.round((registered / totalCapacity) * 100));
       
       let computedStatus = c.status;
-      if (c.status !== 'Cancelled') {
+      if (c.status !== 'Cancelled' && c.status !== 'Draft') {
         const start = c.startDateTime ? new Date(c.startDateTime) : null;
         const end = c.endDateTime ? new Date(c.endDateTime) : null;
         if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
@@ -175,7 +198,10 @@ export class CampaignService {
     const count = await Campaign.countDocuments();
     const campaignCode = data.campaignCode || `CMP-${year}-${String(count + 1).padStart(3, '0')}`;
 
-    const status = data.status || 'Upcoming';
+    let status = data.status || 'Upcoming';
+    if (data.isDraft || data.status === 'Draft') {
+      status = 'Draft';
+    }
 
     const slotCap = Math.max(5, Math.round((data.capacity || 100) / 5));
     const defaultSlots = [
@@ -187,33 +213,74 @@ export class CampaignService {
     ];
     const timeslotsPattern = data.timeslots && data.timeslots.length > 0 ? data.timeslots : defaultSlots;
 
+    // Validate minimum 30 min duration for timeslots
+    validateTimeslotsMinDuration(timeslotsPattern);
+
     let earliestTime = '23:59';
     let latestTime = '00:00';
     timeslotsPattern.forEach((slot: any) => {
-      if (slot.startTime < earliestTime) earliestTime = slot.startTime;
-      if (slot.endTime > latestTime) latestTime = slot.endTime;
+      const sTime = typeof slot.startTime === 'string' && slot.startTime.includes('T') ? slot.startTime.split('T')[1].substring(0, 5) : slot.startTime;
+      const eTime = typeof slot.endTime === 'string' && slot.endTime.includes('T') ? slot.endTime.split('T')[1].substring(0, 5) : slot.endTime;
+      if (sTime < earliestTime) earliestTime = sTime;
+      if (eTime > latestTime) latestTime = eTime;
     });
 
-    // Start date at earliest time, end date at latest time (in local time mapped to UTC)
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = endDate.toISOString().split('T')[0];
+    // Start date at earliest time, end date at latest time
+    const startDateStr = typeof data.startDate === 'string' ? data.startDate.split('T')[0] : startDate.toISOString().split('T')[0];
+    const endDateStr = typeof data.endDate === 'string' ? data.endDate.split('T')[0] : endDate.toISOString().split('T')[0];
     const actualStartDateTime = new Date(`${startDateStr}T${earliestTime}:00`);
     const actualEndDateTime = new Date(`${endDateStr}T${latestTime}:00`);
 
-    // Generate daily timeslots
+    // Auto calculate status if not Draft or Cancelled
+    if (status !== 'Draft' && status !== 'Cancelled') {
+      const now = new Date();
+      if (now >= actualStartDateTime && now <= actualEndDateTime) {
+        status = 'Active';
+      } else if (now < actualStartDateTime) {
+        status = 'Upcoming';
+      } else if (now > actualEndDateTime) {
+        status = 'Completed';
+      }
+    }
+
+    // Generate or format daily timeslots
     const dailyTimeslots: any[] = [];
-    const currentDay = new Date(startDate.getTime());
-    while (currentDay.getTime() <= endDate.getTime()) {
-      const dateStr = currentDay.toISOString().split('T')[0];
-      for (const slot of timeslotsPattern) {
+    let computedTotalCap = 0;
+    if (data.dailyTimeslots && Array.isArray(data.dailyTimeslots) && data.dailyTimeslots.length > 0) {
+      validateTimeslotsMinDuration(data.dailyTimeslots);
+      for (const slot of data.dailyTimeslots) {
+        const dStr = slot.dateStr || startDateStr;
+        const sTime = typeof slot.startTime === 'string' && slot.startTime.includes('T') ? slot.startTime.split('T')[1].substring(0, 5) : (slot.startTime || '07:30');
+        const eTime = typeof slot.endTime === 'string' && slot.endTime.includes('T') ? slot.endTime.split('T')[1].substring(0, 5) : (slot.endTime || '11:30');
+        const cap = Number(slot.capacity) || 50;
+        computedTotalCap += cap;
         dailyTimeslots.push({
-          startTime: new Date(`${dateStr}T${slot.startTime}:00`),
-          endTime: new Date(`${dateStr}T${slot.endTime}:00`),
-          capacity: slot.capacity,
-          registeredCount: 0
+          dateStr: dStr,
+          startTime: sTime,
+          endTime: eTime,
+          capacity: cap,
+          registeredCount: slot.registeredCount || 0
         });
       }
-      currentDay.setDate(currentDay.getDate() + 1);
+    } else {
+      const currentDay = new Date(startDate.getTime());
+      while (currentDay.getTime() <= endDate.getTime()) {
+        const dateStr = currentDay.toISOString().split('T')[0];
+        for (const slot of timeslotsPattern) {
+          const sTime = typeof slot.startTime === 'string' && slot.startTime.includes('T') ? slot.startTime.split('T')[1].substring(0, 5) : (slot.startTime || '07:30');
+          const eTime = typeof slot.endTime === 'string' && slot.endTime.includes('T') ? slot.endTime.split('T')[1].substring(0, 5) : (slot.endTime || '11:30');
+          const cap = Number(slot.capacity) || 50;
+          computedTotalCap += cap;
+          dailyTimeslots.push({
+            dateStr,
+            startTime: sTime,
+            endTime: eTime,
+            capacity: cap,
+            registeredCount: 0
+          });
+        }
+        currentDay.setDate(currentDay.getDate() + 1);
+      }
     }
 
     const campaignPayload: any = {
@@ -225,7 +292,7 @@ export class CampaignService {
       startDateTime: actualStartDateTime,
       endDateTime: actualEndDateTime,
       targetBloodGroups: data.targetBloodGroups || ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
-      capacity: data.capacity,
+      capacity: computedTotalCap > 0 ? computedTotalCap : (data.capacity || 100),
       registeredCount: 0,
       targetUnitsGoal: data.targetUnitsGoal || (data.capacity ? Math.round(data.capacity * 0.8) : 80),
       contactPerson: data.contactPerson || { name: 'Cán bộ Kho máu', phone: '0909123456' },
@@ -279,7 +346,7 @@ export class CampaignService {
 
     const now = new Date();
     let computedStatus = campaign.status;
-    if (campaign.status !== 'Cancelled') {
+    if (campaign.status !== 'Cancelled' && campaign.status !== 'Draft') {
       const start = campaign.startDateTime ? new Date(campaign.startDateTime) : null;
       const end = campaign.endDateTime ? new Date(campaign.endDateTime) : null;
       if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
@@ -324,24 +391,117 @@ export class CampaignService {
       throw new Error('CAPACITY_BELOW_REGISTERED');
     }
 
-    if (updateData.startDateTime) {
-      campaign.startDateTime = new Date(updateData.startDateTime);
-    }
-    if (updateData.endDateTime) {
-      campaign.endDateTime = new Date(updateData.endDateTime);
+    const startDateStr = updateData.startDate
+      ? (typeof updateData.startDate === 'string' ? updateData.startDate.split('T')[0] : new Date(updateData.startDate).toISOString().split('T')[0])
+      : (updateData.startDateTime ? new Date(updateData.startDateTime).toISOString().split('T')[0] : (campaign.startDateTime ? new Date(campaign.startDateTime).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]));
+
+    const endDateStr = updateData.endDate
+      ? (typeof updateData.endDate === 'string' ? updateData.endDate.split('T')[0] : new Date(updateData.endDate).toISOString().split('T')[0])
+      : (updateData.endDateTime ? new Date(updateData.endDateTime).toISOString().split('T')[0] : (campaign.endDateTime ? new Date(campaign.endDateTime).toISOString().split('T')[0] : startDateStr));
+
+    const timeslotsPattern = updateData.timeslots && updateData.timeslots.length > 0
+      ? updateData.timeslots
+      : campaign.timeslots;
+
+    validateTimeslotsMinDuration(timeslotsPattern);
+
+    if (updateData.dailyTimeslots && Array.isArray(updateData.dailyTimeslots) && updateData.dailyTimeslots.length > 0) {
+      validateTimeslotsMinDuration(updateData.dailyTimeslots);
     }
 
-    if (updateData.venue) {
-      campaign.venue = updateData.venue;
-      if (!updateData.fullAddress) {
-        campaign.fullAddress = updateData.venue;
+    let earliestTime = '23:59';
+    let latestTime = '00:00';
+    const slotsForBounds = (updateData.dailyTimeslots && updateData.dailyTimeslots.length > 0)
+      ? updateData.dailyTimeslots
+      : timeslotsPattern;
+
+    (slotsForBounds || []).forEach((slot: any) => {
+      const sTime = typeof slot.startTime === 'string' && slot.startTime.includes('T') ? slot.startTime.split('T')[1].substring(0, 5) : slot.startTime;
+      const eTime = typeof slot.endTime === 'string' && slot.endTime.includes('T') ? slot.endTime.split('T')[1].substring(0, 5) : slot.endTime;
+      if (sTime && sTime < earliestTime) earliestTime = sTime;
+      if (eTime && eTime > latestTime) latestTime = eTime;
+    });
+
+    if (earliestTime === '23:59') earliestTime = '07:30';
+    if (latestTime === '00:00') latestTime = '16:30';
+
+    const actualStartDateTime = new Date(`${startDateStr}T${earliestTime}:00`);
+    const actualEndDateTime = new Date(`${endDateStr}T${latestTime}:00`);
+
+    // Generate or format daily timeslots (IDENTICAL TO createCampaign)
+    const dailyTimeslots: any[] = [];
+    let computedTotalCap = 0;
+    if (updateData.dailyTimeslots && Array.isArray(updateData.dailyTimeslots) && updateData.dailyTimeslots.length > 0) {
+      validateTimeslotsMinDuration(updateData.dailyTimeslots);
+      for (const slot of updateData.dailyTimeslots) {
+        const dStr = slot.dateStr || startDateStr;
+        const sTime = typeof slot.startTime === 'string' && slot.startTime.includes('T') ? slot.startTime.split('T')[1].substring(0, 5) : (slot.startTime || '07:30');
+        const eTime = typeof slot.endTime === 'string' && slot.endTime.includes('T') ? slot.endTime.split('T')[1].substring(0, 5) : (slot.endTime || '11:30');
+        const cap = Number(slot.capacity) || 50;
+        computedTotalCap += cap;
+        dailyTimeslots.push({
+          dateStr: dStr,
+          startTime: sTime,
+          endTime: eTime,
+          capacity: cap,
+          registeredCount: slot.registeredCount || 0
+        });
+      }
+    } else {
+      const currentDay = new Date(startDateStr);
+      const endDay = new Date(endDateStr);
+      while (currentDay <= endDay) {
+        const dateStr = currentDay.toISOString().split('T')[0];
+        for (const slot of (timeslotsPattern || [])) {
+          const sTime = typeof slot.startTime === 'string' && slot.startTime.includes('T') ? slot.startTime.split('T')[1].substring(0, 5) : (slot.startTime || '07:30');
+          const eTime = typeof slot.endTime === 'string' && slot.endTime.includes('T') ? slot.endTime.split('T')[1].substring(0, 5) : (slot.endTime || '11:30');
+          const cap = Number(slot.capacity) || 50;
+          computedTotalCap += cap;
+          dailyTimeslots.push({
+            dateStr,
+            startTime: sTime,
+            endTime: eTime,
+            capacity: cap,
+            registeredCount: 0
+          });
+        }
+        currentDay.setDate(currentDay.getDate() + 1);
       }
     }
-    if (updateData.fullAddress) {
-      campaign.fullAddress = updateData.fullAddress;
+
+    let finalStatus = campaign.status;
+    if (updateData.isDraft || updateData.status === 'Draft') {
+      finalStatus = 'Draft';
+    } else if (updateData.status && updateData.status !== 'Draft') {
+      const now = new Date();
+      if (now >= actualStartDateTime && now <= actualEndDateTime) {
+        finalStatus = 'Active';
+      } else if (now < actualStartDateTime) {
+        finalStatus = 'Upcoming';
+      } else if (now > actualEndDateTime) {
+        finalStatus = 'Completed';
+      } else {
+        finalStatus = updateData.status;
+      }
     }
 
-    // Geocode updated fullAddress / venue to map coordinates if location is not explicitly passed
+    const updatePayload: any = {
+      name: updateData.name || campaign.name,
+      description: updateData.description !== undefined ? updateData.description : campaign.description,
+      venue: updateData.venue || campaign.venue,
+      fullAddress: updateData.fullAddress || campaign.fullAddress || campaign.venue,
+      startDateTime: actualStartDateTime,
+      endDateTime: actualEndDateTime,
+      targetBloodGroups: updateData.targetBloodGroups || campaign.targetBloodGroups,
+      capacity: computedTotalCap > 0 ? computedTotalCap : (updateData.capacity || campaign.capacity),
+      targetUnitsGoal: updateData.targetUnitsGoal !== undefined ? updateData.targetUnitsGoal : campaign.targetUnitsGoal,
+      contactPerson: updateData.contactPerson || campaign.contactPerson,
+      internalRemarks: updateData.internalRemarks !== undefined ? updateData.internalRemarks : campaign.internalRemarks,
+      timeslots: timeslotsPattern,
+      dailyTimeslots: dailyTimeslots,
+      status: finalStatus,
+    };
+
     if (
       updateData.location &&
       Array.isArray(updateData.location.coordinates) &&
@@ -349,22 +509,21 @@ export class CampaignService {
       typeof updateData.location.coordinates[0] === 'number' &&
       typeof updateData.location.coordinates[1] === 'number'
     ) {
-      campaign.location = updateData.location;
+      updatePayload.location = updateData.location;
     } else if (updateData.venue || updateData.fullAddress) {
-      const coords = await geocodeAddress(campaign.fullAddress || campaign.venue);
+      const coords = await geocodeAddress(updatePayload.fullAddress || updatePayload.venue);
       if (coords) {
-        campaign.location = { type: 'Point', coordinates: coords };
+        updatePayload.location = { type: 'Point', coordinates: coords };
       }
     }
 
-    Object.keys(updateData).forEach((key) => {
-      if (key !== 'startDateTime' && key !== 'endDateTime' && key !== 'venue' && key !== 'fullAddress' && key !== 'location') {
-        (campaign as any)[key] = updateData[key];
-      }
-    });
+    const updatedDoc = await Campaign.findByIdAndUpdate(
+      id,
+      { $set: updatePayload },
+      { returnDocument: 'after', runValidators: true }
+    ).lean();
 
-    await campaign.save();
-    return campaign.toObject();
+    return updatedDoc;
   }
 
   /**

@@ -14,8 +14,8 @@ import { notificationEvents, emitAppointmentConfirmed } from '../../notification
 
 export class BookingService {
   public static async searchLocations(filters: any) {
-    // Query both Active & Upcoming campaigns (exclude Cancelled)
-    let query: any = { status: { $nin: ['Cancelled'] } };
+    // Query both Active & Upcoming campaigns (exclude Cancelled and Draft)
+    let query: any = { status: { $nin: ['Cancelled', 'Draft'] } };
 
     if (filters.lat !== undefined && filters.lng !== undefined) {
       const radiusInMeters = (filters.radius || 15) * 1000;
@@ -55,7 +55,7 @@ export class BookingService {
     // Dynamically calculate real-time status (Active, Upcoming, Completed)
     const now = new Date();
     campaigns = campaigns.map(c => {
-      if (c.status === 'Cancelled') return c;
+      if (c.status === 'Cancelled' || c.status === 'Draft') return c;
       const start = new Date(c.startDateTime);
       const end = new Date(c.endDateTime);
       let calculatedStatus = c.status;
@@ -306,12 +306,32 @@ export class BookingService {
       });
       await newDigitalRecord.save({ session });
 
-      // 8. Update Campaign capacity
-      await Campaign.updateOne(
-        { _id: campaignId },
-        { $inc: { registeredCount: 1 } },
-        { session }
-      );
+      // 8. Update Campaign total capacity and specific timeslot registeredCount
+      campaign.registeredCount = Math.max(0, (campaign.registeredCount || 0) + 1);
+
+      const slotStartTime = String(timeSlot || '').split('-')[0].trim();
+      let slotFound = false;
+
+      if (campaign.dailyTimeslots && campaign.dailyTimeslots.length > 0) {
+        const targetDaily = campaign.dailyTimeslots.find(
+          (dt: any) => dt.dateStr === appointmentDate && dt.startTime === slotStartTime
+        );
+        if (targetDaily) {
+          targetDaily.registeredCount = Math.max(0, (targetDaily.registeredCount || 0) + 1);
+          slotFound = true;
+        }
+      }
+
+      if (!slotFound && campaign.timeslots && campaign.timeslots.length > 0) {
+        const targetPattern = campaign.timeslots.find(
+          (s: any) => s.startTime === slotStartTime
+        );
+        if (targetPattern) {
+          targetPattern.registeredCount = Math.max(0, (targetPattern.registeredCount || 0) + 1);
+        }
+      }
+
+      await campaign.save({ session });
 
       await session.commitTransaction();
       session.endSession();
@@ -442,10 +462,54 @@ export class BookingService {
     }
   }
 
+  public static async decrementCampaignSlot(campaignId: any, appointmentDate: string, timeSlot: string, session?: mongoose.ClientSession) {
+    if (!campaignId) return;
+    const query = Campaign.findById(campaignId);
+    const campaign = session ? await query.session(session) : await query;
+    if (!campaign) return;
+
+    campaign.registeredCount = Math.max(0, (campaign.registeredCount || 0) - 1);
+
+    const slotStartTime = String(timeSlot || '').split('-')[0].trim();
+    let slotFound = false;
+
+    if (campaign.dailyTimeslots && campaign.dailyTimeslots.length > 0) {
+      const targetDaily = campaign.dailyTimeslots.find(
+        (dt: any) => dt.dateStr === appointmentDate && dt.startTime === slotStartTime
+      );
+      if (targetDaily) {
+        targetDaily.registeredCount = Math.max(0, (targetDaily.registeredCount || 0) - 1);
+        slotFound = true;
+      }
+    }
+
+    if (!slotFound && campaign.timeslots && campaign.timeslots.length > 0) {
+      const targetPattern = campaign.timeslots.find(
+        (s: any) => s.startTime === slotStartTime
+      );
+      if (targetPattern) {
+        targetPattern.registeredCount = Math.max(0, (targetPattern.registeredCount || 0) - 1);
+      }
+    }
+
+    if (session) {
+      await campaign.save({ session });
+    } else {
+      await campaign.save();
+    }
+  }
+
   public static async rejectAppointmentByBloodCenter(id: string, reason?: string) {
     const appointment = await Appointment.findById(id).populate('campaignId');
     if (!appointment) {
       throw new Error('APPOINTMENT_NOT_FOUND');
+    }
+
+    if (appointment.status !== AppointmentStatus.Rejected && appointment.status !== AppointmentStatus.Cancelled) {
+      if (appointment.campaignId && appointment.appointmentDate) {
+        const cId = typeof appointment.campaignId === 'object' ? (appointment.campaignId as any)._id : appointment.campaignId;
+        await BookingService.decrementCampaignSlot(cId, appointment.appointmentDate, appointment.timeSlot || '');
+      }
     }
 
     appointment.status = AppointmentStatus.Rejected;
@@ -600,11 +664,34 @@ export class BookingService {
       appointment.status = AppointmentStatus.Cancelled;
       await appointment.save({ session });
 
-      await Campaign.updateOne(
-        { _id: appointment.campaignId },
-        { $inc: { registeredCount: -1 } },
-        { session }
-      );
+      const campaign = await Campaign.findById(appointment.campaignId).session(session);
+      if (campaign) {
+        campaign.registeredCount = Math.max(0, (campaign.registeredCount || 0) - 1);
+
+        const slotStartTime = String(appointment.timeSlot || '').split('-')[0].trim();
+        let slotFound = false;
+
+        if (campaign.dailyTimeslots && campaign.dailyTimeslots.length > 0) {
+          const targetDaily = campaign.dailyTimeslots.find(
+            (dt: any) => dt.dateStr === appointment.appointmentDate && dt.startTime === slotStartTime
+          );
+          if (targetDaily) {
+            targetDaily.registeredCount = Math.max(0, (targetDaily.registeredCount || 0) - 1);
+            slotFound = true;
+          }
+        }
+
+        if (!slotFound && campaign.timeslots && campaign.timeslots.length > 0) {
+          const targetPattern = campaign.timeslots.find(
+            (s: any) => s.startTime === slotStartTime
+          );
+          if (targetPattern) {
+            targetPattern.registeredCount = Math.max(0, (targetPattern.registeredCount || 0) - 1);
+          }
+        }
+
+        await campaign.save({ session });
+      }
 
       // Synchronize DigitalDonorRecord donationStatus to Cancelled so registration list removes it
       await DigitalDonorRecord.updateOne(

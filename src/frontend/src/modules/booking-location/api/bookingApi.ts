@@ -168,11 +168,44 @@ export const mapBackendAppointment = (raw: BackendAppointment): Appointment => {
   };
 };
 
+export const formatSlotTime = (timeVal: any, defaultVal: string = '07:30'): string => {
+  if (!timeVal) return defaultVal;
+  if (typeof timeVal === 'string' && !timeVal.includes('T')) {
+    return timeVal;
+  }
+  try {
+    const d = new Date(timeVal);
+    if (isNaN(d.getTime())) return defaultVal;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return defaultVal;
+  }
+};
+
 // Map backend location/campaign to frontend location for step-1
 export const mapBackendCampaignToLocation = (campaign: BackendCampaign) => {
   const cAny = campaign as any;
-  const timeslots = cAny.timeslots && cAny.timeslots.length > 0
-    ? cAny.timeslots
+  const rawSlots = cAny.dailyTimeslots && cAny.dailyTimeslots.length > 0
+    ? cAny.dailyTimeslots
+    : (cAny.timeslots && cAny.timeslots.length > 0 ? cAny.timeslots : []);
+
+  const timeslots = rawSlots.map((s: any) => ({
+    dateStr: s.dateStr,
+    startTime: formatSlotTime(s.startTime, '07:30'),
+    endTime: formatSlotTime(s.endTime, '11:30'),
+    capacity: Number(s.capacity) || 50,
+    registeredCount: Number(s.registeredCount) || 0,
+  }));
+
+  const formattedDailyTimeslots = cAny.dailyTimeslots && Array.isArray(cAny.dailyTimeslots)
+    ? cAny.dailyTimeslots.map((s: any) => ({
+        dateStr: s.dateStr,
+        startTime: formatSlotTime(s.startTime, '07:30'),
+        endTime: formatSlotTime(s.endTime, '11:30'),
+        capacity: Number(s.capacity) || 50,
+        registeredCount: Number(s.registeredCount) || 0,
+      }))
     : [];
 
   return {
@@ -182,6 +215,16 @@ export const mapBackendCampaignToLocation = (campaign: BackendCampaign) => {
     address: cAny.fullAddress || cAny.venue || (campaign.location?.coordinates
       ? `Tọa độ: ${campaign.location.coordinates[1]}, ${campaign.location.coordinates[0]}`
       : 'TP. Hồ Chí Minh'),
+    description: cAny.description || '',
+    startDateTime: cAny.startDateTime || cAny.startDate,
+    endDateTime: cAny.endDateTime || cAny.endDate,
+    startDate: cAny.startDate || cAny.startDateTime,
+    endDate: cAny.endDate || cAny.endDateTime,
+    contactPerson: cAny.contactPerson,
+    capacity: cAny.capacity,
+    registeredCount: cAny.registeredCount,
+    targetUnitsGoal: cAny.targetUnitsGoal,
+    dailyTimeslots: formattedDailyTimeslots,
     timeslots,
     status: campaign.status,
     targetBloodGroups: campaign.targetBloodGroups,

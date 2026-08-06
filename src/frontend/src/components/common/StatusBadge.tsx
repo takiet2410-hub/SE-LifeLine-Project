@@ -2,14 +2,15 @@ import React from 'react';
 
 export type StatusVariant =
   | 'Draft'
+  | 'Upcoming'
   | 'Active'
+  | 'Completed'
   | 'Full'
   | 'Closed'
   | 'Cancelled'
   | 'Registered'
   | 'CheckedIn'
   | 'Eligible'
-  | 'Completed'
   | 'Ineligible'
   | 'Published'
   | 'Unpublished'
@@ -28,15 +29,25 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label }) => {
-  const displayLabel = label || status;
+  const statusLabelMap: Record<string, string> = {
+    Draft: 'Bản nháp',
+    Upcoming: 'Sắp diễn ra',
+    Active: 'Đang mở',
+    Cancelled: 'Đã hủy',
+    Completed: 'Đã kết thúc',
+  };
+
+  const displayLabel = label || statusLabelMap[status] || status;
 
   const styleMap: Record<string, string> = {
     // Campaign statuses
-    Draft: 'bg-slate-100 text-slate-700 border-slate-300',
+    Draft: 'bg-slate-100 text-slate-700 border-slate-300 font-medium',
+    Upcoming: 'bg-blue-50 text-blue-700 border-blue-300 font-semibold',
     Active: 'bg-emerald-50 text-emerald-700 border-emerald-300 font-semibold',
+    Cancelled: 'bg-rose-50 text-rose-700 border-rose-200 font-medium',
+    Completed: 'bg-slate-200 text-slate-700 border-slate-300 font-medium',
     Full: 'bg-amber-50 text-amber-700 border-amber-300',
     Closed: 'bg-red-50 text-red-700 border-red-200',
-    Cancelled: 'bg-slate-200 text-slate-600 border-slate-300',
 
     // Registration statuses
     Pending: 'bg-sky-50 text-sky-700 border-sky-300 font-medium',

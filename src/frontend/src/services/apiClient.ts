@@ -218,7 +218,9 @@ export const apiService = {
         targetUnitsGoal: Number(data.targetUnitsGoal) || (data.capacity ? Math.round(Number(data.capacity) * 0.8) : 80),
         contactPerson: data.contactPerson && data.contactPerson.name ? data.contactPerson : { name: 'Cán bộ Kho máu', phone: '0909123456' },
         timeslots: data.timeslots,
+        dailyTimeslots: data.dailyTimeslots,
         status: data.status || 'Upcoming',
+        isDraft: data.isDraft,
         ...(data.bloodCenterId && /^[0-9a-fA-F]{24}$/.test(data.bloodCenterId) ? { bloodCenterId: data.bloodCenterId } : {}),
       };
 
@@ -301,6 +303,7 @@ export const apiService = {
             donorIdCard,
             donorPhone,
             appointmentDate: item.appointmentDate || new Date().toISOString(),
+            timeSlot: item.timeSlot || item.appointmentTime || item.appointmentId?.timeSlot || '',
             status: item.status || 'Pending',
             screeningForm: screeningObj,
           };
@@ -380,6 +383,7 @@ export const apiService = {
           donorIdCard,
           donorPhone,
           appointmentDate: item.appointmentDate || new Date().toISOString(),
+          timeSlot: item.timeSlot || item.appointmentTime || item.appointmentId?.timeSlot || '',
           status: item.status || 'CheckedIn',
           bloodPressure: screeningObj?.vitals?.bloodPressure || item.bloodPressure || '',
           weight: screeningObj?.vitals?.weight || item.weight || undefined,

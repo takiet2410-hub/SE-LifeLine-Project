@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const validBloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-', 'ALL TYPES', 'All Types'] as const;
-const validStatuses = ['Draft', 'Upcoming', 'Registration Pending', 'Active', 'Full', 'Completed', 'Cancelled'] as const;
+const validStatuses = ['Draft', 'Upcoming', 'Active', 'Completed', 'Cancelled'] as const;
 
 export const CreateCampaignSchema = z.object({
   body: z.object({
@@ -24,6 +24,13 @@ export const CreateCampaignSchema = z.object({
     status: z.enum(validStatuses).optional(),
     bloodCenterId: z.string().optional(),
     timeslots: z.array(z.object({
+      startTime: z.string(),
+      endTime: z.string(),
+      capacity: z.number().int().positive(),
+      registeredCount: z.number().int().nonnegative().optional().default(0)
+    })).optional(),
+    dailyTimeslots: z.array(z.object({
+      dateStr: z.string().optional(),
       startTime: z.string(),
       endTime: z.string(),
       capacity: z.number().int().positive(),
@@ -75,6 +82,13 @@ export const UpdateCampaignSchema = z.object({
     status: z.enum(validStatuses).optional(),
     bloodCenterId: z.string().optional(),
     timeslots: z.array(z.object({
+      startTime: z.string(),
+      endTime: z.string(),
+      capacity: z.number().int().positive(),
+      registeredCount: z.number().int().nonnegative().optional().default(0)
+    })).optional(),
+    dailyTimeslots: z.array(z.object({
+      dateStr: z.string().optional(),
       startTime: z.string(),
       endTime: z.string(),
       capacity: z.number().int().positive(),

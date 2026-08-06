@@ -259,7 +259,7 @@ export class NotificationService {
       if (!prefs?.emailEnabled && !prefs?.campaignEnabled) return false;
 
       // Get user email
-      const User = (await import('../../auth-account/models/User')).User;
+      const User = (await import('../../auth-account/models/user.model')).User;
       const user = await User.findById(notification.recipientUserId).select('email').lean();
       if (!user?.email) return false;
 

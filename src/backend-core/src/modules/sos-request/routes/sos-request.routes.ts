@@ -84,6 +84,11 @@ router.get('/debug-eval/:id', async (req, res) => {
 });
 
 router.get(
+  '/hospitals',
+  SOSRequestController.listHospitals
+);
+
+router.get(
   '/:id',
   SOSRequestController.getSOSRequest
 );

@@ -1,4 +1,5 @@
-import nodemailer from 'nodemailer';
+import { sendEmailViaBrevo } from '../../../utils/email.util';
+import { env } from '../../../config/env.config';
 
 interface EmailOptions {
   to: string;
@@ -8,48 +9,25 @@ interface EmailOptions {
 }
 
 class EmailServiceImpl {
-  private transporter: nodemailer.Transporter | null = null;
-
-  private getTransporter() {
-    if (!this.transporter) {
-      this.transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: false,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-    }
-    return this.transporter;
-  }
-
   async send(options: EmailOptions): Promise<boolean> {
     try {
-      const transporter = this.getTransporter();
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || 'LifeLine <noreply@lifeline.vn>',
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text,
-      });
-      return true;
+      // The sendEmailViaBrevo function requires html content
+      // If we only have text, we wrap it in a basic HTML structure
+      const htmlContent = options.html || `<p>${options.text}</p>`;
+      
+      return await sendEmailViaBrevo(options.to, options.subject, htmlContent);
     } catch (error) {
-      console.error('Email send error:', error);
+      console.error('Email send error via Brevo:', error);
       return false;
     }
   }
 
   async verifyConnection(): Promise<boolean> {
-    try {
-      const transporter = this.getTransporter();
-      await transporter.verify();
+    // Since Brevo API uses HTTP requests, we just check if the API key is configured
+    if (env.BREVO_API_KEY && env.BREVO_API_KEY.length > 0) {
       return true;
-    } catch {
-      return false;
     }
+    return false;
   }
 }
 

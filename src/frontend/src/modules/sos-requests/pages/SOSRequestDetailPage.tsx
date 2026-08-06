@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { sosApi, type SOSRequest } from '../services/sosApi';
 import { SOSStatusBadge } from '../components/SOSStatusBadge';
 import { SOSTimeline } from '../components/SOSTimeline';
+import { HospitalMapModal } from '../components/HospitalMapModal';
 import { ArrowLeft, User, Calendar, Hospital, Activity, AlertCircle, MapPin, Phone, Truck } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -13,6 +14,7 @@ export const SOSRequestDetailPage: React.FC = () => {
   const [request, setRequest] = useState<SOSRequest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [evaluationLog, setEvaluationLog] = useState<any>(null);
+  const [isMapOpen, setIsMapOpen] = useState(false);
 
   useEffect(() => {
     const fetchRequest = async () => {
@@ -267,18 +269,40 @@ export const SOSRequestDetailPage: React.FC = () => {
               Quick Actions
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 rounded-lg border border-brand-primary/20 transition-colors">
+              <button 
+                onClick={() => setIsMapOpen(true)}
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 rounded-lg border border-brand-primary/20 transition-colors"
+              >
                 <MapPin className="w-5 h-5" />
                 Get Directions
               </button>
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 rounded-lg border border-brand-primary/20 transition-colors">
+              <a 
+                href={`tel:${((request.hospital as unknown) as any)?.contactPhone || ''}`}
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 rounded-lg border border-brand-primary/20 transition-colors"
+              >
                 <Phone className="w-5 h-5" />
-                Call Hospital
-              </button>
+                <span className="flex flex-col items-center">
+                  <span>Call Hospital</span>
+                  {((request.hospital as unknown) as any)?.contactPhone && (
+                    <span className="text-xs font-semibold">{((request.hospital as unknown) as any)?.contactPhone}</span>
+                  )}
+                </span>
+              </a>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Map Modal */}
+      {request.hospital && request.hospital.location && (
+        <HospitalMapModal 
+          isOpen={isMapOpen}
+          onClose={() => setIsMapOpen(false)}
+          hospitalName={request.hospital.name}
+          hospitalAddress={request.hospital.address}
+          coordinates={request.hospital.location.coordinates}
+        />
+      )}
     </div>
   );
 };

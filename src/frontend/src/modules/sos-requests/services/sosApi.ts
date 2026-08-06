@@ -35,11 +35,23 @@ export interface PaginatedResponse<T> {
 }
 
 export interface CreateSOSRequestPayload {
+  hospitalId: string;
   bloodType: string;
   requiredQuantityMl: number;
   urgencyLevel: SOSUrgency;
   patientReference?: string;
   fulfillmentDeadline: string;
+}
+
+export interface HospitalInfo {
+  _id: string;
+  name: string;
+  address: string;
+  location: {
+    type: string;
+    coordinates: number[];
+  };
+  contactPhone: string;
 }
 
 export interface UpdateSOSStatusPayload {
@@ -76,6 +88,11 @@ export interface SOSEvaluationLog {
 }
 
 export const sosApi = {
+  async getHospitals(): Promise<HospitalInfo[]> {
+    const response = await apiClient.get('/hospital/sos-requests/hospitals');
+    return response.data;
+  },
+
   async createSOSRequest(payload: CreateSOSRequestPayload): Promise<SOSRequest> {
     const response = await apiClient.post('/hospital/sos-requests', payload);
     return response.data;

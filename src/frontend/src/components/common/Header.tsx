@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, Globe, Menu, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Bell, Globe, Menu, ShieldCheck, AlertTriangle, Calendar, Megaphone, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiService } from '../../services/apiClient';
+import type { NotificationData } from '../../services/mockData';
+import { format } from 'date-fns';
 
 interface HeaderProps {
   onToggleMobileMenu?: () => void;
@@ -17,6 +19,12 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
   const userName = user?.fullName || 'BS. Nguyễn Văn A';
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Notification Dropdown State
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const words = userName.trim().split(/\s+/);
   let initials = 'BC';
   if (words.length >= 2) {
@@ -24,6 +32,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
   } else if (words.length === 1 && words[0].length > 0) {
     initials = words[0].substring(0, 2).toUpperCase();
   }
+
+  const isHospital = user?.role === 'HospitalStaff' || user?.role?.toLowerCase().includes('hospital');
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -37,6 +47,58 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleDropdown = async () => {
+    setIsDropdownOpen(!isDropdownOpen);
+    if (!isDropdownOpen) {
+      setLoadingNotifs(true);
+      try {
+        const data = await apiService.getNotifications({});
+        // Show top 5 recent
+        const sorted = data.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()).slice(0, 5);
+        setNotifications(sorted);
+      } catch (err) {
+        console.error('Failed to fetch dropdown notifications', err);
+      } finally {
+        setLoadingNotifs(false);
+      }
+    }
+  };
+
+  const handleNotificationClick = async (notif: NotificationData) => {
+    setIsDropdownOpen(false);
+    if (!notif.readAt) {
+      await apiService.markNotificationAsRead(notif._id);
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+    if (notif.type === 'SOS') {
+      navigate('/sos-alerts');
+    } else if ((notif.type as string) === 'Appointment') {
+      navigate('/my-appointments');
+    } else if (notif.type === 'Campaign') {
+      navigate('/news');
+    }
+  };
+
+  const getIconForType = (type: string) => {
+    switch (type as string) {
+      case 'SOS': return <AlertTriangle className="w-4 h-4" />;
+      case 'Appointment': return <Calendar className="w-4 h-4" />;
+      case 'Campaign': return <Megaphone className="w-4 h-4" />;
+      default: return <Bell className="w-4 h-4" />;
+    }
+  };
+
   const toggleLanguage = () => {
     const nextLang = i18n.language === 'vi' ? 'en' : 'vi';
     i18n.changeLanguage(nextLang);
@@ -45,43 +107,22 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
   const getPageMeta = () => {
     const path = location.pathname;
     if (path.includes('/hospital/sos-requests')) {
-      return {
-        title: 'SOS Requests Dashboard',
-        subtitle: 'MONITOR AND MANAGE EMERGENCY BLOOD REQUESTS',
-      };
+      return { title: 'SOS Requests Dashboard', subtitle: 'MONITOR AND MANAGE EMERGENCY BLOOD REQUESTS' };
     }
     if (path.includes('/hospital/sos-reports')) {
-      return {
-        title: 'SOS Reports',
-        subtitle: 'VIEW REPORTS AND ANALYTICS FOR SOS REQUESTS',
-      };
+      return { title: 'SOS Reports', subtitle: 'VIEW REPORTS AND ANALYTICS FOR SOS REQUESTS' };
     }
     if (path.includes('/inventory')) {
-      return {
-        title: 'Blood Inventory Management',
-        subtitle: 'MONITOR BLOOD BAG STOCK, FEFO EXPIRATION & DISPATCH',
-      };
+      return { title: 'Blood Inventory Management', subtitle: 'MONITOR BLOOD BAG STOCK, FEFO EXPIRATION & DISPATCH' };
     }
     if (path.includes('/content')) {
-      return {
-        title: 'Content Management',
-        subtitle: 'PUBLISH HEALTH ARTICLES & EMERGENCY BLOOD ALERTS',
-      };
+      return { title: 'Content Management', subtitle: 'PUBLISH HEALTH ARTICLES & EMERGENCY BLOOD ALERTS' };
     }
     if (path.includes('/notifications')) {
-      return {
-        title: 'Notifications & Emergency SOS',
-        subtitle: 'REVIEW CRITICAL HOSPITAL REQUESTS AND SYSTEM ALERTS',
-      };
+      return { title: 'Notifications & Emergency SOS', subtitle: 'REVIEW CRITICAL HOSPITAL REQUESTS AND SYSTEM ALERTS' };
     }
-    return {
-      title: 'Campaign Management',
-      subtitle: 'COORDINATE MOBILE DONATION DRIVES & MONITOR CAPACITY',
-    };
+    return { title: 'Campaign Management', subtitle: 'COORDINATE MOBILE DONATION DRIVES & MONITOR CAPACITY' };
   };
-
-  const isHospital = user?.role === 'HospitalStaff' || user?.role?.toLowerCase().includes('hospital');
-
 
   const pageMeta = getPageMeta();
 
@@ -123,19 +164,82 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
           <span>{i18n.language.toUpperCase()}</span>
         </button>
 
-        {/* SOS Alert Bell Quick Link */}
-        <button
-          onClick={() => navigate(isHospital ? '/hospital/sos-requests' : '/bc/notifications')}
-          className="relative p-2 text-[#6c757d] hover:text-[#271816] hover:bg-[#f8f9fa] rounded-full transition-colors cursor-pointer"
-          title="Notifications"
-        >
-          <Bell className="w-5 h-5" />
-          {unreadCount > 0 && (
-            <span className="absolute top-0 right-0 min-w-[16px] h-4 bg-[#93000b] rounded-full ring-2 ring-white flex items-center justify-center px-1 text-[9px] font-bold text-white">
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
+        {/* SOS Alert Bell & Dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={toggleDropdown}
+            className="relative p-2 text-[#6c757d] hover:text-[#271816] hover:bg-[#f8f9fa] rounded-full transition-colors cursor-pointer"
+            title="Notifications"
+          >
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute top-0 right-0 min-w-[16px] h-4 bg-[#93000b] rounded-full ring-2 ring-white flex items-center justify-center px-1 text-[9px] font-bold text-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 className="font-bold text-gray-800 text-sm">Notifications</h3>
+                {unreadCount > 0 && (
+                  <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">
+                    {unreadCount} unread
+                  </span>
+                )}
+              </div>
+              
+              <div className="max-h-[320px] overflow-y-auto">
+                {loadingNotifs ? (
+                  <div className="p-8 text-center text-gray-500 text-sm">Loading...</div>
+                ) : notifications.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500 text-sm">No new notifications</div>
+                ) : (
+                  <div className="flex flex-col">
+                    {notifications.map((notif) => {
+                      const isUnread = !notif.readAt;
+                      const isSOS = notif.type === 'SOS';
+                      return (
+                        <div 
+                          key={notif._id} 
+                          onClick={() => handleNotificationClick(notif)}
+                          className={`p-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors flex gap-3 ${isUnread ? 'bg-blue-50/30' : ''}`}
+                        >
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isSOS ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
+                            {getIconForType(notif.type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className={`text-sm truncate ${isUnread ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
+                              {notif.title}
+                            </h4>
+                            <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">{notif.body}</p>
+                            <span className="text-[10px] text-gray-400 mt-1 block">
+                              {notif.createdAt ? format(new Date(notif.createdAt), 'dd/MM HH:mm') : ''}
+                            </span>
+                          </div>
+                          {!notif.readAt && <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-2"></div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-2 border-t border-gray-100 bg-gray-50">
+                <button 
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    navigate(isHospital ? '/hospital/sos-requests' : '/bc/notifications');
+                  }}
+                  className="w-full py-2 text-center text-sm font-semibold text-[#93000b] hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  View all notifications
+                </button>
+              </div>
+            </div>
           )}
-        </button>
+        </div>
 
         {/* User Profile Avatar */}
         <div className="flex items-center gap-2.5 pl-3 border-l border-[#f1f3f5]">
@@ -147,7 +251,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
               {userName}
             </span>
             <span className="text-[10px] text-[#93000b] font-semibold uppercase tracking-wider">
-              BloodCenterStaff
+              {user?.role || 'BloodCenterStaff'}
             </span>
           </div>
         </div>

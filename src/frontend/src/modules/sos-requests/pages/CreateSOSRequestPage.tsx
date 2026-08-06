@@ -1,16 +1,20 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, AlertCircle, Droplet, User, Activity, Calendar } from 'lucide-react';
+import { ArrowLeft, Save, AlertCircle, Droplet, User, Activity, Calendar, Hospital } from 'lucide-react';
 import { toast } from 'sonner';
-import { sosApi, type CreateSOSRequestPayload, type SOSUrgency } from '../services/sosApi';
+import { sosApi, type CreateSOSRequestPayload, type SOSUrgency, type HospitalInfo } from '../services/sosApi';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 
 const getDefaultDeadline = () => new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
 
 export const CreateSOSRequestPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hospitals, setHospitals] = useState<HospitalInfo[]>([]);
   
   const [formData, setFormData] = useState<CreateSOSRequestPayload>(() => ({
+    hospitalId: '',
     bloodType: '',
     requiredQuantityMl: 0,
     urgencyLevel: 'Critical',
@@ -22,9 +26,27 @@ export const CreateSOSRequestPage: React.FC = () => {
 
   const defaultDeadline = useMemo(() => getDefaultDeadline(), []);
 
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      try {
+        const data = await sosApi.getHospitals();
+        setHospitals(data);
+        if (data.length === 1) {
+          setFormData(prev => ({ ...prev, hospitalId: data[0]._id }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch hospitals', error);
+      }
+    };
+    fetchHospitals();
+  }, []);
+
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof CreateSOSRequestPayload, string>> = {};
     
+    if (!formData.hospitalId) {
+      newErrors.hospitalId = 'Hospital is required';
+    }
     if (!formData.bloodType) {
       newErrors.bloodType = 'Blood type is required';
     }
@@ -107,6 +129,42 @@ export const CreateSOSRequestPage: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Hospital & Staff Info */}
+        <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-brand-border bg-brand-bg-muted/30">
+            <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2">
+              <Hospital className="w-5 h-5 text-brand-primary" />
+              Hospital & Staff Information
+            </h2>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-brand-text-secondary mb-1">Medical Facility <span className="text-brand-error">*</span></label>
+                <select 
+                  required 
+                  value={formData.hospitalId}
+                  onChange={(e) => handleChange('hospitalId', e.target.value)}
+                  className="w-full px-4 py-2.5 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-brand-text-main"
+                >
+                  <option value="">Select hospital</option>
+                  {hospitals.map(h => (
+                    <option key={h._id} value={h._id}>{h.name}</option>
+                  ))}
+                </select>
+                {errors.hospitalId && <p className="mt-1 text-sm text-brand-error">{errors.hospitalId}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-brand-text-secondary mb-1">Staff Member</label>
+                <div className="w-full px-4 py-2.5 bg-brand-bg-muted/50 border border-brand-border-dark rounded-lg text-brand-text-main flex flex-col justify-center">
+                  <span className="font-medium">{user?.idDocumentNumber || 'Unknown Staff'}</span>
+                  <span className="text-xs text-brand-text-muted">{user?.email || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Urgency Level */}
         <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm overflow-hidden">
           <div className="p-5 border-b border-brand-border bg-brand-bg-muted/30">

@@ -6,6 +6,7 @@ export const CreateSOSRequestSchema = z.object({
     requiredQuantityMl: z.number().min(1, 'Quantity must be greater than 0'),
     urgencyLevel: z.enum(['Critical', 'High', 'Medium']),
     patientReference: z.string().optional(),
+    hospitalId: z.string().min(1, 'Hospital is required'),
     fulfillmentDeadline: z.string().datetime({ message: 'Must be a valid ISO datetime' })
   })
 });

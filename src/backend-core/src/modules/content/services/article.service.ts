@@ -2,8 +2,46 @@ import mongoose from 'mongoose';
 import { Article, IArticle, ArticleCategory, ArticleStatus, TargetAudience } from '../models/article.model';
 import { ContentAuditLog } from '../models/audit-log.model';
 import { CreateArticleInput, UpdateArticleInput } from '../schemas/article.schema';
+import { NotificationService } from '../../notification/services/notification.service';
+import { User } from '../../auth-account/models/user.model';
 
 export class ArticleService {
+  private static async broadcastArticleNotification(article: any) {
+    try {
+      const { title, category, targetAudience } = article;
+      
+      const rolesToQuery = [];
+      if (targetAudience?.includes('Donors')) rolesToQuery.push('Donor');
+      if (targetAudience?.includes('BloodCenterStaff')) rolesToQuery.push('BloodCenterStaff');
+      if (targetAudience?.includes('HospitalStaff')) rolesToQuery.push('HospitalStaff');
+      
+      if (rolesToQuery.length === 0) return;
+
+      const users = await User.find({ roles: { $in: rolesToQuery } }).select('_id').lean();
+      if (users.length === 0) return;
+
+      const recipientIds = users.map(u => u._id.toString());
+      
+      let notifType: 'Campaign' | 'Routine' = 'Routine';
+      if (category === 'Campaign') notifType = 'Campaign';
+
+      await NotificationService.sendNotification({
+        recipientIds,
+        type: notifType,
+        title: `Bài viết mới: ${title}`,
+        body: `Một thông tin mới thuộc chuyên mục ${category} vừa được xuất bản trên hệ thống.`,
+        payload: {
+          articleId: article._id.toString(),
+          deepLink: `/news/${article._id.toString()}`
+        },
+        channels: ['WebPush'] // Tránh spam Email quá nhiều trong MVP
+      });
+      console.log(`[ArticleService] Broadcasted notification to ${recipientIds.length} users for article ${article._id}`);
+    } catch (error) {
+      console.error('[ArticleService] Error broadcasting article notification:', error);
+    }
+  }
+
   static async createArticle(
     input: CreateArticleInput,
     actorUserId: string,
@@ -45,6 +83,10 @@ export class ArticleService {
       timestamp: new Date(),
       ipAddress: ipAddress || '127.0.0.1'
     });
+
+    if (status === 'Published') {
+      this.broadcastArticleNotification(article);
+    }
 
     return article;
   }
@@ -169,6 +211,10 @@ export class ArticleService {
       ipAddress: ipAddress || '127.0.0.1'
     });
 
+    if (input.status === 'Published' && previousValue.status !== 'Published') {
+      this.broadcastArticleNotification(article);
+    }
+
     return article;
   }
 
@@ -230,6 +276,8 @@ export class ArticleService {
         timestamp: now,
         ipAddress: '127.0.0.1'
       });
+
+      this.broadcastArticleNotification(article);
     }
 
     return scheduled.length;

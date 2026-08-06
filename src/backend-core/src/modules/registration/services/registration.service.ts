@@ -506,6 +506,7 @@ export class RegistrationService {
         if (
           payload.status === 'Eligible for Donation' ||
           payload.status === 'Eligible' ||
+          payload.status === 'Examining' ||
           payload.status === 'Confirmed' ||
           payload.status === 'CheckedIn' ||
           payload.status === 'Completed' ||

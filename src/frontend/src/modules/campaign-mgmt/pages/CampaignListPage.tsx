@@ -27,9 +27,17 @@ export const CampaignListPage: React.FC = () => {
   const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 6;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const formatDateSafe = (dateStr?: string | Date) => {
     if (!dateStr) return 'N/A';
@@ -45,7 +53,7 @@ export const CampaignListPage: React.FC = () => {
   const fetchCampaigns = async () => {
     setLoading(true);
     try {
-      const data = await apiService.getCampaigns({ search, status: statusFilter });
+      const data = await apiService.getCampaigns({ search: debouncedSearch, status: statusFilter });
       const items = Array.isArray(data) ? data : ((data as any)?.data || []);
       setCampaigns(items);
     } catch (err) {
@@ -59,7 +67,7 @@ export const CampaignListPage: React.FC = () => {
   useEffect(() => {
     fetchCampaigns();
     setCurrentPage(1);
-  }, [search, statusFilter]);
+  }, [debouncedSearch, statusFilter]);
 
   const totalPages = Math.ceil(campaigns.length / pageSize) || 1;
   const paginatedCampaigns = campaigns.slice((currentPage - 1) * pageSize, currentPage * pageSize);

@@ -86,6 +86,7 @@ export const RegistrationDetailPage: React.FC = () => {
   const [editBloodType, setEditBloodType] = useState<string>('Unknown');
   const [donationVolume, setDonationVolume] = useState<number>(350);
   const [vitalsError, setVitalsError] = useState<string | null>(null);
+  const [showExaminingModal, setShowExaminingModal] = useState<boolean>(false);
 
   useEffect(() => {
     if (registration?.donationVolume) {
@@ -194,6 +195,7 @@ export const RegistrationDetailPage: React.FC = () => {
       const statusLabels: Record<string, string> = {
         Confirmed: '🟢 Đã xác nhận đơn (Confirmed)',
         Eligible: '🟢 Đủ điều kiện hiến máu (Eligible)',
+        Examining: '🟣 Đang xét nghiệm máu (Examining)',
         Ineligible: '🔴 Không đủ điều kiện (Ineligible)',
         Rejected: '🔴 Đã từ chối đơn (Rejected)',
         Completed: '✨ Đã hoàn tất hiến máu (Completed)',
@@ -359,53 +361,25 @@ export const RegistrationDetailPage: React.FC = () => {
           )}
 
           {registration.status === 'Eligible' && (
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Blood Donation Volume Config Selector */}
-              <div className="flex items-center gap-2 bg-red-50/80 border border-red-200 px-3 py-1.5 rounded-xl shadow-2xs">
-                <Droplet className="w-4 h-4 text-[#93000b] shrink-0" />
-                <span className="text-[12px] font-bold text-slate-800 shrink-0">Thể tích máu hiến:</span>
-                {[250, 350, 450].map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => setDonationVolume(v)}
-                    className={`px-2.5 py-1 text-[11px] font-extrabold rounded-lg border transition-all cursor-pointer ${
-                      donationVolume === v
-                        ? 'bg-[#93000b] text-white border-[#93000b] shadow-2xs'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    {v} ml
-                  </button>
-                ))}
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    min={100}
-                    max={1000}
-                    value={donationVolume}
-                    onChange={(e) => setDonationVolume(Math.max(100, parseInt(e.target.value, 10) || 350))}
-                    className="w-16 px-2 py-0.5 text-[12px] font-extrabold text-[#93000b] bg-white border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-[#93000b]"
-                  />
-                  <span className="text-[11px] font-bold text-slate-500">ml</span>
-                </div>
-              </div>
+            <button
+              type="button"
+              onClick={() => setConfirmStatusModal({ isOpen: true, targetStatus: 'Examining' })}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+            >
+              <Activity className="w-4 h-4 text-white" />
+              <span>Examining</span>
+            </button>
+          )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isBloodTypeValid(registration, editBloodType)) {
-                    toast.error('⚠️ Chưa thể Hoàn Thành! Vui lòng chọn & cập nhật nhóm máu cho người hiến (khác Unknown) trước khi hoàn tất.');
-                    return;
-                  }
-                  setConfirmStatusModal({ isOpen: true, targetStatus: 'Completed' });
-                }}
-                className="px-4 py-2 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
-              >
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>Hoàn Thành ({donationVolume}ml)</span>
-              </button>
-            </div>
+          {registration.status === 'Examining' && (
+            <button
+              type="button"
+              onClick={() => setShowExaminingModal(true)}
+              className="px-4 py-2 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+            >
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>Completed</span>
+            </button>
           )}
 
           {registration.status === 'Completed' && (
@@ -900,6 +874,38 @@ export const RegistrationDetailPage: React.FC = () => {
                 </span>
               </div>
 
+              {/* Blood Donation Volume Selector (Đầu Nội Dung Khám Lâm Sàng) */}
+              {['Eligible', 'Examining', 'Completed'].includes(registration.status) && (
+                <div className="p-4 bg-[#fff8f7] border border-red-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-[#93000b] text-white flex items-center justify-center shrink-0">
+                      <Droplet className="w-4 h-4 fill-current" />
+                    </div>
+                    <div>
+                      <h4 className="text-[13px] font-extrabold text-[#271816]">Thể Tích Máu Đăng Ký Hiến</h4>
+                      <p className="text-[11px] font-semibold text-[#6c757d]">Chọn hoặc nhập số ml máu tiếp nhận của người hiến</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {[250, 350, 450].map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setDonationVolume(v)}
+                        className={`px-3.5 py-1.5 text-[12px] font-extrabold rounded-xl border transition-all cursor-pointer ${
+                          donationVolume === v
+                            ? 'bg-[#93000b] text-white border-[#93000b] shadow-2xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {v} ml
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Inline Error Warning Banner for Missing Vitals */}
               {vitalsError && (
                 <div className="p-4 bg-red-50 border-2 border-red-300 text-[#93000b] rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2 shadow-2xs">
@@ -1183,6 +1189,92 @@ export const RegistrationDetailPage: React.FC = () => {
                 className="px-5 py-2 text-[13px] font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all shadow-2xs cursor-pointer"
               >
                 Xác Nhận Từ Chối
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Examining Quality Verification Modal */}
+      {showExaminingModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full border border-slate-100 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center border border-purple-200">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-[#271816] text-[17px]">Xác Nhận Kết Quả Xét Nghiệm</h3>
+                  <p className="text-[12px] text-slate-500">Mẫu máu: {donationVolume}ml ({registration?.donorName || 'Người hiến'})</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowExaminingModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-[13px] font-medium text-slate-700 leading-relaxed">
+                Vui lòng chọn kết quả kiểm tra chất lượng mẫu máu hiến trước khi hoàn tất hồ sơ:
+              </p>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!isBloodTypeValid(registration, editBloodType)) {
+                    toast.error('⚠️ Chưa thể Hoàn Thành! Vui lòng chọn & cập nhật nhóm máu cho người hiến (khác Unknown) trước khi hoàn tất.');
+                    return;
+                  }
+                  setShowExaminingModal(false);
+                  await handleUpdateStatus('Completed');
+                }}
+                className="w-full p-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 rounded-2xl flex items-center justify-between transition-all group cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+                  <div>
+                    <p className="font-extrabold text-[14px]">1. Passed (Đạt tiêu chuẩn)</p>
+                    <p className="text-[11.5px] text-emerald-700 mt-0.5">Mẫu máu đạt yêu cầu an toàn, sẵn sàng nhập kho</p>
+                  </div>
+                </div>
+                <span className="text-emerald-700 font-bold group-hover:translate-x-1 transition-transform">→</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!isBloodTypeValid(registration, editBloodType)) {
+                    toast.error('⚠️ Chưa thể Hoàn Thành! Vui lòng chọn & cập nhật nhóm máu cho người hiến (khác Unknown) trước khi hoàn tất.');
+                    return;
+                  }
+                  setShowExaminingModal(false);
+                  await handleUpdateStatus('Completed');
+                }}
+                className="w-full p-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-900 rounded-2xl flex items-center justify-between transition-all group cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <XCircle className="w-6 h-6 text-red-600 shrink-0" />
+                  <div>
+                    <p className="font-extrabold text-[14px]">2. Máu có vấn đề</p>
+                    <p className="text-[11.5px] text-red-700 mt-0.5">Ghi nhận mẫu máu có bất thường và hoàn tất hồ sơ</p>
+                  </div>
+                </div>
+                <span className="text-red-700 font-bold group-hover:translate-x-1 transition-transform">→</span>
+              </button>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowExaminingModal(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[12px] font-bold rounded-xl cursor-pointer"
+              >
+                Hủy bỏ
               </button>
             </div>
           </div>

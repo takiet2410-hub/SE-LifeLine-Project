@@ -58,9 +58,10 @@ export const Step3_Summary: React.FC = () => {
       const res = await createAppointment(payload);
 
       if (res.success) {
+        const bookedTimeSlot = data.timeSlot;
         resetData();
         toast.success('Tạo lịch hẹn hiến máu thành công!');
-        navigate('/my-appointments/schedule/success');
+        navigate('/my-appointments/schedule/success', { state: { timeSlot: bookedTimeSlot } });
       } else {
         const msg = res.message || '';
         setError(msg || 'Lỗi đặt lịch hẹn. Vui lòng thử lại.');

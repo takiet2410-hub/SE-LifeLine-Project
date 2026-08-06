@@ -357,12 +357,15 @@ export class RegistrationService {
     const phoneNumber = donorProfile?.phoneNumber || donorUser?.phone || 'N/A';
     const bloodType = donorProfile?.bloodType || 'Unknown';
 
-    // Fetch real donor donation history from appointments collection by donorId
+    // Fetch real donor donation history from appointments collection (ONLY Completed donations)
     const donorIdQuery = appointment.donorId?._id || appointment.donorId;
     let historyAppointments: any[] = [];
     if (donorIdQuery) {
       try {
-        const findRes: any = Appointment.find({ donorId: donorIdQuery });
+        const findRes: any = Appointment.find({
+          donorId: donorIdQuery,
+          status: AppointmentStatus.Completed
+        });
         if (findRes && typeof findRes.populate === 'function') {
           const popRes = findRes.populate('campaignId');
           const sortRes = popRes && typeof popRes.sort === 'function' ? popRes.sort({ appointmentDate: -1 }) : popRes;
@@ -377,12 +380,13 @@ export class RegistrationService {
 
     const donationHistory = historyAppointments.map((app: any) => {
       const campaignObj = typeof app.campaignId === 'object' ? app.campaignId : null;
+      const vol = app.donationVolume ? `${app.donationVolume} ml` : '350 ml';
       return {
         _id: app._id.toString(),
         appointmentDate: app.appointmentDate,
         timeSlot: app.timeSlot,
         donationType: 'Máu toàn phần',
-        volume: '350 ml',
+        volume: vol,
         locationName: campaignObj?.name || 'Điểm hiến máu LifeLine',
         status: app.status
       };
@@ -433,6 +437,7 @@ export class RegistrationService {
         hemoglobinLevel: number;
       };
       screeningNotes?: string;
+      donationVolume?: number;
       status?: 'Pending' | 'Confirmed' | 'Rejected' | 'CheckedIn' | 'Eligible' | 'Ineligible' | 'Completed' | 'Eligible for Donation' | 'Ineligible for Donation' | 'Donation Completed';
       responses?: Array<{ questionId: string; selectedOptions: string[]; description?: string }>;
     },
@@ -476,6 +481,26 @@ export class RegistrationService {
 
       let eligibilityFlag = (screeningForm as any)?.eligibilityFlag || 'RequiresReview';
       let outcome = (screeningForm as any)?.outcome || 'PASS';
+
+      if (payload.status === 'Eligible' || payload.status === 'Eligible for Donation') {
+        let digitalRec = await DigitalDonorRecord.findOne({ appointmentId: registrationId }, null, opts).lean();
+        const existingVitals = (digitalRec?.screeningSummary as any)?.staffVitals || (screeningForm as any)?.vitals;
+        const finalVitals = payload.vitals || existingVitals;
+
+        if (
+          !finalVitals ||
+          !finalVitals.bloodPressure ||
+          !finalVitals.weight ||
+          !finalVitals.bodyTemperature ||
+          !finalVitals.hemoglobinLevel
+        ) {
+          const err: any = new Error(
+            'Vui lòng nhập đầy đủ các chỉ số sinh tồn (Huyết áp, Cân nặng, Thân nhiệt, Hemoglobin) trong phần Khám lâm sàng trước khi chuyển sang trạng thái Đủ Điều Kiện!'
+          );
+          err.statusCode = 400;
+          throw err;
+        }
+      }
 
       if (payload.status) {
         if (
@@ -588,6 +613,9 @@ export class RegistrationService {
         }
       }
 
+      if (payload.donationVolume !== undefined) {
+        (appointment as any).donationVolume = Number(payload.donationVolume) || 350;
+      }
       appointment.screeningFormId = screeningForm._id as any;
       await appointment.save(opts);
 
@@ -607,7 +635,7 @@ export class RegistrationService {
         digitalRecord = new DigitalDonorRecord({
           appointmentId: registrationId,
           donorId: appointment.donorId,
-          screeningSummary: { staffVitals: payload.vitals || null },
+          screeningSummary: { staffVitals: payload.vitals || null, ...(payload.donationVolume ? { donationVolume: payload.donationVolume } : {}) },
           donationStatus: mongoDonationStatus,
           clinicalNotes: payload.screeningNotes || '',
           lastUpdatedAt: new Date()
@@ -616,7 +644,8 @@ export class RegistrationService {
         const existingSummary = (digitalRecord.screeningSummary as Record<string, any>) || {};
         digitalRecord.screeningSummary = {
           ...existingSummary,
-          ...(payload.vitals ? { staffVitals: payload.vitals } : {})
+          ...(payload.vitals ? { staffVitals: payload.vitals } : {}),
+          ...(payload.donationVolume ? { donationVolume: payload.donationVolume } : {})
         };
         if (payload.status) {
           digitalRecord.donationStatus = mongoDonationStatus;
@@ -736,12 +765,26 @@ export class RegistrationService {
       throw err;
     }
 
-    // 4. Update status to CheckedIn
+    // 4. Update status to CheckedIn ONLY IF registration is strictly in Confirmed / Pending / Scheduled status
     const registrationIdStr = appointment._id.toString();
-    return await RegistrationService.updateRegistrationScreening(
-      registrationIdStr,
-      { status: 'CheckedIn' },
-      actorUserId || 'system'
-    );
+    const digitalRecord = await DigitalDonorRecord.findOne({ appointmentId: appointment._id }).lean();
+    const effectiveStatus: string = digitalRecord?.donationStatus || appointment.status;
+
+    if (
+      effectiveStatus === 'Confirmed' ||
+      effectiveStatus === 'Pending' ||
+      effectiveStatus === 'Scheduled' ||
+      effectiveStatus === (AppointmentStatus.Confirmed as string) ||
+      effectiveStatus === (AppointmentStatus.Pending as string)
+    ) {
+      return await RegistrationService.updateRegistrationScreening(
+        registrationIdStr,
+        { status: 'CheckedIn' },
+        actorUserId || 'system'
+      );
+    }
+
+    // If already CheckedIn or later (Eligible, Ineligible, Completed, etc.), keep registration EXACTLY as is!
+    return await RegistrationService.getRegistrationById(registrationIdStr);
   }
 }

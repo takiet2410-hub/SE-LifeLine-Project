@@ -312,9 +312,15 @@ export class BookingService {
       const slotStartTime = String(timeSlot || '').split('-')[0].trim();
       let slotFound = false;
 
+      const targetDateStr = typeof appointmentDate === 'string'
+        ? appointmentDate.split('T')[0]
+        : (appointmentDate as any) instanceof Date
+        ? (appointmentDate as Date).toISOString().split('T')[0]
+        : String(appointmentDate).split('T')[0];
+
       if (campaign.dailyTimeslots && campaign.dailyTimeslots.length > 0) {
         const targetDaily = campaign.dailyTimeslots.find(
-          (dt: any) => dt.dateStr === appointmentDate && dt.startTime === slotStartTime
+          (dt: any) => (dt.dateStr === targetDateStr || dt.dateStr === appointmentDate) && dt.startTime === slotStartTime
         );
         if (targetDaily) {
           targetDaily.registeredCount = Math.max(0, (targetDaily.registeredCount || 0) + 1);
@@ -473,9 +479,15 @@ export class BookingService {
     const slotStartTime = String(timeSlot || '').split('-')[0].trim();
     let slotFound = false;
 
+    const targetDateStr = typeof appointmentDate === 'string'
+      ? appointmentDate.split('T')[0]
+      : (appointmentDate as any) instanceof Date
+      ? (appointmentDate as Date).toISOString().split('T')[0]
+      : String(appointmentDate).split('T')[0];
+
     if (campaign.dailyTimeslots && campaign.dailyTimeslots.length > 0) {
       const targetDaily = campaign.dailyTimeslots.find(
-        (dt: any) => dt.dateStr === appointmentDate && dt.startTime === slotStartTime
+        (dt: any) => (dt.dateStr === targetDateStr || dt.dateStr === appointmentDate) && dt.startTime === slotStartTime
       );
       if (targetDaily) {
         targetDaily.registeredCount = Math.max(0, (targetDaily.registeredCount || 0) - 1);

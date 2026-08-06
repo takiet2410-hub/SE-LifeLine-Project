@@ -18,6 +18,7 @@ import {
   Scale,
   Sparkles,
   History,
+  AlertTriangle,
   HelpCircle,
   AlertCircle,
 } from 'lucide-react';
@@ -83,6 +84,14 @@ export const RegistrationDetailPage: React.FC = () => {
   }, [registrationId, reset]);
 
   const [editBloodType, setEditBloodType] = useState<string>('Unknown');
+  const [donationVolume, setDonationVolume] = useState<number>(350);
+  const [vitalsError, setVitalsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (registration?.donationVolume) {
+      setDonationVolume(registration.donationVolume);
+    }
+  }, [registration]);
 
   const isCheckedInOrLater = registration
     ? ['CheckedIn', 'Eligible', 'Ineligible', 'Completed'].includes(registration.status)
@@ -118,8 +127,38 @@ export const RegistrationDetailPage: React.FC = () => {
     return !!isSelectedKnown;
   };
 
+  const areVitalsComplete = () => {
+    const bp = watchBp || registration?.bloodPressure;
+    const weight = watchWeight !== undefined && watchWeight !== null && !isNaN(watchWeight) ? watchWeight : registration?.weight;
+    const temp = watchTemp !== undefined && watchTemp !== null && !isNaN(watchTemp) ? watchTemp : registration?.bodyTemperature;
+    const hgb = watchHgb !== undefined && watchHgb !== null && !isNaN(watchHgb) ? watchHgb : registration?.hemoglobinLevel;
+
+    return Boolean(
+      bp && String(bp).trim() !== '' &&
+      weight !== undefined && weight !== null && Number(weight) > 0 &&
+      temp !== undefined && temp !== null && Number(temp) > 0 &&
+      hgb !== undefined && hgb !== null && Number(hgb) > 0
+    );
+  };
+
+  useEffect(() => {
+    if (areVitalsComplete()) {
+      setVitalsError(null);
+    }
+  }, [watchBp, watchWeight, watchTemp, watchHgb]);
+
   const handleUpdateStatus = async (newStatus: string) => {
     if (!registrationId || !registration) return;
+
+    if (newStatus === 'Eligible') {
+      if (!areVitalsComplete()) {
+        setVitalsError('⚠️ Vui lòng điền đầy đủ 4 chỉ số sinh tồn (Huyết áp, Cân nặng, Thân nhiệt, Hemoglobin) trong khung bên dưới trước khi chuyển sang trạng thái Đủ Điều Kiện.');
+        setConfirmStatusModal({ isOpen: false, targetStatus: null });
+        const formEl = document.getElementById('clinical-vitals-form');
+        if (formEl) formEl.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+    }
 
     if (newStatus === 'Completed') {
       if (!isBloodTypeValid(registration, editBloodType)) {
@@ -145,6 +184,7 @@ export const RegistrationDetailPage: React.FC = () => {
         hemoglobinLevel: watchHgb || undefined,
         screeningNotes: watch('screeningNotes') || '',
         status: newStatus as any,
+        donationVolume,
         ...(shouldUpdateBloodType ? { donorBloodType: editBloodType } : {}),
       });
       setRegistration(updated);
@@ -293,7 +333,15 @@ export const RegistrationDetailPage: React.FC = () => {
             <>
               <button
                 type="button"
-                onClick={() => setConfirmStatusModal({ isOpen: true, targetStatus: 'Eligible' })}
+                onClick={() => {
+                  if (!areVitalsComplete()) {
+                    setVitalsError('⚠️ Vui lòng điền đầy đủ 4 chỉ số sinh tồn (Huyết áp, Cân nặng, Thân nhiệt, Hemoglobin) ở khung Khám lâm sàng bên dưới trước khi chuyển sang trạng thái Đủ Điều Kiện.');
+                    const formEl = document.getElementById('clinical-vitals-form');
+                    if (formEl) formEl.scrollIntoView({ behavior: 'smooth' });
+                    return;
+                  }
+                  setConfirmStatusModal({ isOpen: true, targetStatus: 'Eligible' });
+                }}
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
               >
                 <CheckCircle2 className="w-4 h-4 text-white" />
@@ -311,20 +359,53 @@ export const RegistrationDetailPage: React.FC = () => {
           )}
 
           {registration.status === 'Eligible' && (
-            <button
-              type="button"
-              onClick={() => {
-                if (!isBloodTypeValid(registration, editBloodType)) {
-                  toast.error('⚠️ Chưa thể Hoàn Thành! Vui lòng chọn & cập nhật nhóm máu cho người hiến (khác Unknown) trước khi hoàn tất.');
-                  return;
-                }
-                setConfirmStatusModal({ isOpen: true, targetStatus: 'Completed' });
-              }}
-              className="px-4 py-2 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
-            >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>Hoàn Thành (Completed)</span>
-            </button>
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Blood Donation Volume Config Selector */}
+              <div className="flex items-center gap-2 bg-red-50/80 border border-red-200 px-3 py-1.5 rounded-xl shadow-2xs">
+                <Droplet className="w-4 h-4 text-[#93000b] shrink-0" />
+                <span className="text-[12px] font-bold text-slate-800 shrink-0">Thể tích máu hiến:</span>
+                {[250, 350, 450].map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setDonationVolume(v)}
+                    className={`px-2.5 py-1 text-[11px] font-extrabold rounded-lg border transition-all cursor-pointer ${
+                      donationVolume === v
+                        ? 'bg-[#93000b] text-white border-[#93000b] shadow-2xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {v} ml
+                  </button>
+                ))}
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min={100}
+                    max={1000}
+                    value={donationVolume}
+                    onChange={(e) => setDonationVolume(Math.max(100, parseInt(e.target.value, 10) || 350))}
+                    className="w-16 px-2 py-0.5 text-[12px] font-extrabold text-[#93000b] bg-white border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-[#93000b]"
+                  />
+                  <span className="text-[11px] font-bold text-slate-500">ml</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isBloodTypeValid(registration, editBloodType)) {
+                    toast.error('⚠️ Chưa thể Hoàn Thành! Vui lòng chọn & cập nhật nhóm máu cho người hiến (khác Unknown) trước khi hoàn tất.');
+                    return;
+                  }
+                  setConfirmStatusModal({ isOpen: true, targetStatus: 'Completed' });
+                }}
+                className="px-4 py-2 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>Hoàn Thành ({donationVolume}ml)</span>
+              </button>
+            </div>
           )}
 
           {registration.status === 'Completed' && (
@@ -511,83 +592,89 @@ export const RegistrationDetailPage: React.FC = () => {
                   });
                 }
 
+                const defaultSurveyItems = [
+                  { q: '1. Đã từng hiến máu bao giờ chưa?', a: 'CÓ' },
+                  { q: '2. Đang mắc bệnh mãn tính hoặc bệnh cấp tính?', a: 'KHÔNG' },
+                  { q: '3. Tiền sử bệnh truyền nhiễm (Viêm gan B, C, HIV...)?', a: 'KHÔNG' },
+                  { q: '4. Tiền sử mắc bệnh / truyền máu (12 tháng qua)?', a: 'KHÔNG CÓ' },
+                  { q: '5. Tiêm vắc xin / xăm mình / phẫu thuật (6 tháng qua)?', a: 'KHÔNG CÓ' },
+                  { q: '6. Đi từ vùng có dịch / mắc bệnh nhiễm trùng (1 tháng qua)?', a: 'KHÔNG' },
+                  { q: '7. Triệu chứng sốt, ho, khó thở, nhức mỏi (14 ngày qua)?', a: 'KHÔNG CÓ' },
+                  { q: '8. Dùng thuốc kháng sinh, aspirin, thuốc điều trị (7 ngày qua)?', a: 'KHÔNG' },
+                ];
+
                 return (
                   <>
-                    <div className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200 flex items-center justify-between">
-                      <span className="font-semibold text-[#271816]">1. Đã từng hiến máu bao giờ chưa?</span>
-                      <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-200 text-slate-700 rounded">CÓ</span>
-                    </div>
-
-                    <div className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200 flex items-center justify-between">
-                      <span className="font-semibold text-[#271816]">2. Đang mắc bệnh mãn tính hoặc bệnh cấp tính?</span>
-                      <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-200 text-slate-700 rounded">KHÔNG</span>
-                    </div>
-
-                    <div className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200 flex items-center justify-between">
-                      <span className="font-semibold text-[#271816]">3. Tiền sử bệnh truyền nhiễm (Viêm gan B, C, HIV...)?</span>
-                      <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-200 text-slate-700 rounded">KHÔNG</span>
-                    </div>
-
-                    <div className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200 flex items-center justify-between">
-                      <span className="font-semibold text-[#271816]">4. Tiền sử mắc bệnh / truyền máu (12 tháng qua)?</span>
-                      <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-200 text-slate-700 rounded">KHÔNG CÓ</span>
-                    </div>
+                    {defaultSurveyItems.map((item, idx) => (
+                      <div key={idx} className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <span className="font-semibold text-[#271816]">{item.q}</span>
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-200 text-slate-700 rounded shrink-0">{item.a}</span>
+                      </div>
+                    ))}
                   </>
                 );
               })()}
             </div>
           </div>
 
-          {/* Card 3: Donation History Table */}
-          <div className="bg-white border border-[#f1f3f5] rounded-2xl p-6 md:p-8 shadow-2xs space-y-4 w-full">
-            <div className="flex items-center justify-between border-b border-[#f1f3f5] pb-4">
-              <h3 className="text-[16px] font-bold text-[#271816] flex items-center gap-2">
-                <History className="w-5 h-5 text-[#93000b]" />
-                <span>Lịch Sử Hiến Máu Của Người Dùng</span>
-              </h3>
-              <span className="px-3 py-1 text-[11px] font-bold bg-[#1a1a2e] text-white rounded-full">
-                Tổng cộng: {registration.donationHistory?.length || 0} lượt hiến / đăng ký
-              </span>
-            </div>
+          {/* Card 3: Donation History Table (Completed ONLY) */}
+          {(() => {
+            const completedHistory = (registration.donationHistory || []).filter(
+              (item) => item.status === 'Completed' || (item.status as string) === 'Donation Completed'
+            );
 
-            {(!registration.donationHistory || registration.donationHistory.length === 0) ? (
-              <div className="text-center py-8 text-slate-500 text-[13px]">
-                Chưa ghi nhận lịch sử hiến máu nào cho người dùng này.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-[13px]">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-[#f1f3f5] text-[#6c757d] font-bold uppercase tracking-wider">
-                      <th className="px-4 py-3">Ngày hiến</th>
-                      <th className="px-4 py-3">Loại hiến</th>
-                      <th className="px-4 py-3">Thể tích</th>
-                      <th className="px-4 py-3">Địa điểm</th>
-                      <th className="px-4 py-3 text-right">Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#f1f3f5]">
-                    {registration.donationHistory.map((item, idx) => {
-                      const formattedDate = item.appointmentDate
-                        ? formatDateToDDMMYYYY(item.appointmentDate)
-                        : '---';
-                      return (
-                        <tr key={item._id || idx} className="hover:bg-slate-50/50">
-                          <td className="px-4 py-3.5 font-semibold text-[#271816]">{formattedDate}</td>
-                          <td className="px-4 py-3.5 text-[#5b403d]">{item.donationType || 'Máu toàn phần'}</td>
-                          <td className="px-4 py-3.5 font-bold text-[#93000b]">{item.volume || '350 ml'}</td>
-                          <td className="px-4 py-3.5 text-[#6c757d]">{item.locationName || 'Điểm hiến máu LifeLine'}</td>
-                          <td className="px-4 py-3.5 text-right">
-                            <StatusBadge status={item.status} />
-                          </td>
+            return (
+              <div className="bg-white border border-[#f1f3f5] rounded-2xl p-6 md:p-8 shadow-2xs space-y-4 w-full">
+                <div className="flex items-center justify-between border-b border-[#f1f3f5] pb-4">
+                  <h3 className="text-[16px] font-bold text-[#271816] flex items-center gap-2">
+                    <History className="w-5 h-5 text-[#93000b]" />
+                    <span>Lịch Sử Hiến Máu Thành Công</span>
+                  </h3>
+                  <span className="px-3 py-1 text-[11px] font-bold bg-[#1a1a2e] text-white rounded-full">
+                    Tổng cộng: {completedHistory.length} lần hiến máu thành công
+                  </span>
+                </div>
+
+                {completedHistory.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500 text-[13px]">
+                    Chưa ghi nhận lịch sử hiến máu thành công (Completed) nào cho người dùng này.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-[13px]">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-[#f1f3f5] text-[#6c757d] font-bold uppercase tracking-wider">
+                          <th className="px-4 py-3">Ngày hiến</th>
+                          <th className="px-4 py-3">Loại hiến</th>
+                          <th className="px-4 py-3">Thể tích</th>
+                          <th className="px-4 py-3">Địa điểm</th>
+                          <th className="px-4 py-3 text-right">Trạng thái</th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody className="divide-y divide-[#f1f3f5]">
+                        {completedHistory.map((item, idx) => {
+                          const formattedDate = item.appointmentDate
+                            ? formatDateToDDMMYYYY(item.appointmentDate)
+                            : '---';
+                          return (
+                            <tr key={item._id || idx} className="hover:bg-slate-50/50">
+                              <td className="px-4 py-3.5 font-semibold text-[#271816]">{formattedDate}</td>
+                              <td className="px-4 py-3.5 text-[#5b403d]">{item.donationType || 'Máu toàn phần'}</td>
+                              <td className="px-4 py-3.5 font-bold text-[#93000b]">{item.volume || '350 ml'}</td>
+                              <td className="px-4 py-3.5 text-[#6c757d]">{item.locationName || 'Điểm hiến máu LifeLine'}</td>
+                              <td className="px-4 py-3.5 text-right">
+                                <StatusBadge status={item.status} />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()}
         </div>
       ) : (
         /* 2-Column Grid Layout for CheckedIn or Later Statuses */
@@ -725,6 +812,10 @@ export const RegistrationDetailPage: React.FC = () => {
                     '2': '2. Đang mắc bệnh mãn tính hoặc bệnh cấp tính?',
                     '3': '3. Tiền sử bệnh truyền nhiễm (Viêm gan B, C, HIV...)',
                     '4': '4. Tiền sử mắc bệnh / truyền máu (12 tháng qua)',
+                    '5': '5. Tiêm vắc xin / xăm mình / phẫu thuật (6 tháng qua)',
+                    '6': '6. Đi từ vùng có dịch / mắc bệnh nhiễm trùng (1 tháng qua)',
+                    '7': '7. Triệu chứng sốt, ho, khó thở, nhức mỏi (14 ngày qua)',
+                    '8': '8. Dùng thuốc kháng sinh, aspirin, thuốc điều trị (7 ngày qua)',
                   };
 
                   const responses = (registration as any)?.screeningForm?.responses;
@@ -766,27 +857,25 @@ export const RegistrationDetailPage: React.FC = () => {
                     });
                   }
 
+                  const defaultSurveyItems = [
+                    { q: '1. Đã từng hiến máu bao giờ chưa?', a: 'CÓ' },
+                    { q: '2. Đang mắc bệnh mãn tính hoặc bệnh cấp tính?', a: 'KHÔNG' },
+                    { q: '3. Tiền sử bệnh truyền nhiễm (Viêm gan B, C, HIV...)?', a: 'KHÔNG' },
+                    { q: '4. Tiền sử mắc bệnh / truyền máu (12 tháng qua)?', a: 'KHÔNG CÓ' },
+                    { q: '5. Tiêm vắc xin / xăm mình / phẫu thuật (6 tháng qua)?', a: 'KHÔNG CÓ' },
+                    { q: '6. Đi từ vùng có dịch / mắc bệnh nhiễm trùng (1 tháng qua)?', a: 'KHÔNG' },
+                    { q: '7. Triệu chứng sốt, ho, khó thở, nhức mỏi (14 ngày qua)?', a: 'KHÔNG CÓ' },
+                    { q: '8. Dùng thuốc kháng sinh, aspirin, thuốc điều trị (7 ngày qua)?', a: 'KHÔNG' },
+                  ];
+
                   return (
                     <>
-                      <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-200 flex items-center justify-between">
-                        <span className="font-semibold text-[#271816]">1. Đã từng hiến máu bao giờ chưa?</span>
-                        <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-200 text-slate-700 rounded">CÓ</span>
-                      </div>
-
-                      <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-200 flex items-center justify-between">
-                        <span className="font-semibold text-[#271816]">2. Đang mắc bệnh mãn tính hoặc bệnh cấp tính?</span>
-                        <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-200 text-slate-700 rounded">KHÔNG</span>
-                      </div>
-
-                      <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-200 flex items-center justify-between">
-                        <span className="font-semibold text-[#271816]">3. Tiền sử bệnh truyền nhiễm (Viêm gan B, C, HIV...)?</span>
-                        <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-200 text-slate-700 rounded">KHÔNG</span>
-                      </div>
-
-                      <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-200 flex items-center justify-between">
-                        <span className="font-semibold text-[#271816]">4. Tiền sử mắc bệnh / truyền máu (12 tháng qua)?</span>
-                        <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-200 text-slate-700 rounded">KHÔNG CÓ</span>
-                      </div>
+                      {defaultSurveyItems.map((item, idx) => (
+                        <div key={idx} className="p-3 bg-slate-50/70 rounded-xl border border-slate-200 flex items-center justify-between">
+                          <span className="font-semibold text-[#271816]">{item.q}</span>
+                          <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-200 text-slate-700 rounded shrink-0">{item.a}</span>
+                        </div>
+                      ))}
                     </>
                   );
                 })()}
@@ -797,8 +886,9 @@ export const RegistrationDetailPage: React.FC = () => {
           {/* Right Column: Clinical Vitals & Approval Form (8 cols) */}
           <div className="lg:col-span-8 space-y-6">
             <form
+              id="clinical-vitals-form"
               onSubmit={handleSubmit(onSubmit)}
-              className="bg-white border border-[#f1f3f5] rounded-2xl p-6 md:p-8 shadow-2xs space-y-6"
+              className="bg-white border border-[#f1f3f5] rounded-2xl p-6 md:p-8 shadow-2xs space-y-6 scroll-mt-24"
             >
               <div className="flex items-center justify-between border-b border-[#f1f3f5] pb-4">
                 <h3 className="text-[17px] font-bold text-[#271816] flex items-center gap-2">
@@ -809,6 +899,17 @@ export const RegistrationDetailPage: React.FC = () => {
                   Bác sĩ kiểm tra
                 </span>
               </div>
+
+              {/* Inline Error Warning Banner for Missing Vitals */}
+              {vitalsError && (
+                <div className="p-4 bg-red-50 border-2 border-red-300 text-[#93000b] rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2 shadow-2xs">
+                  <AlertTriangle className="w-5 h-5 text-[#93000b] shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-extrabold text-[14px] leading-tight">Yêu Cầu Điền Đầy Đủ Thông Tin Lâm Sàng</h4>
+                    <p className="text-[12.5px] font-medium leading-relaxed mt-0.5 text-red-900">{vitalsError}</p>
+                  </div>
+                </div>
+              )}
 
               {/* Vitals Bento Metric Cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -871,42 +972,58 @@ export const RegistrationDetailPage: React.FC = () => {
 
               {/* Editable Vitals Inputs */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                <FormField label="Huyết áp (mmHg)" error={errors.bloodPressure?.message}>
+                <FormField label="Huyết áp (mmHg) *" error={errors.bloodPressure?.message}>
                   <input
                     type="text"
                     {...register('bloodPressure')}
                     placeholder="Chưa nhập (VD: 120/80)..."
-                    className="w-full px-3.5 py-2 text-[13px] border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white"
+                    className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white ${
+                      vitalsError && (!watchBp || String(watchBp).trim() === '')
+                        ? 'border-red-500 bg-red-50/40 ring-2 ring-red-200'
+                        : 'border-[#f1f3f5] focus:border-[#93000b]'
+                    }`}
                   />
                 </FormField>
 
-                <FormField label="Cân nặng (kg)" error={errors.weight?.message}>
+                <FormField label="Cân nặng (kg) *" error={errors.weight?.message}>
                   <input
                     type="number"
                     step="0.1"
                     {...register('weight', { valueAsNumber: true })}
                     placeholder="Chưa nhập (VD: 62)..."
-                    className="w-full px-3.5 py-2 text-[13px] border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white"
+                    className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white ${
+                      vitalsError && (watchWeight === undefined || watchWeight === null || isNaN(watchWeight) || Number(watchWeight) <= 0)
+                        ? 'border-red-500 bg-red-50/40 ring-2 ring-red-200'
+                        : 'border-[#f1f3f5] focus:border-[#93000b]'
+                    }`}
                   />
                 </FormField>
 
-                <FormField label="Thân nhiệt (°C)" error={errors.bodyTemperature?.message}>
+                <FormField label="Thân nhiệt (°C) *" error={errors.bodyTemperature?.message}>
                   <input
                     type="number"
                     step="0.1"
                     {...register('bodyTemperature', { valueAsNumber: true })}
                     placeholder="Chưa nhập (VD: 36.6)..."
-                    className="w-full px-3.5 py-2 text-[13px] border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white"
+                    className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white ${
+                      vitalsError && (watchTemp === undefined || watchTemp === null || isNaN(watchTemp) || Number(watchTemp) <= 0)
+                        ? 'border-red-500 bg-red-50/40 ring-2 ring-red-200'
+                        : 'border-[#f1f3f5] focus:border-[#93000b]'
+                    }`}
                   />
                 </FormField>
 
-                <FormField label="Hemoglobin (g/dL)" error={errors.hemoglobinLevel?.message}>
+                <FormField label="Hemoglobin (g/dL) *" error={errors.hemoglobinLevel?.message}>
                   <input
                     type="number"
                     step="0.1"
                     {...register('hemoglobinLevel', { valueAsNumber: true })}
                     placeholder="Chưa nhập (VD: 13.5)..."
-                    className="w-full px-3.5 py-2 text-[13px] border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white"
+                    className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white ${
+                      vitalsError && (watchHgb === undefined || watchHgb === null || isNaN(watchHgb) || Number(watchHgb) <= 0)
+                        ? 'border-red-500 bg-red-50/40 ring-2 ring-red-200'
+                        : 'border-[#f1f3f5] focus:border-[#93000b]'
+                    }`}
                   />
                 </FormField>
 
@@ -920,24 +1037,6 @@ export const RegistrationDetailPage: React.FC = () => {
                     />
                   </FormField>
                 </div>
-
-                {!['Eligible', 'Ineligible', 'Completed', 'Rejected'].includes(registration.status) && (
-                  <div className="sm:col-span-2">
-                    <FormField label="Quyết định & Trạng thái phiếu" required error={errors.status?.message}>
-                      <select
-                        {...register('status')}
-                        className="w-full px-3.5 py-2.5 text-[13px] font-bold border border-[#f1f3f5] focus:border-[#93000b] rounded-xl outline-none bg-white text-[#271816]"
-                      >
-                        <option value="Confirmed">🟢 Xác nhận đơn (Confirmed)</option>
-                        <option value="Eligible">🟢 Đủ điều kiện hiến máu (Eligible)</option>
-                        <option value="Ineligible">🔴 Không đủ điều kiện (Ineligible)</option>
-                        <option value="Rejected">🔴 Từ chối đơn (Rejected)</option>
-                        <option value="Completed">✨ Đã hoàn tất hiến máu (Completed)</option>
-                        <option value="CheckedIn">🟡 Đã điểm danh (CheckedIn)</option>
-                      </select>
-                    </FormField>
-                  </div>
-                )}
               </div>
 
               <div className="pt-4 border-t border-[#f1f3f5] flex justify-end gap-3">

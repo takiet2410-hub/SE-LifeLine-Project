@@ -47,12 +47,23 @@ export interface RegistrationData {
   donorIdCard: string;
   donorPhone: string;
   appointmentDate: string;
+  timeSlot?: string;
   status: 'Pending' | 'Confirmed' | 'Registered' | 'CheckedIn' | 'Eligible' | 'Completed' | 'Ineligible' | 'Cancelled' | 'NoShow' | 'cancelled' | 'no-show';
   bloodPressure?: string;
   weight?: number;
   bodyTemperature?: number;
   hemoglobinLevel?: number;
   screeningNotes?: string;
+  donationVolume?: number;
+  donationHistory?: Array<{
+    _id?: string;
+    appointmentDate: string;
+    timeSlot?: string;
+    donationType?: string;
+    volume?: string;
+    locationName?: string;
+    status: string;
+  }>;
   screeningForm?: {
     screeningFormId?: string;
     outcome?: 'PASS' | 'REJECT' | 'REVIEW';

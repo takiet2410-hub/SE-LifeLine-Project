@@ -117,7 +117,7 @@ export class CampaignService {
     const sortOptions: any = {};
     sortOptions[sortBy] = sortOrder;
 
-    const [campaigns, total] = await Promise.all([
+    const [rawCampaigns, total] = await Promise.all([
       Campaign.find(filterQuery)
         .sort(sortOptions)
         .skip(skip)
@@ -125,6 +125,17 @@ export class CampaignService {
         .lean(),
       Campaign.countDocuments(filterQuery)
     ]);
+
+    // Automatically sync active non-rejected, non-cancelled appointment counts for retrieved campaigns
+    for (const c of rawCampaigns) {
+      await CampaignService.syncCampaignCounts(c._id.toString());
+    }
+
+    const campaigns = await Campaign.find(filterQuery)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
     // Format output to include calculated capacity details & dynamic real-time status
     const now = new Date();
@@ -328,10 +339,61 @@ export class CampaignService {
     return campaign.toObject();
   }
 
+  public static async syncCampaignCounts(campaignId: string) {
+    if (!campaignId || !mongoose.Types.ObjectId.isValid(campaignId)) return null;
+
+    const campaign = await Campaign.findById(campaignId);
+    if (!campaign) return null;
+
+    // Get active (non-rejected, non-cancelled) appointments
+    const activeAppointments = await Appointment.find({
+      campaignId: campaign._id,
+      status: { $nin: ['Rejected', 'Cancelled'] }
+    }).lean();
+
+    const activeCount = activeAppointments.length;
+
+    let hasDailyChanges = false;
+    if (campaign.dailyTimeslots && campaign.dailyTimeslots.length > 0) {
+      campaign.dailyTimeslots.forEach((dt: any) => {
+        const dtDateStr = dt.dateStr;
+        const slotStartTime = String(dt.startTime || '').trim();
+
+        const slotCount = activeAppointments.filter((app: any) => {
+          const appDateStr = app.appointmentDate
+            ? (typeof app.appointmentDate === 'string'
+                ? app.appointmentDate.split('T')[0]
+                : new Date(app.appointmentDate).toISOString().split('T')[0])
+            : '';
+          const appTimeStart = String(app.timeSlot || '').split('-')[0].trim();
+
+          const isDateMatch = appDateStr === dtDateStr;
+          const isSlotMatch = !slotStartTime || !appTimeStart || appTimeStart === slotStartTime;
+
+          return isDateMatch && isSlotMatch;
+        }).length;
+
+        if (dt.registeredCount !== slotCount) {
+          dt.registeredCount = slotCount;
+          hasDailyChanges = true;
+        }
+      });
+    }
+
+    if (campaign.registeredCount !== activeCount || hasDailyChanges) {
+      campaign.registeredCount = activeCount;
+      campaign.markModified('dailyTimeslots');
+      await campaign.save();
+    }
+
+    return campaign;
+  }
+
   /**
    * BC-UC-03: View Campaign Details
    */
   public static async getCampaignById(id: string) {
+    await CampaignService.syncCampaignCounts(id);
     const campaign = await Campaign.findById(id).lean();
     if (!campaign) {
       throw new Error('CAMPAIGN_NOT_FOUND');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, QrCode, Search, Sparkles, Eye, HelpCircle } from 'lucide-react';
+import { ArrowLeft, QrCode, Search, Sparkles, Eye, HelpCircle, Clock, Calendar } from 'lucide-react';
 import { apiService } from '../../../services/apiClient';
 import type { RegistrationData, CampaignData } from '../../../services/mockData';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -17,6 +17,8 @@ export const RegistrationListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [selectedDate, setSelectedDate] = useState<string>('All');
+  const [selectedSlot, setSelectedSlot] = useState<string>('All');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
@@ -52,8 +54,63 @@ export const RegistrationListPage: React.FC = () => {
     setCurrentPage(1);
   }, [campaignId, search, statusFilter]);
 
-  const totalPages = Math.ceil(registrations.length / pageSize) || 1;
-  const paginatedRegistrations = registrations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Extract available operational dates
+  const availableDates = React.useMemo(() => {
+    const datesSet = new Set<string>();
+    if (campaign?.dailyTimeslots && campaign.dailyTimeslots.length > 0) {
+      campaign.dailyTimeslots.forEach((dt) => {
+        if (dt.dateStr) datesSet.add(dt.dateStr);
+      });
+    }
+    registrations.forEach((r) => {
+      if (r.appointmentDate) {
+        const dStr = r.appointmentDate.split('T')[0].split(' ')[0];
+        if (dStr && dStr.includes('-')) datesSet.add(dStr);
+      }
+    });
+    return Array.from(datesSet).sort();
+  }, [campaign, registrations]);
+
+  // Extract operational timeslots for the selected date
+  const slotsForSelectedDate = React.useMemo(() => {
+    if (selectedDate === 'All') return [];
+    const slotSet = new Set<string>();
+    if (campaign?.dailyTimeslots && campaign.dailyTimeslots.length > 0) {
+      campaign.dailyTimeslots.forEach((dt) => {
+        if (dt.dateStr === selectedDate && dt.startTime && dt.endTime) {
+          slotSet.add(`${dt.startTime} - ${dt.endTime}`);
+        }
+      });
+    }
+    registrations.forEach((r) => {
+      const dStr = r.appointmentDate ? r.appointmentDate.split('T')[0].split(' ')[0] : '';
+      if (dStr === selectedDate) {
+        const sStr = r.timeSlot || (r as any).appointmentTime;
+        if (sStr) slotSet.add(sStr);
+      }
+    });
+    return Array.from(slotSet).sort();
+  }, [campaign, registrations, selectedDate]);
+
+  // Filter registrations locally by date & slot
+  const filteredRegistrations = React.useMemo(() => {
+    return registrations.filter((row) => {
+      if (selectedDate !== 'All') {
+        const dStr = row.appointmentDate ? row.appointmentDate.split('T')[0].split(' ')[0] : '';
+        if (dStr !== selectedDate) return false;
+      }
+      if (selectedSlot !== 'All') {
+        const sStr = row.timeSlot || (row as any).appointmentTime || (row as any).time || '';
+        const appStart = String(sStr).split('-')[0].trim();
+        const targetStart = selectedSlot.split('-')[0].trim();
+        if (appStart !== targetStart) return false;
+      }
+      return true;
+    });
+  }, [registrations, selectedDate, selectedSlot]);
+
+  const totalPages = Math.ceil(filteredRegistrations.length / pageSize) || 1;
+  const paginatedRegistrations = filteredRegistrations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const columns: Column<RegistrationData>[] = [
     {
@@ -189,29 +246,62 @@ export const RegistrationListPage: React.FC = () => {
           className="px-4 py-2.5 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[13px] font-semibold rounded-xl flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
         >
           <QrCode className="w-4 h-4 text-red-400" />
-          <span>Quét QR Điểm Danh & Sàng Lọc</span>
+          <span>Quét QR</span>
         </button>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-[#white] p-4 border border-[#f1f3f5] rounded-2xl flex flex-col md:flex-row gap-3 items-center justify-between shadow-2xs">
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-[#a3a3a3] absolute left-3.5 top-3" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo Mã phiếu, Tên, Số CCCD..."
-            className="w-full pl-10 pr-4 py-2 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[13px] text-[#271816] placeholder-[#a3a3a3] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10"
-          />
+      <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-col md:flex-row gap-3 items-center justify-between shadow-2xs">
+        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+          {/* Search Box */}
+          <div className="relative w-full md:w-72">
+            <Search className="w-4 h-4 text-[#a3a3a3] absolute left-3.5 top-3" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Tìm theo Mã phiếu, Tên, Số CCCD..."
+              className="w-full pl-10 pr-4 py-2 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[13px] text-[#271816] placeholder-[#a3a3a3] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10"
+            />
+          </div>
+
+          {/* Operational Date Select Dropdown */}
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] font-bold text-slate-600 flex items-center gap-1 shrink-0">
+              <Calendar className="w-3.5 h-3.5 text-[#93000b]" /> Ngày tổ chức:
+            </span>
+            <select
+              value={selectedDate}
+              onChange={(e) => {
+                setSelectedDate(e.target.value);
+                setSelectedSlot('All');
+                setCurrentPage(1);
+              }}
+              className="px-3 py-2 text-[12.5px] font-bold bg-white border border-slate-200 focus:border-[#93000b] rounded-xl text-[#271816] outline-none cursor-pointer shadow-2xs"
+            >
+              <option value="All">📅 Tất cả ngày tổ chức</option>
+              {availableDates.map((dStr) => {
+                const formatted = dStr.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1');
+                return (
+                  <option key={dStr} value={dStr}>
+                    Ngày {formatted}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
         </div>
 
+        {/* Status Pills */}
         <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto">
           <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Trạng thái:</span>
           {['All', 'Pending', 'Confirmed', 'Rejected', 'CheckedIn', 'Eligible', 'Ineligible', 'Completed'].map((st) => (
             <button
               key={st}
-              onClick={() => setStatusFilter(st)}
+              onClick={() => {
+                setStatusFilter(st);
+                setCurrentPage(1);
+              }}
               className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all shrink-0 cursor-pointer ${
                 statusFilter === st
                   ? 'bg-[#93000b] text-white shadow-2xs'
@@ -223,6 +313,61 @@ export const RegistrationListPage: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Horizontal Scrollable Timeslots Bar (Đẩy Ngang Khi Chọn Ngày) */}
+      {selectedDate !== 'All' && (
+        <div className="bg-white border border-[#f1f3f5] p-4 rounded-2xl space-y-3 animate-in fade-in slide-in-from-top-2 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#93000b] animate-pulse" />
+              <span className="text-[13px] font-bold text-[#271816]">
+                Khung giờ tiếp nhận ngày <span className="text-[#93000b] font-extrabold">{selectedDate.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1')}</span>:
+              </span>
+            </div>
+            <span className="text-[11px] font-semibold text-[#6c757d]">
+              ← Cuộn ngang chọn khung giờ →
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedSlot('All');
+                setCurrentPage(1);
+              }}
+              className={`px-4 py-2 text-[12.5px] font-bold rounded-xl transition-all cursor-pointer shrink-0 border ${
+                selectedSlot === 'All'
+                  ? 'bg-[#93000b] text-white border-[#93000b] shadow-2xs'
+                  : 'bg-[#fff8f7] text-[#5b403d] border-red-100 hover:bg-red-100/60'
+              }`}
+            >
+              Tất cả khung giờ ({slotsForSelectedDate.length})
+            </button>
+
+            {slotsForSelectedDate.map((slotStr) => {
+              const isSelected = selectedSlot === slotStr;
+              return (
+                <button
+                  key={slotStr}
+                  type="button"
+                  onClick={() => {
+                    setSelectedSlot(slotStr);
+                    setCurrentPage(1);
+                  }}
+                  className={`px-4 py-2 text-[12.5px] font-bold rounded-xl transition-all cursor-pointer shrink-0 border ${
+                    isSelected
+                      ? 'bg-[#93000b] text-white border-[#93000b] shadow-2xs'
+                      : 'bg-white text-[#271816] border-[#f1f3f5] hover:border-red-200 hover:bg-[#fff8f7]'
+                  }`}
+                >
+                  <span>{slotStr}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="bg-white border border-[#f1f3f5] rounded-2xl overflow-hidden shadow-2xs">

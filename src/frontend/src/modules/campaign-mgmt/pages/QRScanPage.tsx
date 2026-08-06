@@ -42,16 +42,22 @@ export const QRScanPage: React.FC = () => {
         const donorBloodType = res.donorBloodType || (res.donor ? res.donor.bloodType : '');
         const donorPhone = res.donorPhone || (res.donor ? res.donor.phoneNumber : '');
 
+        const currentStatus = res.status || 'CheckedIn';
+
         setScannedResult({
           id: regId,
           name: donorName,
-          status: 'CheckedIn',
+          status: currentStatus,
           idCard: donorIdCard,
           bloodType: donorBloodType,
           phone: donorPhone,
         });
         setScanState('success');
-        toast.success(`Đã điểm danh (CheckedIn) thành công cho ${donorName}!`);
+        if (currentStatus === 'CheckedIn') {
+          toast.success(`Đã điểm danh (CheckedIn) thành công cho ${donorName}!`);
+        } else {
+          toast.info(`Phiếu của ${donorName} đang ở trạng thái ${currentStatus}`);
+        }
       } else {
         setScanState('error');
         setErrorMessage('Không tìm thấy phiếu đăng ký / E-Ticket phù hợp trong hệ thống.');
@@ -265,8 +271,8 @@ export const QRScanPage: React.FC = () => {
             <div className="bg-emerald-600 text-white p-6 rounded-2xl space-y-3 max-w-xs animate-in zoom-in-95 shadow-xl text-center">
               <CheckCircle2 className="w-14 h-14 mx-auto text-white" />
               <div>
-                <h4 className="font-extrabold text-lg">Đã Điểm Danh Thành Công!</h4>
-                <p className="text-[12px] opacity-90 uppercase tracking-wider font-semibold">Trạng thái: CheckedIn</p>
+                <h4 className="font-extrabold text-lg">Xác Thực Mã QR Thành Công!</h4>
+                <p className="text-[12px] opacity-90 uppercase tracking-wider font-semibold">Trạng thái: {scannedResult.status}</p>
               </div>
               <div className="p-3 bg-white/10 rounded-xl text-left text-xs space-y-1 border border-white/20">
                 <p className="font-bold flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> {scannedResult.name}</p>

@@ -160,14 +160,6 @@ export const CampaignDetailPage: React.FC = () => {
           </button>
 
           <button
-            onClick={() => navigate(`/bc/campaigns/${campaign._id}/scan`)}
-            className="px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 text-sm font-bold rounded-xl flex items-center gap-2 shadow-2xs transition-colors cursor-pointer"
-          >
-            <QrCode className="w-4 h-4 text-slate-700" />
-            <span>Quét QR Check-in</span>
-          </button>
-
-          <button
             onClick={() => navigate(`/bc/campaigns/${campaign._id}/registrations`)}
             className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl flex items-center gap-2 shadow-2xs transition-colors cursor-pointer"
           >

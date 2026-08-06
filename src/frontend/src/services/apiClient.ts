@@ -390,6 +390,8 @@ export const apiService = {
           bodyTemperature: screeningObj?.vitals?.bodyTemperature || item.bodyTemperature || undefined,
           hemoglobinLevel: screeningObj?.vitals?.hemoglobinLevel || item.hemoglobinLevel || undefined,
           screeningNotes: screeningObj?.screeningNotes || item.screeningNotes || '',
+          donationVolume: item.donationVolume || screeningObj?.donationVolume || 350,
+          donationHistory: item.donationHistory || [],
           screeningForm: screeningObj,
         } as RegistrationData;
       }
@@ -420,6 +422,9 @@ export const apiService = {
 
       if (updates.screeningNotes !== undefined) {
         payload.screeningNotes = updates.screeningNotes;
+      }
+      if (updates.donationVolume !== undefined) {
+        payload.donationVolume = Number(updates.donationVolume);
       }
       if (updates.donorBloodType && updates.donorBloodType !== 'Unknown') {
         payload.bloodType = updates.donorBloodType;
@@ -463,7 +468,9 @@ export const apiService = {
     }
     await delay();
     if (registrations.length > 0) {
-      registrations[0].status = 'CheckedIn';
+      if (registrations[0].status === 'Confirmed' || registrations[0].status === 'Pending') {
+        registrations[0].status = 'CheckedIn';
+      }
       return registrations[0];
     }
     return null;

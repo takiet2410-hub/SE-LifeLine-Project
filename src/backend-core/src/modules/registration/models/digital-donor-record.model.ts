@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type DonationStatusType = 'Pending' | 'Confirmed' | 'Rejected' | 'CheckedIn' | 'Eligible' | 'Ineligible' | 'Completed';
+export type DonationStatusType = 'Pending' | 'Confirmed' | 'Rejected' | 'CheckedIn' | 'Eligible' | 'Examining' | 'Ineligible' | 'Completed';
 
 export interface IDigitalDonorRecord extends Document {
   appointmentId: mongoose.Types.ObjectId;
@@ -17,7 +17,7 @@ const DigitalDonorRecordSchema: Schema = new Schema({
   screeningSummary: { type: mongoose.Schema.Types.Mixed, default: {} },
   donationStatus: {
     type: String,
-    enum: ['Pending', 'Confirmed', 'Rejected', 'CheckedIn', 'Eligible', 'Ineligible', 'Completed'],
+    enum: ['Pending', 'Confirmed', 'Rejected', 'CheckedIn', 'Eligible', 'Examining', 'Ineligible', 'Completed'],
     default: 'Pending',
     required: true,
   },

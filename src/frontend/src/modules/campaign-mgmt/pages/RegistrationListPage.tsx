@@ -295,7 +295,7 @@ export const RegistrationListPage: React.FC = () => {
         {/* Status Pills */}
         <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto">
           <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Trạng thái:</span>
-          {['All', 'Pending', 'Confirmed', 'Rejected', 'CheckedIn', 'Eligible', 'Ineligible', 'Completed'].map((st) => (
+          {['All', 'Pending', 'Confirmed', 'Rejected', 'CheckedIn', 'Eligible', 'Examining', 'Ineligible', 'Completed'].map((st) => (
             <button
               key={st}
               onClick={() => {

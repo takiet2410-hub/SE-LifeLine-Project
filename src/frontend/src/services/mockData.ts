@@ -48,7 +48,8 @@ export interface RegistrationData {
   donorPhone: string;
   appointmentDate: string;
   timeSlot?: string;
-  status: 'Pending' | 'Confirmed' | 'Registered' | 'CheckedIn' | 'Eligible' | 'Completed' | 'Ineligible' | 'Cancelled' | 'NoShow' | 'cancelled' | 'no-show';
+  status: 'Pending' | 'Confirmed' | 'Registered' | 'CheckedIn' | 'Eligible' | 'Examining' | 'Completed' | 'Ineligible' | 'Cancelled' | 'NoShow' | 'cancelled' | 'no-show';
+  examiningResult?: 'Passed' | 'Issue' | 'Pending';
   bloodPressure?: string;
   weight?: number;
   bodyTemperature?: number;

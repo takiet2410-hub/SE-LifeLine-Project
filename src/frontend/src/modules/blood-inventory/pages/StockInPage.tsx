@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Save, PackagePlus } from 'lucide-react';
 import { toast } from 'sonner';
-import { apiService } from '../../../services/apiClient';
+import { inventoryApi } from '../services/inventoryApi';
 import { FormField } from '../../../components/common/FormField';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 
@@ -59,6 +59,20 @@ export const StockInPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Client-side validation
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (r.volumeMl <= 0) {
+        toast.error(`Dòng ${i + 1}: Thể tích phải lớn hơn 0`);
+        return;
+      }
+      if (new Date(r.expiryDate) <= new Date(r.collectionDate)) {
+        toast.error(`Dòng ${i + 1}: Ngày hết hạn phải sau ngày lấy máu`);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       const entries = rows.map((r) => ({
@@ -69,7 +83,7 @@ export const StockInPage: React.FC = () => {
         storageLocation: r.storageLocation,
       }));
 
-      await apiService.stockIn(entries);
+      await inventoryApi.stockIn(entries);
       toast.success(`Đã nhập thành công ${rows.length} túi máu mới vào kho!`);
       navigate('/bc/inventory');
     } catch (err) {

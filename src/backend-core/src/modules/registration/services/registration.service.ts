@@ -12,6 +12,7 @@ import { DigitalDonorRecord } from '../models/digital-donor-record.model';
 import { AuditLog } from '../models/audit-log.model';
 import { GamificationService } from '../../auth-account/services/gamification.service';
 import { sendBookingConfirmationEmail } from '../../../utils/email.util';
+import { BloodBag } from '../../blood-inventory/models/blood-bag.model';
 
 const toObjectId = (idStr: string) => {
   return mongoose.Types.ObjectId.isValid(idStr) ? new mongoose.Types.ObjectId(idStr) : new mongoose.Types.ObjectId();
@@ -441,6 +442,7 @@ export class RegistrationService {
       screeningNotes?: string;
       donationVolume?: number;
       status?: 'Pending' | 'Confirmed' | 'Rejected' | 'CheckedIn' | 'Examining' | 'Eligible' | 'Ineligible' | 'Completed' | 'Eligible for Donation' | 'Ineligible for Donation' | 'Donation Completed';
+      testResult?: 'Pass' | 'Rejected';
       responses?: Array<{ questionId: string; selectedOptions: string[]; description?: string }>;
     },
     actorUserId: string,
@@ -560,8 +562,16 @@ export class RegistrationService {
       if (payload.screeningNotes !== undefined) {
         (screeningForm as any).screeningNotes = payload.screeningNotes;
       }
+      if (payload.testResult !== undefined) {
+        (screeningForm as any).testResult = payload.testResult;
+      }
       (screeningForm as any).reviewedByStaffId = toObjectId(actorUserId);
       await screeningForm.save(opts);
+
+      // Auto-set status to Completed if testResult (Pass/Rejected) is submitted without explicit status
+      if (payload.testResult && !payload.status) {
+        payload.status = 'Completed';
+      }
 
       // 2. Map payload status to valid AppointmentStatus enum on Appointment model if status is provided
       if (payload.status) {
@@ -605,20 +615,57 @@ export class RegistrationService {
         appointment.status = targetAppointmentStatus;
 
         // Process Gamification (+250 XP & Achievement unlocking) when donation is completed
-        if (targetAppointmentStatus === AppointmentStatus.Completed && previousStatus !== AppointmentStatus.Completed) {
+        if (targetAppointmentStatus === AppointmentStatus.Completed && !appointment.xpRewardedForCompletion) {
           try {
+            appointment.xpRewardedForCompletion = true;
             await GamificationService.processDonationCompletion(appointment.donorId, appointment.appointmentDate, session);
           } catch (gErr) {
             console.error('Error processing gamification logic:', gErr);
           }
         }
 
-        // Process Gamification (+50 XP bonus) when donor checks in
-        if (targetAppointmentStatus === AppointmentStatus.CheckedIn && previousStatus !== AppointmentStatus.CheckedIn) {
+        // Auto stock-in blood bag if testResult is 'Pass'
+        if (targetAppointmentStatus === AppointmentStatus.Completed && payload.testResult === 'Pass') {
+          const expiryDate = new Date(appointment.appointmentDate);
+          expiryDate.setDate(expiryDate.getDate() + 35); // 35 days shelf life for whole blood
+          
+          const donorProf = await DonorProfile.findOne({
+            $or: [{ userId: appointment.donorId }, { _id: appointment.donorId }]
+          }, null, opts).lean();
+
+          const bType = payload.bloodType || donorProf?.bloodType || 'Unknown';
+          
+          if (bType && bType !== 'Unknown' && bType !== 'Chưa biết' && bType !== '?') {
+            const bagCode = `BB-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+            const newBag = new BloodBag({
+              bagCode,
+              bloodType: bType,
+              volumeMl: payload.donationVolume || (appointment as any).donationVolume || 350,
+              collectionDate: appointment.appointmentDate,
+              expiryDate,
+              storageLocation: 'Kho chính - Khu vực chờ phân loại',
+              status: 'Available',
+              donorSourceId: appointment.donorId,
+              campaignSourceId: appointment.campaignId,
+              testResult: 'Pass',
+              statusHistory: [{
+                previousStatus: 'None',
+                newStatus: 'Available',
+                changedBy: actorUserId,
+                reason: 'Hệ thống tự động nhập kho từ lượt hiến máu hoàn tất'
+              }]
+            });
+            await newBag.save(opts);
+          }
+        }
+
+        // Process Gamification (+50 XP bonus) when donor starts Examining phase (changed from CheckedIn)
+        if (targetAppointmentStatus === AppointmentStatus.Examining && !appointment.xpRewardedForExamining) {
           try {
+            appointment.xpRewardedForExamining = true;
             await GamificationService.processCheckInBonus(appointment.donorId, session);
           } catch (gErr) {
-            console.error('Error processing check-in gamification logic:', gErr);
+            console.error('Error processing examining gamification logic:', gErr);
           }
         }
       }

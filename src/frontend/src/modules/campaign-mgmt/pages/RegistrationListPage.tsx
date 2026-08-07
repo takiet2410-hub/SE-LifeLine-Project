@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, QrCode, Search, Sparkles, Eye, HelpCircle, Clock, Calendar } from 'lucide-react';
+import { ArrowLeft, QrCode, Search, Sparkles, Eye, HelpCircle, Clock, Calendar, CheckCircle2, XCircle, FlaskConical } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
 import type { RegistrationData, CampaignData } from '../../../services/mockData';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -20,6 +21,8 @@ export const RegistrationListPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('All');
   const [selectedSlot, setSelectedSlot] = useState<string>('All');
   const [currentPage, setCurrentPage] = useState(1);
+  const [editingBloodTypes, setEditingBloodTypes] = useState<Record<string, string>>({});
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
   const pageSize = 8;
 
   const formatDateSafe = (dateStr?: string | Date) => {
@@ -109,6 +112,37 @@ export const RegistrationListPage: React.FC = () => {
     });
   }, [registrations, selectedDate, selectedSlot]);
 
+  const handleUpdateTestResult = async (row: RegistrationData, testResult: 'Pass' | 'Rejected') => {
+    const rowId = row._id;
+    const currentBt = editingBloodTypes[rowId] ?? row.donorBloodType;
+
+    if (!currentBt || currentBt === 'Unknown' || currentBt === 'Chưa biết' || currentBt === 'Chưa xác định' || currentBt === '?') {
+      toast.error('⚠️ Vui lòng cập nhật Nhóm máu trước khi lưu kết quả xét nghiệm sinh hoá!');
+      return;
+    }
+
+    setSubmittingId(rowId);
+    try {
+      await apiService.updateRegistration(rowId, {
+        donorBloodType: currentBt,
+        testResult,
+        status: 'Completed',
+      });
+
+      if (testResult === 'Pass') {
+        toast.success(`🎉 Đã duyệt Pass cho ${row.donorName || 'người hiến'}! Túi máu (${currentBt}) đã được tự động nhập kho (Stock In) thành công.`);
+      } else {
+        toast.info(`🔴 Ghi nhận kết quả: Rejected (Máu không đạt tiêu chuẩn). Không nhập kho.`);
+      }
+
+      await fetchRegistrations();
+    } catch (err) {
+      toast.error('⚠️ Cập nhật thất bại. Vui lòng thử lại.');
+    } finally {
+      setSubmittingId(null);
+    }
+  };
+
   const totalPages = Math.ceil(filteredRegistrations.length / pageSize) || 1;
   const paginatedRegistrations = filteredRegistrations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -147,8 +181,33 @@ export const RegistrationListPage: React.FC = () => {
     {
       header: 'Nhóm máu',
       accessor: (row: RegistrationData) => {
-        const bt = row.donorBloodType;
-        if (!bt || bt === 'Unknown' || bt === 'Chưa biết' || bt === 'Chưa xác định' || bt === '?') {
+        const rowBt = editingBloodTypes[row._id] ?? row.donorBloodType;
+        const isExamining = row.status === 'Examining';
+
+        if (isExamining) {
+          return (
+            <select
+              value={rowBt && rowBt !== 'Chưa biết' && rowBt !== 'Chưa xác định' && rowBt !== '?' ? rowBt : 'Unknown'}
+              onChange={(e) => {
+                const newBt = e.target.value;
+                setEditingBloodTypes((prev) => ({ ...prev, [row._id]: newBt }));
+              }}
+              className="px-2.5 py-1 text-[12px] font-extrabold bg-amber-50 text-[#93000b] border border-amber-300 rounded-lg outline-none cursor-pointer focus:ring-2 focus:ring-amber-400/20"
+            >
+              <option value="Unknown">❓ Chọn nhóm máu...</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
+          );
+        }
+
+        if (!rowBt || rowBt === 'Unknown' || rowBt === 'Chưa biết' || rowBt === 'Chưa xác định' || rowBt === '?') {
           return (
             <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold bg-slate-100 text-slate-600 rounded-md border border-slate-200" title="Chưa biết nhóm máu">
               <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
@@ -158,9 +217,63 @@ export const RegistrationListPage: React.FC = () => {
         }
         return (
           <span className="px-2.5 py-1 font-extrabold text-[12px] bg-red-50 text-[#93000b] rounded-md border border-red-200 shadow-2xs">
-            {bt}
+            {rowBt}
           </span>
         );
+      },
+    },
+    {
+      header: 'Kết quả sinh hoá',
+      accessor: (row: RegistrationData) => {
+        const isExamining = row.status === 'Examining';
+        const screeningObj = (row as any).screening || (row as any).screeningForm || {};
+        const savedResult = (row as any).testResult || (row as any).examiningResult || screeningObj.testResult;
+        const isSubmitting = submittingId === row._id;
+
+        if (isExamining) {
+          return (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleUpdateTestResult(row, 'Pass')}
+                className="px-2.5 py-1 text-[11px] font-extrabold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-2xs disabled:opacity-50"
+                title="Xét nghiệm Đạt - Tự động nhập kho túi máu"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Pass</span>
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleUpdateTestResult(row, 'Rejected')}
+                className="px-2.5 py-1 text-[11px] font-extrabold text-red-800 bg-red-100 hover:bg-red-200 border border-red-300 rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-2xs disabled:opacity-50"
+                title="Máu có bất thường - Không nhập kho"
+              >
+                <XCircle className="w-3.5 h-3.5 text-red-600" />
+                <span>Rejected</span>
+              </button>
+            </div>
+          );
+        }
+
+        if (savedResult === 'Pass' || savedResult === 'Passed') {
+          return (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+              <span>Pass (Đã nhập kho)</span>
+            </span>
+          );
+        }
+        if (savedResult === 'Rejected') {
+          return (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-extrabold bg-red-50 text-red-700 border border-red-200 rounded-full">
+              <XCircle className="w-3 h-3 text-red-600" />
+              <span>Rejected</span>
+            </span>
+          );
+        }
+        return <span className="text-[12px] text-slate-400 font-medium">---</span>;
       },
     },
     {

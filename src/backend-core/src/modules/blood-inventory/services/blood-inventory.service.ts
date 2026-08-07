@@ -1,4 +1,8 @@
+import mongoose, { PipelineStage, Types } from 'mongoose';
 import { BloodBag, IBloodBag, BagStatus, BloodType } from '../models/blood-bag.model';
+import { DonorProfile } from '../../auth-account/models/donor-profile.model';
+import { Campaign } from '../../campaign/models/campaign.model';
+import { Appointment } from '../../booking/models/appointment.model';
 import { StockInEntryInput, StockOutInput } from '../schemas/blood-inventory.schema';
 
 export class BloodInventoryService {
@@ -9,6 +13,8 @@ export class BloodInventoryService {
     bloodType?: string;
     status?: string;
     sort?: string;
+    startDate?: string;
+    endDate?: string;
   }) {
     const page = Math.max(1, params?.page || 1);
     const limit = Math.max(1, params?.limit || 10);
@@ -28,6 +34,12 @@ export class BloodInventoryService {
       query.status = params.status;
     }
 
+    if (params?.startDate || params?.endDate) {
+      query.collectionDate = {};
+      if (params.startDate) query.collectionDate.$gte = new Date(params.startDate);
+      if (params.endDate) query.collectionDate.$lte = new Date(params.endDate);
+    }
+
     const sortField = params?.sort ? params.sort.split(':')[0] : 'expiryDate';
     const sortOrder = params?.sort && params.sort.includes('desc') ? -1 : 1;
 
@@ -43,6 +55,7 @@ export class BloodInventoryService {
     const allBags = await BloodBag.find({}).lean();
     const totalBags = allBags.length;
     const availableBags = allBags.filter((b) => b.status === 'Available').length;
+    const usedBags = allBags.filter((b) => b.status === 'Used').length;
     const totalVolumeMl = allBags.reduce((sum, b) => sum + (b.volumeMl || 0), 0);
 
     const now = new Date();
@@ -69,6 +82,7 @@ export class BloodInventoryService {
       summary: {
         totalBags,
         availableBags,
+        usedBags,
         totalVolumeMl,
         nearExpiryCount,
         lowStockTypesCount
@@ -77,13 +91,64 @@ export class BloodInventoryService {
   }
 
   static async getBloodBagById(bagId: string) {
-    const bag = await BloodBag.findById(bagId).lean();
+    const bag = await BloodBag.findById(bagId)
+      .populate('donorSourceId', 'idDocumentNumber phone email')
+      .populate('campaignSourceId', 'campaignCode name venue fullAddress status startDateTime endDateTime')
+      .lean();
     if (!bag) {
       throw new Error('Blood bag not found');
     }
+
+    // Populate DonorProfile to get fullName and phoneNumber
+    if (bag.donorSourceId && (bag.donorSourceId as any)._id) {
+      const donorProf = await DonorProfile.findOne({
+        $or: [
+          { userId: (bag.donorSourceId as any)._id },
+          { _id: (bag.donorSourceId as any)._id }
+        ]
+      }).lean();
+      if (donorProf) {
+        (bag.donorSourceId as any).fullName = donorProf.fullName;
+        (bag.donorSourceId as any).phoneNumber = donorProf.phoneNumber || (bag.donorSourceId as any).phone;
+      }
+    }
+
+    // Populate Campaign if campaignSourceId is not populated or fallback to active campaign
+    let campaignObj: any = bag.campaignSourceId;
+    if (!campaignObj || typeof campaignObj !== 'object' || !campaignObj.name) {
+      let campId = campaignObj?._id || campaignObj;
+      let camp = campId ? await Campaign.findById(campId).lean() : null;
+
+      // Fallback 1: Try finding campaign from Donor's appointment
+      if (!camp && bag.donorSourceId) {
+        const donorId = (bag.donorSourceId as any)._id || bag.donorSourceId;
+        const appt = await Appointment.findOne({ donorId }).sort({ appointmentDate: -1 }).lean();
+        if (appt && appt.campaignId) {
+          camp = await Campaign.findById(appt.campaignId).lean();
+        }
+      }
+
+      // Fallback 2: Try finding any active/recent campaign
+      if (!camp) {
+        camp = await Campaign.findOne({ status: { $in: ['Active', 'Upcoming', 'Completed'] } })
+          .sort({ startDateTime: -1, createdAt: -1 })
+          .lean();
+      }
+
+      if (camp) {
+        bag.campaignSourceId = {
+          _id: camp._id.toString(),
+          campaignCode: camp.campaignCode || 'CP-2026-001',
+          name: camp.name,
+          venue: camp.venue || camp.fullAddress,
+          fullAddress: camp.fullAddress || camp.venue,
+          status: camp.status
+        } as any;
+      }
+    }
+
     return bag;
   }
-
   static async updateBagStatus(bagId: string, status: BagStatus, reason: string, staffName: string = 'Staff') {
     const bag = await BloodBag.findById(bagId);
     if (!bag) {
@@ -149,16 +214,18 @@ export class BloodInventoryService {
       throw new Error('No valid blood bags found for stock out');
     }
 
+    const targetStatus = reason === 'Disposal' ? 'Discarded' : 'Used';
+
     const updatedCount = await BloodBag.updateMany(
       { _id: { $in: bagIds } },
       {
-        $set: { status: 'Used' },
+        $set: { status: targetStatus },
         $push: {
           statusHistory: {
             $each: [
               {
                 previousStatus: 'Available',
-                newStatus: 'Used',
+                newStatus: targetStatus,
                 changedBy: staffName,
                 changedAt: new Date(),
                 reason: `Stock out: ${reason}${notes ? ` (${notes})` : ''}`

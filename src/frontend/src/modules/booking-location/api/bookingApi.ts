@@ -90,6 +90,7 @@ const mapStatus = (backendStatus: BackendAppointmentStatus): AppointmentStatus =
     case 'Confirmed':
     case 'Scheduled':
     case 'CheckedIn':
+    case 'Examining':
       return 'upcoming';
     case 'Completed':
       return 'completed';

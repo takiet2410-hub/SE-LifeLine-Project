@@ -14,7 +14,7 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-import { apiService } from '../../../services/apiClient';
+import { inventoryApi } from '../services/inventoryApi';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
 
 const COLORS = ['#DC2626', '#EA580C', '#D97706', '#CA8A04', '#16A34A', '#2563EB', '#4F46E5', '#9333EA'];
@@ -27,7 +27,7 @@ export const InventoryStatsPage: React.FC = () => {
   const [chartMode, setChartMode] = useState<'Units' | 'Volume' | 'NearExpiry'>('Units');
 
   useEffect(() => {
-    apiService.getInventoryStatistics().then((data) => {
+    inventoryApi.getStatistics().then((data) => {
       setStats(data);
       setLoading(false);
     });

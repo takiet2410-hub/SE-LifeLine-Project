@@ -77,7 +77,8 @@ export class CampaignService {
    */
   public static async listCampaigns(query: any) {
     const page = Math.max(1, parseInt(query.page || '1', 10));
-    const limit = Math.max(1, parseInt(query.limit || '10', 10));
+    // Enforce max limit of 50
+    const limit = Math.min(50, Math.max(1, parseInt(query.limit || '10', 10)));
     const skip = (page - 1) * limit;
 
     const filterQuery: any = {};
@@ -117,32 +118,50 @@ export class CampaignService {
     const sortOptions: any = {};
     sortOptions[sortBy] = sortOrder;
 
-    const [rawCampaigns, total] = await Promise.all([
+    const [campaigns, statsData] = await Promise.all([
       Campaign.find(filterQuery)
+        .select('-timeslots -dailyTimeslots -description -internalRemarks')
         .sort(sortOptions)
         .skip(skip)
         .limit(limit)
         .lean(),
-      Campaign.countDocuments(filterQuery)
+      Campaign.find(filterQuery)
+        .select('status registeredCount capacity startDateTime endDateTime')
+        .lean()
     ]);
 
-    // Automatically sync active non-rejected, non-cancelled appointment counts for retrieved campaigns
-    for (const c of rawCampaigns) {
-      await CampaignService.syncCampaignCounts(c._id.toString());
-    }
+    const total = statsData.length;
 
-    const campaigns = await Campaign.find(filterQuery)
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    // Calculate global stats for KPIs
+    const now = new Date();
+    let totalRegistered = 0;
+    let totalCapacity = 0;
+    let activeCount = 0;
+
+    statsData.forEach((c: any) => {
+      totalRegistered += (c.registeredCount || 0);
+      totalCapacity += (c.capacity || 1);
+      
+      let computedStatus = c.status;
+      if (c.status !== 'Cancelled' && c.status !== 'Draft') {
+        const start = c.startDateTime ? new Date(c.startDateTime) : null;
+        const end = c.endDateTime ? new Date(c.endDateTime) : null;
+        if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          if (now >= start && now <= end) {
+            computedStatus = 'Active';
+          }
+        }
+      }
+      if (computedStatus === 'Active') {
+        activeCount++;
+      }
+    });
 
     // Format output to include calculated capacity details & dynamic real-time status
-    const now = new Date();
     const formattedCampaigns = campaigns.map((c: any) => {
       const registered = c.registeredCount || 0;
-      const totalCapacity = c.capacity || 1;
-      const percentage = Math.min(100, Math.round((registered / totalCapacity) * 100));
+      const cap = c.capacity || 1;
+      const percentage = Math.min(100, Math.round((registered / cap) * 100));
       
       let computedStatus = c.status;
       if (c.status !== 'Cancelled' && c.status !== 'Draft') {
@@ -164,7 +183,7 @@ export class CampaignService {
         status: computedStatus,
         capacityProgress: {
           registered,
-          total: totalCapacity,
+          total: cap,
           percentage
         }
       };
@@ -177,6 +196,12 @@ export class CampaignService {
         page,
         limit,
         totalPages: Math.ceil(total / limit)
+      },
+      stats: {
+        totalCount: total,
+        activeCount,
+        totalRegistered,
+        totalCapacity
       }
     };
   }
@@ -348,7 +373,7 @@ export class CampaignService {
     // Get active (non-rejected, non-cancelled) appointments
     const activeAppointments = await Appointment.find({
       campaignId: campaign._id,
-      status: { $nin: ['Rejected', 'Cancelled'] }
+      status: { $nin: ['Rejected', 'Cancelled'] as any[] }
     }).lean();
 
     const activeCount = activeAppointments.length;

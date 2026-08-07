@@ -22,6 +22,8 @@ export interface IAppointment extends Document {
   screeningFormId?: mongoose.Types.ObjectId;
   eTicketId?: mongoose.Types.ObjectId;
   donationVolume?: number;
+  xpRewardedForExamining?: boolean;
+  xpRewardedForCompletion?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,7 +36,9 @@ const AppointmentSchema: Schema = new Schema({
   status: { type: String, enum: Object.values(AppointmentStatus), default: AppointmentStatus.Pending },
   screeningFormId: { type: Schema.Types.ObjectId, ref: 'ScreeningForm' },
   eTicketId: { type: Schema.Types.ObjectId, ref: 'ETicket' },
-  donationVolume: { type: Number, default: 350 }
+  donationVolume: { type: Number, default: 350 },
+  xpRewardedForExamining: { type: Boolean, default: false },
+  xpRewardedForCompletion: { type: Boolean, default: false }
 }, {
   timestamps: true
 });

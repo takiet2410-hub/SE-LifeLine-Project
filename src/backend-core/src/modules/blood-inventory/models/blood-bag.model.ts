@@ -11,13 +11,6 @@ export interface IStatusHistory {
   reason?: string;
 }
 
-export interface ITestResults {
-  hiv: 'Negative' | 'Positive';
-  hbv: 'Negative' | 'Positive';
-  hcv: 'Negative' | 'Positive';
-  syphilis: 'Negative' | 'Positive';
-  verifiedAt: Date;
-}
 
 export interface IBloodBag extends Document {
   bagCode: string;
@@ -32,7 +25,7 @@ export interface IBloodBag extends Document {
   status: BagStatus;
   donorSourceId?: mongoose.Types.ObjectId;
   campaignSourceId?: mongoose.Types.ObjectId;
-  testResults: ITestResults;
+  testResult: 'Pass' | 'Rejected' | 'Pending';
   statusHistory: IStatusHistory[];
   createdAt: Date;
   updatedAt: Date;
@@ -46,13 +39,6 @@ const statusHistorySchema = new Schema<IStatusHistory>({
   reason: { type: String }
 }, { _id: false });
 
-const testResultsSchema = new Schema<ITestResults>({
-  hiv: { type: String, enum: ['Negative', 'Positive'], default: 'Negative' },
-  hbv: { type: String, enum: ['Negative', 'Positive'], default: 'Negative' },
-  hcv: { type: String, enum: ['Negative', 'Positive'], default: 'Negative' },
-  syphilis: { type: String, enum: ['Negative', 'Positive'], default: 'Negative' },
-  verifiedAt: { type: Date, default: Date.now }
-}, { _id: false });
 
 export const bloodBagSchema = new Schema<IBloodBag>({
   bagCode: { type: String, required: true, unique: true, index: true },
@@ -77,10 +63,11 @@ export const bloodBagSchema = new Schema<IBloodBag>({
   },
   donorSourceId: { type: Schema.Types.ObjectId, ref: 'User' },
   campaignSourceId: { type: Schema.Types.ObjectId, ref: 'Campaign' },
-  testResults: { type: testResultsSchema, default: () => ({}) },
+  testResult: { type: String, enum: ['Pass', 'Rejected', 'Pending'], default: 'Pending' },
   statusHistory: [statusHistorySchema]
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'blood_bags'
 });
 
 bloodBagSchema.index({ expiryDate: 1, status: 1 });

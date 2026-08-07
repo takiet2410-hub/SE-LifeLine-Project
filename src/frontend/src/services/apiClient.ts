@@ -148,23 +148,35 @@ export const apiService = {
   },
 
   // ==================== CAMPAIGN APIs ====================
-  async getCampaigns(params?: { search?: string; status?: string }) {
+  async getCampaigns(params?: { search?: string; status?: string; page?: number; limit?: number }) {
     try {
       const queryParams: any = {};
       if (params?.search) queryParams.location = params.search;
-      queryParams.limit = 1000;
+      if (params?.status && params.status !== 'All') {
+        queryParams.status = params.status;
+      }
+      queryParams.page = params?.page || 1;
+      queryParams.limit = params?.limit || 20;
       queryParams.sortBy = 'startDateTime';
       queryParams.sortOrder = 'desc';
 
       const res = await apiClient.get('/campaigns', { params: queryParams });
+      
+      // If backend returns pagination and stats, pass them through
+      if (res.data && res.data.pagination) {
+        return {
+          data: res.data.data as CampaignData[],
+          pagination: res.data.pagination,
+          stats: res.data.stats
+        };
+      }
+      
       let rawData = res.data?.data || res.data;
       if (Array.isArray(rawData) && rawData.length > 0) {
-        if (params?.status && params.status !== 'All') {
-          rawData = rawData.filter((c: any) => c.status === params.status);
-        } else {
+        if (!params?.status || params.status === 'All') {
           rawData = rawData.filter((c: any) => c.status !== 'Cancelled');
         }
-        return rawData as CampaignData[];
+        return { data: rawData as CampaignData[] };
       }
     } catch (err) {
       console.warn('[apiService] Backend getCampaigns failed, falling back to local dataset:', err);
@@ -181,7 +193,7 @@ export const apiService = {
     if (params?.status && params.status !== 'All') {
       result = result.filter((c) => c.status === params.status);
     }
-    return result;
+    return { data: result };
   },
 
   async getCampaignById(id: string) {
@@ -426,8 +438,13 @@ export const apiService = {
       if (updates.donationVolume !== undefined) {
         payload.donationVolume = Number(updates.donationVolume);
       }
+      if ((updates as any).testResult !== undefined) {
+        payload.testResult = (updates as any).testResult;
+      }
       if (updates.donorBloodType && updates.donorBloodType !== 'Unknown') {
         payload.bloodType = updates.donorBloodType;
+      } else if ((updates as any).bloodType) {
+        payload.bloodType = (updates as any).bloodType;
       }
 
       const res = await apiClient.put(`/registrations/${id}/screening`, payload);

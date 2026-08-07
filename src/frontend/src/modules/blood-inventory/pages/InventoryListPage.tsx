@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, ArrowUpRight, BarChart2, Search, Eye, AlertCircle, Package, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { apiService } from '../../../services/apiClient';
+import { inventoryApi } from '../services/inventoryApi';
 import type { BloodBagData } from '../../../services/mockData';
 import { StatusBadge } from '../../../components/common/StatusBadge';
 import { DataTable } from '../../../components/common/DataTable';
@@ -18,7 +18,11 @@ export const InventoryListPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [bloodTypeFilter, setBloodTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [summary, setSummary] = useState<any>(null);
   const pageSize = 8;
 
   const formatDateSafe = (dateStr?: string | Date) => {
@@ -35,9 +39,12 @@ export const InventoryListPage: React.FC = () => {
   const fetchInventory = async () => {
     setLoading(true);
     try {
-      const data = await apiService.getInventory(search, bloodTypeFilter, statusFilter);
+      const res = await inventoryApi.getInventory({ page: currentPage, limit: pageSize, search, bloodType: bloodTypeFilter, status: statusFilter, startDate, endDate });
+      const data = res.data; // Using res.data from InventoryListResponse
       const items = Array.isArray(data) ? data : ((data as any)?.data || []);
       setBags(items);
+      setTotalItems(res.pagination?.total || 0);
+      setSummary(res.summary || null);
     } catch (err) {
       console.error('Error fetching inventory:', err);
       setBags([]);
@@ -46,25 +53,23 @@ export const InventoryListPage: React.FC = () => {
     }
   };
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, bloodTypeFilter, statusFilter, startDate, endDate]);
+
+  // Fetch data when filters or page changes
   useEffect(() => {
     fetchInventory();
-    setCurrentPage(1);
-  }, [search, bloodTypeFilter, statusFilter]);
+  }, [currentPage, search, bloodTypeFilter, statusFilter, startDate, endDate]);
 
-  const totalPages = Math.ceil(bags.length / pageSize) || 1;
-  const paginatedBags = bags.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const paginatedBags = bags;
 
-  const totalBags = bags.length;
-  const availableBags = bags.filter((b) => b.status === 'Available').length;
-  const nearExpiryBags = bags.filter((b) => {
-    try {
-      const diffDays = differenceInDays(new Date(b.expiryDate), new Date());
-      return diffDays >= 0 && diffDays <= 7 && b.status === 'Available';
-    } catch {
-      return false;
-    }
-  }).length;
-  const usedBags = bags.filter((b) => b.status === 'Used').length;
+  const totalBags = summary?.totalBags || 0;
+  const availableBags = summary?.availableBags || 0;
+  const nearExpiryBags = summary?.nearExpiryCount || 0;
+  const usedBags = summary?.usedBags || 0;
 
   const columns: Column<BloodBagData>[] = [
     {
@@ -289,6 +294,23 @@ export const InventoryListPage: React.FC = () => {
                 {st === 'All' ? 'Tất cả' : st}
               </button>
             ))}
+          </div>
+
+          <div className="flex items-center gap-1.5 border-l border-[#f1f3f5] pl-3">
+            <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Ngày lấy:</span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="px-2 py-1 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[12px] outline-none"
+            />
+            <span className="text-slate-400">-</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="px-2 py-1 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[12px] outline-none"
+            />
           </div>
         </div>
       </div>

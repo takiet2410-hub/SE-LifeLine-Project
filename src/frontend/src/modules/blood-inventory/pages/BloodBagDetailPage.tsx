@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit3, Save, History, Package, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { apiService } from '../../../services/apiClient';
+import { inventoryApi } from '../services/inventoryApi';
 import type { BloodBagData } from '../../../services/mockData';
 import { StatusBadge } from '../../../components/common/StatusBadge';
 import { FormField } from '../../../components/common/FormField';
@@ -23,7 +23,7 @@ export const BloodBagDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (bagId) {
-      apiService.getBloodBagById(bagId).then((data) => {
+      inventoryApi.getBloodBagById(bagId).then((data) => {
         setBag(data);
         if (data) {
           setNewStatus(data.status);
@@ -63,7 +63,7 @@ export const BloodBagDetailPage: React.FC = () => {
     if (!bagId) return;
     setIsSubmitting(true);
     try {
-      const updated = await apiService.updateBloodBagStatus(bagId, newStatus, reason);
+      const updated = await inventoryApi.updateStatus(bagId, newStatus, reason);
       setBag(updated);
       setIsEditing(false);
       setReason('');
@@ -91,7 +91,6 @@ export const BloodBagDetailPage: React.FC = () => {
               <h2 className="text-xl font-bold text-slate-900 font-mono">{bag.bagCode}</h2>
               <StatusBadge status={bag.status} />
             </div>
-            <p className="text-xs text-slate-500">Mã ID hệ thống: {bag._id}</p>
           </div>
         </div>
 
@@ -118,6 +117,71 @@ export const BloodBagDetailPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Donor & Campaign Context */}
+      {(() => {
+        const donorObj = typeof bag.donorSourceId === 'object' ? (bag.donorSourceId as any) : null;
+        const campObj = typeof bag.campaignSourceId === 'object' ? (bag.campaignSourceId as any) : null;
+
+        const donorName = donorObj?.fullName || (bag as any).donorName || 'Chưa cập nhật';
+        const donorPhone = donorObj?.phoneNumber || donorObj?.phone || 'Chưa cập nhật';
+
+        const campaignName = campObj?.name || (bag as any).campaignName || 'Chiến dịch tiếp nhận máu';
+        const campaignVenue = campObj?.venue || campObj?.fullAddress || 'TT Truyền Máu';
+        const campaignCode = campObj?.campaignCode || 'CP-2026-001';
+
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+              <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+                <span className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 font-bold text-[13px]">👤</span>
+                <span>Hồ Sơ Người Hiến</span>
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between py-1 border-b border-slate-100">
+                  <span className="text-slate-500 font-medium">Họ & Tên</span>
+                  <span className="font-bold text-slate-800">{donorName}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-100">
+                  <span className="text-slate-500 font-medium">Số điện thoại</span>
+                  <span className="font-medium text-slate-800">{donorPhone}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-100">
+                  <span className="text-slate-500 font-medium">Kết quả Test Sinh Hóa</span>
+                  <span className={`font-bold ${bag.testResult === 'Pass' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                    {bag.testResult === 'Pass' ? '✅ Đạt tiêu chuẩn' : (bag.testResult || 'Đang chờ')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+              <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+                <span className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-50 text-emerald-600 font-bold text-[13px]">🚩</span>
+                <span>Chiến Dịch Tiếp Nhận</span>
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between py-1 border-b border-slate-100">
+                  <span className="text-slate-500 font-medium">Mã chiến dịch</span>
+                  <span className="font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded text-[11px]">{campaignCode}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-100">
+                  <span className="text-slate-500 font-medium">Tên chiến dịch</span>
+                  <span className="font-bold text-slate-800 text-right line-clamp-1 max-w-[220px]" title={campaignName}>
+                    {campaignName}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-100">
+                  <span className="text-slate-500 font-medium">Địa điểm lấy máu</span>
+                  <span className="font-medium text-slate-800 text-right line-clamp-1 max-w-[220px]" title={campaignVenue}>
+                    {campaignVenue}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Main Details Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

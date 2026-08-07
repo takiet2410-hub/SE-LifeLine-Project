@@ -53,11 +53,11 @@
 
 ### Phase 3: Page-Level Components & Feature Flows (Additive Only)
 - **Pages**:
-  - `src/frontend/src/modules/blood-inventory/pages/InventoryListPage.tsx` (BC-UC-12, BC-UC-17)
-  - `src/frontend/src/modules/blood-inventory/pages/BloodBagDetailPage.tsx` (BC-UC-13)
-  - `src/frontend/src/modules/blood-inventory/pages/StockInPage.tsx` (BC-UC-14)
-  - `src/frontend/src/modules/blood-inventory/pages/StockOutPage.tsx` (BC-UC-15)
-  - `src/frontend/src/modules/blood-inventory/pages/InventoryStatsPage.tsx` (BC-UC-16)
+  - `src/frontend/src/modules/blood-inventory/pages/InventoryListPage.tsx` (BC-UC-12, BC-UC-13)
+  - `src/frontend/src/modules/blood-inventory/pages/BloodBagDetailPage.tsx` (BC-UC-14)
+  - `src/frontend/src/modules/blood-inventory/pages/StockInPage.tsx` (BC-UC-15)
+  - `src/frontend/src/modules/blood-inventory/pages/StockOutPage.tsx` (BC-UC-16)
+  - `src/frontend/src/modules/blood-inventory/pages/InventoryStatsPage.tsx` (BC-UC-17)
 - **Sub-components**:
   - `src/frontend/src/modules/blood-inventory/components/StatusEditModal.tsx`
   - `src/frontend/src/modules/blood-inventory/components/FefoRecommendationPanel.tsx`

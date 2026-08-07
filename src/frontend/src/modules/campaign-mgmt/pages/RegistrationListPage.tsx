@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, QrCode, Search, Sparkles, Eye, HelpCircle, Clock, Calendar } from 'lucide-react';
+import { ArrowLeft, QrCode, Search, Sparkles, Eye, HelpCircle, Calendar } from 'lucide-react';
 import { apiService } from '../../../services/apiClient';
 import type { RegistrationData, CampaignData } from '../../../services/mockData';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -58,7 +58,7 @@ export const RegistrationListPage: React.FC = () => {
   const availableDates = React.useMemo(() => {
     const datesSet = new Set<string>();
     if (campaign?.dailyTimeslots && campaign.dailyTimeslots.length > 0) {
-      campaign.dailyTimeslots.forEach((dt) => {
+      campaign.dailyTimeslots.forEach((dt: any) => {
         if (dt.dateStr) datesSet.add(dt.dateStr);
       });
     }
@@ -76,7 +76,7 @@ export const RegistrationListPage: React.FC = () => {
     if (selectedDate === 'All') return [];
     const slotSet = new Set<string>();
     if (campaign?.dailyTimeslots && campaign.dailyTimeslots.length > 0) {
-      campaign.dailyTimeslots.forEach((dt) => {
+      campaign.dailyTimeslots.forEach((dt: any) => {
         if (dt.dateStr === selectedDate && dt.startTime && dt.endTime) {
           slotSet.add(`${dt.startTime} - ${dt.endTime}`);
         }

@@ -178,7 +178,7 @@ export const Step1_LocationTime: React.FC = () => {
 
           const isDataTimeSlotValid = data.timeSlot && data.date === selectedDate && !isSlotPassed(selectedDate, data.timeSlot.split('-')[1]?.trim() || '23:59');
           if (isDataTimeSlotValid) {
-            setSelectedTime(data.timeSlot);
+            setSelectedTime(data.timeSlot || '');
           } else if (targetLocObj && targetLocObj.timeSlots && targetLocObj.timeSlots.length > 0) {
             const availSlot = getFirstAvailableSlot(selectedDate, targetLocObj.timeSlots);
             setSelectedTime(availSlot ? `${availSlot.startTime} - ${availSlot.endTime}` : '');

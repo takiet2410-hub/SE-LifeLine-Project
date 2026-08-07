@@ -456,8 +456,8 @@ export const EditCampaignPage: React.FC = () => {
         description: data.description || data.name,
         venue: data.venue,
         fullAddress: data.fullAddress,
-        startDate: data.startDate,
-        endDate: data.endDate,
+        startDateTime: data.startDate,
+        endDateTime: data.endDate,
         targetBloodGroups: data.targetBloodGroups,
         capacity: data.capacity,
         targetUnitsGoal: data.targetUnitsGoal,
@@ -465,7 +465,6 @@ export const EditCampaignPage: React.FC = () => {
         timeslots: patternSlots,
         dailyTimeslots,
         status: campaignStatus,
-        isDraft: data.isDraft,
       });
 
       toast.success('Cập nhật thông tin chiến dịch thành công!');

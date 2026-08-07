@@ -15,7 +15,9 @@ export const StockOutPage: React.FC = () => {
   const [availableBags, setAvailableBags] = useState<BloodBagData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBagIds, setSelectedBagIds] = useState<string[]>([]);
-  const [reason, setReason] = useState<'Dispatch' | 'Disposal' | 'Transfer' | 'Other'>('Dispatch');
+  const searchParams = new URLSearchParams(window.location.search);
+  const initialReason = searchParams.get('reason') as 'Dispatch' | 'Disposal' | 'Transfer' | 'Other' || 'Dispatch';
+  const [reason, setReason] = useState<'Dispatch' | 'Disposal' | 'Transfer' | 'Other'>(initialReason);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);

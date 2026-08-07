@@ -23,7 +23,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
         <p style="font-size: 12px; color: #999;">Trân trọng,<br>Đội ngũ LifeLine</p>
       </div>
     `,
-    channels: ['in-app', 'email'],
+    channels: ['InApp', 'Email'],
     variables: ['donorName', 'campaignName', 'appointmentDate', 'appointmentTime', 'locationName', 'deepLink'],
   },
 
@@ -53,7 +53,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
         <p><a href="{{deepLink}}" style="display: inline-block; background: #93000b; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">Xem chi tiết</a></p>
       </div>
     `,
-    channels: ['in-app', 'push'],
+    channels: ['InApp', 'WebPush'],
     variables: ['donorName', 'campaignName', 'appointmentTime', 'locationName', 'deepLink'],
   },
 
@@ -77,7 +77,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
         <p><a href="{{deepLink}}" style="display: inline-block; background: #dc3545; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">Mở bản đồ chỉ đường</a></p>
       </div>
     `,
-    channels: ['in-app', 'push'],
+    channels: ['InApp', 'WebPush'],
     variables: ['donorName', 'campaignName', 'appointmentTime', 'locationName', 'deepLink'],
   },
 
@@ -103,7 +103,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
         <p style="font-size: 12px; color: #999;">Trân trọng,<br>Đội ngũ LifeLine</p>
       </div>
     `,
-    channels: ['in-app', 'email'],
+    channels: ['InApp', 'Email'],
     variables: ['donorName', 'campaignName', 'startDate', 'endDate', 'locationName', 'bloodTypes', 'deepLink'],
   },
 
@@ -125,7 +125,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
         <p><a href="{{deepLink}}" style="display: inline-block; background: #28a745; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">Tìm chiến dịch gần tôi</a></p>
       </div>
     `,
-    channels: ['in-app', 'email', 'push'],
+    channels: ['InApp', 'Email', 'WebPush'],
     variables: ['donorName', 'deepLink'],
   },
 
@@ -147,7 +147,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
         <p><a href="{{deepLink}}" style="display: inline-block; background: #28a745; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">Xem hồ sơ</a></p>
       </div>
     `,
-    channels: ['in-app', 'email'],
+    channels: ['InApp', 'Email'],
     variables: ['donorName', 'deepLink'],
   },
 
@@ -179,7 +179,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
         <p style="font-size: 12px; color: #999;">Nếu bạn có nhóm máu phù hợp và đủ điều kiện (đủ 84 ngày), vui lòng đến ngay bộ phận truyền máu.</p>
       </div>
     `,
-    channels: ['in-app', 'push'],
+    channels: ['InApp', 'WebPush'],
     variables: ['bloodType', 'hospitalName', 'quantity', 'urgencyLevel', 'deadline', 'patientReference', 'hospitalAddress', 'deepLink'],
   },
 
@@ -208,7 +208,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
         <p style="font-size: 12px; color: #999;">Hãy đến đúng giờ để hỗ trợ kịp thời. Cảm ơn bạn đã cứu người!</p>
       </div>
     `,
-    channels: ['in-app', 'email'],
+    channels: ['InApp', 'Email'],
     variables: ['donorName', 'sosRequestId', 'hospitalName', 'hospitalAddress', 'deadline', 'deepLink'],
   },
 
@@ -235,7 +235,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
         </p>
       </div>
     `,
-    channels: ['in-app', 'push'],
+    channels: ['InApp', 'WebPush'],
     variables: ['donorName', 'sosRequestId', 'deepLink'],
   },
 
@@ -259,8 +259,36 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
         <p><a href="{{deepLink}}" style="display: inline-block; background: #93000b; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">Đăng ký lịch mới</a></p>
       </div>
     `,
-    channels: ['in-app', 'email'],
+    channels: ['InApp', 'Email'],
     variables: ['donorName', 'campaignName', 'appointmentDate', 'appointmentTime', 'reason', 'deepLink'],
+  },
+
+  // Eligibility Check Failed / Blood Test Failed
+  {
+    eventType: 'EligibilityCheckFailed',
+    locale: 'vi',
+    subject: 'Thông báo quan trọng về kết quả hiến máu',
+    bodyText: 'Chào {{donorName}},\n\nChúng tôi vô cùng trân trọng tinh thần thiện nguyện của bạn.\n\nTuy nhiên, sau khi xét nghiệm mẫu máu, chúng tôi ghi nhận có một số bất thường. Để đảm bảo sức khỏe cho bạn và an toàn truyền máu, mẫu máu này không thể sử dụng.\n\nVui lòng đến ngay cơ sở y tế gần nhất hoặc liên hệ lại với trung tâm hiến máu để được tư vấn và thăm khám chi tiết.\n\nTrân trọng,\nĐội ngũ LifeLine',
+    bodyHtml: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 12px; padding: 20px; text-align: center;">
+          <h1 style="color: #721c24; margin: 0 0 10px;">🩺 Thông báo kết quả xét nghiệm</h1>
+        </div>
+        
+        <p>Chào <strong>{{donorName}}</strong>,</p>
+        <p>Chúng tôi vô cùng trân trọng tinh thần thiện nguyện của bạn.</p>
+        
+        <div style="background: #fff3cd; border-radius: 8px; padding: 15px; margin: 15px 0;">
+          <p style="margin: 5px 0; color: #856404;">Sau khi xét nghiệm mẫu máu, chúng tôi ghi nhận có một số bất thường. Để đảm bảo sức khỏe cho bạn và an toàn truyền máu, mẫu máu này không thể sử dụng.</p>
+        </div>
+        
+        <p style="font-weight: bold; color: #dc3545;">Vui lòng đến ngay cơ sở y tế gần nhất hoặc liên hệ lại với trung tâm hiến máu để được tư vấn và thăm khám chi tiết.</p>
+        
+        <p><a href="{{deepLink}}" style="display: inline-block; background: #dc3545; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">Xem chi tiết hồ sơ</a></p>
+      </div>
+    `,
+    channels: ['InApp', 'Email'],
+    variables: ['donorName', 'deepLink'],
   },
 
   // Donation Completed
@@ -291,7 +319,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
         <p><a href="{{deepLink}}" style="display: inline-block; background: #93000b; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">Xem thành tích</a></p>
       </div>
     `,
-    channels: ['in-app', 'email'],
+    channels: ['InApp', 'Email'],
     variables: ['donorName', 'campaignName', 'volume', 'bloodType', 'donationDate', 'nextEligibleDate', 'deepLink'],
   },
 ];
@@ -299,9 +327,9 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
 export async function seedNotificationTemplates() {
   for (const template of DEFAULT_NOTIFICATION_TEMPLATES) {
     await NotificationTemplate.findOneAndUpdate(
-      { eventType: template.eventType, locale: template.locale },
+      { eventType: template.eventType as any, locale: template.locale },
       { $set: template },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
   }
   console.log('[Seed] Default notification templates created/updated');

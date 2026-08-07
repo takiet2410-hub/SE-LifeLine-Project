@@ -4,6 +4,8 @@ import { SOSEvaluationLog } from '../models/sos-evaluation-log.model';
 import { Notification } from '../../notification/models/Notification';
 import { User } from '../../auth-account/models/user.model';
 import { Hospital } from '../../auth-account/models/hospital.model';
+import { BloodCenter } from '../../auth-account/models/blood-center.model';
+import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import mongoose from 'mongoose';
 
 export class SOSBroadcastService {
@@ -20,81 +22,116 @@ export class SOSBroadcastService {
     const hospital = await Hospital.findById(request.hospitalId);
     const hospitalName = hospital?.name || 'A Hospital';
 
-    // 1. Notify Ranked Blood Centers (Actually notify all BloodCenterStaff in the system for this demo)
-    const notifiedCenters = [];
-    const bcStaffUsers = await User.find({ role: 'BloodCenterStaff' });
-    
-    for (const center of evalLog.rankedBloodCenters) {
-      console.log(`[SOSBroadcastService] -> Selected BloodCenter ID: ${center.centerId}`);
-      notifiedCenters.push(center.centerId);
-    }
+    // Prepare notifications array for bulk insert
+    const notificationsToInsert = [];
 
-    // Create notifications for BC Staff
-    console.log(`[SOSBroadcastService] Found ${bcStaffUsers.length} BloodCenterStaff users`);
-    for (const staff of bcStaffUsers) {
-      try {
-        console.log(`[SOSBroadcastService] Creating notification for staff: ${staff.email}`);
-        await Notification.create({
-          recipientUserId: staff._id,
-          type: 'SOS',
-          channel: 'WebPush',
-          title: `CẤP CỨU: Cần ${request.requiredQuantityMl}ml máu ${request.bloodType} gấp`,
-          body: `${hospitalName} yêu cầu cung cấp gấp ${request.requiredQuantityMl}ml máu ${request.bloodType} cho bệnh nhân cấp cứu. Hạn chót: ${request.fulfillmentDeadline ? request.fulfillmentDeadline.toLocaleDateString() : 'Không rõ'}`,
-          sourceRefId: request._id,
-          sourceRefType: 'SOSRequest',
-          deliveryStatus: 'Sent',
-          payload: {
+    // 1. Notify Ranked Blood Centers (only staff from ranked centers)
+    const notifiedCenters = [];
+    const rankedCenterIds = evalLog.rankedBloodCenters.map(c => c.centerId.toString());
+    
+    if (rankedCenterIds.length > 0) {
+      // Find BloodCenterStaff users who belong to these ranked centers
+      const rankedCenters = await BloodCenter.find({ _id: { $in: rankedCenterIds } }).select('_id').lean();
+      const rankedCenterObjectIds = rankedCenters.map(c => c._id);
+      
+      const bcStaffUsers = await User.find({ 
+        role: 'BloodCenterStaff',
+        bloodCenterId: { $in: rankedCenterObjectIds }
+      });
+      
+      console.log(`[SOSBroadcastService] Found ${bcStaffUsers.length} BloodCenterStaff users in ${rankedCenterIds.length} ranked centers`);
+      
+      for (const center of evalLog.rankedBloodCenters) {
+        console.log(`[SOSBroadcastService] -> Selected BloodCenter ID: ${center.centerId}`);
+        notifiedCenters.push(center.centerId);
+      }
+
+      const staffIds = bcStaffUsers.map(staff => staff._id.toString());
+      if (staffIds.length > 0) {
+        try {
+          const { NotificationService } = await import('../../notification/services/notification.service');
+          const payload = {
             hospitalName: hospitalName,
             hospitalAddress: hospital?.address || 'Address not available',
+            hospitalPhone: hospital?.contactPhone || 'N/A',
             patientReference: request.patientReference || 'N/A',
             requiredQuantityMl: request.requiredQuantityMl,
             fulfillmentDeadline: request.fulfillmentDeadline,
             bloodType: request.bloodType,
             urgencyLevel: request.urgencyLevel,
             hospitalLocation: hospital?.location,
-          }
-        });
-        console.log(`[SOSBroadcastService] Successfully created notification for ${staff.email}`);
-      } catch (err) {
-        console.error(`[SOSBroadcastService] Error creating notification for ${staff.email}:`, err);
+            deepLink: `/sos-requests/${request._id.toString()}`,
+            sourceRefId: request._id.toString(),
+            sourceRefType: 'SOSRequest'
+          };
+
+          await NotificationService.sendNotification({
+            recipientIds: staffIds,
+            type: 'SOS',
+            title: `CẤP CỨU: Cần ${request.requiredQuantityMl}ml máu ${request.bloodType} gấp`,
+            body: `${hospitalName} yêu cầu cung cấp gấp ${request.requiredQuantityMl}ml máu ${request.bloodType} cho bệnh nhân cấp cứu. Hạn chót: ${request.fulfillmentDeadline ? request.fulfillmentDeadline.toLocaleDateString() : 'Không rõ'}`,
+            payload: payload,
+            channels: ['WebPush', 'InApp'] as any
+          });
+          console.log(`[SOSBroadcastService] Broadcasted to ${staffIds.length} blood center staff`);
+        } catch (err) {
+          console.error(`[SOSBroadcastService] Error broadcasting to staff:`, err);
+        }
       }
+      console.log(`[SOSBroadcastService] No ranked blood centers to notify`);
     }
 
     // 2. Notify Ranked Donors
     const notifiedDonors = [];
-    const DonorProfileModel = mongoose.model('DonorProfile');
-    for (const donor of evalLog.rankedDonors) {
-      console.log(`[SOSBroadcastService] -> Selected Donor ID: ${donor.donorId}`);
-      notifiedDonors.push(donor.donorId);
-      
+    const donorIds = evalLog.rankedDonors.map(d => d.donorId);
+    // Batch fetch all donor profiles to avoid O(N) DB calls
+    const donorProfiles = await DonorProfile.find({ _id: { $in: donorIds } });
+    
+    // Find existing recipient IDs for this SOS request to avoid duplicates
+    const existingNotifs = await Notification.find({
+      sourceRefId: request._id,
+      sourceRefType: 'SOSRequest'
+    }).select('recipientUserId').lean();
+
+    const alreadyNotifiedIds = new Set(
+      existingNotifs.map((n: any) => n.recipientUserId.toString())
+    );
+
+    const newDonorIds = donorIds.filter((id: any) => !alreadyNotifiedIds.has(id.toString()));
+
+    if (newDonorIds.length > 0) {
       try {
-        const donorProfile = await DonorProfileModel.findById(donor.donorId);
-        if (donorProfile && donorProfile.userId) {
-          console.log(`[SOSBroadcastService] Creating notification for Donor User ID: ${donorProfile.userId}`);
-          await Notification.create({
-            recipientUserId: donorProfile.userId,
-            type: 'SOS',
-            channel: 'WebPush',
-            title: `KHẨN CẤP: ${hospitalName} đang cần máu ${request.bloodType}`,
-            body: `Nhóm máu ${request.bloodType} của bạn có thể cứu sống một bệnh nhân ngay lúc này. Xin vui lòng hiến máu khẩn cấp!`,
-            sourceRefId: request._id,
-            sourceRefType: 'SOSRequest',
-            deliveryStatus: 'Sent',
-            payload: {
-              hospitalName: hospitalName,
-              hospitalAddress: hospital?.address || 'Address not available',
-              patientReference: request.patientReference || 'N/A',
-              requiredQuantityMl: request.requiredQuantityMl,
-              fulfillmentDeadline: request.fulfillmentDeadline,
-              bloodType: request.bloodType,
-              urgencyLevel: request.urgencyLevel,
-              hospitalLocation: hospital?.location,
-            }
-          });
-        }
+        const { NotificationService } = await import('../../notification/services/notification.service');
+        const payload = {
+          hospitalName: hospitalName,
+          hospitalAddress: hospital?.address || 'Address not available',
+          hospitalPhone: hospital?.contactPhone || 'N/A',
+          patientReference: request.patientReference || 'N/A',
+          requiredQuantityMl: request.requiredQuantityMl,
+          fulfillmentDeadline: request.fulfillmentDeadline,
+          bloodType: request.bloodType,
+          urgencyLevel: request.urgencyLevel,
+          hospitalLocation: hospital?.location,
+          deepLink: `/sos-requests/${request._id.toString()}`,
+          sourceRefId: request._id.toString(),
+          sourceRefType: 'SOSRequest'
+        };
+
+        await NotificationService.sendNotification({
+          recipientIds: newDonorIds.map((id: any) => id.toString()),
+          type: 'SOS',
+          title: `KHẨN CẤP: ${hospitalName} đang cần máu ${request.bloodType}`,
+          body: `Nhóm máu ${request.bloodType} của bạn có thể cứu sống một bệnh nhân ngay lúc này. Xin vui lòng hiến máu khẩn cấp!`,
+          payload: payload,
+          channels: ['WebPush', 'InApp'] as any
+        });
+        
+        console.log(`[SOSBroadcastService] Broadcasted to ${newDonorIds.length} new donors (skipped ${donorIds.length - newDonorIds.length} duplicates)`);
       } catch (err) {
-        console.error(`[SOSBroadcastService] Error notifying donor ${donor.donorId}:`, err);
+        console.error(`[SOSBroadcastService] Error during broadcast:`, err);
       }
+    } else {
+      console.log(`[SOSBroadcastService] All recipients already notified. Skipping.`);
     }
 
     // Update SOS status

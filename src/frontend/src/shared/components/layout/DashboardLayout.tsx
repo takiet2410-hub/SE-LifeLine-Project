@@ -1,17 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation, Link } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { SideNavBar } from './SideNavBar';
-import { Bell, Menu, Globe } from 'lucide-react';
+import { Bell, Menu, Globe, AlertTriangle, Calendar, Megaphone } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { ScheduleProvider } from '../../../modules/booking-location/context/ScheduleContext';
 import { useTranslation } from 'react-i18next';
 import { apiService } from '../../../services/apiClient';
+import type { NotificationData } from '../../../services/mockData';
+import { format } from 'date-fns';
+
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // Notification Dropdown State
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
   const userName = user?.fullName || 'User';
 
   useEffect(() => {
@@ -22,9 +32,64 @@ export const DashboardLayout: React.FC = () => {
       } catch (err) {}
     };
     fetchCount();
-    const interval = setInterval(fetchCount, 15000);
-    return () => clearInterval(interval);
   }, []);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleDropdown = async () => {
+    setIsDropdownOpen(!isDropdownOpen);
+    if (!isDropdownOpen) {
+      setLoadingNotifs(true);
+      try {
+        const result = await apiService.getNotifications({});
+        // Show top 5 recent
+        const sorted = result.data.sort((a: any, b: any) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()).slice(0, 5);
+        setNotifications(sorted);
+      } catch (err) {
+        console.error('Failed to fetch dropdown notifications', err);
+      } finally {
+        setLoadingNotifs(false);
+      }
+    }
+  };
+
+  const handleNotificationClick = async (notif: NotificationData) => {
+    setIsDropdownOpen(false);
+    if (!notif.readAt) {
+      try {
+        await apiService.markNotificationAsRead(notif._id);
+      } catch (err) {
+        console.warn('Failed to mark notification as read:', err);
+      }
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, readAt: new Date().toISOString() } : n));
+    }
+    if (notif.type === 'SOS') {
+      navigate('/sos-alerts');
+    } else if ((notif.type as string) === 'Appointment') {
+      navigate('/my-appointments');
+    } else if (notif.type === 'Campaign') {
+      navigate('/news');
+    }
+  };
+
+  const getIconForType = (type: string) => {
+    switch (type as string) {
+      case 'SOS': return <AlertTriangle className="w-4 h-4" />;
+      case 'Appointment': return <Calendar className="w-4 h-4" />;
+      case 'Campaign': return <Megaphone className="w-4 h-4" />;
+      default: return <Bell className="w-4 h-4" />;
+    }
+  };
 
   const toggleLanguage = () => {
     const nextLang = i18n.language === 'vi' ? 'en' : 'vi';
@@ -104,14 +169,83 @@ export const DashboardLayout: React.FC = () => {
               <span>{i18n.language.toUpperCase()}</span>
             </button>
 
-            <Link to="/notifications" className="relative p-2 text-[#6c757d] hover:text-[#271816] hover:bg-[#f8f9fa] rounded-full transition-colors">
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-[#93000b] rounded-full border border-white flex items-center justify-center px-1 text-[9px] font-bold text-white">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
+            <div className="relative" ref={dropdownRef}>
+              <button onClick={toggleDropdown} className="relative p-2 text-[#6c757d] hover:text-[#271816] hover:bg-[#f8f9fa] rounded-full transition-colors cursor-pointer">
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-[#93000b] rounded-full border border-white flex items-center justify-center px-1 text-[9px] font-bold text-white">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
+                  <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 className="font-bold text-gray-800 text-sm">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">
+                        {unreadCount} unread
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="max-h-[320px] overflow-y-auto">
+                    {loadingNotifs ? (
+                      <div className="p-8 text-center text-gray-500 text-sm">Loading...</div>
+                    ) : notifications.length === 0 ? (
+                      <div className="p-8 text-center text-gray-500 text-sm">No new notifications</div>
+                    ) : (
+                      <div className="flex flex-col">
+                        {notifications.map((notif) => {
+                          const isUnread = !notif.readAt;
+                          const isSOS = notif.type === 'SOS';
+                          return (
+                            <div 
+                              key={notif._id} 
+                              onClick={() => handleNotificationClick(notif)}
+                              className={`p-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors flex gap-3 ${isUnread ? 'bg-blue-50/30' : ''}`}
+                            >
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isSOS ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
+                                {getIconForType(notif.type)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className={`text-sm truncate ${isUnread ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
+                                  {notif.title}
+                                </h4>
+                                <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">{notif.body}</p>
+                                <span className="text-[10px] text-gray-400 mt-1 block">
+                                  {notif.createdAt ? (() => {
+                                    try {
+                                      return format(new Date(notif.createdAt), 'dd/MM HH:mm');
+                                    } catch (e) {
+                                      return 'N/A';
+                                    }
+                                  })() : ''}
+                                </span>
+                              </div>
+                              {!notif.readAt && <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-2"></div>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="p-2 border-t border-gray-100 bg-gray-50">
+                    <button 
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        navigate('/notifications');
+                      }}
+                      className="w-full py-2 text-center text-sm font-semibold text-[#93000b] hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      View all notifications
+                    </button>
+                  </div>
+                </div>
               )}
-            </Link>
+            </div>
             
             {/* User Avatar */}
             <div className="w-8 h-8 rounded-full bg-[#1a1a2e] flex items-center justify-center border border-[#dee2e6]">

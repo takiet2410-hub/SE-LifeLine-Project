@@ -6,6 +6,7 @@ export const NotificationQuerySchema = z.object({
     limit: z.coerce.number().int().positive().max(100).default(20),
     type: z.enum(['SOS', 'Campaign', 'Routine', 'Appointment']).optional(),
     status: z.enum(['read', 'unread', 'all']).optional(),
+    channel: z.string().optional(),
     startDate: z.string().datetime().optional(),
     endDate: z.string().datetime().optional(),
   })
@@ -15,6 +16,8 @@ export const MarkReadSchema = z.object({
   body: z.object({
     ids: z.array(z.string().uuid().or(z.string().length(24))).min(1).max(100).optional(),
     markAllAsRead: z.boolean().optional(),
+  }).refine(data => data.ids?.length || data.markAllAsRead, {
+    message: "Must provide either 'ids' array or 'markAllAsRead: true'",
   })
 });
 
@@ -37,8 +40,8 @@ export const SendNotificationSchema = z.object({
     type: z.enum(['SOS', 'Campaign', 'Routine', 'Appointment']),
     title: z.string().min(1).max(200),
     body: z.string().min(1).max(2000),
-    payload: z.record(z.any()).optional(),
-    channels: z.array(z.enum(['in-app', 'email', 'push'])).default(['in-app']),
+    payload: z.record(z.string(), z.any()).optional(),
+    channels: z.array(z.enum(['InApp', 'Email', 'WebPush'])).default(['InApp']),
     templateId: z.string().optional(),
     priority: z.enum(['low', 'normal', 'high']).default('normal'),
   })
@@ -67,7 +70,7 @@ export const NotificationTemplateSchema = z.object({
     subject: z.string().min(1).max(200),
     bodyHtml: z.string().min(1),
     bodyText: z.string().min(1),
-    channels: z.array(z.enum(['in-app', 'email', 'push'])).default(['in-app']),
+    channels: z.array(z.enum(['InApp', 'Email', 'WebPush'])).default(['InApp']),
     isActive: z.boolean().default(true),
     variables: z.array(z.string()).optional(),
   })

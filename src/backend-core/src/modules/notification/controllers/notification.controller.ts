@@ -4,6 +4,7 @@ import { Notification, INotification } from '../models/Notification';
 import { NotificationPreference } from '../models/NotificationPreference';
 import { NotificationTemplate } from '../models/NotificationTemplate';
 import { NotificationService } from '../services/notification.service';
+import { UserDevice } from '../models/UserDevice';
 import { validateRequest } from '../../../shared/validate.middleware';
 import { 
   NotificationQuerySchema, 
@@ -24,35 +25,16 @@ export class NotificationController {
         limit: parseInt(query.limit) || 20,
         type: query.type,
         status: query.status,
+        channel: query.channel,
         startDate: query.startDate,
         endDate: query.endDate,
       });
 
       console.log(`[NotificationController] User ${userId} requested notifications. Found: ${result.data.length}, total: ${result.total}`);
 
-      const mappedData = result.data.map((notif: any) => {
-        // If it's an SOS notification and missing payload (old data), inject a mock payload
-        if (notif.type === 'SOS' && (!notif.payload || Object.keys(notif.payload).length === 0)) {
-           return {
-             ...(notif.toObject ? notif.toObject() : notif),
-             payload: {
-                hospitalName: 'Bệnh viện Chợ Rẫy (MOCK DATA)',
-                hospitalAddress: '201B Nguyễn Chí Thanh, Quận 5, TP.HCM',
-                patientReference: 'PAT-12345',
-                requiredQuantityMl: 250,
-                fulfillmentDeadline: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-                bloodType: 'A+',
-                urgencyLevel: 'Critical',
-                hospitalLocation: { type: 'Point', coordinates: [106.659616, 10.757826] }
-             }
-           };
-        }
-        return notif;
-      });
-
       res.status(200).json({
         success: true,
-        data: mappedData,
+        data: result.data,
         pagination: {
           page: result.page,
           limit: result.limit,
@@ -70,7 +52,7 @@ export class NotificationController {
       const userId = (req as any).user?._id || (req as any).user?.id;
       if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
       
-      const newNotif = await NotificationService.createNotification({
+      const newNotif = await Notification.create({
         recipientUserId: userId,
         type: 'SOS',
         channel: 'WebPush',
@@ -103,8 +85,7 @@ export class NotificationController {
     try {
       const userId = (req as any).user?._id || (req as any).user?.id;
       const { id } = req.params;
-
-      const notification = await NotificationService.getNotificationById(id, userId);
+      const notification = await NotificationService.getNotificationById(String(id), userId);
       if (!notification) {
         return res.status(404).json({ success: false, message: 'Notification not found' });
       }
@@ -119,8 +100,7 @@ export class NotificationController {
     try {
       const userId = (req as any).user?._id || (req as any).user?.id;
       const { id } = req.params;
-
-      const notification = await NotificationService.markAsRead(id, userId);
+      const notification = await NotificationService.markAsRead(String(id), userId);
       if (!notification) {
         return res.status(404).json({ success: false, message: 'Notification not found' });
       }
@@ -150,24 +130,27 @@ export class NotificationController {
       const { id } = req.params;
       const { response } = req.body; // 'accepted' or 'declined'
 
-      const notif = await Notification.findOne({ _id: id, recipientUserId: userId });
+      const notif = await Notification.findOne({ _id: String(id), recipientUserId: userId });
       if (!notif) {
         return res.status(404).json({ success: false, message: 'Notification not found' });
       }
 
+      // Call SOSRequestService to record it and handle concurrency
+      const { SOSRequestService } = await import('../../sos-request/services/sos-request.service');
+      const sosResult = await SOSRequestService.recordDonorResponse(notif.sourceRefId.toString(), userId, response);
+
+      // We only record 'accepted' or 'declined' into the payload if it wasn't already fulfilled
+      // Or if the SOS service returned fulfilled, we might want to record 'fulfilled'
+      const finalResponseState = sosResult.status === 'fulfilled' ? 'fulfilled' : response;
+
       notif.payload = {
         ...notif.payload,
-        donorResponse: response
+        donorResponse: finalResponseState
       };
-      // Tell mongoose that the mixed type payload has been modified
       notif.markModified('payload');
       await notif.save();
 
-      // Optionally, call the SOSRequestService here to record it in the SOS request logic
-      // import { SOSRequestService } from '../../sos-request/services/sos-request.service';
-      // await SOSRequestService.recordDonorResponse(notif.sourceRefId.toString(), userId, response);
-
-      res.status(200).json({ success: true, data: notif });
+      res.status(200).json({ success: true, data: notif, sosResult });
     } catch (error) {
       next(error);
     }
@@ -177,8 +160,7 @@ export class NotificationController {
     try {
       const userId = (req as any).user?._id || (req as any).user?.id;
       const { id } = req.params;
-
-      const result = await NotificationService.deleteNotification(id, userId);
+      const result = await NotificationService.deleteNotification(String(id), userId);
       if (!result) {
         return res.status(404).json({ success: false, message: 'Notification not found' });
       }
@@ -203,7 +185,7 @@ export class NotificationController {
   public static async getPreferences(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?._id || (req as any).user?.id;
-      const prefs = await NotificationPreference.findOne({ donorId: userId });
+      const prefs = await NotificationPreference.findOne({ userId });
       
       if (!prefs) {
         // Return defaults
@@ -234,9 +216,9 @@ export class NotificationController {
       const updates = req.body;
 
       const prefs = await NotificationPreference.findOneAndUpdate(
-        { donorId: userId },
+        { userId },
         { $set: updates },
-        { new: true, upsert: true, runValidators: true }
+        { returnDocument: 'after', upsert: true, runValidators: true }
       );
 
       res.status(200).json({ success: true, data: prefs });
@@ -276,13 +258,62 @@ export class NotificationController {
   public static async updateTemplate(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const template = await NotificationTemplate.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+      const template = await NotificationTemplate.findByIdAndUpdate(String(id), req.body, { new: true, runValidators: true });
       if (!template) {
         return res.status(404).json({ success: false, message: 'Template not found' });
       }
       res.status(200).json({ success: true, data: template });
     } catch (error) {
       next(error);
+    }
+  }
+
+  // ---- Device Token Registration ----
+  
+  public static async registerDeviceToken(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?._id || (req as any).user?.id;
+      const { fcmToken, platform, deviceType } = req.body;
+
+      if (!fcmToken) {
+        return res.status(400).json({ success: false, message: 'fcmToken is required' });
+      }
+
+      await UserDevice.findOneAndUpdate(
+        { userId, fcmToken },
+        { 
+          $set: { 
+            deviceType: deviceType || 'Unknown', 
+            platform: platform || 'web',
+            lastActiveAt: new Date()
+          } 
+        },
+        { upsert: true, returnDocument: 'after' }
+      );
+
+      res.status(200).json({ success: true, message: 'Device token registered successfully' });
+    } catch (error: any) {
+      console.error('[NotificationController] Register token error:', error);
+      res.status(500).json({ success: false, message: 'Failed to register device token' });
+    }
+  }
+
+  public static async removeDeviceToken(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?._id || (req as any).user?.id;
+      const { fcmToken } = req.body;
+
+      if (fcmToken) {
+        await UserDevice.deleteOne({ userId, fcmToken });
+      } else {
+        // If no token provided, delete all tokens for this user (global logout)
+        await UserDevice.deleteMany({ userId });
+      }
+
+      res.status(200).json({ success: true, message: 'Device token removed successfully' });
+    } catch (error: any) {
+      console.error('[NotificationController] Remove token error:', error);
+      res.status(500).json({ success: false, message: 'Failed to remove device token' });
     }
   }
 }

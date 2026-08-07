@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Clock, MapPin, Phone, Heart, HeartHandshake, ShieldAlert, Check, X, ArrowLeft, MapPin as MapPinIcon, Phone as PhoneIcon } from 'lucide-react';
+import { AlertTriangle, Clock, MapPin, Heart, HeartHandshake, ShieldAlert, Check, X, ArrowLeft, MapPin as MapPinIcon, Phone as PhoneIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { sosApi, type SOSUrgency } from '../../sos-requests/services/sosApi';
+import { type SOSUrgency } from '../../sos-requests/services/sosApi';
 import { apiService } from '../../../services/apiClient';
+import { HospitalMapModal } from '../../sos-requests/components/HospitalMapModal';
 
 interface SOSAlert {
   id: string;
@@ -34,12 +35,14 @@ export const SOSAlertsPage: React.FC = () => {
   const [selectedAlert, setSelectedAlert] = useState<SOSAlert | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [responseStatus, setResponseStatus] = useState<'idle' | 'accepted' | 'declined' | 'ineligible' | 'fulfilled'>('idle');
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
   const fetchAlerts = async () => {
     setIsLoading(true);
     try {
       // Fetch SOS notifications for the donor
-      const notifications = await apiService.getNotifications({ type: 'SOS' });
+      const result = await apiService.getNotifications({ type: 'SOS' });
+      const notifications = result.data;
       
       const sosAlerts: SOSAlert[] = (notifications || []).map((notif: any) => {
         const payload = notif.payload || notif.sosRequestInfo || {};
@@ -111,6 +114,28 @@ export const SOSAlertsPage: React.FC = () => {
     toast.info('Alert dismissed');
   };
 
+  const handleCardClick = async (alert: SOSAlert) => {
+    // 1. Always mark as read if it's currently unread
+    if (!alert.readAt) {
+      try {
+        await apiService.markNotificationAsRead(alert.id);
+        setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, readAt: new Date().toISOString() } : a));
+      } catch (err) {
+        console.error('Failed to mark as read', err);
+      }
+    }
+
+    // 2. If already responded, show their response detail
+    if (alert.donorResponse) {
+      setSelectedAlert(alert);
+      setResponseStatus(alert.donorResponse);
+      setShowDetail(true);
+    }
+    // Note: If they haven't responded yet, we don't show the detail modal
+    // because that modal is specifically for AFTER responding. They can use
+    // the 'I Can Help' or 'Not Now' buttons instead.
+  };
+
   const getUrgencyColor = (urgency: SOSUrgency) => {
     switch (urgency) {
       case 'Critical': return 'bg-red-100 text-red-700 border-red-200';
@@ -127,15 +152,7 @@ export const SOSAlertsPage: React.FC = () => {
     }
   };
 
-  const formatDate = (dateStr: string) => format(new Date(dateStr), 'MMM dd, yyyy HH:mm');
 
-  const getTimeAgo = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours > 0) return `${hours}h ago`;
-    return `${minutes}m ago`;
-  };
 
   const unreadCount = alerts.filter(a => !a.readAt).length;
 
@@ -188,10 +205,7 @@ export const SOSAlertsPage: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <button 
-                onClick={() => {
-                  const query = encodeURIComponent(selectedAlert.hospitalAddress);
-                  window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
-                }}
+                onClick={() => setIsMapModalOpen(true)}
                 className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
               >
                 <MapPinIcon className="w-5 h-5" />
@@ -307,7 +321,6 @@ export const SOSAlertsPage: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Modal Overlay for Response Detail */}
         {showDetail && selectedAlert && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
@@ -323,6 +336,20 @@ export const SOSAlertsPage: React.FC = () => {
               {renderResponseDetail()}
             </div>
           </div>
+        )}
+
+        {selectedAlert && (
+          <HospitalMapModal
+            isOpen={isMapModalOpen}
+            onClose={() => setIsMapModalOpen(false)}
+            hospitalName={selectedAlert.hospitalName}
+            hospitalAddress={selectedAlert.hospitalAddress}
+            coordinates={
+              selectedAlert.hospitalLocation?.coordinates 
+                ? [selectedAlert.hospitalLocation.coordinates[0], selectedAlert.hospitalLocation.coordinates[1]]
+                : [106.659616, 10.757826] // Default to Chợ Rẫy
+            }
+          />
         )}
 
         {/* Alerts List */}
@@ -374,7 +401,7 @@ export const SOSAlertsPage: React.FC = () => {
                         ? 'bg-red-50 border-red-200 border-l-4 border-l-red-600 shadow-sm'
                         : 'bg-white border-gray-200 hover:bg-gray-50'
                     }`}
-                    onClick={() => !hasResponded && !isExpired && (setSelectedAlert(alert), setResponseStatus('accepted'), setShowDetail(true))}
+                    onClick={() => handleCardClick(alert)}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-4 flex-1">

@@ -17,7 +17,7 @@ const staffAuth = [
  *     summary: Danh sách bài viết tin tức & thông báo (Phân trang, lọc, tìm kiếm)
  *     tags: [Content Management]
  */
-router.get('/', ArticleController.getArticles);
+router.get('/', ...staffAuth, ArticleController.getArticles);
 
 /**
  * @openapi
@@ -26,7 +26,7 @@ router.get('/', ArticleController.getArticles);
  *     summary: Báo cáo thống kê Content Management Dashboard
  *     tags: [Content Management]
  */
-router.get('/stats/summary', ArticleController.getContentStats);
+router.get('/stats/summary', ...staffAuth, ArticleController.getContentStats);
 
 /**
  * @openapi
@@ -57,7 +57,7 @@ router.post('/', ...staffAuth, ArticleController.createArticle);
  *     summary: Xem chi tiết bài viết & thông số hiệu xuất
  *     tags: [Content Management]
  */
-router.get('/:articleId', ArticleController.getArticleById);
+router.get('/:articleId', ...staffAuth, ArticleController.getArticleById);
 
 /**
  * @openapi

@@ -9,6 +9,8 @@ export interface ISOSRequest extends Document {
   patientReference?: string;
   fulfillmentDeadline: Date;
   status: 'Pending' | 'EvaluationInProgress' | 'NotificationsDispatched' | 'Fulfilled' | 'Expired' | 'Cancelled' | 'EvaluationFailed';
+  collectedQuantityMl: number;
+  acceptedDonorIds: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,7 +28,9 @@ const sosRequestSchema = new Schema<ISOSRequest>({
     enum: ['Pending', 'EvaluationInProgress', 'NotificationsDispatched', 'Fulfilled', 'Expired', 'Cancelled', 'EvaluationFailed'],
     default: 'Pending',
     index: true
-  }
+  },
+  collectedQuantityMl: { type: Number, default: 0 },
+  acceptedDonorIds: [{ type: Schema.Types.ObjectId, ref: 'User' }]
 }, {
   timestamps: true,
   collection: 'sos_requests'

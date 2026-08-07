@@ -57,7 +57,7 @@ const donorProfileSchema = new Schema<IDonorProfile>({
   totalDonations: { type: Number, default: 0 },
   xp: { type: Number, default: 0 },
   donorLevel: { type: Number, default: 1 },
-  emergencyOptIn: { type: Boolean, default: false },
+  emergencyOptIn: { type: Boolean, default: true },
   avatarUrl: { type: String, default: 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg' },
   
   email: { type: String },

@@ -12,6 +12,7 @@ import { DigitalDonorRecord } from '../models/digital-donor-record.model';
 import { AuditLog } from '../models/audit-log.model';
 import { GamificationService } from '../../auth-account/services/gamification.service';
 import { sendBookingConfirmationEmail } from '../../../utils/email.util';
+import { emitDonationCompleted, emitEligibilityCheckFailed } from '../../notification/services/notification.events';
 
 const toObjectId = (idStr: string) => {
   return mongoose.Types.ObjectId.isValid(idStr) ? new mongoose.Types.ObjectId(idStr) : new mongoose.Types.ObjectId();
@@ -503,21 +504,22 @@ export class RegistrationService {
       }
 
       if (payload.status) {
+        const statusStr = payload.status as string;
         if (
-          payload.status === 'Eligible for Donation' ||
-          payload.status === 'Eligible' ||
-          payload.status === 'Examining' ||
-          payload.status === 'Confirmed' ||
-          payload.status === 'CheckedIn' ||
-          payload.status === 'Completed' ||
-          payload.status === 'Donation Completed'
+          statusStr === 'Eligible for Donation' ||
+          statusStr === 'Eligible' ||
+          statusStr === 'Examining' ||
+          statusStr === 'Confirmed' ||
+          statusStr === 'CheckedIn' ||
+          statusStr === 'Completed' ||
+          statusStr === 'Donation Completed'
         ) {
           eligibilityFlag = 'Eligible';
           outcome = 'PASS';
         } else if (
-          payload.status === 'Ineligible for Donation' ||
-          payload.status === 'Ineligible' ||
-          payload.status === 'Rejected' ||
+          statusStr === 'Ineligible for Donation' ||
+          statusStr === 'Ineligible' ||
+          statusStr === 'Rejected' ||
           (payload.status as string) === 'Cancelled'
         ) {
           eligibilityFlag = 'Ineligible';
@@ -598,16 +600,55 @@ export class RegistrationService {
         // Process Gamification (+250 XP & Achievement unlocking) when donation is completed
         if (targetAppointmentStatus === AppointmentStatus.Completed && previousStatus !== AppointmentStatus.Completed) {
           try {
-            await GamificationService.processDonationCompletion(appointment.donorId, appointment.appointmentDate, session);
+            await GamificationService.processDonationCompletion(appointment.donorId, appointment.appointmentDate);
+            
+            // Fire DonationCompleted event to notify user
+            const donorProfile = await DonorProfile.findOne({ userId: appointment.donorId }).lean() as any;
+            const donorUser = await User.findById(appointment.donorId).lean() as any;
+            if (donorUser || donorProfile) {
+              const nextEligibleDate = new Date();
+              nextEligibleDate.setDate(nextEligibleDate.getDate() + 84); // 84 days wait time for whole blood
+              const campaign = typeof appointment.campaignId === 'object' ? appointment.campaignId : await Campaign.findById(appointment.campaignId).lean();
+              const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
+              
+              await emitDonationCompleted({
+                donorId: appointment.donorId.toString(),
+                donorName,
+                campaignName: campaign ? (campaign as any).name : 'Chiến dịch hiến máu',
+                volume: payload.donationVolume || (appointment as any).donationVolume || 350,
+                bloodType: payload.bloodType || donorProfile?.bloodType || 'Chưa xác định',
+                donationDate: new Date().toLocaleDateString('vi-VN'),
+                nextEligibleDate: nextEligibleDate.toLocaleDateString('vi-VN'),
+                deepLink: 'https://lifeline.vn/profile'
+              });
+            }
           } catch (gErr) {
-            console.error('Error processing gamification logic:', gErr);
+            console.error('Error processing gamification/notification logic:', gErr);
+          }
+        }
+        
+        // Process Eligibility Check Failed notification when rejected during screening/examining
+        if (targetAppointmentStatus === AppointmentStatus.Rejected && previousStatus !== AppointmentStatus.Rejected) {
+          try {
+            const donorProfile = await DonorProfile.findOne({ userId: appointment.donorId }).lean() as any;
+            const donorUser = await User.findById(appointment.donorId).lean() as any;
+            if (donorUser || donorProfile) {
+              const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
+              await emitEligibilityCheckFailed({
+                donorId: appointment.donorId.toString(),
+                donorName,
+                deepLink: 'https://lifeline.vn/profile'
+              });
+            }
+          } catch (nErr) {
+            console.error('Error processing rejected notification logic:', nErr);
           }
         }
 
         // Process Gamification (+50 XP bonus) when donor checks in
         if (targetAppointmentStatus === AppointmentStatus.CheckedIn && previousStatus !== AppointmentStatus.CheckedIn) {
           try {
-            await GamificationService.processCheckInBonus(appointment.donorId, session);
+            await GamificationService.processCheckInBonus(appointment.donorId);
           } catch (gErr) {
             console.error('Error processing check-in gamification logic:', gErr);
           }
@@ -671,28 +712,8 @@ export class RegistrationService {
       }], opts);
     };
 
-    // Attempt transactional execution if connected to MongoDB
-    if (mongoose.connection.readyState === 1) {
-      let session: mongoose.ClientSession | null = null;
-      try {
-        session = await mongoose.startSession();
-        await session.withTransaction(async () => {
-          await executeUpdate(session!);
-        });
-      } catch (txError: any) {
-        try {
-          await executeUpdate();
-        } catch (fallbackError: any) {
-          throw fallbackError;
-        }
-      } finally {
-        if (session) {
-          session.endSession();
-        }
-      }
-    } else {
-      await executeUpdate();
-    }
+    // Execute screening update
+    await executeUpdate();
 
     // Combine logic with BookingService from booking module for confirmation & rejection (triggers E-Ticket generation & Email notifications)
     try {

@@ -31,3 +31,9 @@ export const RespondSOSSchema = z.object({
     response: z.enum(['accepted', 'declined'])
   })
 });
+
+export const FulfillFromInventorySchema = z.object({
+  body: z.object({
+    bagIds: z.array(z.string().length(24)).min(1, 'At least one bag ID is required').max(50)
+  })
+});

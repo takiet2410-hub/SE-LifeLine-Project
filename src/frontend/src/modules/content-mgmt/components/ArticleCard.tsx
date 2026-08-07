@@ -37,7 +37,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     switch (cat) {
       case 'Alert':
         return 'bg-red-50 text-red-600 border-red-200';
-      case 'Health Tips':
+      case 'Educational':
         return 'bg-green-50 text-green-700 border-green-100';
       case 'Campaign':
         return 'bg-amber-50 text-amber-600 border-amber-200';

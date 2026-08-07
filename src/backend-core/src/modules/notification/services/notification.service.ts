@@ -1,5 +1,5 @@
-import { Types } from 'mongoose';
-import { Notification, INotification, INotificationPayload, IDeliveryStatus } from '../models/Notification';
+import mongoose, { Types } from 'mongoose';
+import { Notification, INotification, DeliveryStatus } from '../models/Notification';
 import { NotificationPreference } from '../models/NotificationPreference';
 import { NotificationTemplate } from '../models/NotificationTemplate';
 import { EmailService } from './email.service';
@@ -10,6 +10,7 @@ export interface NotificationFilters {
   limit: number;
   type?: string;
   status?: string;
+  channel?: string;
   startDate?: string;
   endDate?: string;
 }
@@ -30,10 +31,17 @@ export class NotificationService {
     userId: string,
     filters: NotificationFilters
   ): Promise<PaginatedResult<INotification>> {
-    const { page, limit, type, status, startDate, endDate } = filters;
+    const { page, limit, type, status, channel, startDate, endDate } = filters;
     const skip = (page - 1) * limit;
 
     const query: any = { recipientUserId: new Types.ObjectId(userId) };
+
+    // Default UI channel filter to InApp to prevent showing duplicate WebPush + InApp entries
+    if (channel && channel !== 'all') {
+      query.channel = channel;
+    } else if (!channel) {
+      query.channel = 'InApp';
+    }
 
     if (type) query.type = type;
     if (status === 'read') query.readAt = { $ne: null };
@@ -75,11 +83,11 @@ export class NotificationService {
    * Mark single notification as read
    */
   static async markAsRead(id: string, userId: string): Promise<INotification | null> {
-    if (!Types.ObjectId.isValid(id)) return null;
+    if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(userId)) return null;
     return Notification.findOneAndUpdate(
-      { _id: id, recipientUserId: userId, readAt: null },
+      { _id: new Types.ObjectId(id), recipientUserId: new Types.ObjectId(userId), readAt: null },
       { readAt: new Date() },
-      { new: true }
+      { returnDocument: 'after' }
     ).lean();
   }
 
@@ -91,7 +99,8 @@ export class NotificationService {
     ids?: string[],
     markAllAsRead = false
   ): Promise<{ modifiedCount: number }> {
-    const query: any = { recipientUserId: userId, readAt: null };
+    if (!Types.ObjectId.isValid(userId)) return { modifiedCount: 0 };
+    const query: any = { recipientUserId: new Types.ObjectId(userId), readAt: null };
     
     if (!markAllAsRead && ids && ids.length > 0) {
       query._id = { $in: ids.filter(Types.ObjectId.isValid).map(id => new Types.ObjectId(id)) };
@@ -99,6 +108,29 @@ export class NotificationService {
 
     const result = await Notification.updateMany(query, { readAt: new Date() });
     return { modifiedCount: result.modifiedCount };
+  }
+
+  /**
+   * Queue notification for background processing using BullMQ
+   */
+  static async queueDelivery(notificationId: string, channels: import('../models/Notification').NotificationChannel[]): Promise<void> {
+    try {
+      const { notificationQueue } = await import('../../../config/queue.config');
+      
+      const jobs = channels.map(channel => ({
+        name: `deliver-${channel}`,
+        data: { notificationId, channel },
+        opts: {
+          jobId: `${notificationId}-${channel}`, // Prevent duplicate delivery
+        }
+      }));
+
+      await notificationQueue.addBulk(jobs);
+      console.log(`[NotificationService] Queued ${channels.length} delivery jobs for notification ${notificationId}`);
+    } catch (error) {
+      console.error('[NotificationService] Failed to queue delivery:', error);
+      throw error;
+    }
   }
 
   /**
@@ -114,16 +146,31 @@ export class NotificationService {
    * Get unread count for badge
    */
   static async getUnreadCount(userId: string): Promise<number> {
-    return Notification.countDocuments({ recipientUserId: userId, readAt: null });
+    return Notification.countDocuments({ recipientUserId: userId, readAt: null, channel: 'InApp' });
   }
 
   /**
    * Get or create user preferences
    */
   static async getOrCreatePreferences(userId: string) {
-    let prefs = await NotificationPreference.findOne({ donorId: userId });
+    let prefs = await NotificationPreference.findOne({ userId });
     if (!prefs) {
-      prefs = await NotificationPreference.create({ donorId: userId });
+      try {
+        prefs = await NotificationPreference.create({ userId });
+      } catch (error: any) {
+        if (error.code === 11000 && error.message.includes('donorId_1')) {
+          console.log('[NotificationService] Found legacy donorId_1 index causing E11000. Dropping it...');
+          try {
+            await mongoose.connection.db?.collection('notification_preferences').dropIndex('donorId_1');
+          } catch(e) {}
+          prefs = await NotificationPreference.create({ userId });
+        } else if (error.code === 11000) {
+          // If another worker created it concurrently, just fetch it
+          prefs = await NotificationPreference.findOne({ userId });
+        } else {
+          throw error;
+        }
+      }
     }
     return prefs;
   }
@@ -133,9 +180,9 @@ export class NotificationService {
    */
   static async updatePreferences(userId: string, updates: any) {
     return NotificationPreference.findOneAndUpdate(
-      { donorId: userId },
+      { userId },
       { $set: updates },
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: 'after', upsert: true, runValidators: true }
     );
   }
 
@@ -145,9 +192,9 @@ export class NotificationService {
   static async isCategoryEnabled(userId: string, category: 'sos' | 'appointment' | 'campaign'): Promise<boolean> {
     const prefs = await this.getOrCreatePreferences(userId);
     switch (category) {
-      case 'sos': return prefs.sosEnabled && prefs.pushEnabled;
-      case 'appointment': return prefs.appointmentEnabled;
-      case 'campaign': return prefs.campaignEnabled;
+      case 'sos': return prefs!.sosEnabled && prefs!.pushEnabled;
+      case 'appointment': return prefs!.appointmentEnabled && prefs!.pushEnabled;
+      case 'campaign': return prefs!.campaignEnabled && prefs!.pushEnabled;
       default: return false;
     }
   }
@@ -156,7 +203,7 @@ export class NotificationService {
    * Get active template for event type and locale
    */
   static async getTemplate(eventType: string, locale = 'vi') {
-    return NotificationTemplate.findOne({ eventType, locale, isActive: true }).lean();
+    return NotificationTemplate.findOne({ eventType: eventType as any, locale, isActive: true }).lean();
   }
 
   /**
@@ -164,11 +211,11 @@ export class NotificationService {
    */
   static async sendNotification(data: {
     recipientIds: string[];
-    type: 'SOS' | 'Campaign' | 'Routine' | 'System';
+    type: import('../models/Notification').NotificationType;
     title: string;
     body: string;
     payload?: any;
-    channels?: ('Email' | 'WebPush')[];
+    channels?: ('Email' | 'WebPush' | 'InApp')[];
     templateId?: string;
     priority?: 'low' | 'normal' | 'high';
   }) {
@@ -178,9 +225,20 @@ export class NotificationService {
     for (const recipientId of data.recipientIds) {
       // Check preferences for push/email channels
       const prefs = await this.getOrCreatePreferences(recipientId);
+      if (!prefs) continue; // Should never happen, but satisfies TypeScript
       const allowedChannels = channels.filter(c => {
-        if (c === 'WebPush') return prefs.pushEnabled || prefs.sosEnabled;
-        if (c === 'Email') return prefs.emailEnabled || prefs.appointmentEnabled || prefs.campaignEnabled;
+        if (c === 'WebPush') {
+          if (data.type === 'SOS') return prefs.sosEnabled && prefs.pushEnabled;
+          if (data.type === 'Campaign') return prefs.campaignEnabled && prefs.pushEnabled;
+          if (data.type === 'Appointment') return prefs.appointmentEnabled && prefs.pushEnabled;
+          return prefs.pushEnabled;
+        }
+        if (c === 'Email') {
+          if (data.type === 'SOS') return prefs.sosEnabled && prefs.emailEnabled;
+          if (data.type === 'Campaign') return prefs.campaignEnabled && prefs.emailEnabled;
+          if (data.type === 'Appointment') return prefs.appointmentEnabled && prefs.emailEnabled;
+          return prefs.emailEnabled;
+        }
         return true; 
       });
 
@@ -200,7 +258,7 @@ export class NotificationService {
           deliveryStatus: 'Pending',
         });
 
-        await this.queueDelivery(notification._id.toString(), channel);
+        await this.queueDelivery(notification._id.toString(), [channel]);
         results.push({ recipientUserId: recipientId, notificationId: notification._id, channel });
       }
     }
@@ -208,19 +266,12 @@ export class NotificationService {
     return { success: true, sent: results.length, results };
   }
 
-  /**
-   * Queue notification for delivery via BullMQ
-   */
-  static async queueDelivery(notificationId: string, channel: 'Email' | 'WebPush') {
-    // This will be implemented with BullMQ
-    // For now, process synchronously
-    await this.processDelivery(notificationId, channel);
-  }
+
 
   /**
    * Process delivery for a specific channel
    */
-  static async processDelivery(notificationId: string, channel: 'Email' | 'WebPush') {
+  static async processDelivery(notificationId: string, channel: import('../models/Notification').NotificationChannel) {
     const notification = await Notification.findById(notificationId);
     if (!notification || notification.channel !== channel) return;
 
@@ -235,18 +286,24 @@ export class NotificationService {
         case 'WebPush':
           success = await this.sendPush(notification);
           break;
+        case 'InApp':
+          success = true; // InApp doesn't need external delivery
+          break;
       }
 
       if (success) {
         notification.deliveryStatus = 'Sent';
       } else {
         notification.deliveryStatus = 'Failed';
+        await notification.save();
+        throw new Error(`Failed to deliver via ${channel}`);
       }
 
       await notification.save();
     } catch (error) {
       notification.deliveryStatus = 'Failed';
       await notification.save();
+      throw error; // N12: Ensure BullMQ catches this for retries
     }
   }
 
@@ -255,8 +312,15 @@ export class NotificationService {
    */
   static async sendEmail(notification: any): Promise<boolean> {
     try {
-      const prefs = await NotificationPreference.findOne({ donorId: notification.recipientUserId });
-      if (!prefs?.emailEnabled && !prefs?.campaignEnabled) return false;
+      const prefs = await NotificationPreference.findOne({ userId: notification.recipientUserId });
+      let allowed = false;
+      if (prefs) {
+        if (notification.type === 'SOS') allowed = prefs.emailEnabled && prefs.sosEnabled;
+        else if (notification.type === 'Campaign') allowed = prefs.emailEnabled && prefs.campaignEnabled;
+        else if (notification.type === 'Appointment') allowed = prefs.emailEnabled && prefs.appointmentEnabled;
+        else allowed = prefs.emailEnabled;
+      }
+      if (!allowed) return false;
 
       // Get user email
       const User = (await import('../../auth-account/models/user.model')).User;
@@ -282,8 +346,15 @@ export class NotificationService {
    */
   static async sendPush(notification: any): Promise<boolean> {
     try {
-      const prefs = await NotificationPreference.findOne({ donorId: notification.recipientUserId });
-      if (!prefs?.pushEnabled && !prefs?.sosEnabled) return false;
+      const prefs = await NotificationPreference.findOne({ userId: notification.recipientUserId });
+      let allowed = false;
+      if (prefs) {
+        if (notification.type === 'SOS') allowed = prefs.pushEnabled && prefs.sosEnabled;
+        else if (notification.type === 'Campaign') allowed = prefs.pushEnabled && prefs.campaignEnabled;
+        else if (notification.type === 'Appointment') allowed = prefs.pushEnabled && prefs.appointmentEnabled;
+        else allowed = prefs.pushEnabled;
+      }
+      if (!allowed) return false;
 
       await PushService.send({
         userId: notification.recipientUserId.toString(),
@@ -337,7 +408,7 @@ export class NotificationService {
     for (const notification of failedNotifications) {
       notification.deliveryStatus = 'Retried';
       await notification.save();
-      await this.queueDelivery(notification._id.toString(), notification.channel as 'Email' | 'WebPush');
+      await this.queueDelivery(notification._id.toString(), [notification.channel as any]);
     }
   }
 }

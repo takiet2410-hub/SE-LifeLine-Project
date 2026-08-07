@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Globe, Menu, ShieldCheck, AlertTriangle, Calendar, Megaphone, Check } from 'lucide-react';
+import { Bell, Globe, Menu, ShieldCheck, AlertTriangle, Calendar, Megaphone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
@@ -12,7 +12,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -43,8 +43,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
       } catch (err) {}
     };
     fetchCount();
-    const interval = setInterval(fetchCount, 15000);
-    return () => clearInterval(interval);
   }, []);
 
   // Handle click outside to close dropdown
@@ -63,9 +61,9 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
     if (!isDropdownOpen) {
       setLoadingNotifs(true);
       try {
-        const data = await apiService.getNotifications({});
+        const result = await apiService.getNotifications({});
         // Show top 5 recent
-        const sorted = data.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()).slice(0, 5);
+        const sorted = result.data.sort((a: any, b: any) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()).slice(0, 5);
         setNotifications(sorted);
       } catch (err) {
         console.error('Failed to fetch dropdown notifications', err);
@@ -78,15 +76,23 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
   const handleNotificationClick = async (notif: NotificationData) => {
     setIsDropdownOpen(false);
     if (!notif.readAt) {
-      await apiService.markNotificationAsRead(notif._id);
+      try {
+        await apiService.markNotificationAsRead(notif._id);
+      } catch (err) {
+        console.warn('Failed to mark notification as read:', err);
+      }
       setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, readAt: new Date().toISOString() } : n));
     }
-    if (notif.type === 'SOS') {
-      navigate('/sos-alerts');
-    } else if ((notif.type as string) === 'Appointment') {
-      navigate('/my-appointments');
-    } else if (notif.type === 'Campaign') {
-      navigate('/news');
+    if (isHospital) {
+      if (notif.type === 'SOS') {
+        // We could route to the specific request if we knew it, or just the list
+        navigate('/hospital/sos-requests');
+      } else {
+        navigate('/hospital/sos-requests'); // Adjust if hospitals have their own notification list
+      }
+    } else {
+      navigate(`/bc/notifications/${notif._id}`);
     }
   };
 
@@ -180,7 +186,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
               <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 className="font-bold text-gray-800 text-sm">Notifications</h3>
                 {unreadCount > 0 && (
@@ -215,7 +221,13 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
                             </h4>
                             <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">{notif.body}</p>
                             <span className="text-[10px] text-gray-400 mt-1 block">
-                              {notif.createdAt ? format(new Date(notif.createdAt), 'dd/MM HH:mm') : ''}
+                              {notif.createdAt ? (() => {
+                                try {
+                                  return format(new Date(notif.createdAt), 'dd/MM HH:mm');
+                                } catch (e) {
+                                  return 'N/A';
+                                }
+                              })() : ''}
                             </span>
                           </div>
                           {!notif.readAt && <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-2"></div>}

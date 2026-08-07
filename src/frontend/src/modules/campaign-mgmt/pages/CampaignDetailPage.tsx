@@ -13,7 +13,6 @@ import {
   FileText,
   CheckCircle2,
   Droplet,
-  QrCode,
   Target,
   ShieldCheck,
   Building2,

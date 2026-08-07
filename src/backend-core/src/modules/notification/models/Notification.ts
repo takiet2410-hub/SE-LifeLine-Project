@@ -1,9 +1,9 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type NotificationType = 'Routine' | 'SOS' | 'Campaign' | 'System';
-export type NotificationChannel = 'Email' | 'WebPush';
+export type NotificationType = 'Routine' | 'SOS' | 'Campaign' | 'System' | 'Appointment';
+export type NotificationChannel = 'Email' | 'WebPush' | 'InApp';
 export type DeliveryStatus = 'Pending' | 'Sent' | 'Failed' | 'Retried';
-export type SourceRefType = 'Appointment' | 'Campaign' | 'SOSRequest' | 'Article';
+export type SourceRefType = 'Appointment' | 'Campaign' | 'SOSRequest' | 'Article' | 'System';
 
 export interface INotification extends Document {
   recipientUserId: mongoose.Types.ObjectId;
@@ -22,18 +22,21 @@ export interface INotification extends Document {
 
 const NotificationSchema = new Schema<INotification>({
   recipientUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  type: { type: String, enum: ['Routine', 'SOS', 'Campaign', 'System'], required: true, index: true },
-  channel: { type: String, enum: ['Email', 'WebPush'], required: true },
+  type: { type: String, enum: ['Routine', 'SOS', 'Campaign', 'System', 'Appointment'], required: true, index: true },
+  channel: { type: String, enum: ['Email', 'WebPush', 'InApp'], required: true },
   title: { type: String, required: true },
   body: { type: String, required: true },
   payload: { type: Schema.Types.Mixed, default: {} },
   sourceRefId: { type: Schema.Types.ObjectId, required: true },
-  sourceRefType: { type: String, enum: ['Appointment', 'Campaign', 'SOSRequest', 'Article'], required: true },
+  sourceRefType: { type: String, enum: ['Appointment', 'Campaign', 'SOSRequest', 'Article', 'System'], required: true },
   deliveryStatus: { type: String, enum: ['Pending', 'Sent', 'Failed', 'Retried'], default: 'Pending', index: true },
   readAt: { type: Date, default: null, index: true }
 }, {
   timestamps: true,
   collection: 'notifications'
 });
+
+// Compound index for efficient queries (NOT unique - allows re-broadcast)
+NotificationSchema.index({ recipientUserId: 1, sourceRefId: 1, sourceRefType: 1 });
 
 export const Notification = mongoose.model<INotification>('Notification', NotificationSchema);

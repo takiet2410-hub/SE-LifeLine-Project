@@ -143,7 +143,7 @@ export const HospitalMapModal: React.FC<HospitalMapModalProps> = ({
         
         <div className="flex-1 p-4 bg-gray-50 relative min-h-[500px]">
           {mapError ? (
-            <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-[#fff8f7] rounded-xl border border-red-100">
+            <div className="w-full h-full min-h-[500px] flex flex-col items-center justify-center p-8 text-center bg-[#fff8f7] rounded-xl border border-red-100">
               <div className="w-16 h-16 rounded-full bg-[#ffe9e6] flex items-center justify-center mb-4 text-[#93000b]">
                 <MapPinOff className="w-8 h-8" />
               </div>
@@ -153,7 +153,7 @@ export const HospitalMapModal: React.FC<HospitalMapModalProps> = ({
               </p>
             </div>
           ) : (
-            <div ref={mapContainerRef} className="w-full h-full rounded-xl shadow-inner border border-gray-200 z-0 overflow-hidden" />
+            <div ref={mapContainerRef} className="w-full h-full min-h-[500px] rounded-xl shadow-inner border border-gray-200 z-0 overflow-hidden relative" />
           )}
         </div>
 

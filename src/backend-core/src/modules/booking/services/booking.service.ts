@@ -520,7 +520,7 @@ export class BookingService {
     if (appointment.status !== AppointmentStatus.Rejected && appointment.status !== AppointmentStatus.Cancelled) {
       if (appointment.campaignId && appointment.appointmentDate) {
         const cId = typeof appointment.campaignId === 'object' ? (appointment.campaignId as any)._id : appointment.campaignId;
-        await BookingService.decrementCampaignSlot(cId, appointment.appointmentDate, appointment.timeSlot || '');
+        await BookingService.decrementCampaignSlot(cId, appointment.appointmentDate.toISOString(), appointment.timeSlot || '');
       }
     }
 

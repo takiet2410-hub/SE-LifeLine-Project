@@ -116,7 +116,7 @@ export const ArticleListPage: React.FC = () => {
               <option value="All">All Categories</option>
               <option value="News">News</option>
               <option value="Alert">Alerts</option>
-              <option value="Health Tips">Health Tips</option>
+              <option value="Educational">Educational</option>
               <option value="Campaign">Campaign</option>
             </select>
           </div>

@@ -3,7 +3,7 @@ import { NavLink, Link } from 'react-router-dom';
 import { Calendar, LayoutDashboard, Bell, Heart, LogOut, Map, Newspaper, AlertTriangle } from 'lucide-react';
 import { LifeLineLogo } from '../../../modules/auth-account/components/LifeLineLogo';
 import { useAuth } from '../../contexts/AuthContext';
-import { toast } from 'sonner';
+
 import { useTranslation } from 'react-i18next';
 
 export const SideNavBar: React.FC = () => {
@@ -50,7 +50,7 @@ export const SideNavBar: React.FC = () => {
             <NavLink
               key={item.path}
               to={item.path}
-              onClick={(e) => {
+              onClick={() => {
               }}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors ${

@@ -202,11 +202,17 @@ export const RegistrationDetailPage: React.FC = () => {
         CheckedIn: '🟡 Đã điểm danh (CheckedIn)',
       };
 
-      toast.success(
-        shouldUpdateBloodType
-          ? `Đã cập nhật nhóm máu (${editBloodType}) & hoàn tất trạng thái: ${statusLabels[newStatus] || newStatus}`
-          : `Đã cập nhật trạng thái phiếu sàng lọc: ${statusLabels[newStatus] || newStatus}`
-      );
+      if (newStatus === 'Completed') {
+        toast.success(`✨ Đã xác nhận mẫu máu ĐẠT TIÊU CHUẨN & gửi thông báo cảm ơn (hẹn 84 ngày hiến lại) tới người hiến!`);
+      } else if (newStatus === 'Ineligible for Donation' || newStatus === 'Ineligible') {
+        toast.error(`🔴 Đã ghi nhận MẪU MÁU BẤT THƯỜNG & gửi thông báo hướng dẫn sức khỏe tới người hiến!`);
+      } else {
+        toast.success(
+          shouldUpdateBloodType
+            ? `Đã cập nhật nhóm máu (${editBloodType}) & hoàn tất trạng thái: ${statusLabels[newStatus] || newStatus}`
+            : `Đã cập nhật trạng thái phiếu sàng lọc: ${statusLabels[newStatus] || newStatus}`
+        );
+      }
     } catch (err) {
       toast.error('Cập nhật trạng thái thất bại. Vui lòng thử lại.');
     }
@@ -1248,12 +1254,8 @@ export const RegistrationDetailPage: React.FC = () => {
               <button
                 type="button"
                 onClick={async () => {
-                  if (!isBloodTypeValid(registration, editBloodType)) {
-                    toast.error('⚠️ Chưa thể Hoàn Thành! Vui lòng chọn & cập nhật nhóm máu cho người hiến (khác Unknown) trước khi hoàn tất.');
-                    return;
-                  }
                   setShowExaminingModal(false);
-                  await handleUpdateStatus('Completed');
+                  await handleUpdateStatus('Ineligible for Donation');
                 }}
                 className="w-full p-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-900 rounded-2xl flex items-center justify-between transition-all group cursor-pointer text-left"
               >

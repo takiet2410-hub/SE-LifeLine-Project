@@ -6,7 +6,9 @@ import { Hospital } from '../../auth-account/models/hospital.model';
 export class SOSRequestController {
   public static async listHospitals(req: Request, res: Response, next: NextFunction) {
     try {
-      const hospitals = await Hospital.find({ isVerified: true }).select('-createdAt -updatedAt');
+    const hospitals = await Hospital.find({
+      $or: [{ isVerified: true }, { isVerified: { $exists: false } }]
+    }).select('-createdAt -updatedAt');
       res.status(200).json(hospitals);
     } catch (error) {
       next(error);
@@ -15,8 +17,11 @@ export class SOSRequestController {
 
   public static async createSOSRequest(req: Request, res: Response, next: NextFunction) {
     try {
-      // Mocking userId for testing purposes if auth is missing
-      const userId = (req as any).user?.userId || '60d21b4667d0d8992e610c85'; 
+      // Extract userId from JWT (always required)
+      const userId = (req as any).user?.userId || (req as any).user?._id?.toString() || (req as any).user?.id?.toString();
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized: user identity is required' });
+      }
       const hospitalId = req.body.hospitalId;
       
       if (!hospitalId) {
@@ -79,11 +84,42 @@ export class SOSRequestController {
 
   public static async respondToSOS(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId || '60d21b4667d0d8992e610c85';
+      const userId = (req as any).user?.userId || (req as any).user?._id?.toString() || (req as any).user?.id?.toString();
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const { id } = req.params;
       const { response } = req.body;
 
-      const result = await SOSRequestService.recordDonorResponse(id as string, userId as string, response);
+      const result = await SOSRequestService.recordDonorResponse(String(id), userId as string, response);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async reopenSOSRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { cancelledDonorId } = req.body;
+      
+      const result = await SOSRequestService.reopenSOSRequest(String(id), cancelledDonorId);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async fulfillFromInventory(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user?.userId || (req as any).user?._id?.toString() || (req as any).user?.id?.toString();
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      const { id } = req.params;
+      const { bagIds } = req.body;
+
+      const result = await SOSRequestService.fulfillFromInventory(String(id), bagIds, userId);
       res.status(200).json(result);
     } catch (error) {
       next(error);

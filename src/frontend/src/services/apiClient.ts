@@ -37,10 +37,15 @@ export const apiService = {
 
     const res = await apiClient.get('/notifications', { params: queryParams });
     const rawData = res.data?.data || res.data;
+    const pagination = res.data?.pagination;
     if (Array.isArray(rawData)) {
-      return rawData as NotificationData[];
+      return {
+        data: rawData as NotificationData[],
+        totalPages: pagination?.totalPages || 1,
+        total: pagination?.total || rawData.length,
+      };
     }
-    return [];
+    return { data: [] as NotificationData[], totalPages: 1, total: 0 };
   },
 
   async getNotificationById(id: string) {
@@ -69,7 +74,9 @@ export const apiService = {
 
   async markMultipleNotificationsAsRead(ids: string[]) {
     try {
-      const res = await apiClient.patch('/notifications/read', { ids });
+      // If no ids passed, mark all unread as read
+      const body = ids.length > 0 ? { ids } : { markAllAsRead: true };
+      const res = await apiClient.patch('/notifications/read-all', body);
       return res.data;
     } catch (err) {
       console.warn('[apiService] Backend markMultipleNotificationsAsRead failed, using fallback:', err);
@@ -740,5 +747,39 @@ export const apiService = {
       lowStockTypes,
       unitsByBloodType,
     };
+  },
+
+  // ==================== HOSPITAL APIs ====================
+  async getHospitals() {
+    try {
+      const res = await apiClient.get('/hospitals');
+      const data = res.data?.data || res.data;
+      if (Array.isArray(data)) {
+        return data;
+      }
+    } catch (err) {
+      console.warn('[apiService] Backend getHospitals failed, using fallback:', err);
+    }
+    
+    // Fallback Mock Data
+    await delay();
+    return [
+      {
+        _id: '60d21b4667d0d8992e610c86',
+        name: 'Bệnh viện Chợ Rẫy (MOCK DATA)',
+        address: '201B Nguyễn Chí Thanh, Quận 5, TP.HCM',
+        location: { type: 'Point', coordinates: [106.659616, 10.757826] },
+        contactPhone: '02838554137',
+        isVerified: true
+      },
+      {
+        _id: '60d21b4667d0d8992e610c99',
+        name: 'Bệnh viện Truyền máu Huyết học (MOCK DATA)',
+        address: '118 Hồng Bàng, Phường 12, Quận 5, TP.HCM',
+        location: { type: 'Point', coordinates: [106.662700, 10.755490] },
+        contactPhone: '02839571342',
+        isVerified: true
+      }
+    ];
   },
 };

@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface INotificationPreference extends Document {
-  donorId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   sosEnabled: boolean;
   appointmentEnabled: boolean;
   campaignEnabled: boolean;
@@ -15,7 +15,7 @@ export interface INotificationPreference extends Document {
 }
 
 const NotificationPreferenceSchema = new Schema<INotificationPreference>({
-  donorId: { type: Schema.Types.ObjectId, ref: 'DonorProfile', required: true, unique: true, index: true },
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true, index: true },
   sosEnabled: { type: Boolean, default: true },
   appointmentEnabled: { type: Boolean, default: true },
   campaignEnabled: { type: Boolean, default: true },

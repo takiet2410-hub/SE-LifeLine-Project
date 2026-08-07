@@ -1,16 +1,15 @@
 import { Router } from 'express';
-import { register, login, logout, updateProfile, verifyEmail } from './auth-account.controller';
+import { register, login, logout, updateProfile, verifyEmail, assignBloodCenter, updateEmergencyOptIn, updateDonorLocation, getMyProfile, createBloodCenter, getBloodCenters, getBloodCenterById, updateBloodCenter, deleteBloodCenter, createHospital, getHospitalsAdmin, getHospitalByIdAdmin, updateHospital, deleteHospital } from './auth-account.controller';
 import { validate } from '../../shared/validate.middleware';
-import { authenticateJWT } from '../../shared/auth.middleware';
+import { authenticateJWT, authorizeRoles } from '../../shared/auth.middleware';
 
 import { registerSchema } from './schemas/register.schema';
 import { verifyEmailSchema } from './schemas/verify-email.schema';
 import { loginSchema } from './schemas/login.schema';
 import { forgotPassword, resendForgotPassword, resetPassword } from './auth-account.controller';
 import { forgotPasswordSchema, resetPasswordSchema } from './schemas/reset-password.schema';
-import { updateProfileSchema } from './schemas/update-profile.schema';
+import { updateProfileSchema, assignBloodCenterSchema, emergencyOptInSchema, updateDonorLocationSchema, createBloodCenterSchema, updateBloodCenterSchema, createHospitalSchema, updateHospitalSchema } from './schemas/update-profile.schema';
 import { verifyResetOtp } from './auth-account.controller';
-import { getMyProfile } from './auth-account.controller';
 
 
 const router = Router();
@@ -305,5 +304,289 @@ router.patch('/profile', authenticateJWT, validate(updateProfileSchema), updateP
  *         description: Profile fetched successfully
  */
 router.get('/profile', authenticateJWT, getMyProfile);
+
+/**
+ * @openapi
+ * /api/v1/users/me/blood-center:
+ *   patch:
+ *     summary: BloodCenterStaff tự gán trung tâm máu
+ *     tags: [Account]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [bloodCenterId]
+ *             properties:
+ *               bloodCenterId:
+ *                 type: string
+ *                 description: ID của trung tâm máu (MongoDB ObjectId)
+ *                 example: "65f1a2b3c4d5e6f7a8b9c001"
+ *     responses:
+ *       200:
+ *         description: Assigned blood center successfully
+ *       403:
+ *         description: Forbidden - Only BloodCenterStaff can assign
+ *       404:
+ *         description: Blood center not found
+ */
+router.patch('/me/blood-center', authenticateJWT, authorizeRoles('BloodCenterStaff'), validate(assignBloodCenterSchema), assignBloodCenter);
+
+/**
+ * @openapi
+ * /api/v1/users/me/emergency-opt-in:
+ *   patch:
+ *     summary: Donor bật/tắt nhận thông báo SOS khẩn cấp
+ *     tags: [Account]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [emergencyOptIn]
+ *             properties:
+ *               emergencyOptIn:
+ *                 type: boolean
+ *                 description: true = bật nhận SOS, false = tắt
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Updated emergency opt-in preference
+ *       403:
+ *         description: Forbidden - Only Donor can update
+ *       404:
+ *         description: Donor profile not found
+ */
+router.patch('/me/emergency-opt-in', authenticateJWT, authorizeRoles('Donor'), validate(emergencyOptInSchema), updateEmergencyOptIn);
+
+/**
+ * @openapi
+ * /api/v1/users/me/location:
+ *   patch:
+ *     summary: Donor cập nhật vị trí (cho SOS geoNear)
+ *     tags: [Account]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [location]
+ *             properties:
+ *               location:
+ *                 type: object
+ *                 required: [type, coordinates]
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     enum: [Point]
+ *                     example: "Point"
+ *                   coordinates:
+ *                     type: array
+ *                     items:
+ *                       type: number
+ *                     minItems: 2
+ *                     maxItems: 2
+ *                     example: [106.660172, 10.755498]
+ *     responses:
+ *       200:
+ *         description: Location updated
+ *       403:
+ *         description: Forbidden - Only Donor can update
+ *       404:
+ *         description: Donor profile not found
+ */
+router.patch('/me/location', authenticateJWT, authorizeRoles('Donor'), validate(updateDonorLocationSchema), updateDonorLocation);
+
+// ========== BLOOD CENTER CRUD (Administrator) ==========
+/**
+ * @openapi
+ * /api/v1/admin/blood-centers:
+ *   post:
+ *     summary: Tạo trung tâm máu mới
+ *     tags: [Admin - Blood Centers]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, address, location, contactPhone, operatingHours]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Trung tâm Huyết học TP.HCM"
+ *               address:
+ *                 type: string
+ *                 example: "118 Hồng Bàng, Quận 5, TP.HCM"
+ *               location:
+ *                 type: object
+ *                 required: [type, coordinates]
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     enum: [Point]
+ *                     example: "Point"
+ *                   coordinates:
+ *                     type: array
+ *                     items:
+ *                       type: number
+ *                     example: [106.6627, 10.7555]
+ *               contactPhone:
+ *                 type: string
+ *                 example: "02839571342"
+ *               operatingHours:
+ *                 type: string
+ *                 example: "07:00 - 16:00"
+ *     responses:
+ *       201:
+ *         description: Blood center created
+ *       403:
+ *         description: Forbidden - Admin only
+ */
+router.post('/admin/blood-centers', authenticateJWT, authorizeRoles('Administrator'), validate(createBloodCenterSchema), createBloodCenter);
+
+/**
+ * @openapi
+ * /api/v1/admin/blood-centers:
+ *   get:
+ *     summary: Danh sách trung tâm máu
+ *     tags: [Admin - Blood Centers]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of blood centers
+ */
+router.get('/admin/blood-centers', authenticateJWT, authorizeRoles('Administrator'), getBloodCenters);
+
+/**
+ * @openapi
+ * /api/v1/admin/blood-centers/{id}:
+ *   get:
+ *     summary: Chi tiết trung tâm máu
+ *     tags: [Admin - Blood Centers]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Blood center details
+ *       404:
+ *         description: Not found
+ */
+router.get('/admin/blood-centers/:id', authenticateJWT, authorizeRoles('Administrator'), getBloodCenterById);
+
+/**
+ * @openapi
+ * /api/v1/admin/blood-centers/{id}:
+ *   patch:
+ *     summary: Cập nhật trung tâm máu
+ *     tags: [Admin - Blood Centers]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Updated blood center
+ *       404:
+ *         description: Not found
+ */
+router.patch('/admin/blood-centers/:id', authenticateJWT, authorizeRoles('Administrator'), validate(updateBloodCenterSchema), updateBloodCenter);
+
+/**
+ * @openapi
+ * /api/v1/admin/blood-centers/{id}:
+ *   delete:
+ *     summary: Xóa trung tâm máu
+ *     tags: [Admin - Blood Centers]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Deleted
+ *       404:
+ *         description: Not found
+ */
+router.delete('/admin/blood-centers/:id', authenticateJWT, authorizeRoles('Administrator'), deleteBloodCenter);
+
+// ========== HOSPITAL CRUD (Administrator) ==========
+/**
+ * @openapi
+ * /api/v1/admin/hospitals:
+ *   post:
+ *     summary: Tạo bệnh viện mới
+ *     tags: [Admin - Hospitals]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Hospital created
+ */
+router.post('/admin/hospitals', authenticateJWT, authorizeRoles('Administrator'), validate(createHospitalSchema), createHospital);
+
+/**
+ * @openapi
+ * /api/v1/admin/hospitals:
+ *   get:
+ *     summary: Danh sách bệnh viện (admin - tất cả, không filter isVerified)
+ *     tags: [Admin - Hospitals]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of hospitals
+ */
+router.get('/admin/hospitals', authenticateJWT, authorizeRoles('Administrator'), getHospitalsAdmin);
+
+/**
+ * @openapi
+ * /api/v1/admin/hospitals/{id}:
+ *   get:
+ *     summary: Chi tiết bệnh viện
+ *     tags: [Admin - Hospitals]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Hospital details
+ */
+router.get('/admin/hospitals/:id', authenticateJWT, authorizeRoles('Administrator'), getHospitalByIdAdmin);
+
+/**
+ * @openapi
+ * /api/v1/admin/hospitals/{id}:
+ *   patch:
+ *     summary: Cập nhật bệnh viện (kể cả isVerified)
+ *     tags: [Admin - Hospitals]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Updated hospital
+ */
+router.patch('/admin/hospitals/:id', authenticateJWT, authorizeRoles('Administrator'), validate(updateHospitalSchema), updateHospital);
+
+/**
+ * @openapi
+ * /api/v1/admin/hospitals/{id}:
+ *   delete:
+ *     summary: Xóa bệnh viện
+ *     tags: [Admin - Hospitals]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Deleted
+ */
+router.delete('/admin/hospitals/:id', authenticateJWT, authorizeRoles('Administrator'), deleteHospital);
 
 export default router;

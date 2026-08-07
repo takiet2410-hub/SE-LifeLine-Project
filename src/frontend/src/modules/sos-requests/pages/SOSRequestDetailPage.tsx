@@ -4,6 +4,7 @@ import { sosApi, type SOSRequest } from '../services/sosApi';
 import { SOSStatusBadge } from '../components/SOSStatusBadge';
 import { SOSTimeline } from '../components/SOSTimeline';
 import { HospitalMapModal } from '../components/HospitalMapModal';
+import { FulfillSOSModal } from '../components/FulfillSOSModal';
 import { ArrowLeft, User, Calendar, Hospital, Activity, AlertCircle, MapPin, Phone, Truck } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -13,6 +14,7 @@ export const SOSRequestDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [request, setRequest] = useState<SOSRequest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFulfillModalOpen, setIsFulfillModalOpen] = useState(false);
   const [evaluationLog, setEvaluationLog] = useState<any>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
 
@@ -63,9 +65,6 @@ export const SOSRequestDetailPage: React.FC = () => {
     );
   }
 
-  const fulfillmentPercentage = evaluationLog 
-    ? Math.min(100, Math.round((evaluationLog.rankedBloodCenters?.length || 0) / 10 * 100))
-    : 0;
 
   const handleCancelRequest = async () => {
     if (!confirm('Are you sure you want to cancel this SOS request?')) return;
@@ -106,11 +105,44 @@ export const SOSRequestDetailPage: React.FC = () => {
           </div>
         </div>
         {(request.status === 'Pending' || request.status === 'EvaluationInProgress') && (
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setIsFulfillModalOpen(true)}
+              className="bg-brand-primary text-white hover:bg-brand-primary/90 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
+            >
+              Fulfill from Inventory
+            </button>
+            <button 
+              onClick={handleCancelRequest}
+              className="bg-brand-error/10 text-brand-error hover:bg-brand-error/20 px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              Cancel Request
+            </button>
+          </div>
+        )}
+        
+        {/* Reopen / Replace Donor Button (For No-Show scenario) */}
+        {(request.status === 'Fulfilled' && (request.acceptedDonorIds && request.acceptedDonorIds.length > 0)) && (
           <button 
-            onClick={handleCancelRequest}
-            className="bg-brand-error/10 text-brand-error hover:bg-brand-error/20 px-4 py-2 rounded-lg font-medium transition-colors"
+            onClick={async () => {
+              // Note: In a real app, this should open a modal to select WHICH donor didn't show up.
+              // For simplicity, we just use the first donor in the list for this MVP demo.
+              const donorIdToCancel = request.acceptedDonorIds?.[0];
+              if (!donorIdToCancel) return;
+
+              if (!confirm('Donor did not show up? Re-open request and find replacement?')) return;
+              try {
+                await sosApi.reopenSOSRequest(request.id || (request as any)._id, donorIdToCancel);
+                toast.success('SOS Request reopened. Broadcasting to find new donors!');
+                // Force a page reload or refetch to update status
+                window.location.reload();
+              } catch (error) {
+                toast.error('Failed to reopen request');
+              }
+            }}
+            className="bg-brand-warning/10 text-brand-warning hover:bg-brand-warning/20 px-4 py-2 rounded-lg font-medium transition-colors border border-brand-warning/20"
           >
-            Cancel Request
+            No-Show? Find Replacement
           </button>
         )}
       </div>
@@ -246,20 +278,25 @@ export const SOSRequestDetailPage: React.FC = () => {
               <Hospital className="w-5 h-5 text-brand-primary" />
               Hospital Details
             </h2>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-brand-text-muted">Hospital Name</p>
-                <p className="font-medium text-brand-text-main">{request.hospital?.name || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-brand-text-muted">Address</p>
-                <p className="font-medium text-brand-text-main">{request.hospital?.address || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-brand-text-muted">Contact</p>
-                <p className="font-medium text-brand-text-main">{((request.hospital as unknown) as any)?.contactPhone || 'Blood Transfusion Dept.'}</p>
-              </div>
-            </div>
+            {(() => {
+              const hospitalData: any = request.hospital || request.hospitalId;
+              return (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-brand-text-muted">Hospital Name</p>
+                    <p className="font-medium text-brand-text-main">{hospitalData?.name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-brand-text-muted">Address</p>
+                    <p className="font-medium text-brand-text-main">{hospitalData?.address || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-brand-text-muted">Contact</p>
+                    <p className="font-medium text-brand-text-main">{hospitalData?.contactPhone || 'Blood Transfusion Dept.'}</p>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Action Buttons */}
@@ -277,14 +314,14 @@ export const SOSRequestDetailPage: React.FC = () => {
                 Get Directions
               </button>
               <a 
-                href={`tel:${((request.hospital as unknown) as any)?.contactPhone || ''}`}
+                href={`tel:${(request.hospital || request.hospitalId as any)?.contactPhone || ''}`}
                 className="flex items-center justify-center gap-2 px-4 py-3 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 rounded-lg border border-brand-primary/20 transition-colors"
               >
                 <Phone className="w-5 h-5" />
                 <span className="flex flex-col items-center">
                   <span>Call Hospital</span>
-                  {((request.hospital as unknown) as any)?.contactPhone && (
-                    <span className="text-xs font-semibold">{((request.hospital as unknown) as any)?.contactPhone}</span>
+                  {(request.hospital || request.hospitalId as any)?.contactPhone && (
+                    <span className="text-xs font-semibold">{(request.hospital || request.hospitalId as any).contactPhone}</span>
                   )}
                 </span>
               </a>
@@ -293,16 +330,30 @@ export const SOSRequestDetailPage: React.FC = () => {
         </div>
       </div>
 
+      <FulfillSOSModal
+        request={request}
+        isOpen={isFulfillModalOpen}
+        onClose={() => setIsFulfillModalOpen(false)}
+        onSuccess={() => {
+          setIsFulfillModalOpen(false);
+          window.location.reload();
+        }}
+      />
+
       {/* Map Modal */}
-      {request.hospital && request.hospital.location && (
-        <HospitalMapModal 
-          isOpen={isMapOpen}
-          onClose={() => setIsMapOpen(false)}
-          hospitalName={request.hospital.name}
-          hospitalAddress={request.hospital.address}
-          coordinates={request.hospital.location.coordinates}
-        />
-      )}
+      {(() => {
+        const hospitalData: any = request.hospital || request.hospitalId;
+        if (!hospitalData || !hospitalData.location) return null;
+        return (
+          <HospitalMapModal 
+            isOpen={isMapOpen}
+            onClose={() => setIsMapOpen(false)}
+            hospitalName={hospitalData.name}
+            hospitalAddress={hospitalData.address}
+            coordinates={hospitalData.location.coordinates}
+          />
+        );
+      })()}
     </div>
   );
 };

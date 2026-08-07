@@ -39,8 +39,7 @@ export class NotificationEventHandler {
     try {
       // Get template
       const template = await NotificationTemplate.findOne({ 
-        eventType: config.eventType, 
-        locale: 'vi', 
+        eventType: config.eventType as any, 
         isActive: true 
       }).lean();
 
@@ -61,13 +60,16 @@ export class NotificationEventHandler {
       }
 
       // Send notifications
+      const channelMap: Record<string, any> = { 'in-app': 'InApp', 'email': 'Email', 'push': 'WebPush' };
+      const mappedChannels = config.channels.map(c => channelMap[c]);
+
       await NotificationService.sendNotification({
         recipientIds,
         type: this.getNotificationType(event.eventType),
         title,
         body,
         payload,
-        channels: config.channels,
+        channels: mappedChannels,
       });
 
       console.log(`[Notification] Dispatched ${event.eventType} to ${recipientIds.length} recipients`);
@@ -157,26 +159,47 @@ export class NotificationEventHandler {
    * Get eligible donors for campaign
    */
   private static async getEligibleDonorsForCampaign(campaignId: string, bloodType?: string, location?: any): Promise<string[]> {
-    // This would query User collection with filters
-    // For now, return empty array - implement based on User model
-    return [];
+    try {
+      const User = (await import('../../auth-account/models/user.model')).User;
+      const query: any = { role: 'Donor', accountStatus: 'Active' };
+      const users = await User.find(query).select('_id').lean();
+      return users.map((u: any) => u._id.toString());
+    } catch (error) {
+      console.error('[NotificationEvents] Error fetching eligible donors for campaign:', error);
+      return [];
+    }
   }
 
   /**
    * Get eligible donors for SOS
    */
   private static async getEligibleDonorsForSOS(sosRequestId: string, bloodType?: string, location?: any, urgencyLevel?: string): Promise<string[]> {
-    // This would query User collection with blood type, location, and eligibility filters
-    // For now, return empty array - implement based on User model
-    return [];
+    try {
+      const DonorProfile = (await import('../../auth-account/models/donor-profile.model')).DonorProfile;
+      const query: any = { emergencyOptIn: true };
+      if (bloodType) query.bloodType = bloodType;
+      const profiles = await DonorProfile.find(query).select('userId').lean();
+      return profiles.filter((p: any) => p.userId).map((p: any) => p.userId.toString());
+    } catch (error) {
+      console.error('[NotificationEvents] Error fetching eligible donors for SOS:', error);
+      return [];
+    }
   }
 
   /**
    * Get blood center staff
    */
   private static async getBloodCenterStaff(bloodCenterId?: string): Promise<string[]> {
-    // Query User collection for staff with bloodCenterId
-    return [];
+    try {
+      const User = (await import('../../auth-account/models/user.model')).User;
+      const query: any = { role: 'BloodCenterStaff', accountStatus: 'Active' };
+      if (bloodCenterId) query.bloodCenterId = bloodCenterId;
+      const users = await User.find(query).select('_id').lean();
+      return users.map((u: any) => u._id.toString());
+    } catch (error) {
+      console.error('[NotificationEvents] Error fetching blood center staff:', error);
+      return [];
+    }
   }
 
   /**
@@ -255,4 +278,8 @@ export async function emitAppointmentCancelled(payload: any) {
 
 export async function emitDonationCompleted(payload: any) {
   await notificationEvents.emit({ eventType: 'DonationCompleted', payload, timestamp: new Date() });
+}
+
+export async function emitEligibilityCheckFailed(payload: any) {
+  await notificationEvents.emit({ eventType: 'EligibilityCheckFailed', payload, timestamp: new Date() });
 }

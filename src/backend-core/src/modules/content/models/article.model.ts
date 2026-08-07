@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type ArticleStatus = 'Draft' | 'Published' | 'Unpublished';
+export type ArticleStatus = 'Draft' | 'Published' | 'Unpublished' | 'Scheduled';
 
 export interface IArticle extends Document {
   authorStaffId: mongoose.Types.ObjectId;
@@ -23,13 +23,13 @@ export interface IArticle extends Document {
 }
 
 const ArticleSchema: Schema = new Schema({
-  authorStaffId: { type: Schema.Types.ObjectId, ref: 'StaffProfile', required: true, index: true },
+  authorStaffId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   title: { type: String, required: true, trim: true, maxlength: 200 },
   bodyContent: { type: String, default: '' },
   imageUrls: { type: [String], default: [] },
   status: { 
     type: String, 
-    enum: ['Draft', 'Published', 'Unpublished'], 
+    enum: ['Draft', 'Published', 'Unpublished', 'Scheduled'], 
     default: 'Draft', 
     required: true,
     index: true

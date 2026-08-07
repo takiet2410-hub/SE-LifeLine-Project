@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-import { Article, IArticle, ArticleCategory, ArticleStatus, TargetAudience } from '../models/article.model';
+import { Article, IArticle, ArticleStatus } from '../models/article.model';
+import { env } from '../../../config/env.config';
 import { ContentAuditLog } from '../models/audit-log.model';
 import { CreateArticleInput, UpdateArticleInput } from '../schemas/article.schema';
 import { NotificationService } from '../../notification/services/notification.service';
@@ -10,14 +11,14 @@ export class ArticleService {
     try {
       const { title, category, targetAudience } = article;
       
-      const rolesToQuery = [];
+      const rolesToQuery: Array<'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator'> = [];
       if (targetAudience?.includes('Donors')) rolesToQuery.push('Donor');
-      if (targetAudience?.includes('BloodCenterStaff')) rolesToQuery.push('BloodCenterStaff');
-      if (targetAudience?.includes('HospitalStaff')) rolesToQuery.push('HospitalStaff');
+      if (targetAudience?.includes('Staff') || targetAudience?.includes('BloodCenterStaff')) rolesToQuery.push('BloodCenterStaff');
+      if (targetAudience?.includes('Hospitals') || targetAudience?.includes('HospitalStaff')) rolesToQuery.push('HospitalStaff');
       
       if (rolesToQuery.length === 0) return;
 
-      const users = await User.find({ roles: { $in: rolesToQuery } }).select('_id').lean();
+      const users = await User.find({ $or: [{ roles: { $in: rolesToQuery } }, { role: { $in: rolesToQuery } }] }).select('_id').lean();
       if (users.length === 0) return;
 
       const recipientIds = users.map(u => u._id.toString());
@@ -32,9 +33,11 @@ export class ArticleService {
         body: `Một thông tin mới thuộc chuyên mục ${category} vừa được xuất bản trên hệ thống.`,
         payload: {
           articleId: article._id.toString(),
-          deepLink: `/news/${article._id.toString()}`
+          deepLink: `${env.FRONTEND_URL}/news/${article._id.toString()}`,
+          sourceRefId: article._id.toString(),
+          sourceRefType: 'Article'
         },
-        channels: ['WebPush'] // Tránh spam Email quá nhiều trong MVP
+        channels: ['InApp', 'WebPush', 'Email']
       });
       console.log(`[ArticleService] Broadcasted notification to ${recipientIds.length} users for article ${article._id}`);
     } catch (error) {
@@ -129,8 +132,13 @@ export class ArticleService {
 
     const summary = await this.getContentStats();
 
+    const mappedArticles = articles.map((article: any) => ({
+      ...article,
+      coverImageUrl: article.imageUrls?.[0] || ''
+    }));
+
     return {
-      articles,
+      articles: mappedArticles,
       pagination: {
         total,
         page,
@@ -157,7 +165,12 @@ export class ArticleService {
     }
 
     const articleObj = article.toObject();
-    return articleObj;
+    
+    // Map for frontend which expects coverImageUrl
+    return {
+      ...articleObj,
+      coverImageUrl: articleObj.imageUrls?.[0] || ''
+    };
   }
 
   static async updateArticle(
@@ -199,6 +212,11 @@ export class ArticleService {
     }
 
     await article.save();
+
+    // Trigger broadcast if status changed to Published
+    if (previousValue.status !== 'Published' && article.status === 'Published') {
+      this.broadcastArticleNotification(article);
+    }
 
     await ContentAuditLog.create({
       actorUserId: new mongoose.Types.ObjectId(actorUserId),

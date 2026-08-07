@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Bell, Trash2, Clock, Hospital, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react';
+import { AlertTriangle, Bell, Trash2, Clock, Hospital, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
 import type { NotificationData } from '../../../services/mockData';
@@ -19,43 +19,20 @@ export const NotificationListPage: React.FC = () => {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
-
-  const formatDateSafe = (dateStr?: string | Date) => {
-    if (!dateStr) return 'N/A';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return 'N/A';
-      return format(d, 'dd/MM/yyyy HH:mm');
-    } catch {
-      return 'N/A';
-    }
-  };
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = {
-        type: typeFilter === 'All' ? undefined : typeFilter,
-        status: statusFilter === 'All' ? undefined : statusFilter,
-        page,
-        limit: 20,
-      };
-      // Remove undefined values
-      Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
-
-      const data = await apiService.getNotifications({
+      const result = await apiService.getNotifications({
         type: typeFilter === 'All' ? undefined : typeFilter,
         status: statusFilter === 'All' ? undefined : statusFilter,
         page,
         limit: 20,
       });
       
-      setNotifications(data);
-      // For pagination, we'd need backend to return pagination info
-      // For now, estimate from local data
-      setUnreadCount(data.filter((n) => n.readAt === null).length);
+      setNotifications(result.data);
+      setTotalPages(result.totalPages);
     } catch (err) {
       console.error('Failed to fetch notifications:', err);
       toast.error('Không thể tải danh sách thông báo');
@@ -89,6 +66,19 @@ export const NotificationListPage: React.FC = () => {
       toast.error('Xóa thông báo thất bại.');
     } finally {
       setDeleteTargetId(null);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await apiService.markMultipleNotificationsAsRead([]);
+      // Pass empty array with markAllAsRead=true handled server-side
+      // Re-fetch to get updated state
+      await fetchNotifications();
+      await fetchUnreadCount();
+      toast.success('Đã đánh dấu tất cả là đã đọc!');
+    } catch (err) {
+      toast.error('Không thể đánh dấu tất cả là đã đọc.');
     }
   };
 
@@ -144,6 +134,14 @@ export const NotificationListPage: React.FC = () => {
             Tiếp nhận yêu cầu cấp cứu khẩn cấp (SOS) từ các bệnh viện đối tác và cảnh báo vận hành kho máu.
           </p>
         </div>
+        {unreadCount > 0 && (
+          <button
+            onClick={handleMarkAllAsRead}
+            className="px-4 py-2 text-[13px] font-semibold text-[#93000b] border border-[#93000b]/30 bg-[#93000b]/5 hover:bg-[#93000b]/10 rounded-xl transition-colors shrink-0"
+          >
+            Đánh dấu tất cả đã đọc
+          </button>
+        )}
       </div>
 
       {/* Filter Controls */}
@@ -213,7 +211,9 @@ export const NotificationListPage: React.FC = () => {
                   onClick={() => handleNotificationClick(item)}
                   className={`rounded-2xl p-5 border transition-all cursor-pointer relative group ${
                     isSOS
-                      ? 'bg-red-50/70 border-red-300 border-l-4 border-l-[#93000b] shadow-xs hover:bg-red-100/70'
+                      ? isUnread 
+                        ? 'bg-red-50/70 border-red-300 border-l-4 border-l-[#93000b] shadow-xs hover:bg-red-100/70'
+                        : 'bg-white border-[#f1f3f5] border-l-4 border-l-red-200 hover:bg-slate-50'
                       : isUnread
                       ? 'bg-white border-[#f1f3f5] border-l-4 border-l-[#1a1a2e] shadow-2xs hover:bg-slate-50'
                       : 'bg-white border-[#f1f3f5] hover:bg-slate-50'
@@ -225,7 +225,7 @@ export const NotificationListPage: React.FC = () => {
                       <div
                         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                           isSOS
-                            ? 'bg-[#93000b] text-white shadow-sm animate-pulse'
+                            ? isUnread ? 'bg-[#93000b] text-white shadow-sm animate-pulse' : 'bg-red-100 text-[#93000b]'
                             : 'bg-slate-100 text-[#1a1a2e]'
                         }`}
                       >
@@ -242,7 +242,7 @@ export const NotificationListPage: React.FC = () => {
                           <h3
                             className={`text-[15px] ${
                               isSOS
-                                ? 'text-[#93000b] font-bold'
+                                ? isUnread ? 'text-[#93000b] font-bold' : 'text-red-800 font-medium'
                                 : isUnread
                                 ? 'text-[#271816] font-bold'
                                 : 'text-[#271816] font-medium'
@@ -265,7 +265,7 @@ export const NotificationListPage: React.FC = () => {
 
                         <p
                           className={`text-[13px] ${
-                            isSOS ? 'text-[#93000b] font-medium' : 'text-[#5b403d]'
+                            isSOS ? isUnread ? 'text-[#93000b] font-medium' : 'text-red-900/70' : 'text-[#5b403d]'
                           } leading-relaxed`}
                         >
                           {item.body}
@@ -283,6 +283,21 @@ export const NotificationListPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Interactive Action for BC SOS */}
+                    {isSOS && (
+                      <div className="mt-4 flex gap-2 pl-[56px]">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/bc/inventory/stock-out?reason=Transfer`);
+                          }}
+                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors"
+                        >
+                          Chuyển máu cho bệnh viện →
+                        </button>
+                      </div>
+                    )}
 
                     {/* Actions: Delete Button */}
                     <button
@@ -312,11 +327,11 @@ export const NotificationListPage: React.FC = () => {
               <ChevronLeft className="w-5 h-5" />
             </button>
             <span className="px-4 py-2 text-[13px] font-medium text-[#271816]">
-              Trang {page}
+              Trang {page} / {totalPages}
             </span>
             <button
               onClick={() => handlePageChange(page + 1)}
-              disabled={loading}
+              disabled={loading || page >= totalPages}
               className="p-2 border border-[#f1f3f5] rounded-lg text-[#6c757d] hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               aria-label="Next page"
             >

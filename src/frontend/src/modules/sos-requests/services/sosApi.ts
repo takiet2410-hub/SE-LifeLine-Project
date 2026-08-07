@@ -1,4 +1,5 @@
 import { apiClient } from '../../../shared/api/apiClient';
+import { apiService } from '../../../services/apiClient';
 
 export type SOSUrgency = 'Critical' | 'High' | 'Medium';
 export type SOSStatus = 'Pending' | 'EvaluationInProgress' | 'NotificationsDispatched' | 'Fulfilled' | 'Expired' | 'Cancelled' | 'EvaluationFailed';
@@ -9,6 +10,8 @@ export interface SOSRequest {
   createdByStaffId: string;
   bloodType: string;
   requiredQuantityMl: number;
+  collectedQuantityMl?: number;
+  acceptedDonorIds?: string[];
   urgencyLevel: SOSUrgency;
   patientReference?: string;
   fulfillmentDeadline: string;
@@ -19,6 +22,7 @@ export interface SOSRequest {
     _id: string;
     name: string;
     address: string;
+    contactPhone?: string;
     location?: {
       type: 'Point';
       coordinates: [number, number];
@@ -89,8 +93,7 @@ export interface SOSEvaluationLog {
 
 export const sosApi = {
   async getHospitals(): Promise<HospitalInfo[]> {
-    const response = await apiClient.get('/hospital/sos-requests/hospitals');
-    return response.data;
+    return await apiService.getHospitals();
   },
 
   async createSOSRequest(payload: CreateSOSRequestPayload): Promise<SOSRequest> {
@@ -129,7 +132,19 @@ export const sosApi = {
   },
 
   async respondToSOS(id: string, accept: boolean): Promise<any> {
-    const response = await apiClient.post(`/hospital/sos-requests/${id}/respond`, { accept });
+    const response = await apiClient.post(`/hospital/sos-requests/${id}/respond`, { 
+      response: accept ? 'accepted' : 'declined' 
+    });
+    return response.data;
+  },
+
+  async reopenSOSRequest(id: string, cancelledDonorId: string): Promise<any> {
+    const response = await apiClient.post(`/hospital/sos-requests/${id}/reopen`, { cancelledDonorId });
+    return response.data;
+  },
+
+  async fulfillFromInventory(id: string, bagIds: string[]): Promise<any> {
+    const response = await apiClient.post(`/hospital/sos-requests/${id}/fulfill-from-inventory`, { bagIds });
     return response.data;
   }
 };

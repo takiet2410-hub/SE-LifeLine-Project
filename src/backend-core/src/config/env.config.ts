@@ -11,6 +11,9 @@ const envSchema = z.object({
   BREVO_API_KEY: z.string().min(10).optional(),
   SENDER_EMAIL: z.string().email().default('noreply.lifeline@gmail.com'),
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
+  CORS_ORIGINS: z.string().optional(),
+  REDIS_URL: z.string().url().optional(),
+  FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
 
   // THÊM 3 DÒNG NÀY VÀO SCHEMA:
   CLOUDINARY_CLOUD_NAME: z.string().default(''),

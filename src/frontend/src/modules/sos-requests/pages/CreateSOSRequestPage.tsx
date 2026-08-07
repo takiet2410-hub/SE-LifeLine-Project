@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, AlertCircle, Droplet, User, Activity, Calendar, Hospital } from 'lucide-react';
+import { ArrowLeft, Save, AlertCircle, Droplet, User, Activity, Hospital } from 'lucide-react';
 import { toast } from 'sonner';
 import { sosApi, type CreateSOSRequestPayload, type SOSUrgency, type HospitalInfo } from '../services/sosApi';
 import { useAuth } from '../../../shared/contexts/AuthContext';
@@ -24,7 +24,6 @@ export const CreateSOSRequestPage: React.FC = () => {
   
   const [errors, setErrors] = useState<Partial<Record<keyof CreateSOSRequestPayload, string>>>({});
 
-  const defaultDeadline = useMemo(() => getDefaultDeadline(), []);
 
   useEffect(() => {
     const fetchHospitals = async () => {
@@ -157,7 +156,7 @@ export const CreateSOSRequestPage: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-brand-text-secondary mb-1">Staff Member</label>
                 <div className="w-full px-4 py-2.5 bg-brand-bg-muted/50 border border-brand-border-dark rounded-lg text-brand-text-main flex flex-col justify-center">
-                  <span className="font-medium">{user?.idDocumentNumber || 'Unknown Staff'}</span>
+                  <span className="font-medium">{(user as any)?.idDocumentNumber || 'Unknown Staff'}</span>
                   <span className="text-xs text-brand-text-muted">{user?.email || 'N/A'}</span>
                 </div>
               </div>

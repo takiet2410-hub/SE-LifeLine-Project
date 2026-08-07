@@ -348,7 +348,7 @@ export class CampaignService {
     // Get active (non-rejected, non-cancelled) appointments
     const activeAppointments = await Appointment.find({
       campaignId: campaign._id,
-      status: { $nin: ['Rejected', 'Cancelled'] }
+      status: { $nin: ['Rejected', 'Cancelled'] } as any
     }).lean();
 
     const activeCount = activeAppointments.length;

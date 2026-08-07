@@ -1,4 +1,4 @@
-export type ArticleCategory = 'News' | 'Alert' | 'Health Tips' | 'Campaign';
+export type ArticleCategory = 'News' | 'Alert' | 'Educational' | 'Campaign';
 export type ArticleStatus = 'Draft' | 'Published' | 'Scheduled';
 export type TargetAudience = 'Donors' | 'Staff' | 'Hospitals';
 
@@ -16,6 +16,7 @@ export interface Article {
   category: ArticleCategory;
   status: ArticleStatus;
   coverImageUrl?: string;
+  imageUrls?: string[];  // BE returns this array
   publishedAt?: string;
   scheduledAt?: string | null;
   targetAudience: TargetAudience[];

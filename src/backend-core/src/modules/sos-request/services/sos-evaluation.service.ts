@@ -65,11 +65,10 @@ export class SOSEvaluationService {
     ]);
 
     const rankedCenters = nearbyCenters
-      .filter(c => c._id && centerInventoryMap.has(c._id.toString()))
       .map(c => {
-        const inventory = centerInventoryMap.get(c._id.toString());
+        const inventory = centerInventoryMap.has(c._id.toString()) ? centerInventoryMap.get(c._id.toString()) : 0;
         const distance = c.distance || 1; // avoid div by 0
-        const score = inventory / distance; // Simple heuristic
+        const score = (inventory > 0 ? inventory : 0.1) / distance; // Simple heuristic, give minimum score if 0
         return {
           centerId: c._id,
           score,
@@ -102,7 +101,8 @@ export class SOSEvaluationService {
       const distance = d.distance || 1;
       const score = ((d.donorLevel || 1) * 10) / distance;
       return {
-        donorId: d._id,
+        donorId: d.userId || d._id,
+        donorProfileId: d._id,
         score,
         distanceKm: distance,
         lastDonationDate: d.lastDonationDate,

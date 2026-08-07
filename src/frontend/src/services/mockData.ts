@@ -32,6 +32,13 @@ export interface CampaignData {
     capacity: number;
     registeredCount: number;
   }>;
+  dailyTimeslots?: Array<{
+    dateStr: string;
+    startTime: string;
+    endTime: string;
+    capacity: number;
+    registeredCount: number;
+  }>;
   registeredCount: number;
   status: 'Draft' | 'Upcoming' | 'Registration Pending' | 'Active' | 'Full' | 'Completed' | 'Cancelled';
   createdAt: string;
@@ -74,15 +81,6 @@ export interface RegistrationData {
       description?: string;
     }>;
   };
-  donationHistory?: Array<{
-    _id: string;
-    appointmentDate: string;
-    timeSlot?: string;
-    donationType?: string;
-    volume?: string;
-    locationName?: string;
-    status: string;
-  }>;
 }
 
 export interface ArticleData {
@@ -100,12 +98,18 @@ export interface ArticleData {
 
 export interface NotificationData {
   _id: string;
-  type: 'Routine' | 'SOS' | 'Campaign' | 'System';
+  type: 'Routine' | 'SOS' | 'Campaign' | 'System' | 'Appointment';
+  channel: 'Email' | 'WebPush' | 'InApp';
   title: string;
   body: string;
-  senderName: string;
-  createdAt: string;
+  payload: Record<string, any>;
+  sourceRefId: string;
+  sourceRefType: 'Appointment' | 'Campaign' | 'SOSRequest' | 'Article' | 'System';
+  deliveryStatus: 'Pending' | 'Sent' | 'Failed' | 'Retried';
   readAt: string | null;
+  createdAt: string;
+  // Backward compatibility for existing FE code
+  senderName?: string;
   sosRequestInfo?: {
     bloodType: string;
     urgencyLevel: 'Critical' | 'High' | 'Medium';
@@ -204,7 +208,7 @@ export const initialArticles: ArticleData[] = [
     authorStaffId: 'staff-01',
     authorName: 'BS. Nguyễn Văn A',
     title: 'Những Lưu Ý Quan Trọng Trước Và Sau Khi Hiến Máu Tình Nguyện',
-    category: 'Sức Khỏe',
+    category: 'Educational',
     bodyContent: '<p>Hiến máu tình nguyện là một nghĩa cử cao đẹp. Để đảm bảo an toàn cho bản thân và chất lượng túi máu, người hiến máu cần lưu ý uống đủ nước, ăn nhẹ và nghỉ ngơi hợp lý trước khi đến điểm hiến máu...</p>',
     imageUrls: ['https://images.unsplash.com/photo-1615461066841-6116e61058f4?w=800&q=80'],
     status: 'Published',
@@ -216,7 +220,7 @@ export const initialArticles: ArticleData[] = [
     authorStaffId: 'staff-01',
     authorName: 'BS. Nguyễn Văn A',
     title: 'Chiến Dịch Hè 2026: Lịch Trình Chi Tiết Các Điểm Hiến Máu Lưu Động',
-    category: 'Chiến Dịch',
+    category: 'Campaign',
     bodyContent: '<p>Trung tâm Huyết học thông báo lịch trình các điểm hiến máu lưu động tại các quận huyện trong tháng 8/2026...</p>',
     imageUrls: ['https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800&q=80'],
     status: 'Published',
@@ -229,6 +233,11 @@ export const initialNotifications: NotificationData[] = [
   {
     _id: 'notif-sos-001',
     type: 'SOS',
+    channel: 'InApp',
+    deliveryStatus: 'Sent',
+    sourceRefType: 'System',
+    sourceRefId: 'sos-001',
+    payload: {},
     title: 'CẤP CỨU: Cần 2000ml máu O- gấp cho ca phẫu thuật',
     body: 'Bệnh viện Chợ Rẫy yêu cầu cung cấp gấp 2000ml máu O- cho bệnh nhân cấp cứu tai nạn giao thông.',
     senderName: 'Bệnh viện Chợ Rẫy',
@@ -246,6 +255,11 @@ export const initialNotifications: NotificationData[] = [
   {
     _id: 'notif-002',
     type: 'Campaign',
+    channel: 'InApp',
+    deliveryStatus: 'Sent',
+    sourceRefType: 'System',
+    sourceRefId: 'camp-001',
+    payload: {},
     title: 'Chiến dịch "Hiến máu Mùa Hè 2026" đạt 45% chỉ tiêu',
     body: 'Đã có 45 người đăng ký thành công cho điểm hiến máu Quận 1.',
     senderName: 'Hệ thống LifeLine',
@@ -255,6 +269,11 @@ export const initialNotifications: NotificationData[] = [
   {
     _id: 'notif-003',
     type: 'Routine',
+    channel: 'InApp',
+    deliveryStatus: 'Sent',
+    sourceRefType: 'System',
+    sourceRefId: 'rout-001',
+    payload: {},
     title: 'Báo cáo tồn kho máu tuần 3 tháng 7 đã sẵn sàng',
     body: 'Báo cáo tự động tổng hợp số lượng túi máu theo nhóm máu và hạn sử dụng.',
     senderName: 'Hệ thống Quản lý Kho',

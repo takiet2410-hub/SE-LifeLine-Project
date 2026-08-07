@@ -28,12 +28,36 @@ export const errorHandler = (
     err.message.includes('Invalid credentials') ||
     err.message.includes('Đăng nhập') ||
     err.message.includes('Tài khoản') ||
-    err.message.includes('verification')
+    err.message.includes('not available') ||
+    err.message.includes('Invalid') ||
+    err.message.includes('already exists') ||
+    (err as any).statusCode === 400
   );
-  const statusCode = isClientError ? 400 : 500;
 
-  return res.status(statusCode).json({
-    code: isClientError ? 'BAD_REQUEST' : 'INTERNAL_SERVER_ERROR',
+  const isNotFoundError = err.message && (
+    err.message.includes('not found') || 
+    err.message.includes('Not found') ||
+    (err as any).statusCode === 404
+  );
+
+  if (isNotFoundError) {
+    return res.status(404).json({
+      code: 'NOT_FOUND',
+      message: err.message || 'Resource not found',
+      details,
+    });
+  }
+
+  if (isClientError) {
+    return res.status(400).json({
+      code: 'BAD_REQUEST',
+      message: err.message,
+      details,
+    });
+  }
+
+  return res.status(500).json({
+    code: 'INTERNAL_SERVER_ERROR',
     message: err.message || 'Internal Server Error',
     details,
   });

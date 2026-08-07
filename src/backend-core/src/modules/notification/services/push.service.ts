@@ -1,4 +1,6 @@
-import admin from 'firebase-admin';
+import { isFirebaseInitialized } from '../../../config/firebase.config';
+const admin = require('firebase-admin');
+import { UserDevice } from '../models/UserDevice';
 
 interface PushOptions {
   userId: string;
@@ -8,33 +10,13 @@ interface PushOptions {
 }
 
 class PushServiceImpl {
-  private initialized = false;
-
-  private init() {
-    if (!this.initialized && process.env.FIREBASE_SERVICE_ACCOUNT) {
-      try {
-        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-        });
-        this.initialized = true;
-      } catch (error) {
-        console.warn('Firebase Admin initialization failed:', error);
-      }
-    }
-  }
-
   async send(options: PushOptions): Promise<boolean> {
-    this.init();
-    
-    if (!this.initialized) {
+    if (!isFirebaseInitialized()) {
       console.log('[Push] Firebase not configured, skipping push notification');
       return false;
     }
 
     try {
-      // Get user's FCM tokens from database
-      // This would typically come from a UserDevice collection
       const tokens = await this.getUserTokens(options.userId);
       
       if (tokens.length === 0) {
@@ -70,10 +52,9 @@ class PushServiceImpl {
 
       const response = await admin.messaging().sendEachForMulticast(message);
       
-      // Handle failed tokens
       if (response.failureCount > 0) {
         const failedTokens: string[] = [];
-        response.responses.forEach((resp, idx) => {
+        response.responses.forEach((resp: any, idx: number) => {
           if (!resp.success) {
             failedTokens.push(tokens[idx]);
           }
@@ -83,25 +64,33 @@ class PushServiceImpl {
 
       return response.successCount > 0;
     } catch (error) {
-      console.error('Push send error:', error);
+      console.error('[Push] send error:', error);
       return false;
     }
   }
 
   private async getUserTokens(userId: string): Promise<string[]> {
-    // This would query a UserDevice or PushToken collection
-    // For now, return empty array
-    return [];
+    try {
+      const devices = await UserDevice.find({ userId }).select('fcmToken').lean();
+      return devices.map(d => d.fcmToken);
+    } catch (error) {
+      console.error('[Push] Error fetching user tokens:', error);
+      return [];
+    }
   }
 
   private async removeInvalidTokens(tokens: string[]): Promise<void> {
-    // Remove invalid FCM tokens from database
-    console.log('[Push] Removing invalid tokens:', tokens);
+    if (tokens.length > 0) {
+      console.log(`[Push] Removing ${tokens.length} invalid tokens`);
+      await UserDevice.deleteMany({ fcmToken: { $in: tokens } });
+    }
   }
 
   async sendToTopic(topic: string, options: Omit<PushOptions, 'userId'>): Promise<boolean> {
-    this.init();
-    if (!this.initialized) return false;
+    if (!isFirebaseInitialized()) {
+      console.log('[Push] Firebase not configured, skipping topic push');
+      return false;
+    }
 
     try {
       await admin.messaging().send({

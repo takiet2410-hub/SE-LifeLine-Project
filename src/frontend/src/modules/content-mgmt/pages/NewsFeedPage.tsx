@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Filter, Calendar, User, Clock, Eye, Download, Tag, Search, Activity, HeartPulse, Megaphone, Inbox } from 'lucide-react';
+import { ArrowLeft, Search, Activity, HeartPulse, Megaphone, Inbox } from 'lucide-react';
 import { articleApi } from '../services/articleApi';
 import { ArticleCard } from '../components/ArticleCard';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
 import { EmptyState } from '../../../components/common/EmptyState';
 import type { Article, ArticleCategory } from '../types/article.types';
-import { format } from 'date-fns';
+
 
 export const NewsFeedPage: React.FC = () => {
   const navigate = useNavigate();
@@ -59,19 +59,7 @@ export const NewsFeedPage: React.FC = () => {
     }
   };
 
-  const categories: (ArticleCategory | 'All')[] = ['All', 'News', 'Alert', 'Health Tips', 'Campaign'];
 
-  const formatDate = (dateStr: string) => format(new Date(dateStr), 'dd/MM/yyyy');
-
-  const getCategoryColor = (category: ArticleCategory) => {
-    switch (category) {
-      case 'News': return 'bg-blue-50 text-blue-700 border-blue-100';
-      case 'Alert': return 'bg-red-50 text-red-700 border-red-100';
-      case 'Health Tips': return 'bg-green-50 text-green-700 border-green-100';
-      case 'Campaign': return 'bg-purple-50 text-purple-700 border-purple-100';
-      default: return 'bg-gray-50 text-gray-700 border-gray-100';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -111,7 +99,7 @@ export const NewsFeedPage: React.FC = () => {
             </div>
             
             <div className="flex flex-wrap gap-2 md:flex-nowrap">
-              {['All', 'News', 'Alert', 'Health Tips', 'Campaign'].map((cat) => (
+              {['All', 'News', 'Alert', 'Educational', 'Campaign'].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => handleCategoryChange(cat as any)}
@@ -153,7 +141,7 @@ export const NewsFeedPage: React.FC = () => {
                 setCategoryFilter('All');
               } : undefined}
               icon={
-                categoryFilter === 'Health Tips' ? <HeartPulse className="w-8 h-8 text-green-500" /> :
+                categoryFilter === 'Educational' ? <HeartPulse className="w-8 h-8 text-green-500" /> :
                 categoryFilter === 'Campaign' ? <Megaphone className="w-8 h-8 text-purple-500" /> :
                 categoryFilter === 'Alert' ? <Activity className="w-8 h-8 text-red-500" /> :
                 <Inbox className="w-8 h-8" />

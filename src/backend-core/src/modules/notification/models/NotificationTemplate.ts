@@ -17,7 +17,7 @@ export type NotificationEventType =
   | 'DonationCompleted'
   | 'EligibilityCheckFailed';
 
-export type NotificationChannel = 'in-app' | 'email' | 'push';
+import { NotificationChannel } from './Notification';
 
 export interface INotificationTemplate extends Document {
   eventType: NotificationEventType;
@@ -59,7 +59,7 @@ const NotificationTemplateSchema = new Schema<INotificationTemplate>({
   subject: { type: String, required: true, maxlength: 200 },
   bodyHtml: { type: String, required: true },
   bodyText: { type: String, required: true },
-  channels: [{ type: String, enum: ['in-app', 'email', 'push'], default: ['in-app'] }],
+  channels: [{ type: String, enum: ['InApp', 'Email', 'WebPush'], default: ['InApp'] }],
   isActive: { type: Boolean, default: true },
   variables: [{ type: String }],
 }, {

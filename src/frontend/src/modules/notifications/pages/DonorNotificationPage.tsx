@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Filter, AlertTriangle, Calendar, Megaphone, CheckCircle2 } from 'lucide-react';
+import { Bell, Search, AlertTriangle, Calendar, Megaphone } from 'lucide-react';
 import { apiService } from '../../../services/apiClient';
 import type { NotificationData } from '../../../services/mockData';
 import { NotificationPreferences } from '../components/NotificationPreferences';
@@ -13,24 +13,21 @@ export const DonorNotificationPage: React.FC = () => {
   const [filter, setFilter] = useState<'All' | 'Alerts' | 'Updates'>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [errorText, setErrorText] = useState<string>('');
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      // Mock API call to get user notifications
-      const data = await apiService.getNotifications({});
-      // Ensure we have some SOS mock if needed for display purposes
+      const result = await apiService.getNotifications({});
+      const data = result.data;
+      // Sort: SOS first, then by date
       const sorted = data.sort((a, b) => {
         if (a.type === 'SOS' && b.type !== 'SOS') return -1;
         if (a.type !== 'SOS' && b.type === 'SOS') return 1;
         return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
       });
       setNotifications(sorted);
-      setErrorText('SUCCESS: Fetched ' + sorted.length + ' items.');
     } catch (err: any) {
       console.error('Failed to fetch notifications:', err);
-      setErrorText('ERROR: ' + (err.message || String(err)));
     } finally {
       setLoading(false);
     }
@@ -42,7 +39,11 @@ export const DonorNotificationPage: React.FC = () => {
 
   const handleNotificationClick = async (notif: NotificationData) => {
     if (!notif.readAt) {
-      await apiService.markNotificationAsRead(notif._id);
+      try {
+        await apiService.markNotificationAsRead(notif._id);
+      } catch (err) {
+        console.warn('Failed to mark notification as read:', err);
+      }
       setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, readAt: new Date().toISOString() } : n));
     }
 
@@ -50,7 +51,7 @@ export const DonorNotificationPage: React.FC = () => {
       navigate('/sos-alerts');
     } else if ((notif.type as string) === 'Appointment') {
       navigate('/my-appointments');
-    } else if (notif.type === 'Campaign') {
+    } else if (notif.type === 'Campaign' || notif.type === 'Routine') {
       navigate('/news');
     }
   };
@@ -91,9 +92,7 @@ export const DonorNotificationPage: React.FC = () => {
                 className="w-full pl-9 pr-4 py-2 bg-[#f8f9fa] border border-[#f1f3f5] rounded-xl text-[13px] focus:outline-none focus:border-[#93000b]"
               />
             </div>
-          
-          <div className="mt-2 text-sm font-bold text-red-500">DEBUG: {errorText}</div>
-          
+
           <div className="flex bg-[#f8f9fa] p-1 rounded-xl border border-[#f1f3f5]">
               {['All', 'Alerts', 'Updates'].map((f) => (
                 <button
@@ -125,11 +124,13 @@ export const DonorNotificationPage: React.FC = () => {
                   key={notif._id}
                   onClick={() => handleNotificationClick(notif)}
                   className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                    isSOS
-                      ? 'bg-red-50/70 border-red-300 border-l-4 border-l-[#93000b] hover:bg-red-100'
-                      : isUnread
-                      ? 'bg-white border-[#f1f3f5] border-l-4 border-l-[#1a1a2e] hover:bg-slate-50'
-                      : 'bg-white border-[#f1f3f5] hover:bg-slate-50 opacity-80'
+                    isUnread
+                      ? isSOS
+                        ? 'bg-red-50/70 border-red-300 border-l-4 border-l-[#93000b] hover:bg-red-100 shadow-sm'
+                        : 'bg-white border-[#f1f3f5] border-l-4 border-l-[#1a1a2e] hover:bg-slate-50 shadow-sm'
+                      : isSOS
+                        ? 'bg-white border-[#f1f3f5] hover:bg-slate-50 opacity-80 border-l-4 border-l-red-200'
+                        : 'bg-white border-[#f1f3f5] hover:bg-slate-50 opacity-80'
                   }`}
                 >
                   <div className="flex items-start gap-4">

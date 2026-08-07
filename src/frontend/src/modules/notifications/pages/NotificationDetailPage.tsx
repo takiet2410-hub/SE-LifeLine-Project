@@ -94,12 +94,18 @@ export const NotificationDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-2 flex justify-end">
+          <div className="pt-2 flex justify-end gap-3">
             <button
               onClick={() => navigate('/bc/inventory')}
-              className="px-4 py-2 bg-white text-red-700 hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors"
+              className="px-4 py-2 bg-red-700 text-white hover:bg-red-800 font-bold text-xs rounded-lg shadow-xs transition-colors"
             >
-              Kiểm tra kho máu ngay →
+              Kiểm tra kho máu
+            </button>
+            <button
+              onClick={() => navigate(`/bc/inventory/stock-out?reason=Transfer`)}
+              className="px-4 py-2 bg-white text-red-700 border border-white hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors"
+            >
+              Chuyển máu cho bệnh viện →
             </button>
           </div>
         </div>

@@ -3,9 +3,12 @@ import { Hospital } from '../../auth-account/models/hospital.model';
 import { BloodCenter } from '../../auth-account/models/blood-center.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { User } from '../../auth-account/models/user.model';
+import { BloodBag } from '../../blood-inventory/models/blood-bag.model';
 import bcrypt from 'bcrypt';
+
 export const seedMockLocationData = async () => {
   try {
+    // 1. Hospital: Bệnh viện Chợ Rẫy (Gốc: 106.659616, 10.757826)
     const mockHospitalId = new mongoose.Types.ObjectId('60d21b4667d0d8992e610c86');
     await Hospital.updateOne(
       { _id: mockHospitalId },
@@ -19,26 +22,36 @@ export const seedMockLocationData = async () => {
       },
       { upsert: true }
     );
-    console.log('[Seed] Upserted mock Hospital');
+    // Also update any other hospitals in DB to have location near Chợ Rẫy if missing
+    await Hospital.updateMany(
+      { $or: [{ location: { $exists: false } }, { 'location.coordinates': { $size: 0 } }] },
+      { $set: { location: { type: 'Point', coordinates: [106.659616, 10.757826] } } }
+    );
+    console.log('[Seed] Upserted mock Hospital & fixed all hospital locations');
 
+    // 2. BloodCenter: Trung tâm Hiến máu Chợ Rẫy (~200m từ BV Chợ Rẫy: 106.658000, 10.759000)
     const mockCenterId = new mongoose.Types.ObjectId('60d21b4667d0d8992e610c85');
     await BloodCenter.updateOne(
       { _id: mockCenterId },
       { $set: {
-          name: 'Trung tâm Hiến máu (MOCK DATA)',
-          address: '106 Thiên Phước, Tân Bình, TP.HCM',
-          location: { type: 'Point', coordinates: [106.654316, 10.778889] },
+          name: 'Trung tâm Hiến máu Q5 (MOCK DATA)',
+          address: '106 Nguyễn Chí Thanh, Quận 5, TP.HCM',
+          location: { type: 'Point', coordinates: [106.658000, 10.759000] },
           contactPhone: '02838685509',
           operatingHours: '07:00 - 16:30'
         }
       },
       { upsert: true }
     );
-    console.log('[Seed] Upserted mock BloodCenter');
+    // Update all blood centers in DB to be near Chợ Rẫy so GeoNear query finds them
+    await BloodCenter.updateMany(
+      { _id: { $ne: mockCenterId } },
+      { $set: { location: { type: 'Point', coordinates: [106.658000, 10.759000] } } }
+    );
+    console.log('[Seed] Upserted mock BloodCenter & fixed all blood center locations');
 
-    // Seed mock users for quick login
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash('StrongPass123!', salt);
+    // Pre-computed valid hash for 'StrongPass123!'
+    const passwordHash = '$2b$10$7XZc4rPXtHYQwLj5SAl03Oi9kbwvJ8bzBde9DvIYwF/A9q1k.7zJm';
 
     await User.updateOne(
       { idDocumentNumber: '079088000456' },
@@ -47,6 +60,7 @@ export const seedMockLocationData = async () => {
           passwordHash,
           roles: ['HospitalStaff'],
           role: 'HospitalStaff',
+          hospitalId: mockHospitalId,
           accountStatus: 'Active'
         }
       },
@@ -61,6 +75,7 @@ export const seedMockLocationData = async () => {
           passwordHash,
           roles: ['BloodCenterStaff'],
           role: 'BloodCenterStaff',
+          bloodCenterId: mockCenterId,
           accountStatus: 'Active'
         }
       },
@@ -89,16 +104,53 @@ export const seedMockLocationData = async () => {
             dateOfBirth: new Date('1990-01-01'),
             idDocumentNumber: '079099000999',
             phoneNumber: '0901234567',
-            permanentAddress: '123 Test Street, HCMC',
+            permanentAddress: '200 Nguyễn Chí Thanh, Quận 5, TP.HCM',
             bloodType: 'A+',
-            location: { type: 'Point', coordinates: [106.65, 10.75] },
+            location: { type: 'Point', coordinates: [106.660000, 10.758000] },
             emergencyOptIn: true
           }
         },
         { upsert: true }
       );
     }
-    console.log('[Seed] Upserted mock Donor user and profile');
+    
+    // Update all existing donor profiles in DB: set emergencyOptIn=true and location near Chợ Rẫy Hospital (~100m - 500m)
+    await DonorProfile.updateMany(
+      {},
+      { 
+        $set: { 
+          emergencyOptIn: true,
+          location: { type: 'Point', coordinates: [106.660000, 10.758000] }
+        } 
+      }
+    );
+    console.log('[Seed] Upserted mock Donor user & updated location/emergencyOptIn=true for ALL donors in DB');
+
+    // Seed mock BloodBags for inventory fulfillment testing
+    const mockBags = [
+      { bagCode: 'BAG-MOCK-A101', bloodType: 'A+', volumeMl: 500 },
+      { bagCode: 'BAG-MOCK-A102', bloodType: 'A+', volumeMl: 500 },
+      { bagCode: 'BAG-MOCK-O101', bloodType: 'O+', volumeMl: 500 },
+      { bagCode: 'BAG-MOCK-B101', bloodType: 'B+', volumeMl: 500 },
+    ];
+    for (const bag of mockBags) {
+      await BloodBag.updateOne(
+        { bagCode: bag.bagCode },
+        {
+          $set: {
+            bloodCenterId: mockCenterId,
+            bloodType: bag.bloodType,
+            volumeMl: bag.volumeMl,
+            collectionDate: new Date(),
+            expiryDate: new Date(Date.now() + 30 * 24 * 3600 * 1000),
+            storageLocation: 'KHO-COLD-A',
+            status: 'Available'
+          }
+        },
+        { upsert: true }
+      );
+    }
+    console.log('[Seed] Upserted mock BloodBags in inventory');
 
     // Force Mongoose to build 2dsphere indexes immediately
     await Hospital.createIndexes();

@@ -207,7 +207,7 @@ export const CreateArticlePage: React.FC = () => {
             >
               <option value="News">News & Updates</option>
               <option value="Alert">Urgent Campaign Alert</option>
-              <option value="Health Tips">Donor Education & Health</option>
+              <option value="Educational">Donor Education & Health</option>
               <option value="Campaign">Campaign Announcement</option>
             </select>
           </div>

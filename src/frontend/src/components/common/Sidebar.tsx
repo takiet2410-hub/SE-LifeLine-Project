@@ -11,16 +11,31 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { LifeLineLogo } from '../../modules/auth-account/components/LifeLineLogo';
+import { apiService } from '../../services/apiClient';
+import { useState, useEffect } from 'react';
 
 interface SidebarProps {
   unreadNotifCount?: number;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount = 3 }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnreadCount }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const userName = user?.fullName || 'BS. Nguyễn Văn A';
+  
+  const [unreadCount, setUnreadCount] = useState(initialUnreadCount || 0);
+
+  useEffect(() => {
+    if (initialUnreadCount !== undefined) return;
+    const fetchCount = async () => {
+      try {
+        const count = await apiService.getUnreadCount();
+        setUnreadCount(count);
+      } catch (err) {}
+    };
+    fetchCount();
+  }, [initialUnreadCount]);
 
   const words = userName.trim().split(/\s+/);
   let initials = 'BC';
@@ -68,7 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount = 3 }) => {
       to: '/bc/notifications',
       label: t('common.notifications') || 'Notifications & SOS',
       icon: Bell,
-      badge: unreadNotifCount > 0 ? unreadNotifCount : undefined,
+      badge: unreadCount > 0 ? unreadCount : undefined,
     },
   ];
 

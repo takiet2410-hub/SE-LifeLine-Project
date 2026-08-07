@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
+    "build": "tsc",
+    "seed:prod": "tsx src/scripts/seed-prod-data.ts",
     "test": "jest src/modules/booking/__tests__ --verbose",
     "test:booking:export": "cmd /c \"jest src/modules/booking/__tests__ --verbose > ../../docs/test/jest_booking_results.log 2>&1\""
   },
@@ -14,11 +16,15 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@bull-board/api": "^8.6.0",
+    "@bull-board/express": "^8.6.0",
     "bcrypt": "^6.0.0",
+    "bullmq": "^6.0.9",
     "cloudinary": "^2.10.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "firebase-admin": "^14.2.0",
+    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.4",
     "node-cron": "^4.6.0",

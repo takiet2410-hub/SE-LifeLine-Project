@@ -1,5 +1,5 @@
 // src/modules/auth-account/models/user.model.ts
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IUser extends Document {
   idDocumentNumber: string;
@@ -10,7 +10,7 @@ export interface IUser extends Document {
   role?: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
   accountStatus: 'PendingVerification' | 'Active' | 'Suspended';
   failedLoginAttempts: number;
-  lockUntil?: Date; // Giữ lại phục vụ cho logic khóa tài khoản tạm thời
+  lockUntil?: Date;
 
   // Dành cho luồng Đăng ký & Xác minh Email
   verificationToken?: string; 
@@ -19,6 +19,9 @@ export interface IUser extends Document {
   // Dành cho luồng Quên mật khẩu
   resetToken?: string; 
   resetTokenExpiry?: Date;
+
+  // BloodCenterStaff only
+  bloodCenterId?: Types.ObjectId;
 
   lastLoginAt?: Date;
   sessionExpiresAt?: Date;
@@ -59,6 +62,8 @@ const userSchema = new Schema<IUser>({
   verificationTokenExpiry: { type: Date },
   resetToken: { type: String, index: true }, // Đánh index để truy vấn nhanh khi reset password
   resetTokenExpiry: { type: Date },
+
+  bloodCenterId: { type: Schema.Types.ObjectId, ref: 'BloodCenter', index: true },
   
   lastLoginAt: { type: Date },
   sessionExpiresAt: { type: Date }

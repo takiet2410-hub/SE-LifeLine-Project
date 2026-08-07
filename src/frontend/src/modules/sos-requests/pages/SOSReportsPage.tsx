@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sosApi, type SOSRequest, type SOSStatus, type SOSUrgency } from '../services/sosApi';
 import { SOSStatusBadge } from '../components/SOSStatusBadge';
-import { ArrowLeft, Download, Calendar, Filter, BarChart2, RefreshCw, ArrowUp, ArrowDown, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, Download, Calendar, Filter, BarChart2, RefreshCw, ArrowDown, Minus, Plus } from 'lucide-react';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 
 interface SOSReportFilters {
@@ -122,10 +122,6 @@ export const SOSReportsPage: React.FC = () => {
     fetchReports();
   }, [filters, currentPage]);
 
-  const handleDateRangeChange = (range: { from: Date; to: Date }) => {
-    setFilters(prev => ({ ...prev, dateRange: range }));
-    setCurrentPage(1);
-  };
 
   const handleFilterChange = (key: keyof SOSReportFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));

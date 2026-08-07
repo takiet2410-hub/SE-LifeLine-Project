@@ -57,7 +57,6 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label }) => {
     CheckedIn: 'bg-amber-50 text-amber-700 border-amber-300 font-medium',
     Eligible: 'bg-emerald-50 text-emerald-700 border-emerald-300 font-semibold',
     Examining: 'bg-purple-50 text-purple-700 border-purple-300 font-semibold',
-    Completed: 'bg-emerald-100 text-emerald-800 border-emerald-400 font-bold',
     Ineligible: 'bg-rose-50 text-rose-700 border-rose-300',
 
     // Content statuses

@@ -3,12 +3,10 @@ import { connectDB } from './utils/db.util';
 import { env } from './config/env.config';
 import dns from 'node:dns';
 dns.setServers(['8.8.8.8', '1.1.1.1']);
-import { seedMockLocationData } from './modules/sos-request/jobs/seed-mock-data';
 import { initCampaignStatusJob } from './modules/campaign/jobs/campaign-status.job';
 
 const startServer = async () => {
   await connectDB();
-  await seedMockLocationData();
   initCampaignStatusJob();
 
   app.listen(env.PORT, () => {
@@ -17,3 +15,4 @@ const startServer = async () => {
 };
 
 startServer();
+

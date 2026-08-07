@@ -31,7 +31,7 @@
 
 ---
 
-## Phase 3: User Story 1 - View Blood Inventory Dashboard (BC-UC-12) 🎯 MVP
+## Phase 3: User Story 1 - View Blood Inventory (BC-UC-12) 🎯 MVP
 
 **Goal**: Allow Blood Center Staff to view real-time inventory summary cards and browse paginated blood bag table.
 
@@ -45,7 +45,7 @@
 
 ---
 
-## Phase 4: User Story 2 - View / Update Blood Bag Status (BC-UC-13)
+## Phase 4: User Story 2 - View / Update Blood Bag Status (BC-UC-14)
 
 **Goal**: Display comprehensive details of a blood bag (medical screening, storage, donor ref) and allow status updates with audit trail.
 
@@ -58,7 +58,7 @@
 
 ---
 
-## Phase 5: User Story 3 - Stock In Blood Bags (BC-UC-14)
+## Phase 5: User Story 3 - Stock In Blood Bags (BC-UC-15)
 
 **Goal**: Enable staff to batch receive new blood bags into active inventory with collection & expiry validation.
 
@@ -70,7 +70,7 @@
 
 ---
 
-## Phase 6: User Story 4 - Stock Out Blood Bags with FEFO (BC-UC-15)
+## Phase 6: User Story 4 - Stock Out Blood Bags with FEFO (BC-UC-16)
 
 **Goal**: Dispatch or discard selected blood bags with FEFO recommendation panel (highlighting bags expiring in ≤ 7 days).
 
@@ -83,7 +83,7 @@
 
 ---
 
-## Phase 7: User Story 5 - View Blood Inventory Statistics (BC-UC-16)
+## Phase 7: User Story 5 - View Blood Inventory Statistics (BC-UC-17)
 
 **Goal**: Provide Chief Hematologists with visual analytics charts and stock threshold indicators.
 
@@ -96,7 +96,7 @@
 
 ---
 
-## Phase 8: User Story 6 - Filter & Search Inventory Records (BC-UC-17)
+## Phase 8: User Story 6 - Search Blood Bag (BC-UC-13)
 
 **Goal**: Provide a reusable filter and search component across inventory screens.
 

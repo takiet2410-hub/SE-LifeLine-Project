@@ -9,14 +9,7 @@ export interface StatusHistoryEntry {
   reason?: string;
 }
 
-export interface MedicalTestResults {
-  hiv: 'Negative' | 'Positive';
-  hbv: 'Negative' | 'Positive';
-  hcv: 'Negative' | 'Positive';
-  syphilis: 'Negative' | 'Positive';
-  verifiedAt: string;
-}
-
+export type MedicalTestResult = 'Pass' | 'Rejected' | 'Pending';
 export interface BloodBagItem {
   _id: string;
   bagCode: string;
@@ -31,7 +24,7 @@ export interface BloodBagItem {
   donorSourceId?: string;
   donorName?: string;
   campaignSourceId?: string;
-  testResults?: MedicalTestResults;
+  testResult?: MedicalTestResult;
   statusHistory: StatusHistoryEntry[];
 }
 

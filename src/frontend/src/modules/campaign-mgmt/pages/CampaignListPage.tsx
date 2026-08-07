@@ -30,6 +30,8 @@ export const CampaignListPage: React.FC = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
+  const [stats, setStats] = useState({ totalCount: 0, activeCount: 0, totalRegistered: 0, totalCapacity: 0 });
+  const [totalPages, setTotalPages] = useState(1);
   const pageSize = 6;
 
   useEffect(() => {
@@ -53,9 +55,30 @@ export const CampaignListPage: React.FC = () => {
   const fetchCampaigns = async () => {
     setLoading(true);
     try {
-      const data = await apiService.getCampaigns({ search: debouncedSearch, status: statusFilter });
-      const items = Array.isArray(data) ? data : ((data as any)?.data || []);
+      const response: any = await apiService.getCampaigns({ 
+        search: debouncedSearch, 
+        status: statusFilter,
+        page: currentPage,
+        limit: pageSize
+      });
+      
+      const items = Array.isArray(response?.data) ? response.data : [];
       setCampaigns(items);
+      
+      if (response?.pagination) {
+        setTotalPages(response.pagination.totalPages || 1);
+      } else {
+        setTotalPages(1);
+      }
+      
+      if (response?.stats) {
+        setStats({
+          totalCount: response.stats.totalCount || 0,
+          activeCount: response.stats.activeCount || 0,
+          totalRegistered: response.stats.totalRegistered || 0,
+          totalCapacity: response.stats.totalCapacity || 0
+        });
+      }
     } catch (err) {
       console.error('Error fetching campaigns:', err);
       setCampaigns([]);
@@ -66,23 +89,19 @@ export const CampaignListPage: React.FC = () => {
 
   useEffect(() => {
     fetchCampaigns();
+  }, [debouncedSearch, statusFilter, currentPage]);
+
+  useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearch, statusFilter]);
 
-  const totalPages = Math.ceil(campaigns.length / pageSize) || 1;
-  const paginatedCampaigns = campaigns.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginatedCampaigns = campaigns;
 
-  // Calculated Summary KPI Metrics
-  const totalCount = campaigns.length;
-  const activeCount = campaigns.filter((c) => c.status === 'Active').length;
-  const totalRegistered = campaigns.reduce(
-    (sum, c) => sum + (c.registeredCount || (c as any).capacityProgress?.registered || 0),
-    0
-  );
-  const totalCapacity = campaigns.reduce(
-    (sum, c) => sum + (c.capacity || (c as any).capacityProgress?.total || 0),
-    0
-  );
+  // Calculated Summary KPI Metrics from Backend Stats
+  const totalCount = stats.totalCount;
+  const activeCount = stats.activeCount;
+  const totalRegistered = stats.totalRegistered;
+  const totalCapacity = stats.totalCapacity;
 
   const columns: Column<CampaignData>[] = [
     {

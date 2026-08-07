@@ -9,175 +9,410 @@
 
 ## Executive Summary
 
-The Blood Inventory Management feature equips Blood Center Staff, Medical Supervisors, and Chief Hematologists with comprehensive capabilities to monitor, receive, inspect, dispatch, and analyze blood inventory.
+The Blood Inventory Management feature equips Blood Center Staff, Medical Supervisors, and Chief Hematologists with comprehensive capabilities to monitor, receive, inspect, dispatch, and analyze blood inventory. 
+It revolves around a central Inventory Dashboard, from which all other operations (Search, Status Edit, Stock In, Stock Out, Statistics) branch out.
+
+### Complete Blood Inventory & Emergency Coordination Workflow
+
+```text
+                    ┌──────────────────────┐
+                    │ Blood Center Staff   │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │ BC-UC-12             │
+                    │ View Blood Inventory │
+                    └──────────┬───────────┘
+                               │
+          ┌────────────────────┼────────────────────┐
+          │                    │                    │
+          ▼                    ▼                    ▼
+ ┌────────────────┐   ┌─────────────────┐  ┌──────────────────┐
+ │ BC-UC-13       │   │ BC-UC-14        │  │ BC-UC-17         │
+ │ Search Bag     │   │ Edit Bag Status │  │ View Statistics  │
+ └───────┬────────┘   └────────┬────────┘  └────────┬─────────┘
+         │                     │                    │
+         │                     │                    ├── Low Stock
+         │                     │                    └── Near Expiry
+         │                     │
+         └──────────┬──────────┘
+                    │
+          ┌─────────┴─────────┐
+          ▼                   ▼
+ ┌────────────────┐   ┌────────────────┐
+ │ BC-UC-15       │   │ BC-UC-16       │
+ │ Stock In       │   │ Stock Out      │
+ └───────┬────────┘   └───────┬────────┘
+         │                    │
+         ▼                    ▼
+ Generate Bag ID        Validate Bags
+ Status = Available     Select Reason
+         │                    │
+         │                    ▼
+         │              Update Status
+         │                    │
+         └──────────┬─────────┘
+                    ▼
+          ┌────────────────────┐
+          │ Current Inventory  │
+          │ Updated            │
+          └─────────┬──────────┘
+                    │
+                    │ Inventory data
+                    │
+                    ▼
+          ┌─────────────────────┐
+          │ SYS-UC-04           │
+          │ Evaluate &          │
+          │ Prioritize SOS      │
+          └──────────┬──────────┘
+                     │
+             ┌───────┴────────┐
+             ▼                ▼
+       Blood Centers        Donors
+       ranked by           matched by
+       inventory +         distance +
+       compatibility       eligibility
+             │                │
+             └───────┬────────┘
+                     ▼
+             ┌────────────────┐
+             │ SYS-UC-05      │
+             │ Broadcast SOS  │
+             └────────────────┘
+```
 
 ---
 
 ## 1. Use Case Specifications
 
-### BC-UC-12: View Blood Inventory Dashboard
+### BC-UC-12: View Blood Inventory
 
-* **Goal**: Provide authorized staff with a real-time overview of current blood inventory counts, health metrics, and a searchable/paginated list of blood bags.
-* **Primary Actor**: Blood Carrier Staff / Medical Supervisor
+* **Goal**: Provide authorized staff with a real-time overview of current blood inventory. This is the entry point of Inventory Management, from which staff can branch out to other use cases.
+* **Primary Actor**: Blood Center Staff / Medical Supervisor
 * **Preconditions**:
-  1. Staff is authenticated with an authorized role (`BloodCenterStaff`, `MedicalSupervisor`, or `Administrator`).
-  2. Backend inventory API endpoint (`GET /api/v1/bc/inventory`) is accessible.
+  1. Staff is logged in to the system.
+  2. Staff has permission to access inventory management.
+  3. Inventory management service is operational.
 * **Main Success Flow**:
-  1. Staff navigates to `/bc/inventory`.
-  2. System fetches summary metrics and paginated blood bag records.
-  3. System renders **Summary Cards**:
-     - Total Blood Bags (count)
-     - Available Bags (count)
-     - Total Volume (ml)
-     - Near-Expiry Count (within 7 days, "Warning" badge)
-     - Low Stock Types Count ("Critical" badge)
-  4. System renders the **Blood Inventory Table** with columns:
-     - Bag ID (`bagCode`)
-     - Blood Type badge (`A+`, `O-`, etc.)
-     - Volume (ml)
-     - Collection Date
-     - Expiry Date (with "Days Remaining" progress bar)
-     - Status badge (`Available`, `Near Expiry`, `Reserved`, `Expired`, `Discarded`)
-     - Storage Location
-     - Actions ("View Detail")
-  5. Top actions bar provides entry points to **Stock In** (`/bc/inventory/stock-in`), **Stock Out** (`/bc/inventory/stock-out`), and **Statistics** (`/bc/inventory/stats`).
-* **Alternate & Error Flows**:
-  * *AF-01 (Server Error)*: API returns 500/503 -> Show error banner with "Retry" button.
-  * *AF-02 (Empty Inventory)*: API returns 0 records -> Show empty state illustration: "No blood bags currently in inventory".
-* **Acceptance Criteria**:
-  * Summary cards accurately aggregate inventory stats.
-  * Days remaining progress bar turns amber when ≤ 7 days, red when 0 days.
-  * Pagination controls work smoothly (10 items per page by default).
-* **UI Mockup Reference**: Figma `INV-LIST` (Inventory Dashboard).
+```text
+Staff
+  │
+  │ Click Inventory
+  ▼
+System
+  │
+  │ Query latest inventory
+  ▼
+MongoDB
+  │
+  │ Blood Bag records
+  ▼
+System
+  │
+  ├── Blood Bag ID
+  ├── Blood Type
+  ├── Volume
+  ├── Collection Date
+  ├── Expiry Date
+  ├── Status
+  └── Storage Location
+  │
+  ▼
+Inventory Page
+```
+  1. System fetches latest inventory data from the database.
+  2. System renders the summary (total blood bags, available blood bags).
+  3. System renders the Blood Bag list with key information: Blood Bag ID, Blood Type, Volume, Collection Date, Expiry Date, Status, Storage Location.
+  4. From the Inventory Page, staff can branch out to:
+     - Search (BC-UC-13)
+     - Select Bag to view/edit (BC-UC-14)
+     - Stock In (BC-UC-15)
+     - Stock Out (BC-UC-16)
+     - Statistics (BC-UC-17)
 
 ---
 
-### BC-UC-13: View / Update Blood Bag Status
+### BC-UC-13: Search Blood Bag
 
-* **Goal**: Display full information (medical screening, storage, donor reference) for a specific blood bag and allow authorized staff to update its status.
-* **Primary Actor**: Blood Carrier Staff
-* **Preconditions**:
-  1. Blood bag exists in the database with a valid ID (`bagId`).
+* **Goal**: Act as an extension point of BC-UC-12 and BC-UC-16, allowing staff to quickly find specific blood bags using various criteria.
+* **Primary Actor**: Blood Center Staff
 * **Main Success Flow**:
-  1. Staff clicks a blood bag row on the dashboard or navigates to `/bc/inventory/:bagId`.
-  2. System loads blood bag details:
-     - **Header Info**: Bag ID, Blood Type, Status badge, Volume (ml), Collection & Expiry dates, Days remaining.
-     - **Medical Screening Results**: HIV-1/2, HBV, HCV, Syphilis with verification date and result badges (`Negative` / `Positive`).
-     - **Storage & Logistics**: Location name, Shelf/Position, Temperature (°C), Stability status (`Stable` / `Alert`).
-     - **Donor Reference**: Donor Name, Donor ID, link to donor profile.
-  3. Staff clicks **"Edit Status"** button.
-  4. System opens status update dialog with target status dropdown (`Available`, `Reserved`, `Expired`, `Discarded`) and mandatory reason field.
-  5. Staff selects new status, enters reason, and clicks "Save Changes".
-  6. System updates status via `PUT /api/v1/bc/inventory/:bagId/status`, appends entry to `statusHistory` timeline, and updates UI.
+```text
+Inventory / Stock Out
+   │
+   ▼
+Click Search / Filter
+   │
+   ▼
+Enter keyword OR Select filters
+   │
+   ▼
+Click Search
+   │
+   ▼
+System queries database
+   │
+   ▼
+Filter matching blood bags
+   │
+   ▼
+Display result table
+   │
+   ├── Bag ID
+   ├── Blood Type
+   ├── Volume
+   ├── Intake Date
+   ├── Expiry Date
+   └── Status
+   │
+   ▼
+Staff selects bag
+   │
+   ▼
+BC-UC-14 View/Edit Blood Bag Status OR BC-UC-16 Select for Stock Out
+```
 * **Alternate & Error Flows**:
-  * *AF-01 (Expired Bag)*: Current status is `Expired` -> "Edit Status" button is disabled; status cannot be set back to `Available`.
-  * *AF-02 (Invalid Transition)*: Staff attempts invalid transition (e.g. `Discarded` -> `Available`) -> System shows inline error: "Invalid status transition".
+  * *No matching records*: If no records found, display "No matching blood bags found." Staff can adjust criteria and search again.
 * **Acceptance Criteria**:
-  * All 4 screening test results are displayed with verification timestamp.
-  * Status changes are recorded in `statusHistory` with staff name, timestamp, and reason.
-* **UI Mockup Reference**: Figma `INV-BAG-DETAIL` & `INV-BAG-EDIT-STATUS`.
+  * Search results must be returned within 2 seconds.
+  * Search results must reflect the correct current inventory state.
+  * Can be used to narrow down the list before selecting blood bags in Stock Out (BC-UC-16).
+  * Staff can search by: Blood Bag ID, Blood type, Intake/collection date, Expiry date, Status, Donation source / related campaign.
 
 ---
 
-### BC-UC-14: Stock In (Receive Blood Bags)
+### BC-UC-14: View/Edit Blood Bag Status
 
-* **Goal**: Register newly collected or transferred blood bags into active inventory in batch.
-* **Primary Actor**: Blood Carrier Staff
-* **Preconditions**:
-  1. Staff navigates to `/bc/inventory/stock-in`.
+* **Goal**: Display details for a selected blood bag and allow authorized staff to update its status based on valid transitions.
+* **Primary Actor**: Blood Center Staff
 * **Main Success Flow**:
-  1. System displays Stock In multi-row form grid.
-  2. Staff adds one or more rows. Each row requires:
-     - Blood Type (dropdown: `A+`, `A-`, `B+`, `B-`, `AB+`, `AB-`, `O+`, `O-`)
-     - Volume (ml, positive integer)
-     - Collection Date (date picker)
-     - Expiry Date (date picker, auto-suggested 35/42 days based on component)
-     - Location (dropdown: `Central Storage`, `Mobile Unit A`, `Donor Center`)
-  3. Staff clicks **"+ Add Row"** to append additional bags or trash icon to remove rows.
-  4. Staff clicks **"Confirm & Save"**.
-  5. System validates all fields (Volume > 0, Expiry Date > Collection Date).
-  6. System submits payload via `POST /api/v1/bc/inventory/stock-in`, auto-generates `bagCode` for each, sets initial status to `Available`, and redirects to inventory dashboard with success toast.
-* **Alternate & Error Flows**:
-  * *AF-01 (Validation Failure)*: Invalid dates or volume ≤ 0 -> Highlight affected input cells in red; display error message; prevent submission.
-  * *AF-02 (Cancel Entry)*: Staff clicks "Cancel" with unsubmitted data -> Display confirmation modal: "Discard unsaved entries?".
+```text
+Select Blood Bag
+       │
+       ▼
+Display Blood Bag Details
+       │
+       ├── Bag ID
+       ├── Blood Type
+       ├── Volume
+       ├── Collection Date
+       ├── Expiry Date
+       ├── Donor Source
+       ├── Test Results
+       ├── Current Status
+       └── Status Change History
+       │
+       ▼
+Click "Edit Status"
+       │
+       ▼
+System displays valid statuses based on current status
+       │
+       ▼
+Staff selects new status
+       │
+       ▼
+Click Save
+       │
+       ▼
+System validates transition
+       │
+       ├── Invalid ──► Error
+       │
+       ▼ Valid
+Update Blood Bag Status
+       │
+       ▼
+Record Audit Log
+       │
+       ▼
+Success
+```
 * **Acceptance Criteria**:
-  * Supports single or multi-row batch entry.
-  * Validation executes atomically (all rows must pass before saving).
-* **UI Mockup Reference**: Figma `INV-STOCK-IN` & `INV-STOCK-IN-CONFIRM`.
+  * System only displays valid target statuses based on the current status.
+  * Status history is displayed in chronological order.
+  * Examples of lifecycles: Stock In -> Available -> Reserved -> Used. OR Available -> Expired -> Discarded.
 
 ---
 
-### BC-UC-15: Stock Out (Dispatch / Discard Blood Bags)
+### BC-UC-15: Stock In
 
-* **Goal**: Select and dispatch or discard blood bags from inventory utilizing First Expired, First Out (FEFO) guidance.
-* **Primary Actor**: Blood Carrier Staff / Medical Supervisor
-* **Preconditions**:
-  1. Staff opens `/bc/inventory/stock-out`.
+* **Goal**: Put new blood bags into the available inventory. Staff inputs information and system automatically generates IDs.
+* **Primary Actor**: Blood Center Staff
 * **Main Success Flow**:
-  1. System loads available blood bags sorted by expiry date ascending (`FEFO`).
-  2. System renders **FEFO Recommendation Panel** at top highlighting bags expiring within 7 days.
-  3. Staff can click **"Select All Recommended"** or manually select bags via table checkboxes.
-  4. Selected count and total volume update in summary panel.
-  5. Staff selects **Stock Out Reason** (dropdown: `Hospital Dispatch`, `Emergency Transport`, `Expired Disposal`, `Quality Quarantine`) and optional notes.
-  6. Staff clicks **"Confirm Stock Out"**.
-  7. System submits request via `POST /api/v1/bc/inventory/stock-out`, updates status of selected bags, logs transaction, and shows completion toast.
-* **Alternate & Error Flows**:
-  * *AF-01 (No Selection)*: Staff clicks confirm without selecting any bags -> Show warning message: "Please select at least one blood bag".
-  * *AF-02 (Quarantined Bag Selected)*: Selected bag has `Quarantined` status -> Block dispatch for that bag unless reason is `Quality Quarantine`.
-* **Acceptance Criteria**:
-  * FEFO recommendation panel displays bags near expiry (≤ 7 days).
-  * Multi-select checkboxes accurately maintain selected bag IDs.
-  * Stock Out Reason is mandatory.
-* **UI Mockup Reference**: Figma `INV-STOCK-OUT` & `INV-STOCK-OUT-CONFIRM`.
+```text
+Inventory Page
+      │
+      ▼
+Click "Stock In"
+      │
+      ▼
+Display Stock-In Form
+      │
+      ▼
+Staff enters: Blood Type, Volume, Collection Date, Expiry Date, Storage Location
+      │
+      ▼
+Add another bag? ── YES ──► Add entry
+      │
+      NO
+      ▼
+Click Stock In
+      │
+      ▼
+Validate ALL entries
+      │
+      ├──── Invalid ────► Show validation errors
+      │                       │
+      │                       ▼
+      │                  Staff corrects
+      │                       │
+      │                       └──► Validate again
+      │
+      ▼ Valid
+Generate unique Blood Bag ID
+      │
+      ▼
+Set Status = Available
+      │
+      ▼
+Create Blood Bag records
+      │
+      ▼
+Add to Inventory
+      │
+      ▼
+Success message
+      │
+      ▼
+Return Inventory page
+```
+* **Validation & Bulk Entry**:
+  * **Missing required information**: System highlights field -> Shows message -> Staff fixes -> Submit again.
+  * **Invalid information**: e.g., Negative volume, Expiry date earlier than collection date. Shows error per entry -> Staff fixes -> Submit again.
+  * **Bulk Stock In**: One or more bags can be entered in the same operation. All are validated and created at once.
 
 ---
 
-### BC-UC-16: View Blood Inventory Statistics
+### BC-UC-16: Stock Out
 
-* **Goal**: Provide analytical dashboards, blood group comparison charts, and threshold indicators for strategic decision-making.
+* **Goal**: Remove blood bags from available inventory for dispatch, disposal, or transfer.
+* **Primary Actor**: Blood Center Staff
+* **Main Success Flow**:
+```text
+Inventory
+   │
+   ▼
+Click "Stock Out"
+   │
+   ▼
+System displays eligible blood bags (provides FEFO suggestion)
+   │
+   ├───────────────┐
+   │               │
+   ▼               ▼
+View list       Search (narrow down list)
+                   │
+                   ▼
+             Filter bags
+                   │
+                   └──────┐
+                          ▼
+                   Select blood bag(s)
+                          │
+                          ▼
+                   Enter Stock-Out Reason
+                          │
+                   ┌──────┴──────┐
+                   │             │
+               Dispatch      Disposal (or Transfer)
+                   │             │
+                   └──────┬──────┘
+                          │
+                          ▼
+                  Confirm Stock Out
+                          │
+                          ▼
+                    Validate data
+                          │
+                 ┌────────┴────────┐
+                 │                 │
+              Invalid             Valid
+                 │                 │
+                 ▼                 ▼
+             Show error      Update status
+                 │                 │
+                 └──► Fix       Remove from available inventory
+                                   │
+                                   ▼
+                              Audit Log
+                                   │
+                                   ▼
+                              Success
+                                   │
+                                   ▼
+                            Inventory updated
+```
+* **FEFO in Stock Out**: FEFO suggestion list is displayed clearly to help staff reduce manual selection. The system *suggests* bags but staff manually selects them before confirmation.
+
+---
+
+### BC-UC-17: View Blood Inventory Statistics
+
+* **Goal**: Provide insights and visual charts of the inventory state, with alerts for low stock and near expiry.
 * **Primary Actor**: Chief Hematologist / Medical Supervisor
-* **Preconditions**:
-  1. Staff navigates to `/bc/inventory/stats`.
 * **Main Success Flow**:
-  1. System fetches analytics data via `GET /api/v1/bc/inventory/statistics`.
-  2. System renders **Summary Metrics Cards**:
-     - Total Units (with % change vs last month)
-     - Available Units
-     - Near Expiry Units (urgent warning indicator)
-     - Low Stock Types Count (critical warning indicator)
-  3. System renders **Inventory Analytics Bar Chart** comparing blood groups, with view toggle (`Units` / `Volume` / `Expiry`).
-  4. System renders **Type Distribution Donut Chart** (Rh+ vs Rh- percentage with unit breakdown).
-  5. System renders **Detailed Inventory Status Table** per blood type: Total Units, Near Expiry, Minimum Threshold, Stock Status (`Critical` / `Low Stock` / `Sufficient`).
-* **Alternate & Error Flows**:
-  * *AF-01 (No Data)*: Analytics database is empty -> Render chart shell with message "No inventory statistics available".
+```text
+Inventory Page
+      │
+      ▼
+Click Statistics
+      │
+      ▼
+System retrieves latest inventory statistics
+      │
+      ▼
+Statistics Dashboard
+      │
+      ├── Total Blood Units
+      ├── Available Blood Units
+      ├── Near-Expiry Units
+      └── Low-Stock Blood Types
+      │
+      ▼
+Charts
+      │
+      ├── Number by Blood Type
+      ├── Blood Type Distribution
+      └── Total Volume by Blood Type
+      │
+      ▼
+Summary Table
+      │
+      ├── Total Units
+      ├── Total Volume
+      ├── Near-Expiry Units
+      └── Current Stock Status
+      │
+      ▼
+Warning?
+ ┌────┴─────┐
+ │          │
+YES         NO
+ │          │
+ ▼          ▼
+Low Stock /  Review
+Near Expiry  Statistics
+ │
+ ▼
+Review
+```
 * **Acceptance Criteria**:
-  * Toggle buttons seamlessly switch chart metrics between Units, Volume, and Expiry.
-  * Status badges dynamically reflect stock levels vs predefined thresholds.
-* **UI Mockup Reference**: Figma `INV-STATS`.
-
----
-
-### BC-UC-17: Filter & Search Inventory Records
-
-* **Goal**: Provide unified, reusable search and multi-criteria filtering across inventory lists and selection pages.
-* **Primary Actor**: Blood Carrier Staff / Medical Supervisor / Chief Hematologist
-* **Preconditions**:
-  1. Staff is on Inventory Dashboard (`/bc/inventory`) or Stock Out page (`/bc/inventory/stock-out`).
-* **Main Success Flow**:
-  1. Staff enters Bag ID keyword in search input or selects filter criteria:
-     - Blood Type (`A+`, `A-`, `B+`, `B-`, `AB+`, `AB-`, `O+`, `O-`)
-     - Status (`Available`, `Near Expiry`, `Reserved`, `Expired`, `Discarded`)
-     - Date Range (Collection Date / Expiry Date)
-  2. System filters records dynamically or on "Search" click.
-  3. System updates table rows and pagination count.
-  4. Staff clicks **"Clear"** button -> System resets all filters and reloads full inventory list.
-* **Alternate & Error Flows**:
-  * *AF-01 (No Matches)*: No bags match query -> Display empty state: "No matching blood bags found".
-* **Acceptance Criteria**:
-  * Search performs case-insensitive partial match on `bagCode`.
-  * Filters combine using AND logic.
-  * Clear button resets search input and dropdowns in 1 click.
-* **UI Mockup Reference**: Figma `INV-SEARCH`.
+  * **Low-stock warning**: If calculated inventory for a blood type < configured safety threshold, highlight blood type, staff reviews warning.
+  * **Near-expiry warning**: If bag is approaching expiry date, display warning and show number of affected bags.
+  * Staff can switch chart modes between Units, Volume, and Near Expiry. System updates chart but keeps summary info.
 
 ---
 
@@ -222,10 +457,10 @@ export interface BloodBag {
 | Screen | Desktop (≥1280px) | Tablet (768px-1279px) | Mobile (≤767px) |
 | :--- | :--- | :--- | :--- |
 | **Inventory List** (UC-12) | 4 Stat Cards, 8-column Table | 2x2 Stat Cards, 5-column Table | Stacked Cards, Card List View |
-| **Bag Detail** (UC-13) | 2-column (Info + Timeline) | 1-column Stacked | 1-column Compact |
-| **Stock In** (UC-14) | Horizontal Row Grid | 2-row Grid per Entry | Vertical Stacked Inputs |
-| **Stock Out** (UC-15) | 60/40 Split View | Stacked View | Card List + Floating Action Bar |
-| **Statistics** (UC-16) | Side-by-side Charts | Stacked Charts | 1-column Cards + Stacked Charts |
+| **Bag Detail** (UC-14) | 2-column (Info + Timeline) | 1-column Stacked | 1-column Compact |
+| **Stock In** (UC-15) | Horizontal Row Grid | 2-row Grid per Entry | Vertical Stacked Inputs |
+| **Stock Out** (UC-16) | 60/40 Split View | Stacked View | Card List + Floating Action Bar |
+| **Statistics** (UC-17) | Side-by-side Charts | Stacked Charts | 1-column Cards + Stacked Charts |
 
 ---
 

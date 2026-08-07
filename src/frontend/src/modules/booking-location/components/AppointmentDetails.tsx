@@ -39,8 +39,8 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   const isCancelled = appointment.status === 'cancelled';
   const isRejected = appointment.status === 'rejected';
   const isCompleted = appointment.status === 'completed';
-  const isPending = !isNoShow && !isCancelled && !isRejected && !isCompleted && (appointment.status === 'pending' || !appointment.qrCodeUrl);
-  const isUpcoming = !isNoShow && !isCancelled && !isRejected && !isCompleted && (appointment.status === 'upcoming' || Boolean(appointment.qrCodeUrl));
+  const isPending = appointment.status === 'pending';
+  const isUpcoming = appointment.status === 'upcoming';
 
   return (
     <div className="bg-white border border-[#f1f3f5] rounded-xl overflow-hidden shadow-sm h-full flex flex-col">

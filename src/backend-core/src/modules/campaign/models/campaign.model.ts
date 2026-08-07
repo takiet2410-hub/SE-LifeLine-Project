@@ -87,6 +87,7 @@ const CampaignSchema = new Schema<ICampaign>({
 
 CampaignSchema.index({ location: '2dsphere' });
 CampaignSchema.index({ venue: 'text', fullAddress: 'text', name: 'text' });
+CampaignSchema.index({ status: 1, startDateTime: -1 });
 
 if (mongoose.models.Campaign) {
   delete (mongoose.models as any).Campaign;

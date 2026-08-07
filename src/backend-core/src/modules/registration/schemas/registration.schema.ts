@@ -44,6 +44,10 @@ export const UpdateScreeningSchema = z.object({
     ], {
       message: "Blood type must be one of: 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'"
     }).optional(),
+    testResult: z.enum(['Pass', 'Rejected', 'Pending'], {
+      message: "testResult must be 'Pass', 'Rejected', or 'Pending'"
+    }).optional(),
+    donationVolume: z.number().positive({ message: 'donationVolume must be greater than 0' }).optional(),
     vitals: z.object({
       bloodPressure: z.string().regex(/^\d{2,3}\/\d{2,3}$/, {
         message: 'bloodPressure must match pattern SYS/DIA (e.g. 120/80)'
@@ -58,6 +62,7 @@ export const UpdateScreeningSchema = z.object({
       'Confirmed',
       'Rejected',
       'CheckedIn',
+      'Examining',
       'Eligible',
       'Ineligible',
       'Completed',
@@ -65,7 +70,7 @@ export const UpdateScreeningSchema = z.object({
       'Ineligible for Donation',
       'Donation Completed'
     ], {
-      message: "Status must be one of: 'Pending', 'Confirmed', 'Rejected', 'CheckedIn', 'Eligible', 'Ineligible', 'Completed', 'Eligible for Donation', 'Ineligible for Donation', 'Donation Completed'"
+      message: "Status must be one of: 'Pending', 'Confirmed', 'Rejected', 'CheckedIn', 'Examining', 'Eligible', 'Ineligible', 'Completed', 'Eligible for Donation', 'Ineligible for Donation', 'Donation Completed'"
     }).optional(),
     responses: z.array(
       z.object({

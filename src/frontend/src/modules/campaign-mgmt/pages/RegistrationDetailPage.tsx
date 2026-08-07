@@ -95,7 +95,7 @@ export const RegistrationDetailPage: React.FC = () => {
   }, [registration]);
 
   const isCheckedInOrLater = registration
-    ? ['CheckedIn', 'Eligible', 'Ineligible', 'Completed'].includes(registration.status)
+    ? ['CheckedIn', 'Eligible', 'Examining', 'Ineligible', 'Completed'].includes(registration.status)
     : false;
 
   const isUnknownBloodType = registration
@@ -148,7 +148,7 @@ export const RegistrationDetailPage: React.FC = () => {
     }
   }, [watchBp, watchWeight, watchTemp, watchHgb]);
 
-  const handleUpdateStatus = async (newStatus: string) => {
+  const handleUpdateStatus = async (newStatus: string, testResult?: 'Pass' | 'Rejected') => {
     if (!registrationId || !registration) return;
 
     if (newStatus === 'Eligible') {
@@ -186,6 +186,7 @@ export const RegistrationDetailPage: React.FC = () => {
         screeningNotes: watch('screeningNotes') || '',
         status: newStatus as any,
         donationVolume,
+        ...(testResult ? { testResult } : {}),
         ...(shouldUpdateBloodType ? { donorBloodType: editBloodType } : {}),
       });
       setRegistration(updated);
@@ -673,26 +674,7 @@ export const RegistrationDetailPage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-[#271816] text-[17px] truncate">{registration.donorName}</h3>
                   </div>
-                  {isUnknownBloodType && isCheckedInOrLater ? (
-                    <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[11px] font-bold text-[#93000b]">Cập nhật:</span>
-                      <select
-                        value={editBloodType}
-                        onChange={(e) => setEditBloodType(e.target.value)}
-                        className="px-2 py-1 text-[11px] font-extrabold bg-[#fff8f7] text-[#93000b] border border-red-200 rounded-md outline-none cursor-pointer"
-                      >
-                        <option value="Unknown">❓ Unknown (Chưa xác định)</option>
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
-                      </select>
-                    </div>
-                  ) : registration.donorBloodType && registration.donorBloodType !== 'Unknown' && registration.donorBloodType !== 'Chưa biết' && registration.donorBloodType !== 'Chưa xác định' && registration.donorBloodType !== '?' ? (
+                  {registration.donorBloodType && registration.donorBloodType !== 'Unknown' && registration.donorBloodType !== 'Chưa biết' && registration.donorBloodType !== 'Chưa xác định' && registration.donorBloodType !== '?' ? (
                     <span className="px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider bg-[#93000b] text-white rounded-md block w-fit mt-1">
                       Nhóm máu {registration.donorBloodType}
                     </span>
@@ -1224,20 +1206,41 @@ export const RegistrationDetailPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <p className="text-[13px] font-medium text-slate-700 leading-relaxed">
-                Vui lòng chọn kết quả kiểm tra chất lượng mẫu máu hiến trước khi hoàn tất hồ sơ:
+                Vui lòng xác nhận kết quả kiểm tra chất lượng mẫu máu trước khi hoàn tất hồ sơ:
               </p>
+
+              {isUnknownBloodType && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
+                  <p className="text-[12px] font-bold text-amber-900">Cập nhật nhóm máu người hiến</p>
+                  <select
+                    value={editBloodType}
+                    onChange={(e) => setEditBloodType(e.target.value)}
+                    className="w-full p-2.5 text-[13px] font-extrabold bg-white text-[#93000b] border border-amber-300 rounded-lg outline-none cursor-pointer"
+                  >
+                    <option value="Unknown">❓ Chọn nhóm máu...</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+              )}
 
               <button
                 type="button"
                 onClick={async () => {
                   if (!isBloodTypeValid(registration, editBloodType)) {
-                    toast.error('⚠️ Chưa thể Hoàn Thành! Vui lòng chọn & cập nhật nhóm máu cho người hiến (khác Unknown) trước khi hoàn tất.');
+                    toast.error('⚠️ Chưa thể Hoàn Thành! Vui lòng cập nhật nhóm máu cho người hiến.');
                     return;
                   }
                   setShowExaminingModal(false);
-                  await handleUpdateStatus('Completed');
+                  await handleUpdateStatus('Completed', 'Pass');
                 }}
                 className="w-full p-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 rounded-2xl flex items-center justify-between transition-all group cursor-pointer text-left"
               >
@@ -1245,7 +1248,7 @@ export const RegistrationDetailPage: React.FC = () => {
                   <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
                   <div>
                     <p className="font-extrabold text-[14px]">1. Passed (Đạt tiêu chuẩn)</p>
-                    <p className="text-[11.5px] text-emerald-700 mt-0.5">Mẫu máu đạt yêu cầu an toàn, sẵn sàng nhập kho</p>
+                    <p className="text-[11.5px] text-emerald-700 mt-0.5">Mẫu máu đạt yêu cầu an toàn, hệ thống sẽ tự động nhập kho (Stock In).</p>
                   </div>
                 </div>
                 <span className="text-emerald-700 font-bold group-hover:translate-x-1 transition-transform">→</span>
@@ -1262,8 +1265,8 @@ export const RegistrationDetailPage: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <XCircle className="w-6 h-6 text-red-600 shrink-0" />
                   <div>
-                    <p className="font-extrabold text-[14px]">2. Máu có vấn đề</p>
-                    <p className="text-[11.5px] text-red-700 mt-0.5">Ghi nhận mẫu máu có bất thường và hoàn tất hồ sơ</p>
+                    <p className="font-extrabold text-[14px]">2. Máu có vấn đề (Rejected)</p>
+                    <p className="text-[11.5px] text-red-700 mt-0.5">Ghi nhận mẫu máu có bất thường. Hệ thống sẽ KHÔNG nhập kho túi máu này.</p>
                   </div>
                 </div>
                 <span className="text-red-700 font-bold group-hover:translate-x-1 transition-transform">→</span>

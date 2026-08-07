@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowUpRight, CheckSquare, Square, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
-import { apiService } from '../../../services/apiClient';
+import { inventoryApi } from '../services/inventoryApi';
 import type { BloodBagData } from '../../../services/mockData';
 import { FormField } from '../../../components/common/FormField';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
@@ -24,8 +24,8 @@ export const StockOutPage: React.FC = () => {
 
   useEffect(() => {
     // Fetch available bags sorted by FEFO (expiryDate ASC)
-    apiService.getInventory(undefined, undefined, 'Available').then((data) => {
-      const sortedByFefo = [...data].sort(
+    inventoryApi.getInventory({ status: 'Available' }).then((res) => {
+      const sortedByFefo = [...res.data].sort(
         (a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
       );
       setAvailableBags(sortedByFefo);
@@ -61,7 +61,7 @@ export const StockOutPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await apiService.stockOut(selectedBagIds, reason, notes);
+      await inventoryApi.stockOut(selectedBagIds, reason, notes);
       toast.success(`Đã xuất kho thành công ${selectedBagIds.length} túi máu!`);
       navigate('/bc/inventory');
     } catch (err) {

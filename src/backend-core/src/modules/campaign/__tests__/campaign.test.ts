@@ -81,6 +81,7 @@ describe('CampaignService', () => {
       ];
 
       const chainMock = {
+        select: jest.fn().mockReturnThis(),
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),

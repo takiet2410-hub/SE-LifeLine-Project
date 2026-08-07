@@ -5,14 +5,16 @@ import { updateStatusSchema, stockInBatchSchema, stockOutSchema } from '../schem
 export class BloodInventoryController {
   static async getInventoryList(req: Request, res: Response) {
     try {
-      const { page, limit, search, bloodType, status, sort } = req.query;
+      const { page, limit, search, bloodType, status, sort, startDate, endDate } = req.query;
       const result = await BloodInventoryService.getInventoryList({
         page: page ? Number(page) : undefined,
         limit: limit ? Number(limit) : undefined,
         search: search as string,
         bloodType: bloodType as string,
         status: status as string,
-        sort: sort as string
+        sort: sort as string,
+        startDate: startDate as string,
+        endDate: endDate as string
       });
 
       return res.status(200).json({

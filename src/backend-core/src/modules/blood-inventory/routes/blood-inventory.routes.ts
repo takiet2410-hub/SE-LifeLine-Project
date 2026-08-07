@@ -17,6 +17,40 @@ const staffAuth = [
  *     tags: [Blood Inventory]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: bloodType
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *     responses:
+ *       200:
+ *         description: Success
  */
 router.get('/', ...staffAuth, BloodInventoryController.getInventoryList);
 
@@ -39,6 +73,15 @@ router.get('/statistics', ...staffAuth, BloodInventoryController.getStatistics);
  *     tags: [Blood Inventory]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bagId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Success
  */
 router.get('/:bagId', ...staffAuth, BloodInventoryController.getBloodBagById);
 
@@ -50,6 +93,26 @@ router.get('/:bagId', ...staffAuth, BloodInventoryController.getBloodBagById);
  *     tags: [Blood Inventory]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bagId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Success
  */
 router.put('/:bagId/status', ...staffAuth, BloodInventoryController.updateBagStatus);
 
@@ -61,6 +124,31 @@ router.put('/:bagId/status', ...staffAuth, BloodInventoryController.updateBagSta
  *     tags: [Blood Inventory]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               entries:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     bloodType:
+ *                       type: string
+ *                     volumeMl:
+ *                       type: number
+ *                     collectionDate:
+ *                       type: string
+ *                     expiryDate:
+ *                       type: string
+ *                     storageLocation:
+ *                       type: string
+ *     responses:
+ *       201:
+ *         description: Created
  */
 router.post('/stock-in', ...staffAuth, BloodInventoryController.stockInBatch);
 
@@ -72,6 +160,25 @@ router.post('/stock-in', ...staffAuth, BloodInventoryController.stockInBatch);
  *     tags: [Blood Inventory]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               bagIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               reason:
+ *                 type: string
+ *                 enum: [Dispatch, Disposal, Transfer, Quality Quarantine, Other]
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Success
  */
 router.post('/stock-out', ...staffAuth, BloodInventoryController.stockOutBatch);
 

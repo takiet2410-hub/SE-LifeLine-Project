@@ -203,13 +203,14 @@ export class RegistrationService {
         }
 
         if (!donorProfile && donorUser) {
-          donorProfile = await DonorProfile.findOne({
-            $or: [
-              ...(donorUser.idDocumentNumber ? [{ idDocumentNumber: donorUser.idDocumentNumber }] : []),
-              ...(donorUser.phone ? [{ phoneNumber: donorUser.phone }] : []),
-              ...(donorUser.email ? [{ email: donorUser.email }] : [])
-            ]
-          }).lean();
+          const orConditions = [];
+          if (donorUser.idDocumentNumber) orConditions.push({ idDocumentNumber: donorUser.idDocumentNumber });
+          if (donorUser.phone) orConditions.push({ phoneNumber: donorUser.phone });
+          if (donorUser.email) orConditions.push({ email: donorUser.email });
+
+          if (orConditions.length > 0) {
+            donorProfile = await DonorProfile.findOne({ $or: orConditions }).lean();
+          }
         }
 
         const digitalRecord = await DigitalDonorRecord.findOne({ appointmentId: app._id }).lean();
@@ -323,13 +324,14 @@ export class RegistrationService {
     }
 
     if (!donorProfile && donorUser) {
-      donorProfile = await DonorProfile.findOne({
-        $or: [
-          ...(donorUser.idDocumentNumber ? [{ idDocumentNumber: donorUser.idDocumentNumber }] : []),
-          ...(donorUser.phone ? [{ phoneNumber: donorUser.phone }] : []),
-          ...(donorUser.email ? [{ email: donorUser.email }] : [])
-        ]
-      }).lean();
+      const orConditions = [];
+      if (donorUser.idDocumentNumber) orConditions.push({ idDocumentNumber: donorUser.idDocumentNumber });
+      if (donorUser.phone) orConditions.push({ phoneNumber: donorUser.phone });
+      if (donorUser.email) orConditions.push({ email: donorUser.email });
+
+      if (orConditions.length > 0) {
+        donorProfile = await DonorProfile.findOne({ $or: orConditions }).lean();
+      }
     }
 
     const screeningForm = await ScreeningForm.findOne({ appointmentId: registrationId }).lean();
@@ -438,7 +440,7 @@ export class RegistrationService {
       };
       screeningNotes?: string;
       donationVolume?: number;
-      status?: 'Pending' | 'Confirmed' | 'Rejected' | 'CheckedIn' | 'Eligible' | 'Ineligible' | 'Completed' | 'Eligible for Donation' | 'Ineligible for Donation' | 'Donation Completed';
+      status?: 'Pending' | 'Confirmed' | 'Rejected' | 'CheckedIn' | 'Examining' | 'Eligible' | 'Ineligible' | 'Completed' | 'Eligible for Donation' | 'Ineligible for Donation' | 'Donation Completed';
       responses?: Array<{ questionId: string; selectedOptions: string[]; description?: string }>;
     },
     actorUserId: string,
@@ -470,8 +472,13 @@ export class RegistrationService {
       // 0. Update bloodType in DonorProfile if bloodType is provided in payload
       if (payload.bloodType) {
         await DonorProfile.findOneAndUpdate(
-          { userId: appointment.donorId },
-          { bloodType: payload.bloodType as any },
+          { 
+            $or: [
+              { userId: appointment.donorId },
+              { _id: appointment.donorId }
+            ]
+          },
+          { $set: { bloodType: payload.bloodType as any } },
           opts
         );
       }
@@ -565,6 +572,8 @@ export class RegistrationService {
           targetAppointmentStatus = AppointmentStatus.Rejected;
         } else if (payload.status === 'Confirmed' || payload.status === 'Eligible' || payload.status === 'Eligible for Donation') {
           targetAppointmentStatus = AppointmentStatus.Confirmed;
+        } else if (payload.status === 'Examining') {
+          targetAppointmentStatus = AppointmentStatus.Examining;
         } else if (payload.status === 'Pending') {
           targetAppointmentStatus = AppointmentStatus.Pending;
         } else {
@@ -628,6 +637,7 @@ export class RegistrationService {
           : (payload.status === 'Donation Completed' || payload.status === 'Completed') ? 'Completed'
           : (payload.status === 'Confirmed') ? 'Confirmed'
           : (payload.status === 'Rejected') ? 'Rejected'
+          : (payload.status === 'Examining') ? 'Examining'
           : (payload.status === 'CheckedIn') ? 'CheckedIn'
           : 'Pending'
         : digitalRecord?.donationStatus || 'Pending';

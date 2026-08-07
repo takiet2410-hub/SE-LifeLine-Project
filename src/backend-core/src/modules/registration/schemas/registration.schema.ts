@@ -58,6 +58,7 @@ export const UpdateScreeningSchema = z.object({
       'Confirmed',
       'Rejected',
       'CheckedIn',
+      'Examining',
       'Eligible',
       'Ineligible',
       'Completed',
@@ -65,7 +66,7 @@ export const UpdateScreeningSchema = z.object({
       'Ineligible for Donation',
       'Donation Completed'
     ], {
-      message: "Status must be one of: 'Pending', 'Confirmed', 'Rejected', 'CheckedIn', 'Eligible', 'Ineligible', 'Completed', 'Eligible for Donation', 'Ineligible for Donation', 'Donation Completed'"
+      message: "Status must be one of: 'Pending', 'Confirmed', 'Rejected', 'CheckedIn', 'Examining', 'Eligible', 'Ineligible', 'Completed', 'Eligible for Donation', 'Ineligible for Donation', 'Donation Completed'"
     }).optional(),
     responses: z.array(
       z.object({

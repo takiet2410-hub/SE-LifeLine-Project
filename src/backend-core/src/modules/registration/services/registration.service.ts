@@ -13,6 +13,7 @@ import { AuditLog } from '../models/audit-log.model';
 import { GamificationService } from '../../auth-account/services/gamification.service';
 import { sendBookingConfirmationEmail } from '../../../utils/email.util';
 import { emitDonationCompleted, emitEligibilityCheckFailed } from '../../notification/services/notification.events';
+import { BloodBag } from '../../blood-inventory/models/blood-bag.model';
 
 const toObjectId = (idStr: string) => {
   return mongoose.Types.ObjectId.isValid(idStr) ? new mongoose.Types.ObjectId(idStr) : new mongoose.Types.ObjectId();

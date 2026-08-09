@@ -57,6 +57,7 @@ export interface RegistrationData {
   timeSlot?: string;
   status: 'Pending' | 'Confirmed' | 'Registered' | 'CheckedIn' | 'Eligible' | 'Examining' | 'Completed' | 'Ineligible' | 'Cancelled' | 'NoShow' | 'cancelled' | 'no-show';
   examiningResult?: 'Passed' | 'Issue' | 'Pending';
+  testResult?: 'Pass' | 'Rejected' | string;
   bloodPressure?: string;
   weight?: number;
   bodyTemperature?: number;
@@ -129,7 +130,9 @@ export interface BloodBagData {
   expiryDate: string;
   storageLocation: string;
   status: 'Available' | 'Reserved' | 'Used' | 'Expired' | 'Discarded';
-  donorSourceId?: string;
+  donorSourceId?: string | any;
+  campaignSourceId?: string | any;
+  testResult?: 'Pass' | 'Rejected' | 'Pending' | string;
   statusHistory: Array<{
     previousStatus: string;
     newStatus: string;

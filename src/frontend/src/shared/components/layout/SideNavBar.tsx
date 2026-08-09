@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Calendar, LayoutDashboard, Bell, Heart, LogOut, Map, Newspaper, AlertTriangle } from 'lucide-react';
+import { Calendar, LayoutDashboard, Bell, Heart, LogOut, Map, Newspaper, AlertTriangle, Bot } from 'lucide-react';
 import { LifeLineLogo } from '../../../modules/auth-account/components/LifeLineLogo';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -25,6 +25,7 @@ export const SideNavBar: React.FC = () => {
     { name: t('donorNav.newsFeed'), path: '/news', icon: Newspaper },
     { name: t('donorNav.notifications'), path: '/notifications', icon: Bell },
     { name: t('donorNav.sosAlerts'), path: '/sos-alerts', icon: AlertTriangle },
+    { name: 'AI Chatbot', path: '/chat', icon: Bot },
     { name: t('donorNav.myProfile'), path: '/profile', icon: Heart },
   ];
 

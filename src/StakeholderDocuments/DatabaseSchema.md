@@ -266,6 +266,7 @@ erDiagram
     CHAT_CONVERSATION {
         ObjectId _id PK
         ObjectId donorId FK "nullable for anonymous"
+        string anonymousSessionIdHash "partial unique where status='Active'"
         date startedAt
         date lastActivityAt
         string status "Active|TimedOut|Closed"
@@ -274,9 +275,11 @@ erDiagram
     CHAT_MESSAGE {
         ObjectId _id PK
         ObjectId conversationId FK
+        string clientRequestId "unique per conversation"
         string sender "User|AI"
         string contentText
         object richContent "campaign card, action buttons"
+        array citations "Source IDs for RAG"
         float confidenceScore
         date sentAt
     }
@@ -285,7 +288,7 @@ erDiagram
         ObjectId _id PK
         string title
         string sourceContent
-        array embeddingVector "Atlas Vector Search index"
+        array embeddingVector "Sentence Transformer embedding"
         string category "Eligibility|PreDonation|PostDonation|General"
         date updatedAt
     }
@@ -510,8 +513,8 @@ Traced to CB-UC-01.
 
 | Entity | Key Fields | Notes |
 | :--- | :--- | :--- |
-| `ChatConversation` | `donorId` (nullable — anonymous allowed), `status` | AF-05 session timeout preserves history visually |
-| `ChatMessage` | `conversationId`, `sender`, `contentText`, `richContent` | `richContent` holds Campaign Card / action buttons (AF-03) |
+| `ChatConversation` | `donorId` (nullable), `anonymousSessionIdHash`, `status` | AF-05 session timeout preserves history visually; `anonymousSessionIdHash` is partially unique for Active sessions |
+| `ChatMessage` | `conversationId`, `clientRequestId`, `sender`, `contentText`, `richContent` | `richContent` holds Campaign Card / action buttons (AF-03); `clientRequestId` enables idempotency |
 | `KnowledgeBaseDoc` | `title`, `sourceContent`, `embeddingVector`, `category` | Curated medical knowledge base for RAG retrieval; managed outside donor-facing CRUD (content team / admin ingestion pipeline) |
 
 ### 2.16 `Role`, `Permission`, `AuditLog`, `SystemConfiguration`
@@ -536,7 +539,7 @@ Traced to AD-UC-01…06.
 | `blood_bags` | compound on `(bloodCenterId, bloodType, status)`; index on `expiryDate` | Inventory statistics, near-expiry warnings (BC-UC-17) |
 | `sos_requests` | index on `status`, `hospitalId` | HS-UC-02 monitoring dashboard |
 | `notifications` | compound on `(recipientUserId, createdAt desc)` | Notification Center feed (NT-UC-01) |
-| `knowledge_base_docs` | Atlas Vector Search index on `embeddingVector` | RAG retrieval for CB-UC-01 |
+| `knowledge_base_docs` | Sentence Transformer embedding stored in `embeddingVector` | RAG semantic retrieval for CB-UC-01 |
 | `audit_logs` | index on `(resourceType, resourceId, timestamp)` | Fast audit trail lookup, append-only (no update/delete allowed at app layer) |
 
 ---

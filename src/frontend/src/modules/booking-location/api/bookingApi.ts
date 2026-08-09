@@ -1,7 +1,7 @@
 import { apiClient } from '../../../shared/api/apiClient';
 
 // Backend AppointmentStatus enum values
-export type BackendAppointmentStatus = 'Scheduled' | 'CheckedIn' | 'Completed' | 'Cancelled' | 'NoShow' | 'Pending' | 'Confirmed' | 'Rejected';
+export type BackendAppointmentStatus = 'Scheduled' | 'CheckedIn' | 'Registered' | 'Eligible' | 'Examining' | 'Completed' | 'Cancelled' | 'NoShow' | 'Pending' | 'Confirmed' | 'Rejected' | 'Ineligible';
 
 // Backend Campaign (when populated in appointment)
 export interface BackendCampaign {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, QrCode, Search, Sparkles, Eye, HelpCircle, Calendar } from 'lucide-react';
+import { ArrowLeft, QrCode, Search, Sparkles, Eye, HelpCircle, Calendar, CheckCircle2, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
 import type { RegistrationData, CampaignData } from '../../../services/mockData';
 import { StatusBadge } from '../../../components/common/StatusBadge';

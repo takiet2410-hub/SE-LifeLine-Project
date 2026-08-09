@@ -1,5 +1,6 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { ChatbotWidget } from './modules/chatbot/components/ChatbotWidget';
 
 // Auth Module
 import {
@@ -62,6 +63,9 @@ import { HowItWorksPage } from './modules/landing-page/pages/HowItWorksPage';
 import { FindLocationsPage } from './modules/landing-page/pages/FindLocationsPage';
 import { HealthTipsPage } from './modules/landing-page/pages/HealthTipsPage';
 
+// Chatbot Page
+import { ChatbotPage } from './modules/chatbot/pages/ChatbotPage';
+
 // Hospital SOS Requests Module
 import { SOSDashboardPage } from './modules/sos-requests/pages/SOSDashboardPage';
 import { CreateSOSRequestPage } from './modules/sos-requests/pages/CreateSOSRequestPage';
@@ -75,10 +79,14 @@ import { DonorNotificationPage } from './modules/notifications/pages/DonorNotifi
 import { ScrollToTop } from './shared/components/ScrollToTop';
 
 function App() {
+  const location = useLocation();
+  const showWidget = location.pathname !== '/chatbot';
+
   return (
     <>
       <ScrollToTop />
       <Toaster position="top-right" />
+      {showWidget && <ChatbotWidget />}
       <Routes>
       {/* 1. Public Landing Pages */}
       <Route path="/" element={<LandingPage />} />
@@ -90,6 +98,7 @@ function App() {
       <Route path="/tips" element={<Navigate to="/health-tips#pre-donation" replace />} />
       <Route path="/care" element={<Navigate to="/health-tips#post-donation" replace />} />
       <Route path="/faq" element={<Navigate to="/health-tips#faq" replace />} />
+      <Route path="/chatbot" element={<ChatbotPage />} />
 
       {/* 2. Public Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
@@ -123,6 +132,9 @@ function App() {
           <Route path="/sos-alerts" element={<SOSAlertsPage />} />
           <Route path="/news" element={<NewsFeedPage />} />
           <Route path="/news/:articleId" element={<PublicArticleDetailPage />} />
+          
+          {/* Internal Dashboard Chatbot */}
+          <Route path="/chat" element={<div className="h-[calc(100vh-72px)] w-full relative bg-white"><ChatbotWidget inlineMode={true} /></div>} />
 
           {/* Booking Schedule Flow */}
           <Route path="/my-appointments/schedule" element={<ScheduleLayout />}>

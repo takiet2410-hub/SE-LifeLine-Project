@@ -1,0 +1,9 @@
+services:
+  ai-service:
+    build:
+      context: ./ai-service
+    env_file:
+      - ./ai-service/.env
+    ports:
+      - "8000:7860"
+    restart: unless-stopped

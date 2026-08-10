@@ -40,6 +40,10 @@ venv/
 env/
 .venv/
 pip-log.txt
+semantic_cache.json
+*.index
+faiss_index/
+
 
 # ==========================================
 # 6. Node.js & Build Outputs

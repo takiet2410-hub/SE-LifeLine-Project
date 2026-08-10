@@ -13,13 +13,13 @@ Tài liệu này hướng dẫn cách khởi chạy **tất cả 3 dịch vụ**
 
 ---
 
-## 2. Dịch vụ 1: Setup Python AI Service (`ai-service`)
+## 2. Dịch vụ 1: Setup Python AI Service (`src/ai-service`)
 
 Dịch vụ AI Chatbot & RAG Engine phụ trách xử lý tư vấn hiến máu thông minh.
 
-1. Mở Terminal mới thứ nhất, di chuyển vào thư mục `ai-service`:
+1. Mở Terminal mới thứ nhất, di chuyển vào thư mục `src/ai-service`:
    ```bash
-   cd ai-service
+   cd src/ai-service
    ```
 2. Tạo và kích hoạt môi trường ảo Python (Virtual Environment):
    - **Windows PowerShell**:
@@ -37,7 +37,7 @@ Dịch vụ AI Chatbot & RAG Engine phụ trách xử lý tư vấn hiến máu 
    pip install -r requirements.txt
    ```
 4. Cấu hình biến môi trường (`.env`):
-   Tạo file `.env` trong thư mục `ai-service`:
+   Tạo file `.env` trong thư mục `src/ai-service`:
    ```env
    GEMINI_API_KEY=AIzaSy... (API Key của bạn từ Google AI Studio)
    MONGODB_URI=mongodb+srv://... (MongoDB URI chứa database LifeLine)

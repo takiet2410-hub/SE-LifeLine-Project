@@ -88,7 +88,8 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
     lower_query = query.lower().strip()
     greeting_keywords = ["hi", "hello", "xin chào", "chào", "alo", "ê", "có ai không", "tạm biệt", "bye", "cảm ơn", "thanks", "khoẻ không", "khỏe không"]
     
-    if lower_query in greeting_keywords or (len(lower_query.split()) <= 4 and any(k in lower_query for k in greeting_keywords)):
+    # Only match if the query is exactly a greeting, or starts with a greeting word + space
+    if lower_query in greeting_keywords or any(lower_query.startswith(k + " ") for k in ["hi", "hello", "chào", "xin chào"]):
         is_greeting = True
     else:
         # LLM Router check
@@ -122,8 +123,7 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
     
     # Format system prompt
     formatted_sys = SYSTEM_PROMPT.format(
-        donor_context=json.dumps(donor_context, ensure_ascii=False) if donor_context else "None",
-        retrieved_context=""
+        donor_context=json.dumps(donor_context, ensure_ascii=False) if donor_context else "None"
     )
     
     prompt = ChatPromptTemplate.from_messages([

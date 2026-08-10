@@ -16,6 +16,14 @@ interface ChatbotWidgetProps {
   inlineMode?: boolean;
 }
 
+const SUGGESTED_QUESTIONS = [
+  "Tôi có đủ điều kiện để hiến máu không?",
+  "Bao lâu thì tôi có thể hiến máu lại?",
+  "Trước khi hiến máu cần chuẩn bị gì?",
+  "Sau khi hiến máu cần làm gì?",
+  "Đang uống thuốc/bị bệnh có hiến được không?"
+];
+
 export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = false, inlineMode = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -245,9 +253,22 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = fal
       {/* Chat Area */}
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
-          <div className="text-center my-8 text-gray-500">
-            <Bot className="w-12 h-12 mx-auto text-gray-300 mb-2" />
-            <p className="text-sm">Hãy đặt câu hỏi về hiến máu, tôi có thể giúp bạn!</p>
+          <div className="text-center my-6 text-gray-500">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+              <Bot className="w-8 h-8 text-red-500" />
+            </div>
+            <p className="text-sm mb-5 font-medium text-gray-700">Hãy đặt câu hỏi, tôi có thể giúp bạn!</p>
+            <div className="flex flex-wrap justify-center gap-2 px-2">
+              {SUGGESTED_QUESTIONS.map((q, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSendMessage(q)}
+                  className="px-3 py-1.5 bg-white text-red-600 text-[12.5px] border border-red-200 rounded-full hover:bg-red-50 transition-colors shadow-sm text-left"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

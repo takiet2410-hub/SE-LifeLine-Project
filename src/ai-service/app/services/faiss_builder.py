@@ -60,12 +60,44 @@ def build_faiss_index():
         _vectorstore = FAISS.from_embeddings(text_embeddings, embeddings, metadatas=metadatas_with_emb)
         # Compute embeddings for the missing ones and add them
         if texts_missing_emb:
-            print(f"Computing embeddings on the fly for {len(texts_missing_emb)} missing documents...")
-            _vectorstore.add_texts(texts_missing_emb, metadatas=metadatas_missing_emb)
+            print(f"Computing and saving embeddings for {len(texts_missing_emb)} missing documents...")
+            missing_embs = embeddings.embed_documents(texts_missing_emb)
+            
+            # Save to DB
+            from bson import ObjectId
+            for i, meta in enumerate(metadatas_missing_emb):
+                try:
+                    doc_id = ObjectId(meta["sourceId"])
+                    collection.update_one({"_id": doc_id}, {"$set": {"embeddingVector": missing_embs[i]}})
+                except Exception as e:
+                    print(f"Failed to update embedding in DB for {meta['sourceId']}: {e}")
+            
+            # Add to FAISS
+            text_embeddings_new = list(zip(texts_missing_emb, missing_embs))
+            _vectorstore.add_embeddings(
+                text_embeddings=text_embeddings_new,
+                metadatas=metadatas_missing_emb
+            )
     else:
         # Fallback to computing all embeddings on the fly
-        print("Warning: Missing all embeddingVectors in DB. Computing on the fly...")
-        _vectorstore = FAISS.from_texts(texts_missing_emb, embeddings, metadatas=metadatas_missing_emb)
+        print("Warning: Missing all embeddingVectors in DB. Computing and saving...")
+        missing_embs = embeddings.embed_documents(texts_missing_emb)
+        
+        # Save to DB
+        from bson import ObjectId
+        for i, meta in enumerate(metadatas_missing_emb):
+            try:
+                doc_id = ObjectId(meta["sourceId"])
+                collection.update_one({"_id": doc_id}, {"$set": {"embeddingVector": missing_embs[i]}})
+            except Exception as e:
+                print(f"Failed to update embedding in DB for {meta['sourceId']}: {e}")
+                
+        text_embeddings_new = list(zip(texts_missing_emb, missing_embs))
+        _vectorstore = FAISS.from_embeddings(
+            text_embeddings_new, 
+            embeddings, 
+            metadatas=metadatas_missing_emb
+        )
         
     _retriever = _vectorstore.as_retriever(search_kwargs={"k": 5})
     print("FAISS index built successfully.")
@@ -77,8 +109,8 @@ def get_retriever():
 
 @tool
 def search_knowledge_base(query: str) -> str:
-    """Tra cứu cơ sở tri thức (Knowledge Base) về quy định y tế, điều kiện hiến máu, và lưu ý sức khỏe.
-    CHỈ GỌI tool này khi người dùng hỏi về kiến thức chuyên môn, quy định y tế, hoặc các câu hỏi nằm ngoài thông tin cá nhân của họ. Không gọi tool này cho các câu chào hỏi bình thường."""
+    """Công cụ BẮT BUỘC SỬ DỤNG để tra cứu cơ sở tri thức (Knowledge Base) về: quy trình hiến máu, điều kiện sức khỏe, lợi ích, và các lưu ý trước/sau khi hiến máu.
+    LUÔN LUÔN gọi công cụ này trước khi trả lời bất kỳ câu hỏi nào liên quan đến kiến thức hiến máu hoặc quy định y tế, để lấy dữ liệu chính xác nhất."""
     retriever = get_retriever()
     if not retriever:
         return "Không có dữ liệu trong hệ thống."

@@ -25,7 +25,7 @@ export const SideNavBar: React.FC = () => {
     { name: t('donorNav.newsFeed'), path: '/news', icon: Newspaper },
     { name: t('donorNav.notifications'), path: '/notifications', icon: Bell },
     { name: t('donorNav.sosAlerts'), path: '/sos-alerts', icon: AlertTriangle },
-    { name: 'AI Chatbot', path: '/chat', icon: Bot },
+
     { name: t('donorNav.myProfile'), path: '/profile', icon: Heart },
   ];
 

@@ -1,3 +1,7 @@
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import FastAPI, Depends
 from contextlib import asynccontextmanager
 from app.api.routes import router

@@ -21,7 +21,10 @@ CRITICAL INSTRUCTIONS & RULES:
 
 4. CAMPAIGN SUGGESTIONS & RECOMMENDATIONS:
    - ONLY when the user asks for nearby/upcoming campaigns, check `availableCampaigns` in "DONOR CONTEXT".
-   - Present campaigns using clean Vietnamese bullet points with Name, Location/Venue, Address, Dates (Start -> End), Remaining Slots, and Targeted Blood Groups.
+   - IMPORTANT: For each campaign you suggest, you MUST format it as a JSON block wrapped in a specific tag exactly like this:
+     [CAMPAIGN_CARD:{{"id": "...", "name": "...", "location": "...", "address": "...", "date": "...", "bloodTypes": "...", "url": "..."}}]
+   - For `url`, generate a booking link like `/booking?campaignId=` followed by the campaign's ID.
+   - Do NOT use regular bullet points for campaign details. Just output the [CAMPAIGN_CARD:{{...}}] tag. You can add some conversational text before or after the cards.
    - If the user's `bloodType` is known, explicitly highlight campaigns that accept or urgently need their blood type.
    - If `availableCampaigns` is empty, politely explain that no active campaigns are currently scheduled and advise checking back soon.
 

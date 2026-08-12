@@ -1,5 +1,7 @@
 import json
 import os
+from dotenv import load_dotenv
+load_dotenv()
 from typing import AsyncGenerator
 from langchain_google_genai import ChatGoogleGenerativeAI
 try:
@@ -17,7 +19,7 @@ def get_llm(model_name: str = None):
     if not api_key:
         raise ValueError("GEMINI_API_KEY not found in environment variables")
         
-    target_model = model_name or os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    target_model = model_name or os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
     
     kwargs = {
         "model": target_model,
@@ -94,8 +96,8 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
     else:
         # LLM Router check
         try:
-            primary_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-            fallback_model = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-2.0-flash-lite")
+            primary_model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+            fallback_model = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
             router_llm = get_llm(fallback_model or primary_model) 
             router_prompt = ChatPromptTemplate.from_messages([
                 ("system", "Bạn là bộ phân loại. Nếu câu hỏi là giao tiếp đời thường (chào hỏi, cảm ơn, đùa giỡn, hỏi thăm...) KHÔNG liên quan y tế, máu, lịch hẹn, trả lời '1'. Nếu có liên quan y tế/chuyên môn, trả lời '0'. CHỈ TRẢ LỜI 0 HOẶC 1."),
@@ -142,8 +144,8 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
             chat_history.append(AIMessage(content=msg["parts"][0]["text"]))
             
     # Try primary model first, fallback to lite model if 429 Quota Exceeded occurs
-    primary_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-    fallback_model = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-2.0-flash-lite")
+    primary_model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+    fallback_model = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
     
     models_to_try = [primary_model]
     if fallback_model and fallback_model != primary_model:

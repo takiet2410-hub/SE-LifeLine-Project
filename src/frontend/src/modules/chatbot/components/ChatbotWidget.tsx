@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { chatbotApi } from '../api/chatbot.api';
 import { useAuth } from '../../../shared/contexts/AuthContext';
-import { Send, Bot, User, Loader2, X, Minimize2, Maximize2, MessageSquare } from 'lucide-react';
+import { Send, Bot, User, Loader2, X, Minimize2, Maximize2, MessageSquare, Calendar, MapPin, Droplet } from 'lucide-react';
 import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface Message {
   sender: 'User' | 'AI';
@@ -27,12 +27,33 @@ const SUGGESTED_QUESTIONS = [
 export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = false, inlineMode = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(isFullScreen || inlineMode);
   const [isMaximized, setIsMaximized] = useState(isFullScreen);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isTimedOut, setIsTimedOut] = useState(false);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const resetTimer = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      setIsTimedOut(true);
+    }, 30 * 60 * 1000); // 30 minutes
+  };
+
+  useEffect(() => {
+    if (isOpen && !isTimedOut) {
+      resetTimer();
+    }
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [isOpen, messages, input, isTimedOut]);
 
   useEffect(() => {
     // Clear messages and fetch history when user changes
@@ -49,6 +70,12 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = fal
   }, [isOpen]);
 
   useEffect(() => {
+    if (!isFullScreen) {
+      setIsMaximized(false);
+    }
+  }, [location.pathname, isFullScreen]);
+
+  useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading, isOpen, isMaximized]);
 
@@ -59,8 +86,16 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = fal
   const fetchHistory = async () => {
     try {
       const res = await chatbotApi.getHistory();
-      if (res.status === 'success' && res.data.messages) {
-        setMessages(res.data.messages);
+      if (res.status === 'success') {
+        if (res.data.messages) {
+          setMessages(res.data.messages);
+        }
+        if (res.data.status === 'TimedOut') {
+          setIsTimedOut(true);
+        } else {
+          setIsTimedOut(false);
+          resetTimer();
+        }
       }
     } catch (error) {
       console.error("Failed to fetch history", error);
@@ -68,7 +103,9 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = fal
   };
 
   const handleSendMessage = async (text: string) => {
-    if (!text.trim()) return;
+    if (!text.trim() || isTimedOut) return;
+
+    resetTimer();
 
     const requestId = crypto.randomUUID();
     const newUserMsg: Message = { sender: 'User', contentText: text };
@@ -99,7 +136,13 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = fal
     } catch (error: any) {
       console.error("Failed to send message", error);
       const msg = error?.message || "Lỗi kết nối. Vui lòng thử lại.";
-      toast.error(msg);
+      
+      if (msg.includes('502') || msg.includes('503') || msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('network')) {
+        setIsMaintenanceMode(true);
+      } else {
+        toast.error(msg);
+      }
+      
       // Remove the blank AI message on error if it's still blank
       setMessages((prev) => prev.filter(msg => msg.contentText !== '' || msg.sender !== 'AI'));
     } finally {
@@ -149,70 +192,147 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = fal
     const lines = cleanedText.split('\n');
     let disclaimerRendered = false;
 
-    return lines.map((line, i) => {
+    const renderElements: React.ReactNode[] = [];
+    
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
       const trimmed = line.trim();
 
+      // Check for Campaign Card
+      const cardMatch = trimmed.match(/\[CAMPAIGN_CARD:(.*?)\]/);
+      if (cardMatch) {
+        try {
+          const data = JSON.parse(cardMatch[1]);
+          renderElements.push(
+            <div key={`card-${i}`} className="my-3 border border-red-100 rounded-xl overflow-hidden bg-white shadow-sm">
+              <div className="bg-red-50 p-3 border-b border-red-100">
+                <h3 className="font-bold text-red-700 text-sm">{data.name}</h3>
+              </div>
+              <div className="p-3 space-y-2 text-sm text-gray-700">
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <span><span className="font-medium">Địa điểm:</span> {data.location} ({data.address})</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <span><span className="font-medium">Thời gian:</span> {data.date}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Droplet className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                  <span><span className="font-medium">Nhóm máu:</span> {data.bloodTypes}</span>
+                </div>
+                <div className="pt-2">
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('/my-appointments/schedule/step-1');
+                    }}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 rounded-lg transition-colors"
+                  >
+                    Đăng ký
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        } catch (e) {
+          console.error("Failed to parse campaign card", e);
+        }
+        i++;
+        continue;
+      }
+
       if (!trimmed) {
-        return <div key={i} className="h-1.5" />;
+        renderElements.push(<div key={i} className="h-1.5" />);
+        i++;
+        continue;
       }
 
       if (trimmed.includes('Lưu ý:') && trimmed.includes('bác sĩ')) {
-        if (disclaimerRendered) return null;
-        disclaimerRendered = true;
-        const disclaimerText = trimmed.replace(/^[\*\_\#\-\s]+|[\*\_\#\-\s]+$/g, '');
-        return (
-          <div key={i} className="mt-3 pt-2 border-t border-gray-100 text-[12px] text-gray-500 italic bg-amber-50/60 p-2.5 rounded-xl border border-amber-100/60 leading-normal">
-            💡 {disclaimerText}
-          </div>
-        );
+        if (!disclaimerRendered) {
+          disclaimerRendered = true;
+          const disclaimerText = trimmed.replace(/^[\*\_\#\-\s]+|[\*\_\#\-\s]+$/g, '');
+          renderElements.push(
+            <div key={i} className="mt-3 pt-2 border-t border-gray-100 text-[12px] text-gray-500 italic bg-amber-50/60 p-2.5 rounded-xl border border-amber-100/60 leading-normal">
+              💡 {disclaimerText}
+            </div>
+          );
+        }
+        i++;
+        continue;
       }
 
       if (/^[\*\-\+]\s+/.test(trimmed)) {
         const content = trimmed.replace(/^[\*\-\+]\s+/, '');
-        return (
+        renderElements.push(
           <div key={i} className="flex items-start gap-2.5 my-1 pl-1 text-[13.5px]">
             <span className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2 flex-shrink-0" />
             <span className="flex-1 leading-relaxed">{parseInlineMarkdown(content)}</span>
           </div>
         );
+        i++;
+        continue;
       }
 
       const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
       if (numMatch) {
-        return (
+        renderElements.push(
           <div key={i} className="flex items-start gap-2 my-1 pl-1 text-[13.5px]">
             <span className="font-semibold text-red-600 text-xs mt-0.5 min-w-[18px]">{numMatch[1]}.</span>
             <span className="flex-1 leading-relaxed">{parseInlineMarkdown(numMatch[2])}</span>
           </div>
         );
+        i++;
+        continue;
       }
 
       if (trimmed.startsWith('#')) {
         const headingText = trimmed.replace(/^#+\s*/, '');
-        return (
+        renderElements.push(
           <div key={i} className="font-bold text-gray-900 text-sm mt-3 mb-1">
             {parseInlineMarkdown(headingText)}
           </div>
         );
+        i++;
+        continue;
       }
 
-      return (
+      renderElements.push(
         <div key={i} className="my-0.5 text-[13.5px] leading-relaxed">
           {parseInlineMarkdown(trimmed)}
         </div>
       );
-    });
+      
+      i++;
+    }
+
+    return renderElements;
   };
 
 
   if (!isOpen && !isFullScreen && !inlineMode) {
     return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-transform hover:scale-110 z-50 animate-bounce-short"
-      >
-        <MessageSquare className="w-7 h-7" />
-      </button>
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4 animate-bounce-short">
+        <div 
+          onClick={() => setIsOpen(true)}
+          className="relative bg-white px-4 py-2.5 rounded-2xl shadow-xl border border-gray-100 flex items-center gap-2 cursor-pointer transition-transform hover:scale-105"
+        >
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+          </span>
+          <span className="text-[13px] font-semibold text-gray-700">Trợ lý AI LifeLine</span>
+          <div className="absolute -bottom-2 right-[1.125rem] w-4 h-4 bg-white border-b border-r border-gray-100 transform rotate-45"></div>
+        </div>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="w-14 h-14 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-transform hover:scale-110"
+        >
+          <MessageSquare className="w-7 h-7" />
+        </button>
+      </div>
     );
   }
 
@@ -258,21 +378,20 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = fal
               <Bot className="w-8 h-8 text-red-500" />
             </div>
             <p className="text-sm mb-5 font-medium text-gray-700">Hãy đặt câu hỏi, tôi có thể giúp bạn!</p>
-            <div className="flex flex-wrap justify-center gap-2 px-2">
-              {SUGGESTED_QUESTIONS.map((q, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSendMessage(q)}
-                  className="px-3 py-1.5 bg-white text-red-600 text-[12.5px] border border-red-200 rounded-full hover:bg-red-50 transition-colors shadow-sm text-left"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
           </div>
         )}
 
-        {messages.map((msg, idx) => (
+        {messages.map((msg, idx) => {
+          if (msg.sender === ('System' as any)) {
+            return (
+              <div key={idx} className="flex items-center my-6">
+                <div className="flex-1 border-t border-gray-200"></div>
+                <span className="px-4 text-[11px] text-gray-400 font-semibold uppercase tracking-wider text-center">Khởi tạo cuộc hội thoại mới</span>
+                <div className="flex-1 border-t border-gray-200"></div>
+              </div>
+            );
+          }
+          return (
           <div key={idx} className={`flex ${msg.sender === 'User' ? 'justify-end' : 'justify-start'}`}>
             <div className={`flex max-w-[85%] ${msg.sender === 'User' ? 'flex-row-reverse' : 'flex-row'} gap-2`}>
               <div className="flex-shrink-0 mt-1">
@@ -297,7 +416,8 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = fal
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
 
         {isLoading && (
           <div className="flex justify-start">
@@ -319,30 +439,78 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = fal
       </main>
 
       {/* Input Area */}
-      <footer className="bg-white border-t p-3">
-        <form onSubmit={handleSubmit} className="flex items-end gap-2 relative">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit(e);
-              }
-            }}
-            placeholder="Nhập câu hỏi..."
-            className="w-full bg-gray-100 rounded-xl pl-3 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-100 focus:bg-white transition-colors resize-none max-h-24 min-h-[44px] text-sm overflow-y-auto"
-            rows={1}
-          />
-          <button
-            type="submit"
-            disabled={!input.trim()}
-            className="absolute right-2 bottom-1.5 p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </form>
+      <footer className="bg-white border-t p-3 relative">
+        {(messages.length === 0 || messages[messages.length - 1]?.sender === 'System') && !isTimedOut && !isMaintenanceMode && (
+          <div className="absolute bottom-[calc(100%+8px)] left-0 w-full px-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {SUGGESTED_QUESTIONS.map((q, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSendMessage(q)}
+                className="whitespace-nowrap px-3 py-1.5 bg-white text-red-600 text-[12.5px] border border-red-200 rounded-full hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
+        {isTimedOut ? (
+          <div className="flex flex-col items-center justify-center p-2">
+            <div className="text-gray-500 text-xs mb-3">Phiên trò chuyện đã kết thúc do không hoạt động.</div>
+            <button
+              onClick={() => {
+                setMessages((prev) => [...prev, { sender: 'System' as any, contentText: 'DIVIDER_NEW_SESSION' }]);
+                setIsTimedOut(false);
+                resetTimer();
+              }}
+              className="px-4 py-2 bg-red-50 text-red-600 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors"
+            >
+              Khởi tạo cuộc hội thoại mới
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex items-end gap-2 relative">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              placeholder="Nhập câu hỏi..."
+              className="w-full bg-gray-100 rounded-xl pl-3 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-100 focus:bg-white transition-colors resize-none max-h-24 min-h-[44px] text-sm overflow-y-auto"
+              rows={1}
+            />
+            <button
+              type="submit"
+              disabled={!input.trim()}
+              className="absolute right-2 bottom-1.5 p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </form>
+        )}
       </footer>
+
+      {/* Maintenance Overlay */}
+      {isMaintenanceMode && (
+        <div className="absolute inset-0 top-[60px] bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-4">
+            <Bot className="w-10 h-10 text-red-500" />
+          </div>
+          <h3 className="font-bold text-gray-900 text-lg mb-2">Chatbot đang bảo trì</h3>
+          <p className="text-[13.5px] text-gray-600 mb-6 leading-relaxed">
+            Chúng tôi đang nâng cấp hệ thống để phục vụ bạn tốt hơn. Vui lòng quay lại sau ít phút.
+          </p>
+          <button 
+            onClick={() => setIsMaintenanceMode(false)}
+            className="bg-red-600 text-white px-8 py-2.5 rounded-xl font-medium hover:bg-red-700 transition-colors shadow-sm"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
     </div>
   );
 };

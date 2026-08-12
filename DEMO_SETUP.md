@@ -1,141 +1,213 @@
-# Hướng dẫn Setup & Khởi chạy Toàn bộ Hệ thống (LifeLine Project)
+# 🚀 Hướng Dẫn Setup & Khởi Chạy Dự Án LifeLine (Dành Cho Thành Viên Mới)
 
-Tài liệu này hướng dẫn cách khởi chạy **tất cả 3 dịch vụ** (Python AI Service, Node.js Backend Core, React Frontend) ở môi trường Local để chuẩn bị cho buổi Demo.
-
----
-
-## 1. Yêu cầu hệ thống (Prerequisites)
-- **Node.js**: Phiên bản 18.x trở lên.
-- **Python**: Phiên bản 3.10 trở lên.
-- **MongoDB**: MongoDB local hoặc MongoDB Atlas URI.
-- **Google Gemini API Key**: Dùng cho dịch vụ AI Chatbot (Lấy miễn phí tại [Google AI Studio](https://aistudio.google.com/app/apikey)).
-- **Tài khoản Cloudinary**: Dùng cho tính năng upload ảnh đại diện.
+Tài liệu này chi tiết toàn bộ quy trình cho thành viên mới **sau khi `git pull` hoặc `git clone`** code về máy local. Dự án bao gồm **3 dịch vụ chính**:
+1. 🤖 **AI Service (Python FastAPI)**: Chatbot tư vấn, RAG Engine, Semantic Cache.
+2. ⚙️ **Backend Core (Node.js Express + TS)**: Quản lý Auth, Booking, SOS, Campaign, Notification, Proxy.
+3. 💻 **Frontend (React + Vite + TS)**: Giao diện Web Client cho Người hiến máu & Quản trị viên.
 
 ---
 
-## 2. Dịch vụ 1: Setup Python AI Service (`src/ai-service`)
+## 📋 1. Yêu Cầu Tiền Trạm (Prerequisites)
 
-Dịch vụ AI Chatbot & RAG Engine phụ trách xử lý tư vấn hiến máu thông minh.
+Trước khi bắt đầu, hãy đảm bảo máy tính của bạn đã cài đặt:
+- **Node.js**: Phiên bản `18.x` trở lên (Khuyên dùng LTS `20.x`).
+- **Python**: Phiên bản `3.10` trở lên.
+- **Git**: Đã cấu hình trên máy.
+- **MongoDB**: Chuỗi kết nối MongoDB Atlas URI hoặc MongoDB Local.
+- **Google Gemini API Key**: Dùng cho AI Service (Lấy miễn phí tại [Google AI Studio](https://aistudio.google.com/app/apikey)).
+- **Cloudinary Account**: Dùng cho upload ảnh đại diện (Tùy chọn nếu chỉ test các tính năng cơ bản).
 
-1. Mở Terminal mới thứ nhất, di chuyển vào thư mục `src/ai-service`:
+---
+
+## 📥 2. Bước 1: Lấy Code Mới Nhất Tới Local
+
+Mở Terminal tại thư mục bạn muốn chứa dự án:
+
+```bash
+# Nếu bạn chưa clone dự án
+git clone <URL_REPOSITORY_LIFELINE>
+cd SE-LifeLine-Project
+
+# Nếu bạn đã clone và muốn cập nhật code mới nhất
+git checkout main
+git pull origin main
+```
+
+---
+
+## 🔑 3. Bước 2: Cấu Hình Biến Môi Trường (`.env`)
+
+Mỗi dịch vụ cần 1 file `.env` riêng đặt đúng ở thư mục tương ứng. Bạn cần tạo 3 file `.env` như sau:
+
+### 3.1. Dịch vụ AI Service: Tạo file `src/ai-service/.env`
+
+```env
+GEMINI_API_KEY=AIzaSy... (Điền API Key của bạn lấy từ Google AI Studio)
+MONGODB_URI=mongodb+srv://... (Điền MongoDB URI của dự án)
+AI_SERVICE_TOKEN_SECRET_CURRENT=super-secret-local-dev-key
+AI_SERVICE_TOKEN_SECRET_PREVIOUS=optional_previous_string_for_rotation
+AI_SERVICE_TOKEN_KID=local-dev-key-1
+GEMINI_MODEL=gemini-2.0-flash
+GEMINI_FALLBACK_MODEL=gemini-2.0-flash-lite
+```
+
+### 3.2. Dịch vụ Backend Core: Tạo file `src/backend-core/.env`
+
+```env
+PORT=3000
+NODE_ENV=development
+MONGODB_URI=mongodb+srv://... (Điền MongoDB URI trùng với AI Service)
+JWT_SECRET=sanguineteam
+SENDER_EMAIL=noreply.lifeline@gmail.com
+FRONTEND_URL=http://localhost:5173
+
+# Cloudinary Config
+CLOUDINARY_CLOUD_NAME=tên_cloud_của_bạn
+CLOUDINARY_API_KEY=api_key_của_bạn
+CLOUDINARY_API_SECRET=api_secret_của_bạn
+
+# Token Kết Nối Với AI Service
+AI_SERVICE_TOKEN_SECRET_CURRENT=super-secret-local-dev-key
+AI_SERVICE_TOKEN_SECRET_PREVIOUS=optional_previous_string_for_rotation
+AI_SERVICE_TOKEN_KID=local-dev-key-1
+AI_SERVICE_URL=http://127.0.0.1:8000
+```
+
+### 3.3. Dịch vụ Frontend: Tạo file `src/frontend/.env`
+
+```env
+VITE_API_BASE_URL=http://localhost:3000/api/v1
+VITE_CLOUDINARY_CLOUD_NAME=tên_cloud_của_bạn
+VITE_CLOUDINARY_UPLOAD_PRESET=tên_preset_unsigned_của_bạn
+```
+
+---
+
+## 🛠️ 4. Bước 3: Setup Chi Tiết & Khởi Tạo Dữ Liệu Ban Đầu
+
+Thực hiện cài đặt phụ thuộc và khởi tạo dữ liệu cho từng dịch vụ:
+
+### 4.1. Setup AI Service (`src/ai-service`)
+
+1. Di chuyển vào thư mục:
    ```bash
    cd src/ai-service
    ```
-2. Tạo và kích hoạt môi trường ảo Python (Virtual Environment):
+2. Tạo môi trường ảo Python (Virtual Environment):
    - **Windows PowerShell**:
      ```powershell
      python -m venv venv
      .\venv\Scripts\Activate.ps1
      ```
+     > 💡 *Nếu Windows báo lỗi execution policies, chạy lệnh này trước:* `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process`
    - **Git Bash / Linux / macOS**:
      ```bash
      python -m venv venv
      source venv/bin/activate
      ```
-3. Cài đặt các thư viện phụ thuộc:
+3. Cài đặt thư viện:
    ```bash
    pip install -r requirements.txt
    ```
-4. Cấu hình biến môi trường (`.env`):
-   Tạo file `.env` trong thư mục `src/ai-service`:
-   ```env
-   GEMINI_API_KEY=AIzaSy... (API Key của bạn từ Google AI Studio)
-   MONGODB_URI=mongodb+srv://... (MongoDB URI chứa database LifeLine)
-   AI_SERVICE_TOKEN_SECRET_CURRENT=super-secret-local-dev-key
-   AI_SERVICE_TOKEN_SECRET_PREVIOUS=optional_previous_string_for_rotation
-   AI_SERVICE_TOKEN_KID=local-dev-key-1
-   GEMINI_MODEL=gemini-2.0-flash
-   GEMINI_FALLBACK_MODEL=gemini-2.0-flash-lite
-   ```
-5. Khởi động AI Service:
+4. **QUAN TRỌNG FOR NEWBIE - Khởi tạo dữ liệu Kiến thức AI (Knowledge Base):**
+   Chạy script ingest để nạp toàn bộ dữ liệu tài liệu y tế vào MongoDB cho AI RAG:
    ```bash
-   python main.py
+   python scripts/ingest_md.py
    ```
-   *Terminal báo `Uvicorn running on http://127.0.0.1:8000` và tải xong mô hình là thành công.*
+   *Màn hình hiển thị `THÀNH CÔNG: Đã ingest ... tài liệu vào MongoDB.` là hoàn tất.*
 
 ---
 
-## 3. Dịch vụ 2: Setup Node.js Backend Core (`src/backend-core`)
+### 4.2. Setup Backend Core (`src/backend-core`)
 
-Dịch vụ Backend chính xử lý Authentication, Booking, SOS, Campaign, Notification và Proxy sang AI Service.
-
-1. Mở Terminal thứ hai (giữ nguyên Terminal AI Service), di chuyển vào thư mục backend:
+1. Mở Terminal mới (hoặc di chuyển thư mục):
    ```bash
    cd src/backend-core
    ```
-2. Cài đặt các thư viện:
+2. Cài đặt gói thư viện Node.js:
    ```bash
    npm install
    ```
-3. Cấu hình biến môi trường (`.env`):
-   Tạo file `.env` trong thư mục `backend-core`:
-   ```env
-   PORT=3000
-   NODE_ENV=development
-   MONGODB_URI=mongodb+srv://...
-   JWT_SECRET=sanguineteam
-   SENDER_EMAIL=noreply.lifeline@gmail.com
-   FRONTEND_URL=http://localhost:5173
-   
-   CLOUDINARY_CLOUD_NAME=tên_cloud_của_bạn
-   CLOUDINARY_API_KEY=api_key_của_bạn
-   CLOUDINARY_API_SECRET=api_secret_của_bạn
-
-   AI_SERVICE_TOKEN_SECRET_CURRENT=super-secret-local-dev-key
-   AI_SERVICE_TOKEN_SECRET_PREVIOUS=optional_previous_string_for_rotation
-   AI_SERVICE_TOKEN_KID=local-dev-key-1
-   AI_SERVICE_URL=http://127.0.0.1:8000
-   ```
-4. Khởi động Backend Server:
+3. **Khởi tạo dữ liệu mẫu (Seed Data - Khuyên dùng):**
+   Giúp tạo sẵn dữ liệu Trung tâm hiến máu, Hồ sơ Donor & Phân quyền:
    ```bash
-   npm run dev
+   npm run seed:prod
    ```
-   *Terminal báo `Server is running on port 3000` và `Connected to MongoDB` là thành công.*
+   *Màn hình báo `Data Integrity Check Passed` là hoàn tất.*
 
 ---
 
-## 4. Dịch vụ 3: Setup Frontend (`src/frontend`)
+### 4.3. Setup Frontend (`src/frontend`)
 
-Giao diện Web Client dành cho Người hiến máu và Quản trị viên / Bệnh viện.
-
-1. Mở Terminal thứ ba (giữ nguyên 2 Terminal trước), di chuyển vào thư mục frontend:
+1. Di chuyển vào thư mục:
    ```bash
    cd src/frontend
    ```
-2. Cài đặt các thư viện:
+2. Cài đặt các thư viện React:
    ```bash
    npm install
    ```
-3. Cấu hình biến môi trường (`.env`):
-   Tạo file `.env` trong thư mục `frontend`:
-   ```env
-   VITE_API_BASE_URL=http://localhost:3000/api/v1
-   VITE_CLOUDINARY_CLOUD_NAME=tên_cloud_của_bạn
-   VITE_CLOUDINARY_UPLOAD_PRESET=tên_preset_unsigned_của_bạn
-   ```
-4. Khởi động Frontend Server:
-   ```bash
-   npm run dev
-   ```
-   *Terminal báo `Local: http://localhost:5173/` là thành công.*
 
 ---
 
-## 5. Kịch bản Test Demo Toàn Bộ Hệ Thống
+## 🏃‍♂️ 5. Bước 4: Khởi Chạy Đồng Thời 3 Dịch Vụ
 
-Sau khi cả 3 dịch vụ đều đang chạy:
+Mở **3 cửa sổ Terminal độc lập** để chạy đồng thời 3 dịch vụ:
 
-1. **Truy cập ứng dụng:** Mở trình duyệt và vào `http://localhost:5173/`
-2. **Đăng nhập / Đăng ký:** Tạo tài khoản mới hoặc đăng nhập tài khoản Người hiến máu.
-3. **Test AI Chatbot tư vấn hiến máu (2 Chế độ):**
-   - **Chế độ Guest (Chưa đăng nhập):** Truy cập `http://localhost:5173/chatbot` (hoặc bấm widget), AI sẽ đóng vai trò tư vấn viên chung, không lưu lịch sử chat để bảo mật.
-   - **Chế độ Nội bộ (Đã đăng nhập):** Bấm vào mục **AI Chatbot** trên thanh điều hướng bên trái (Sidebar). AI sẽ chào bạn bằng tên, hiểu nhóm máu của bạn và ghi nhớ toàn bộ lịch sử trò chuyện.
-   - Nhập câu hỏi: *"Điều kiện hiến máu là gì?"* hoặc *"Tôi có thể hiến máu không?"*.
-   - Quan sát tốc độ gõ chữ (streaming) siêu mượt nhờ Semantic Cache và RAG.
-4. **Test Đổi Thông Tin & Upload Avatar (Cloudinary):**
-   - Vào mục **My Profile** -> Đổi số điện thoại/địa chỉ -> Bấm "Lưu thay đổi".
-   - Upload Avatar mới và xem kết quả cập nhật trực tiếp.
-5. **Test Đặt Lịch Hiến Máu & Chuyển Trang (React Router):**
-   - Chọn điểm hiến máu -> Chọn ngày giờ -> Xác nhận đặt lịch thành công.
+### 🟢 Terminal 1: AI Service
+```bash
+cd src/ai-service
+# Đảm bảo venv đã được activate
+python main.py
+```
+👉 *Chạy tại:* `http://127.0.0.1:8000`  
+👉 *Swagger API Docs:* `http://127.0.0.1:8000/docs`
 
-🎉 **Chúc Team có một buổi Demo thành công rực rỡ!**
+---
+
+### 🟢 Terminal 2: Backend Core
+```bash
+cd src/backend-core
+npm run dev
+```
+👉 *Chạy tại:* `http://localhost:3000`
+
+---
+
+### 🟢 Terminal 3: Frontend Web Client
+```bash
+cd src/frontend
+npm run dev
+```
+👉 *Chạy tại:* `http://localhost:5173`
+
+---
+
+## 🧪 6. Bước 5: Kiểm Thử & Trải Nghiệm Tính Năng
+
+1. **Truy cập Ứng dụng Web:** Mở trình duyệt truy cập `http://localhost:5173/`
+2. **Tạo tài khoản / Đăng nhập:** Đăng ký tài khoản người dùng mới hoặc đăng nhập tài khoản có sẵn.
+3. **Test AI Chatbot tư vấn hiến máu:**
+   - **Chế độ Guest:** Chưa đăng nhập -> Bấm vào widget Chatbot ở góc phải bên dưới (`http://localhost:5173/chatbot`). AI đóng vai trò tư vấn viên cộng đồng chung.
+   - **Chế độ Member (Đã đăng nhập):** Đăng nhập -> Chọn **AI Chatbot** trên thanh Sidebar. AI chào theo tên người dùng, nhận diện nhóm máu và lưu lịch sử chat.
+   - Hỏi thử: *"Điều kiện hiến máu là gì?"* hoặc *"Khoảng cách giữa 2 lần hiến máu là bao lâu?"*.
+4. **Test Đặt lịch hiến máu (Booking):**
+   - Vào mục Đặt lịch -> Chọn điểm hiến máu -> Chọn ngày giờ -> Xác nhận đặt lịch.
+5. **Test Đổi Thông Tin Profile:**
+   - Vào **My Profile** -> Cập nhật thông tin cá nhân / Upload avatar.
+
+---
+
+## ❓ 7. Xử Lý Lỗi Thường Gặp (Troubleshooting)
+
+| Sự cố | Nguyên nhân | Cách khắc phục |
+| :--- | :--- | :--- |
+| **`cannot be loaded because running scripts is disabled` (PowerShell)** | Windows chặn chạy script chưa ký | Chạy `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process` trong PowerShell rồi kích hoạt lại `venv`. |
+| **AI Chatbot không trả lời hoặc báo lỗi Knowledge Base** | Chưa nạp dữ liệu vector vào MongoDB | Vào `src/ai-service` và chạy lại `python scripts/ingest_md.py`. |
+| **Lỗi `MONGODB_URI` / `GEMINI_API_KEY` is missing** | Chưa tạo hoặc đặt sai tên file `.env` | Kiểm tra xem file `.env` có nằm ở đúng thư mục `src/ai-service/.env` và `src/backend-core/.env` hay chưa. |
+| **Lỗi CORS khi gọi API từ Frontend sang Backend** | Backend chưa chạy hoặc `VITE_API_BASE_URL` sai | Kiểm tra Terminal Backend Core đã hiện `Server listening on port 3000` chưa, kiểm tra file `src/frontend/.env`. |
+| **Lỗi `ModuleNotFoundError` khi chạy Python** | Chưa kích hoạt môi trường ảo `venv` | Chạy lệnh activate `venv` trước khi thực hiện `python main.py` hoặc `python scripts/ingest_md.py`. |
+
+---
+
+🎉 **Chào mừng bạn gia nhập đội ngũ phát triển dự án LifeLine! Chúc bạn setup thành công!** 🚀

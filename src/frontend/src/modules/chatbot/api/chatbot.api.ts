@@ -50,13 +50,15 @@ export const chatbotApi = {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
+    let buffer = '';
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // keep the last incomplete line in buffer
       
       for (const line of lines) {
         if (line.startsWith('data: ') && line !== 'data: [DONE]') {
@@ -75,7 +77,7 @@ export const chatbotApi = {
 
   getHistory: async (page = 1, limit = 50) => {
     // Note: Do not auto-redirect on 401 since it's optionally authenticated
-    const response = await apiClient.get(`/chatbot/history?page=${page}&limit=${limit}`, {
+    const response = await apiClient.get(`/chatbot/history?page=${page}&limit=${limit}&t=${Date.now()}`, {
       withCredentials: true,
     });
     return response.data;

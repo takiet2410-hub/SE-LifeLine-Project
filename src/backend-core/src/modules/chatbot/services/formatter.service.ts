@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { Campaign } from '../../campaign/models/campaign.model';
+import { Appointment } from '../../booking/models/appointment.model';
 
 export class FormatterService {
   /**
@@ -66,6 +67,27 @@ export class FormatterService {
       }
     }
 
+    // Fetch appointment history
+    let donationHistory: any[] = [];
+    try {
+      const appointments = await Appointment.find({ donorId })
+        .populate('campaignId', 'name venue fullAddress')
+        .sort({ appointmentDate: -1 })
+        .limit(10)
+        .lean();
+
+      donationHistory = appointments.map((app: any) => ({
+        date: app.appointmentDate ? new Date(app.appointmentDate).toISOString().split('T')[0] : '',
+        status: app.status,
+        campaignName: app.campaignId?.name || 'Chiến dịch',
+        venue: app.campaignId?.venue || 'Địa điểm không xác định',
+        address: app.campaignId?.fullAddress || '',
+        donationVolume: app.donationVolume
+      }));
+    } catch (err) {
+      console.error('[FormatterService] Failed to fetch appointment history:', err);
+    }
+
     return {
       isAuthenticated: true,
       bloodType: donor.bloodType || 'Chưa cập nhật',
@@ -76,7 +98,8 @@ export class FormatterService {
       isEligibleNow: isEligibleNow,
       daysUntilEligible: daysUntilEligible,
       isEmergencyOptIn: !!donor.emergencyOptIn,
-      availableCampaigns: formattedCampaigns
+      availableCampaigns: formattedCampaigns,
+      donationHistory: donationHistory
     };
   }
 

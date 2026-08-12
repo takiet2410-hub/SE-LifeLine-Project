@@ -4,7 +4,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from app.services.embeddings import get_embedding_model
 
-CACHE_FILE = "semantic_cache.json"
+CACHE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "semantic_cache.json")
 
 _cache_data = {}  # query -> response
 _faiss_index = None

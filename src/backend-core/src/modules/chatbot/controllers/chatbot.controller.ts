@@ -135,6 +135,7 @@ export class ChatbotController {
       
       // Do not return history for Guests
       if (!donorId) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
         return res.status(200).json({ status: 'success', data: { messages: [], activeConversationId: null } });
       }
 
@@ -159,6 +160,7 @@ export class ChatbotController {
 
       messages.reverse();
 
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
       return res.status(200).json({
         status: 'success',
         data: {

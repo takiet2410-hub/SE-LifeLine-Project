@@ -1,14 +1,6 @@
-import os
-import re
-import datetime
-from pymongo import MongoClient
-from dotenv import load_dotenv
-
-# Hướng dẫn sử dụng:
-# 1. Mở Terminal trong thư mục src/ai-service
-# 2. Đảm bảo đã kích hoạt môi trường ảo (venv)
-# 3. Chạy lệnh: python scripts/ingest_md.py
-# Lưu ý: File LifeLine_Knowledge_Base_Detailed.md phải nằm chung trong thư mục src/ai-service.
+import sys
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
 MONGODB_URI = os.getenv('MONGODB_URI')

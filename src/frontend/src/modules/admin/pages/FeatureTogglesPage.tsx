@@ -49,8 +49,8 @@ export const FeatureTogglesPage: React.FC = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Feature Toggles</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-[#271816]">Feature Toggles</h1>
+        <p className="text-sm font-medium text-[#6c757d]">
           Enable or disable platform modules without redeployment (AD-UC-06)
         </p>
       </div>
@@ -64,20 +64,20 @@ export const FeatureTogglesPage: React.FC = () => {
               key={item.key}
               className={`p-6 rounded-2xl border transition shadow-xs flex flex-col justify-between ${
                 item.isEnabled
-                  ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
-                  : 'bg-slate-50/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-80'
+                  ? 'bg-white border-[#f1f3f5] shadow-xs'
+                  : 'bg-slate-50/80 border-[#f1f3f5] opacity-85'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <ToggleLeft className={`w-6 h-6 ${item.isEnabled ? 'text-red-600' : 'text-slate-400'}`} />
-                    <h3 className="font-bold text-slate-900 dark:text-white text-base">{item.name}</h3>
+                  <div className="flex items-center gap-2.5">
+                    <ToggleLeft className={`w-6 h-6 ${item.isEnabled ? 'text-[#93000b]' : 'text-slate-400'}`} />
+                    <h3 className="font-bold text-[#271816] text-base">{item.name}</h3>
                   </div>
                   <button
                     onClick={() => handleToggleClick(item)}
-                    className={`w-14 h-7 rounded-full transition relative p-0.5 ${
-                      item.isEnabled ? 'bg-red-600' : 'bg-slate-300 dark:bg-slate-700'
+                    className={`w-14 h-7 rounded-full transition relative p-0.5 cursor-pointer ${
+                      item.isEnabled ? 'bg-[#93000b]' : 'bg-slate-300'
                     }`}
                   >
                     <span
@@ -87,17 +87,17 @@ export const FeatureTogglesPage: React.FC = () => {
                     />
                   </button>
                 </div>
-                <p className="text-xs text-slate-500 leading-relaxed mb-4">{item.description}</p>
+                <p className="text-xs text-[#5b403d] font-medium leading-relaxed mb-4">{item.description}</p>
 
                 {item.affectedServices.length > 0 && (
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/60">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  <div className="p-3.5 bg-[#fff8f7] rounded-xl border border-[#f1f3f5]">
+                    <span className="text-[10px] font-bold text-[#93000b] uppercase tracking-wider block mb-1.5">
                       Controlled Services
                     </span>
                     <ul className="space-y-1">
                       {item.affectedServices.map((svc) => (
-                        <li key={svc} className="text-xs text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                        <li key={svc} className="text-xs text-[#271816] font-semibold flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-[#93000b] rounded-full" />
                           {svc}
                         </li>
                       ))}
@@ -106,8 +106,8 @@ export const FeatureTogglesPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-400">
-                <span>Updated by: {item.updatedBy || 'System'}</span>
+              <div className="mt-4 pt-3 border-t border-[#f1f3f5] flex justify-between text-[11px] font-semibold text-[#6c757d]">
+                <span>Updated by: <strong className="text-[#271816]">{item.updatedBy || 'System'}</strong></span>
                 <span>{item.updatedAt ? new Date(item.updatedAt).toLocaleDateString('vi-VN') : ''}</span>
               </div>
             </div>

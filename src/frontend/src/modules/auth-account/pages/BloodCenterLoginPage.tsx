@@ -122,9 +122,13 @@ export const BloodCenterLoginPage: React.FC = () => {
           localStorage.removeItem('rememberedBcId');
         }
 
-        toast.success('Đăng nhập Cổng Quản trị Trung tâm Truyền máu thành công!');
+        toast.success('Đăng nhập Cổng Quản trị thành công!');
         setTimeout(() => {
-          navigate('/bc/campaigns');
+          if (userRole === 'Administrator' || roleLower.includes('admin')) {
+            navigate('/admin/dashboard', { replace: true });
+          } else {
+            navigate('/bc/campaigns', { replace: true });
+          }
         }, 800);
       } else {
         setErrorMessage(

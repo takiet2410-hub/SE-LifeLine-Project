@@ -10,7 +10,7 @@ import type { Article, ContentStatsSummary } from '../types/article.types';
 export const ArticleListPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const basePath = location.pathname.startsWith('/hospital') ? '/hospital' : '/bc';
+  const basePath = location.pathname.startsWith('/admin') ? '/admin' : location.pathname.startsWith('/hospital') ? '/hospital' : '/bc';
 
   const [articles, setArticles] = useState<Article[]>([]);
   const [summary, setSummary] = useState<ContentStatsSummary | undefined>(undefined);

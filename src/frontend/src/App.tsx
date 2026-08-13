@@ -194,6 +194,13 @@ function App() {
           <Route path="/admin/logs" element={<ActivityLogsPage />} />
           <Route path="/admin/config" element={<SystemConfigPage />} />
           <Route path="/admin/toggles" element={<FeatureTogglesPage />} />
+
+          {/* Admin Content & Notifications */}
+          <Route path="/admin/content" element={<ArticleListPage />} />
+          <Route path="/admin/content/create" element={<CreateArticlePage />} />
+          <Route path="/admin/content/:articleId" element={<ArticleDetailPage />} />
+          <Route path="/admin/notifications" element={<NotificationListPage />} />
+          <Route path="/admin/notifications/:notifId" element={<NotificationDetailPage />} />
         </Route>
       </Route>
 

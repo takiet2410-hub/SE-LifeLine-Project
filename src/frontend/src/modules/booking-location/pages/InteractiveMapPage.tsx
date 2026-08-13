@@ -77,7 +77,7 @@ export const InteractiveMapPage: React.FC = () => {
   // Geolocation state
   const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
   const [showPermissionPrompt, setShowPermissionPrompt] = useState<boolean>(false);
-  const [permissionDenied, setPermissionDenied] = useState<boolean>(false);
+  const [_permissionDenied, setPermissionDenied] = useState<boolean>(false);
   
   // Manual Address state
   const [manualAddress, setManualAddress] = useState('');
@@ -229,7 +229,7 @@ export const InteractiveMapPage: React.FC = () => {
             mapInstanceRef.current.flyTo(coords, 14);
           }
         },
-        (error) => {
+        (_error) => {
           setPermissionDenied(true);
           // Only show prompt if it was a denial or timeout, not if it's completely unsupported
           setShowPermissionPrompt(true);

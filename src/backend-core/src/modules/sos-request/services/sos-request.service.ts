@@ -2,6 +2,7 @@ import { SOSRequest } from '../models/sos-request.model';
 import { SOSEvaluationService } from './sos-evaluation.service';
 import { BloodBag } from '../../blood-inventory/models/blood-bag.model';
 import { NotificationService } from '../../notification/services/notification.service';
+import { AdminAuditLog } from '../../admin/models/audit-log.model';
 import mongoose from 'mongoose';
 
 export class SOSRequestService {
@@ -13,6 +14,29 @@ export class SOSRequestService {
       status: 'Pending'
     });
     await request.save();
+
+    try {
+      await AdminAuditLog.create({
+        actorUserId: createdByStaffId,
+        actorName: 'Hospital Staff',
+        action: 'Create SOS Request',
+        actionCategory: 'SOS Request',
+        resourceType: 'SOSRequest',
+        resourceId: request._id.toString(),
+        newValue: {
+          hospitalId,
+          bloodType: data.bloodType,
+          requiredQuantityMl: data.requiredQuantityMl,
+          urgencyLevel: data.urgencyLevel,
+          fulfillmentDeadline: data.fulfillmentDeadline,
+          patientReference: data.patientReference
+        },
+        details: `Created ${data.urgencyLevel || 'Standard'} SOS Request for ${data.requiredQuantityMl}ml of ${data.bloodType} blood`,
+        status: 'Success'
+      });
+    } catch (auditErr) {
+      console.warn('[SOSRequestService] AuditLog warning:', auditErr);
+    }
 
     // Queue evaluation in BullMQ (High Priority)
     // This decoupled approach allows fast HTTP response while complex evaluation happens async
@@ -66,8 +90,27 @@ export class SOSRequestService {
     const request = await SOSRequest.findById(id);
     if (!request) throw new Error('SOS Request not found');
     
+    const previousStatus = request.status;
     request.status = status as any;
     await request.save();
+
+    try {
+      await AdminAuditLog.create({
+        actorUserId: 'System/Staff',
+        actorName: 'Staff',
+        action: 'Update SOS Status',
+        actionCategory: 'SOS Request',
+        resourceType: 'SOSRequest',
+        resourceId: id,
+        previousValue: { status: previousStatus },
+        newValue: { status },
+        details: `Updated SOS request status from ${previousStatus} to ${status}`,
+        status: 'Success'
+      });
+    } catch (auditErr) {
+      console.warn('[SOSRequestService] AuditLog warning:', auditErr);
+    }
+
     return request;
   }
 
@@ -103,6 +146,22 @@ export class SOSRequestService {
       }
       
       return { success: true, status: 'fulfilled_or_expired', message: 'SOS Request is no longer active' };
+    }
+
+    try {
+      await AdminAuditLog.create({
+        actorUserId: donorId,
+        actorName: 'Donor',
+        action: 'Respond to SOS Request',
+        actionCategory: 'SOS Request',
+        resourceType: 'SOSRequest',
+        resourceId: sosRequestId,
+        newValue: { donorId, collectedQuantityMl: request.collectedQuantityMl, status: request.status },
+        details: `Donor accepted emergency blood request ${sosRequestId}`,
+        status: 'Success'
+      });
+    } catch (auditErr) {
+      console.warn('[SOSRequestService] AuditLog warning:', auditErr);
     }
 
     // If collected quantity reaches required quantity, mark as Fulfilled
@@ -144,6 +203,23 @@ export class SOSRequestService {
       SOSBroadcastService.broadcastAlert(sosRequestId).catch(err => {
         console.error(`[SOSRequestService] Error re-broadcasting SOS ${sosRequestId}:`, err);
       });
+    }
+
+    try {
+      await AdminAuditLog.create({
+        actorUserId: cancelledDonorId,
+        actorName: 'Donor/System',
+        action: 'Reopen SOS Request',
+        actionCategory: 'SOS Request',
+        resourceType: 'SOSRequest',
+        resourceId: sosRequestId,
+        previousValue: { status: request.status },
+        newValue: { status: updatedRequest.status, collectedQuantityMl: updatedRequest.collectedQuantityMl },
+        details: `Reopened SOS request due to cancellation by donor ${cancelledDonorId}`,
+        status: 'Success'
+      });
+    } catch (auditErr) {
+      console.warn('[SOSRequestService] AuditLog warning:', auditErr);
     }
 
     return { 
@@ -256,6 +332,23 @@ export class SOSRequestService {
 
       await session.commitTransaction();
       session.endSession();
+
+      try {
+        await AdminAuditLog.create({
+          actorUserId: staffId,
+          actorName: 'Blood Center Staff',
+          action: 'Fulfill SOS Request from Inventory',
+          actionCategory: 'SOS Request',
+          resourceType: 'SOSRequest',
+          resourceId: sosRequestId,
+          previousValue: { collectedQuantityMl: sosRequest.collectedQuantityMl - totalVolumeMl },
+          newValue: { collectedQuantityMl: newCollectedQuantity, status: sosRequest.status, bagsUsed: bags.length },
+          details: `Fulfilled ${totalVolumeMl}ml from ${bags.length} blood bag(s)`,
+          status: 'Success'
+        });
+      } catch (auditErr) {
+        console.warn('[SOSRequestService] AuditLog warning:', auditErr);
+      }
 
       // Collect all recipient IDs: hospital staff + accepted donors
       const recipientIds = [sosRequest.createdByStaffId.toString()];

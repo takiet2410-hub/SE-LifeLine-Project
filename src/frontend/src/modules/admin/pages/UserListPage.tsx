@@ -34,11 +34,22 @@ export const UserListPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [search, role, status]);
 
-  const handleExportCsv = () => {
-    const token = localStorage.getItem('accessToken');
-    const url = adminApi.exportUsersCsvUrl({ search, role, accountStatus: status, token });
-    window.open(url, '_blank');
-    toast.success('Downloading user list CSV...');
+  const handleExportCsv = async () => {
+    try {
+      toast.info('Preparing CSV export download...');
+      const blob = await adminApi.exportUsersCsv({ search, role, accountStatus: status });
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'text/csv' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `user_accounts_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('User list CSV downloaded successfully.');
+    } catch (err: any) {
+      toast.error('Failed to export CSV file.');
+    }
   };
 
   const handleSoftDelete = async (reason: string, confirmationUsername: string) => {
@@ -83,22 +94,22 @@ export const UserListPage: React.FC = () => {
       {/* Header & Main Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">User Accounts</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <h1 className="text-2xl font-bold text-[#271816]">User Accounts</h1>
+          <p className="text-sm font-medium text-[#6c757d]">
             Manage user accounts, roles & status (AD-UC-01 & AD-UC-02)
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={handleExportCsv}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-xl transition"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#271816] text-sm font-semibold rounded-xl transition cursor-pointer"
           >
             <Download className="w-4 h-4" />
             Export CSV
           </button>
           <button
             onClick={() => navigate('/admin/users/create')}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl shadow-md transition"
+            className="flex items-center gap-2 px-4 py-2 bg-[#93000b] hover:bg-[#780009] text-white text-sm font-semibold rounded-xl shadow-md transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Create Account
@@ -107,14 +118,14 @@ export const UserListPage: React.FC = () => {
       </div>
 
       {/* Filter Controls Bar */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="bg-white p-4 rounded-2xl border border-[#f1f3f5] shadow-xs flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-80">
           <input
             type="text"
             placeholder="Search name, email or CCCD..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-red-500 outline-hidden"
+            className="w-full pl-9 pr-4 py-2 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-medium text-[#271816] focus:ring-2 focus:ring-[#93000b] outline-hidden"
           />
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
         </div>
@@ -123,7 +134,7 @@ export const UserListPage: React.FC = () => {
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm rounded-xl focus:ring-2 focus:ring-red-500 outline-hidden"
+            className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
             <option value="All">All Roles</option>
             <option value="Donor">Donor</option>
@@ -135,7 +146,7 @@ export const UserListPage: React.FC = () => {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm rounded-xl focus:ring-2 focus:ring-red-500 outline-hidden"
+            className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
             <option value="All">All Statuses</option>
             <option value="Active">Active</option>
@@ -150,7 +161,7 @@ export const UserListPage: React.FC = () => {
                 setRole('All');
                 setStatus('All');
               }}
-              className="text-xs font-semibold text-red-600 hover:underline px-2"
+              className="text-xs font-bold text-[#93000b] hover:underline px-2 cursor-pointer"
             >
               Clear Filters
             </button>
@@ -159,16 +170,16 @@ export const UserListPage: React.FC = () => {
       </div>
 
       {/* Users Data Table / Empty State */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#f1f3f5] shadow-xs overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-slate-400 text-sm">Loading user accounts...</div>
         ) : users.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center justify-center space-y-3">
-            <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400">
-              <Inbox className="w-10 h-10" />
+            <div className="p-4 bg-[#fff8f7] rounded-full text-slate-400">
+              <Inbox className="w-10 h-10 text-[#93000b]" />
             </div>
-            <h3 className="font-bold text-slate-900 dark:text-white text-base">No Matching User Accounts Found</h3>
-            <p className="text-xs text-slate-500 max-w-md">
+            <h3 className="font-bold text-[#271816] text-base">No Matching User Accounts Found</h3>
+            <p className="text-xs font-medium text-[#6c757d] max-w-md">
               Try refining your search keyword or clearing the filter options to view available accounts.
             </p>
           </div>
@@ -176,7 +187,7 @@ export const UserListPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <tr className="bg-[#fff8f7] border-b border-[#f1f3f5] text-xs font-bold text-[#6c757d] uppercase tracking-wider">
                   <th className="py-3.5 px-4">User Info</th>
                   <th className="py-3.5 px-4">ID Document (CCCD)</th>
                   <th className="py-3.5 px-4">Role</th>
@@ -185,37 +196,37 @@ export const UserListPage: React.FC = () => {
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-[#f1f3f5]">
                 {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                  <tr key={u.id} className="hover:bg-[#fff8f7]/60 transition">
                     <td className="py-3.5 px-4">
                       <div>
-                        <div className="font-bold text-slate-900 dark:text-white">{u.fullName}</div>
-                        <div className="text-xs text-slate-500">{u.email}</div>
+                        <div className="font-bold text-[#271816]">{u.fullName}</div>
+                        <div className="text-xs text-[#6c757d] font-medium">{u.email}</div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-xs text-slate-600 dark:text-slate-300">
+                    <td className="py-3.5 px-4 font-mono text-xs font-semibold text-[#271816]">
                       {u.idDocumentNumber}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="font-medium text-slate-700 dark:text-slate-300 text-xs">{u.role}</span>
+                      <span className="font-semibold text-[#271816] text-xs">{u.role}</span>
                     </td>
                     <td className="py-3.5 px-4">{renderStatusBadge(u.accountStatus)}</td>
-                    <td className="py-3.5 px-4 text-xs text-slate-500">
+                    <td className="py-3.5 px-4 text-xs font-medium text-[#6c757d]">
                       {new Date(u.createdAt).toLocaleDateString('vi-VN')}
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => navigate(`/admin/users/${u.id}/edit`)}
-                          className="p-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+                          className="p-1.5 text-slate-600 hover:text-[#271816] hover:bg-slate-100 rounded-lg transition cursor-pointer"
                           title="Edit User"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setSelectedUserForDelete(u)}
-                          className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition"
+                          className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition cursor-pointer"
                           title="Deactivate Account"
                         >
                           <Trash2 className="w-4 h-4" />

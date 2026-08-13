@@ -9,10 +9,15 @@ export interface AuthRequest extends Request {
 
 export const authenticateJWT = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
+  let token: string | undefined;
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.split(' ')[1];
+    token = authHeader.split(' ')[1];
+  } else if (req.query && typeof req.query.token === 'string') {
+    token = req.query.token;
+  }
 
+  if (token) {
     try {
       const decoded = jwt.verify(token, env.JWT_SECRET) as any;
       const user = await User.findById(decoded.userId);
@@ -27,7 +32,7 @@ export const authenticateJWT = async (req: AuthRequest, res: Response, next: Nex
       return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Token is invalid or expired' });
     }
   } else {
-    return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Authorization header is missing' });
+    return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Authorization token is missing' });
   }
 };
 

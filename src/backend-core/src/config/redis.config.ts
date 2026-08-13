@@ -11,9 +11,8 @@ const redisOptions: RedisOptions = {
   autoResendUnfulfilledCommands: true,
   tls: { rejectUnauthorized: false },
   retryStrategy: (times) => {
-    // Retry connection backoff
-    console.warn(`[Redis] Connection attempt ${times} failed. Retrying in ${Math.min(times * 1000, 5000)}ms`);
-    return Math.min(times * 1000, 5000);
+    // Retry connection backoff (up to 30s to prevent spamming cloud limits)
+    return Math.min(times * 2000, 30000);
   }
 };
 
@@ -34,8 +33,18 @@ if (env.REDIS_URL) {
   console.log('[Redis] Configured with local fallback (localhost:6379)');
 }
 
-connection.on('error', (err) => {
-  console.error('[Redis] Connection error:', err);
+let lastLimitWarn = 0;
+connection.on('error', (err: any) => {
+  const msg = err?.message || String(err);
+  if (msg.includes('max requests limit exceeded')) {
+    const now = Date.now();
+    if (now - lastLimitWarn > 60000) { // log once per minute max
+      console.warn('[Redis Warning] Upstash request limit exceeded. BullMQ background queues temporarily paused.');
+      lastLimitWarn = now;
+    }
+    return;
+  }
+  console.error('[Redis] Connection error:', msg);
 });
 
 export { connection as redisConnection };

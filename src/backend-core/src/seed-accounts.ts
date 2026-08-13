@@ -184,8 +184,8 @@ async function seedTestAccounts() {
           email: data.email,
           phone: data.phone,
           passwordHash,
-          role: data.role,
-          roles: data.roles,
+          role: data.role as any,
+          roles: data.roles as any,
           bloodCenterId: (data as any).bloodCenterId,
           accountStatus: 'Active',
         });
@@ -194,8 +194,8 @@ async function seedTestAccounts() {
         user.idDocumentNumber = data.idDocumentNumber;
         user.passwordHash = passwordHash;
         user.accountStatus = 'Active';
-        user.role = data.role;
-        user.roles = data.roles;
+        user.role = data.role as any;
+        user.roles = data.roles as any;
         user.failedLoginAttempts = 0;
         user.lockUntil = undefined;
         if ((data as any).bloodCenterId) user.bloodCenterId = (data as any).bloodCenterId;

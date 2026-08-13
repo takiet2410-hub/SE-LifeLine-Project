@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Clock, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle2, ShieldAlert, FileText, ExternalLink } from 'lucide-react';
 import { apiService } from '../../../services/apiClient';
 import type { NotificationData } from '../../../services/mockData';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
 import { format } from 'date-fns';
+import { getArticleIdFromNotification, getArticleRouteForRole } from '../../../utils/notificationHelpers';
 
 export const NotificationDetailPage: React.FC = () => {
   const { notifId } = useParams<{ notifId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const backPath = location.pathname.startsWith('/hospital') ? '/hospital/notifications' : '/bc/notifications';
+  const backPath = location.pathname.startsWith('/admin') ? '/admin/notifications' : location.pathname.startsWith('/hospital') ? '/hospital/notifications' : '/bc/notifications';
 
   const [notification, setNotification] = useState<NotificationData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,7 @@ export const NotificationDetailPage: React.FC = () => {
 
   const isSOS = notification.type === 'SOS';
   const sosInfo = notification.sosRequestInfo;
+  const articleId = getArticleIdFromNotification(notification);
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -60,6 +62,28 @@ export const NotificationDetailPage: React.FC = () => {
           <p className="text-xs text-slate-500">Mã thông báo: {notification._id}</p>
         </div>
       </div>
+
+      {/* Article Notification Action Banner */}
+      {articleId && (
+        <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-xl p-5 shadow-md flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-red-600/20 text-red-400 rounded-lg border border-red-500/30">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm">Thông báo bài viết tin tức</h3>
+              <p className="text-xs text-slate-300">Nhấn nút bên cạnh để xem nội dung và thông số bài viết.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate(getArticleRouteForRole(articleId, location.pathname))}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shrink-0"
+          >
+            <span>Xem bài viết</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* SOS Emergency Prominent Alert Banner (NFR-U-03) */}
       {isSOS && sosInfo && (

@@ -17,9 +17,18 @@ export const adminApi = {
   },
 
   exportUsersCsvUrl: (params?: Record<string, any>): string => {
-    const query = new URLSearchParams(params).toString();
-    const token = localStorage.getItem('accessToken') || '';
-    return `${apiClient.defaults.baseURL}/admin/users/export?${query}&token=${token}`;
+    const { token, ...rest } = params || {};
+    const query = new URLSearchParams(rest).toString();
+    const authToken = token || localStorage.getItem('accessToken') || '';
+    return `${apiClient.defaults.baseURL}/admin/users/export?${query}&token=${authToken}`;
+  },
+
+  exportUsersCsv: async (params?: Record<string, any>): Promise<Blob> => {
+    const res = await apiClient.get('/admin/users/export', {
+      params,
+      responseType: 'blob',
+    });
+    return res.data;
   },
 
   createUser: async (data: any) => {
@@ -67,8 +76,18 @@ export const adminApi = {
   },
 
   exportLogsCsvUrl: (params?: Record<string, any>): string => {
-    const query = new URLSearchParams(params).toString();
-    return `${apiClient.defaults.baseURL}/admin/logs/export?${query}`;
+    const { token, ...rest } = params || {};
+    const query = new URLSearchParams(rest).toString();
+    const authToken = token || localStorage.getItem('accessToken') || '';
+    return `${apiClient.defaults.baseURL}/admin/logs/export?${query}&token=${authToken}`;
+  },
+
+  exportLogsCsv: async (params?: Record<string, any>): Promise<Blob> => {
+    const res = await apiClient.get('/admin/logs/export', {
+      params,
+      responseType: 'blob',
+    });
+    return res.data;
   },
 
   // AD-UC-05: Configurations

@@ -55,7 +55,7 @@ export class AdminController {
         name: req.user?.email || 'Administrator',
       };
       const ipAddress = req.ip || req.socket.remoteAddress || '127.0.0.1';
-      const user = await userService.updateUser(adminUser, req.params.userId, req.body, ipAddress);
+      const user = await userService.updateUser(adminUser, req.params.userId as string, req.body, ipAddress);
       return res.status(200).json({ message: 'User updated successfully', user });
     } catch (err: any) {
       return res.status(400).json({ code: 'BAD_REQUEST', message: err.message });
@@ -73,7 +73,7 @@ export class AdminController {
 
       const result = await userService.softDeleteUser(
         adminUser,
-        req.params.userId,
+        req.params.userId as string,
         reason,
         confirmationUsername,
         ipAddress
@@ -105,7 +105,7 @@ export class AdminController {
 
       const role = await roleService.updateRolePermissions(
         adminUser,
-        req.params.roleId,
+        req.params.roleId as string,
         permissions,
         ipAddress
       );
@@ -201,7 +201,7 @@ export class AdminController {
 
       const toggle = await toggleService.updateFeatureToggle(
         adminUser,
-        req.params.key,
+        req.params.key as string,
         isEnabled,
         ipAddress
       );

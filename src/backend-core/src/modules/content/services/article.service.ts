@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { Article, IArticle, ArticleStatus } from '../models/article.model';
 import { env } from '../../../config/env.config';
 import { ContentAuditLog } from '../models/audit-log.model';
+import { AdminAuditLog } from '../../admin/models/audit-log.model';
 import { CreateArticleInput, UpdateArticleInput } from '../schemas/article.schema';
 import { NotificationService } from '../../notification/services/notification.service';
 import { User } from '../../auth-account/models/user.model';
@@ -94,6 +95,23 @@ export class ArticleService {
       ipAddress: ipAddress || '127.0.0.1'
     });
 
+    try {
+      await AdminAuditLog.create({
+        actorUserId,
+        actorName: 'Content Staff',
+        action: 'Create Article',
+        actionCategory: 'Content Management',
+        resourceType: 'Article',
+        resourceId: article._id.toString(),
+        newValue: { title: input.title, status: article.status, category: article.category },
+        details: `Created article "${input.title}" (${article.status})`,
+        ipAddress: ipAddress || '127.0.0.1',
+        status: 'Success'
+      });
+    } catch (auditErr) {
+      console.warn('[ArticleService] AdminAuditLog warning:', auditErr);
+    }
+
     if (status === 'Published') {
       this.broadcastArticleNotification(article);
     }
@@ -174,7 +192,16 @@ export class ArticleService {
       query.status = 'Published';
     }
 
-    const article = await Article.findOne(query).populate('authorStaffId', 'fullName role');
+    let article;
+    if (isPublicView) {
+      article = await Article.findOneAndUpdate(
+        query,
+        { $inc: { viewsCount: 1, 'performance.reach': 1 } },
+        { new: true }
+      ).populate('authorStaffId', 'fullName role');
+    } else {
+      article = await Article.findOne(query).populate('authorStaffId', 'fullName role');
+    }
     if (!article) {
       throw new Error('Article not found');
     }
@@ -251,6 +278,24 @@ export class ArticleService {
       ipAddress: ipAddress || '127.0.0.1'
     });
 
+    try {
+      await AdminAuditLog.create({
+        actorUserId,
+        actorName: 'Content Staff',
+        action: 'Update Article',
+        actionCategory: 'Content Management',
+        resourceType: 'Article',
+        resourceId: article._id.toString(),
+        previousValue: { title: previousValue.title, status: previousValue.status },
+        newValue: { title: article.title, status: article.status },
+        details: `Updated article "${article.title}"`,
+        ipAddress: ipAddress || '127.0.0.1',
+        status: 'Success'
+      });
+    } catch (auditErr) {
+      console.warn('[ArticleService] AdminAuditLog warning:', auditErr);
+    }
+
     return article;
   }
 
@@ -276,6 +321,23 @@ export class ArticleService {
       timestamp: new Date(),
       ipAddress: ipAddress || '127.0.0.1'
     });
+
+    try {
+      await AdminAuditLog.create({
+        actorUserId,
+        actorName: 'Content Staff',
+        action: 'Delete Article',
+        actionCategory: 'Content Management',
+        resourceType: 'Article',
+        resourceId: article._id.toString(),
+        previousValue: { title: article.title, status: article.status },
+        details: `Deleted article "${article.title}"`,
+        ipAddress: ipAddress || '127.0.0.1',
+        status: 'Success'
+      });
+    } catch (auditErr) {
+      console.warn('[ArticleService] AdminAuditLog warning:', auditErr);
+    }
 
     return articleId;
   }
@@ -312,6 +374,23 @@ export class ArticleService {
         timestamp: now,
         ipAddress: '127.0.0.1'
       });
+
+      try {
+        await AdminAuditLog.create({
+          actorUserId: article.authorStaffId?.toString(),
+          actorName: 'System Scheduler',
+          action: 'Publish Scheduled Article',
+          actionCategory: 'Content Management',
+          resourceType: 'Article',
+          resourceId: article._id.toString(),
+          newValue: { status: 'Published', publishedAt: now },
+          details: `Automatically published scheduled article "${article.title}"`,
+          ipAddress: '127.0.0.1',
+          status: 'Success'
+        });
+      } catch (auditErr) {
+        console.warn('[ArticleService] AdminAuditLog warning:', auditErr);
+      }
 
       this.broadcastArticleNotification(article);
     }

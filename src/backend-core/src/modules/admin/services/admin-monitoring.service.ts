@@ -1,6 +1,6 @@
 import { AdminAuditLog, IAdminAuditLog } from '../models/audit-log.model';
 import { User } from '../../auth-account/models/user.model';
-import mongoose, { FilterQuery } from 'mongoose';
+import mongoose from 'mongoose';
 import http from 'http';
 
 export interface GetLogsQuery {
@@ -19,7 +19,7 @@ export class AdminMonitoringService {
     const limit = Math.max(1, Math.min(100, Number(query.limit) || 15));
     const skip = (page - 1) * limit;
 
-    const filter: FilterQuery<IAdminAuditLog> = {};
+    const filter: Record<string, any> = {};
 
     if (query.category && query.category !== 'All') {
       filter.actionCategory = query.category;
@@ -118,6 +118,10 @@ export class AdminMonitoringService {
         { month: 'Jun', donors: 560, campaigns: 25 },
       ],
     };
+  }
+
+  async runDiagnostics() {
+    return this.runSystemDiagnostics();
   }
 
   async runSystemDiagnostics() {

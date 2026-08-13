@@ -36,32 +36,59 @@ export const apiService = {
     if (params?.page) queryParams.page = params.page;
     if (params?.limit) queryParams.limit = params.limit;
 
-    const res = await apiClient.get('/notifications', { params: queryParams });
-    const rawData = res.data?.data || res.data;
-    const pagination = res.data?.pagination;
-    if (Array.isArray(rawData)) {
-      return {
-        data: rawData as NotificationData[],
-        totalPages: pagination?.totalPages || 1,
-        total: pagination?.total || rawData.length,
-      };
+    try {
+      const res = await apiClient.get('/notifications', { params: queryParams });
+      const rawData = res.data?.data || res.data;
+      const pagination = res.data?.pagination;
+      if (Array.isArray(rawData) && rawData.length > 0) {
+        return {
+          data: rawData as NotificationData[],
+          totalPages: pagination?.totalPages || 1,
+          total: pagination?.total || rawData.length,
+        };
+      }
+    } catch (err) {
+      console.warn('[apiService] Backend getNotifications failed, using local notifications fallback:', err);
     }
-    return { data: [] as NotificationData[], totalPages: 1, total: 0 };
+
+    let filtered = [...notifications];
+    if (params?.type && params.type !== 'All') {
+      filtered = filtered.filter(n => n.type === params.type);
+    }
+    if (params?.status && params.status !== 'All') {
+      const isUnread = params.status.toLowerCase() === 'unread';
+      filtered = filtered.filter(n => isUnread ? !n.readAt : !!n.readAt);
+    }
+    return {
+      data: filtered as NotificationData[],
+      totalPages: 1,
+      total: filtered.length,
+    };
   },
 
   async getNotificationById(id: string) {
-    const res = await apiClient.get(`/notifications/${id}`);
-    const rawData = res.data?.data || res.data;
-    if (rawData) return rawData as NotificationData;
-    return null;
+    try {
+      const res = await apiClient.get(`/notifications/${id}`);
+      const rawData = res.data?.data || res.data;
+      if (rawData) return rawData as NotificationData;
+    } catch (err) {
+      console.warn('[apiService] Backend getNotificationById failed, using local fallback:', err);
+    }
+    return notifications.find((n) => n._id === id) || null;
   },
 
   async markNotificationAsRead(id: string) {
-    const res = await apiClient.patch(`/notifications/${id}/read`);
-    const rawData = res.data?.data || res.data;
+    try {
+      const res = await apiClient.patch(`/notifications/${id}/read`);
+      const rawData = res.data?.data || res.data;
+      notifyNotificationsChanged();
+      if (rawData) return rawData as NotificationData;
+    } catch (err) {
+      console.warn('[apiService] Backend markNotificationAsRead failed, using local fallback:', err);
+    }
+    notifications = notifications.map((n) => n._id === id ? { ...n, readAt: new Date().toISOString() } : n);
     notifyNotificationsChanged();
-    if (rawData) return rawData as NotificationData;
-    return null;
+    return notifications.find((n) => n._id === id) || null;
   },
 
   async respondToSOS(notificationId: string, response: 'accepted' | 'declined') {

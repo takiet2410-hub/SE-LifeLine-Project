@@ -8,6 +8,7 @@ import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
 import { EmptyState } from '../../../components/common/EmptyState';
 import { format } from 'date-fns';
+import { getArticleIdFromNotification, getArticleRouteForRole } from '../../../utils/notificationHelpers';
 
 export const NotificationListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -107,8 +108,15 @@ export const NotificationListPage: React.FC = () => {
     if (item.readAt === null) {
       await handleMarkAsRead(item._id);
     }
+    const articleId = getArticleIdFromNotification(item);
+    if (articleId) {
+      navigate(getArticleRouteForRole(articleId, location.pathname));
+      return;
+    }
     const isHospital = location.pathname.startsWith('/hospital');
-    navigate(`${isHospital ? '/hospital' : '/bc'}/notifications/${item._id}`);
+    const isAdmin = location.pathname.startsWith('/admin');
+    const basePath = isAdmin ? '/admin' : isHospital ? '/hospital' : '/bc';
+    navigate(`${basePath}/notifications/${item._id}`);
   };
 
   const handlePageChange = (newPage: number) => {

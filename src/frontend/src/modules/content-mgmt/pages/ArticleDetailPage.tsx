@@ -15,7 +15,7 @@ export const ArticleDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const basePath = location.pathname.startsWith('/hospital') ? '/hospital' : '/bc';
+  const basePath = location.pathname.startsWith('/admin') ? '/admin' : location.pathname.startsWith('/hospital') ? '/hospital' : '/bc';
 
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);

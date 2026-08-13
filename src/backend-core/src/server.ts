@@ -6,10 +6,32 @@ dns.setServers(['8.8.8.8', '1.1.1.1']);
 import { initCampaignStatusJob } from './modules/campaign/jobs/campaign-status.job';
 import { NotificationWorker } from './modules/notification/jobs/notification.worker';
 
+process.on('uncaughtException', (err: any) => {
+  console.error('[Server] Uncaught Exception caught (preventing crash):', err?.message || err);
+});
+
+process.on('unhandledRejection', (reason: any) => {
+  console.error('[Server] Unhandled Rejection caught (preventing crash):', reason?.message || reason);
+});
+
 const startServer = async () => {
-  await connectDB();
-  initCampaignStatusJob();
-  NotificationWorker.start();
+  try {
+    await connectDB();
+  } catch (dbErr) {
+    console.error('[Server] DB Connection warning:', dbErr);
+  }
+  
+  try {
+    initCampaignStatusJob();
+  } catch (jobErr) {
+    console.warn('[Server] Campaign status job warning:', jobErr);
+  }
+
+  try {
+    NotificationWorker.start();
+  } catch (workerErr) {
+    console.warn('[Server] Notification worker warning:', workerErr);
+  }
 
   app.listen(env.PORT, () => {
     console.log(`🚀 Server listening on port ${env.PORT} in ${env.NODE_ENV} mode`);

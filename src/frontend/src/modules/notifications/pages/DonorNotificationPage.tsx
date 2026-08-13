@@ -5,6 +5,7 @@ import { apiService } from '../../../services/apiClient';
 import type { NotificationData } from '../../../services/mockData';
 import { NotificationPreferences } from '../components/NotificationPreferences';
 import { format } from 'date-fns';
+import { getArticleIdFromNotification } from '../../../utils/notificationHelpers';
 
 export const DonorNotificationPage: React.FC = () => {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ export const DonorNotificationPage: React.FC = () => {
     }
 
     // Direct redirect to specific article page if notification is for an article
-    const articleId = notif.payload?.articleId || (notif.sourceRefType === 'Article' ? notif.sourceRefId : null);
+    const articleId = getArticleIdFromNotification(notif);
     if (articleId) {
       navigate(`/news/${articleId}`);
       return;

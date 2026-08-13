@@ -5,7 +5,7 @@ export interface IAdminAuditLog extends Document {
   actorUserId?: string;
   actorName: string;
   action: string;
-  actionCategory: 'Authentication' | 'User Management' | 'Role Management' | 'System Configuration' | 'Feature Toggle' | 'Data Access';
+  actionCategory: 'Authentication' | 'User Management' | 'Role Management' | 'System Configuration' | 'Feature Toggle' | 'Data Access' | 'SOS Request' | 'Content Management' | 'Registration';
   resourceType: string;
   resourceId?: string;
   ipAddress: string;
@@ -20,11 +20,11 @@ const adminAuditLogSchema = new Schema<IAdminAuditLog>(
   {
     timestamp: { type: Date, default: Date.now, index: true },
     actorUserId: { type: String },
-    actorName: { type: String, required: true },
+    actorName: { type: String, default: 'System' },
     action: { type: String, required: true },
     actionCategory: {
       type: String,
-      enum: ['Authentication', 'User Management', 'Role Management', 'System Configuration', 'Feature Toggle', 'Data Access'],
+      enum: ['Authentication', 'User Management', 'Role Management', 'System Configuration', 'Feature Toggle', 'Data Access', 'SOS Request', 'Content Management', 'Registration'],
       required: true,
       index: true,
     },
@@ -38,6 +38,7 @@ const adminAuditLogSchema = new Schema<IAdminAuditLog>(
   },
   {
     timestamps: { createdAt: true, updatedAt: false },
+    collection: 'audit_logs',
   }
 );
 

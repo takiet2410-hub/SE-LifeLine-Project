@@ -2,7 +2,7 @@ import { User, IUser } from '../../auth-account/models/user.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { AdminAuditLog } from '../models/audit-log.model';
 import bcrypt from 'bcrypt';
-import { FilterQuery } from 'mongoose';
+import mongoose from 'mongoose';
 
 export interface GetUsersQuery {
   page?: number;
@@ -39,7 +39,7 @@ export class AdminUserService {
     const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
     const skip = (page - 1) * limit;
 
-    const filter: FilterQuery<IUser> = {};
+    const filter: Record<string, any> = {};
 
     if (query.role && query.role !== 'All') {
       filter.$or = [{ role: query.role }, { roles: query.role }];
@@ -144,11 +144,12 @@ export class AdminUserService {
       await DonorProfile.create({
         userId: newUser._id,
         fullName: data.fullName,
+        idDocumentNumber: data.idDocumentNumber,
         dateOfBirth: new Date('1995-01-01'),
         gender: 'Other',
         bloodType: 'O+',
-        phone: data.phone || '',
-        address: 'N/A',
+        phoneNumber: data.phone || '0900000000',
+        permanentAddress: 'N/A',
       });
     }
 

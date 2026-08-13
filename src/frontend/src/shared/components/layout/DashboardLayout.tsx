@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { apiService } from '../../../services/apiClient';
 import type { NotificationData } from '../../../services/mockData';
 import { format } from 'date-fns';
+import { getArticleIdFromNotification, getArticleRouteForRole } from '../../../utils/notificationHelpers';
 
 
 export const DashboardLayout: React.FC = () => {
@@ -87,9 +88,9 @@ export const DashboardLayout: React.FC = () => {
     }
 
     // Direct redirect to specific article page if notification is for an article
-    const articleId = notif.payload?.articleId || (notif.sourceRefType === 'Article' ? notif.sourceRefId : null);
+    const articleId = getArticleIdFromNotification(notif);
     if (articleId) {
-      navigate(`/news/${articleId}`);
+      navigate(getArticleRouteForRole(articleId, user?.role || location.pathname));
       return;
     }
 

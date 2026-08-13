@@ -46,8 +46,8 @@ export const SystemConfigPage: React.FC = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">System Configuration</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-[#271816]">System Configuration</h1>
+        <p className="text-sm font-medium text-[#6c757d]">
           Platform-wide operational parameters & eligibility threshold rules (AD-UC-05)
         </p>
       </div>
@@ -59,11 +59,11 @@ export const SystemConfigPage: React.FC = () => {
           {categories.map((group, catIdx) => (
             <div
               key={group.category}
-              className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5"
+              className="bg-white p-6 rounded-2xl border border-[#f1f3f5] shadow-xs space-y-5"
             >
-              <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <Sliders className="w-5 h-5 text-red-600" />
-                <h2 className="font-bold text-slate-900 dark:text-white text-base">{group.category}</h2>
+              <div className="flex items-center gap-2 border-b border-[#f1f3f5] pb-3">
+                <Sliders className="w-5 h-5 text-[#93000b]" />
+                <h2 className="font-bold text-[#271816] text-base">{group.category}</h2>
               </div>
 
               <div className="space-y-4">
@@ -72,21 +72,21 @@ export const SystemConfigPage: React.FC = () => {
                   return (
                     <div
                       key={item.key}
-                      className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      className="p-4 bg-[#fff8f7] rounded-xl border border-[#f1f3f5] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <label className="font-bold text-sm text-slate-900 dark:text-white">
+                          <label className="font-bold text-sm text-[#271816]">
                             {item.label}
                           </label>
                           {item.unit && (
-                            <span className="text-[10px] uppercase font-semibold px-2 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full">
+                            <span className="text-[10px] uppercase font-bold px-2 py-0.5 bg-red-50 text-[#93000b] border border-red-100 rounded-full">
                               {item.unit}
                             </span>
                           )}
                         </div>
                         {item.description && (
-                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">{item.description}</p>
+                          <p className="text-xs text-[#5b403d] font-medium mt-1 leading-relaxed">{item.description}</p>
                         )}
                       </div>
 
@@ -97,8 +97,8 @@ export const SystemConfigPage: React.FC = () => {
                               handleConfigChange(catIdx, itemIdx, !item.value);
                               handleSaveConfig({ ...item, value: !item.value });
                             }}
-                            className={`w-12 h-6 rounded-full transition relative ${
-                              item.value ? 'bg-red-600' : 'bg-slate-300 dark:bg-slate-700'
+                            className={`w-12 h-6 rounded-full transition relative cursor-pointer ${
+                              item.value ? 'bg-[#93000b]' : 'bg-slate-300'
                             }`}
                           >
                             <span
@@ -114,7 +114,7 @@ export const SystemConfigPage: React.FC = () => {
                               value={item.value}
                               onChange={(e) => handleConfigChange(catIdx, itemIdx, Number(e.target.value))}
                               onBlur={() => handleSaveConfig(item)}
-                              className="w-24 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-semibold text-center focus:ring-2 focus:ring-red-500 outline-hidden"
+                              className="w-24 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-bold text-[#271816] text-center focus:ring-2 focus:ring-[#93000b] outline-hidden"
                             />
                           </div>
                         )}
@@ -122,7 +122,7 @@ export const SystemConfigPage: React.FC = () => {
                         {isSaving ? (
                           <span className="text-xs text-slate-400 font-mono">Saving...</span>
                         ) : (
-                          <Check className="w-4 h-4 text-emerald-500 opacity-60" />
+                          <Check className="w-4 h-4 text-emerald-600 font-bold" />
                         )}
                       </div>
                     </div>

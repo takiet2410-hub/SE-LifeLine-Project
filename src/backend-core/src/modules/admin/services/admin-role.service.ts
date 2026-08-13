@@ -44,7 +44,7 @@ export class AdminRoleService {
     const items = await Promise.all(
       roles.map(async (role) => {
         const userCount = await User.countDocuments({
-          $or: [{ role: role.name }, { roles: role.name }],
+          $or: [{ role: role.name as any }, { roles: role.name as any }],
         });
 
         return {

@@ -11,7 +11,7 @@ import type { ArticleCategory, ArticleStatus, TargetAudience } from '../types/ar
 export const CreateArticlePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const basePath = location.pathname.startsWith('/hospital') ? '/hospital' : '/bc';
+  const basePath = location.pathname.startsWith('/admin') ? '/admin' : location.pathname.startsWith('/hospital') ? '/hospital' : '/bc';
 
   const [draftId, setDraftId] = useState<string | null>(null);
   const draftIdRef = React.useRef<string | null>(null);

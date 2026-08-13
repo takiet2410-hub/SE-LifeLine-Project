@@ -31,24 +31,36 @@ export const ActivityLogsPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [search, category, status]);
 
-  const handleExportCsv = () => {
-    const url = adminApi.exportLogsCsvUrl({ search, category, status });
-    window.open(url, '_blank');
-    toast.success('Downloading activity logs CSV...');
+  const handleExportCsv = async () => {
+    try {
+      toast.info('Preparing activity logs CSV export...');
+      const blob = await adminApi.exportLogsCsv({ search, category, status });
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'text/csv' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `activity_logs_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Activity logs CSV downloaded successfully.');
+    } catch (err: any) {
+      toast.error('Failed to export activity logs CSV.');
+    }
   };
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Activity & Audit Logs</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-[#271816]">Activity & Audit Logs</h1>
+          <p className="text-sm font-medium text-[#6c757d]">
             Immutable system audit logs & security event trail (AD-UC-04)
           </p>
         </div>
         <button
           onClick={handleExportCsv}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-xl transition"
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#271816] text-sm font-semibold rounded-xl transition cursor-pointer"
         >
           <Download className="w-4 h-4" />
           Export CSV
@@ -56,14 +68,14 @@ export const ActivityLogsPage: React.FC = () => {
       </div>
 
       {/* Filter Controls Bar */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="bg-white p-4 rounded-2xl border border-[#f1f3f5] shadow-xs flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-80">
           <input
             type="text"
             placeholder="Search actor, action or resource..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-red-500 outline-hidden"
+            className="w-full pl-9 pr-4 py-2 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-medium text-[#271816] focus:ring-2 focus:ring-[#93000b] outline-hidden"
           />
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
         </div>
@@ -72,7 +84,7 @@ export const ActivityLogsPage: React.FC = () => {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm rounded-xl focus:ring-2 focus:ring-red-500 outline-hidden"
+            className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
             <option value="All">All Categories</option>
             <option value="Authentication">Authentication</option>
@@ -80,12 +92,15 @@ export const ActivityLogsPage: React.FC = () => {
             <option value="Role Management">Role Management</option>
             <option value="System Configuration">System Configuration</option>
             <option value="Feature Toggle">Feature Toggle</option>
+            <option value="SOS Request">SOS Request</option>
+            <option value="Content Management">Content Management</option>
+            <option value="Registration">Registration</option>
           </select>
 
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm rounded-xl focus:ring-2 focus:ring-red-500 outline-hidden"
+            className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
             <option value="All">All Statuses</option>
             <option value="Success">Success</option>
@@ -95,16 +110,16 @@ export const ActivityLogsPage: React.FC = () => {
       </div>
 
       {/* Logs Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#f1f3f5] shadow-xs overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-slate-400 text-sm">Loading activity logs...</div>
         ) : logs.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 text-sm">No activity logs found.</div>
+          <div className="p-12 text-center text-[#6c757d] text-sm font-medium">No activity logs found.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <tr className="bg-[#fff8f7] border-b border-[#f1f3f5] text-xs font-bold text-[#6c757d] uppercase tracking-wider">
                   <th className="py-3.5 px-4">Timestamp</th>
                   <th className="py-3.5 px-4">Actor</th>
                   <th className="py-3.5 px-4">Action</th>
@@ -114,26 +129,26 @@ export const ActivityLogsPage: React.FC = () => {
                   <th className="py-3.5 px-4 text-right">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-[#f1f3f5]">
                 {logs.map((l) => (
-                  <tr key={l.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
-                    <td className="py-3.5 px-4 text-xs font-mono text-slate-500">
+                  <tr key={l.id} className="hover:bg-[#fff8f7]/60 transition">
+                    <td className="py-3.5 px-4 text-xs font-mono text-[#6c757d] font-medium">
                       {new Date(l.timestamp).toLocaleString('vi-VN')}
                     </td>
-                    <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white text-xs">
+                    <td className="py-3.5 px-4 font-bold text-[#271816] text-xs">
                       {l.actorName}
                     </td>
-                    <td className="py-3.5 px-4 text-xs font-medium text-slate-800 dark:text-slate-200">
+                    <td className="py-3.5 px-4 text-xs font-semibold text-[#271816]">
                       {l.action}
                     </td>
-                    <td className="py-3.5 px-4 text-xs text-slate-500">{l.actionCategory}</td>
-                    <td className="py-3.5 px-4 font-mono text-xs text-slate-500">{l.ipAddress}</td>
+                    <td className="py-3.5 px-4 text-xs font-medium text-[#6c757d]">{l.actionCategory}</td>
+                    <td className="py-3.5 px-4 font-mono text-xs text-[#6c757d]">{l.ipAddress}</td>
                     <td className="py-3.5 px-4">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full border ${
                           l.status === 'Success'
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
-                            : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-red-50 text-red-700 border-red-200'
                         }`}
                       >
                         {l.status === 'Success' ? <CheckCircle className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
@@ -143,7 +158,7 @@ export const ActivityLogsPage: React.FC = () => {
                     <td className="py-3.5 px-4 text-right">
                       <button
                         onClick={() => setSelectedLog(l)}
-                        className="p-1.5 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+                        className="p-1.5 text-slate-500 hover:text-[#271816] hover:bg-slate-100 rounded-lg transition cursor-pointer"
                         title="View Full Metadata"
                       >
                         <Eye className="w-4 h-4" />

@@ -12,13 +12,20 @@ export class ArticleService {
       const { title, category, targetAudience } = article;
       
       const rolesToQuery: Array<'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator'> = [];
-      if (targetAudience?.includes('Donors')) rolesToQuery.push('Donor');
-      if (targetAudience?.includes('Staff') || targetAudience?.includes('BloodCenterStaff')) rolesToQuery.push('BloodCenterStaff');
-      if (targetAudience?.includes('Hospitals') || targetAudience?.includes('HospitalStaff')) rolesToQuery.push('HospitalStaff');
+      if (!targetAudience || targetAudience.length === 0) {
+        rolesToQuery.push('Donor', 'BloodCenterStaff', 'HospitalStaff');
+      } else {
+        if (targetAudience.includes('Donors')) rolesToQuery.push('Donor');
+        if (targetAudience.includes('Staff') || targetAudience.includes('BloodCenterStaff')) rolesToQuery.push('BloodCenterStaff');
+        if (targetAudience.includes('Hospitals') || targetAudience.includes('HospitalStaff')) rolesToQuery.push('HospitalStaff');
+      }
       
-      if (rolesToQuery.length === 0) return;
+      if (rolesToQuery.length === 0) rolesToQuery.push('Donor');
 
-      const users = await User.find({ $or: [{ roles: { $in: rolesToQuery } }, { role: { $in: rolesToQuery } }] }).select('_id').lean();
+      const users = await User.find({
+        accountStatus: 'Active',
+        $or: [{ roles: { $in: rolesToQuery } }, { role: { $in: rolesToQuery } }]
+      }).select('_id email').lean();
       if (users.length === 0) return;
 
       const recipientIds = users.map(u => u._id.toString());
@@ -123,6 +130,7 @@ export class ArticleService {
 
     const [articles, total] = await Promise.all([
       Article.find(query)
+        .populate('authorStaffId', 'fullName role')
         .sort({ publishedAt: -1, createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -134,7 +142,14 @@ export class ArticleService {
 
     const mappedArticles = articles.map((article: any) => ({
       ...article,
-      coverImageUrl: article.imageUrls?.[0] || ''
+      authorName: (article.authorStaffId as any)?.fullName || 'Blood Center Staff',
+      coverImageUrl: article.imageUrls?.[0] || '',
+      performance: {
+        viewsCount: article.viewsCount || 0,
+        publicReachCount: article.performance?.reach || 0,
+        sharesCount: article.performance?.shares || 0,
+        engagementNote: ''
+      }
     }));
 
     return {
@@ -166,10 +181,17 @@ export class ArticleService {
 
     const articleObj = article.toObject();
     
-    // Map for frontend which expects coverImageUrl
+    // Map for frontend which expects coverImageUrl, authorName and performance
     return {
       ...articleObj,
-      coverImageUrl: articleObj.imageUrls?.[0] || ''
+      authorName: (articleObj.authorStaffId as any)?.fullName || 'Blood Center Staff',
+      coverImageUrl: articleObj.imageUrls?.[0] || '',
+      performance: {
+        viewsCount: articleObj.viewsCount || 0,
+        publicReachCount: articleObj.performance?.reach || 0,
+        sharesCount: articleObj.performance?.shares || 0,
+        engagementNote: ''
+      }
     };
   }
 
@@ -228,10 +250,6 @@ export class ArticleService {
       timestamp: new Date(),
       ipAddress: ipAddress || '127.0.0.1'
     });
-
-    if (input.status === 'Published' && previousValue.status !== 'Published') {
-      this.broadcastArticleNotification(article);
-    }
 
     return article;
   }

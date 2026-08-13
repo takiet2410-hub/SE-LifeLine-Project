@@ -4,10 +4,12 @@ import { env } from './config/env.config';
 import dns from 'node:dns';
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 import { initCampaignStatusJob } from './modules/campaign/jobs/campaign-status.job';
+import { NotificationWorker } from './modules/notification/jobs/notification.worker';
 
 const startServer = async () => {
   await connectDB();
   initCampaignStatusJob();
+  NotificationWorker.start();
 
   app.listen(env.PORT, () => {
     console.log(`🚀 Server listening on port ${env.PORT} in ${env.NODE_ENV} mode`);

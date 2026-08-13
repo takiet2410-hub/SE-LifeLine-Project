@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus, Search, Filter, RefreshCw } from 'lucide-react';
 import { articleApi } from '../services/articleApi';
 import { ContentStatsCards } from '../components/ContentStatsCards';
@@ -9,6 +9,8 @@ import type { Article, ContentStatsSummary } from '../types/article.types';
 
 export const ArticleListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith('/hospital') ? '/hospital' : '/bc';
 
   const [articles, setArticles] = useState<Article[]>([]);
   const [summary, setSummary] = useState<ContentStatsSummary | undefined>(undefined);
@@ -80,7 +82,7 @@ export const ArticleListPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => navigate('/bc/content/create')}
+          onClick={() => navigate(`${basePath}/content/create`)}
           className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-sm flex items-center justify-center space-x-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -165,7 +167,7 @@ export const ArticleListPage: React.FC = () => {
             No articles match your current filter settings. Click below to create your first article!
           </p>
           <button
-            onClick={() => navigate('/bc/content/create')}
+            onClick={() => navigate(`${basePath}/content/create`)}
             className="px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700"
           >
             Create First Article
@@ -177,8 +179,8 @@ export const ArticleListPage: React.FC = () => {
             <ArticleCard
               key={art._id}
               article={art}
-              onSelect={(id) => navigate(`/bc/content/${id}`)}
-              onEdit={(id) => navigate(`/bc/content/${id}?edit=true`)}
+              onSelect={(id) => navigate(`${basePath}/content/${id}`)}
+              onEdit={(id) => navigate(`${basePath}/content/${id}?edit=true`)}
               onDelete={(article) => setSelectedArticleToDelete(article)}
             />
           ))}

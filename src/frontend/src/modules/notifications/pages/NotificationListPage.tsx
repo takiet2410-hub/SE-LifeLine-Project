@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AlertTriangle, Bell, Trash2, Clock, Hospital, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 
 export const NotificationListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +54,16 @@ export const NotificationListPage: React.FC = () => {
   useEffect(() => {
     fetchNotifications();
     fetchUnreadCount();
+
+    const handleUpdate = () => {
+      fetchNotifications();
+      fetchUnreadCount();
+    };
+
+    window.addEventListener('notifications-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('notifications-updated', handleUpdate);
+    };
   }, [fetchNotifications, fetchUnreadCount]);
 
   const handleConfirmDelete = async () => {
@@ -92,11 +103,12 @@ export const NotificationListPage: React.FC = () => {
     }
   };
 
-  const handleNotificationClick = (item: NotificationData) => {
+  const handleNotificationClick = async (item: NotificationData) => {
     if (item.readAt === null) {
-      handleMarkAsRead(item._id);
+      await handleMarkAsRead(item._id);
     }
-    navigate(`/bc/notifications/${item._id}`);
+    const isHospital = location.pathname.startsWith('/hospital');
+    navigate(`${isHospital ? '/hospital' : '/bc'}/notifications/${item._id}`);
   };
 
   const handlePageChange = (newPage: number) => {

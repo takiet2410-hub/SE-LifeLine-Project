@@ -177,6 +177,13 @@ function App() {
           <Route path="/hospital/sos-requests/:id" element={<SOSRequestDetailPage />} />
           <Route path="/hospital/sos-reports" element={<SOSReportsPage />} />
 
+          <Route path="/hospital/content" element={<ArticleListPage />} />
+          <Route path="/hospital/content/create" element={<CreateArticlePage />} />
+          <Route path="/hospital/content/:articleId" element={<ArticleDetailPage />} />
+
+          <Route path="/hospital/notifications" element={<NotificationListPage />} />
+          <Route path="/hospital/notifications/:notifId" element={<NotificationDetailPage />} />
+
           {/* System Administrator Routes */}
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />

@@ -1,0 +1,181 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>LifeLine - User Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-dark": "#7F1D1D",
+                        "dark-text-muted": "#8E8EA0",
+                        "primary": "#93000b",
+                        "on-primary-fixed": "#410002",
+                        "surface-dim": "#f1d3d0",
+                        "on-surface-variant": "#5b403d",
+                        "secondary-light": "#D6E4F0",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed": "#d5e3ff",
+                        "tertiary-container": "#0061a6",
+                        "error": "#ba1a1a",
+                        "neutral-700": "#343A40",
+                        "secondary": "#455f87",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#adc8f5",
+                        "secondary-dark": "#152A43",
+                        "on-primary-fixed-variant": "#93000b",
+                        "tertiary-fixed": "#d2e4ff",
+                        "success": "#16A34A",
+                        "primary-container": "#b91c1c",
+                        "on-secondary": "#ffffff",
+                        "info": "#3B82F6",
+                        "primary-fixed-dim": "#ffb4ab",
+                        "dark-surface-alt": "#0F3460",
+                        "neutral-500": "#6C757D",
+                        "neutral-50": "#F8F9FA",
+                        "dark-text-primary": "#EAEAEA",
+                        "surface-tint": "#b91c1c",
+                        "on-secondary-fixed": "#001c3b",
+                        "on-error-container": "#93000a",
+                        "neutral-200": "#DEE2E6",
+                        "tertiary-fixed-dim": "#a0caff",
+                        "surface-container-high": "#ffe2de",
+                        "neutral-900": "#121212",
+                        "surface-container": "#ffe9e6",
+                        "on-tertiary-fixed-variant": "#00497e",
+                        "secondary-container": "#b5d0fd",
+                        "dark-border": "#2C2C44",
+                        "on-primary-container": "#ffcdc7",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#f9dcd8",
+                        "surface-variant": "#f9dcd8",
+                        "on-secondary-fixed-variant": "#2d486d",
+                        "error-container": "#ffdad6",
+                        "background": "#fff8f7",
+                        "outline": "#8f6f6c",
+                        "surface-container-low": "#fff0ee",
+                        "primary-light": "#FEE2E2",
+                        "inverse-primary": "#ffb4ab",
+                        "on-surface": "#271816",
+                        "on-background": "#271816",
+                        "on-tertiary-fixed": "#001c37",
+                        "neutral-300": "#CED4DA",
+                        "warning": "#F59E0B",
+                        "outline-variant": "#e4beb9",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#3e5980",
+                        "inverse-surface": "#3e2c2a",
+                        "primary-fixed": "#ffdad6",
+                        "surface": "#fff8f7",
+                        "dark-bg": "#1A1A2E",
+                        "tertiary": "#00497f",
+                        "surface-bright": "#fff8f7",
+                        "on-tertiary-container": "#c1dbff",
+                        "inverse-on-surface": "#ffedea",
+                        "dark-surface": "#16213E",
+                        "neutral-100": "#F1F3F5",
+                        "danger": "#EF4444"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "sp-16": "64px",
+                        "sp-3": "12px",
+                        "sp-8": "32px",
+                        "sp-5": "20px",
+                        "sp-6": "24px",
+                        "sp-2": "8px",
+                        "sp-12": "48px",
+                        "base": "4px",
+                        "sp-10": "40px",
+                        "sp-4": "16px",
+                        "sp-1": "4px"
+                    },
+                    fontFamily: {
+                        "h1": ["Inter"],
+                        "button": ["Inter"],
+                        "h2": ["Inter"],
+                        "mono": ["JetBrains Mono"],
+                        "body-sm": ["Inter"],
+                        "caption": ["Inter"],
+                        "body": ["Inter"],
+                        "h3": ["Inter"],
+                        "h1-mobile": ["Inter"],
+                        "display": ["Inter"]
+                    },
+                    fontSize: {
+                        "h1": ["28px", { lineHeight: "1.3", fontWeight: "700" }],
+                        "button": ["14px", { lineHeight: "1.0", fontWeight: "600" }],
+                        "h2": ["22px", { lineHeight: "1.3", fontWeight: "600" }],
+                        "mono": ["14px", { lineHeight: "1.5", fontWeight: "400" }],
+                        "body-sm": ["14px", { lineHeight: "1.5", fontWeight: "400" }],
+                        "caption": ["12px", { lineHeight: "1.4", fontWeight: "500" }],
+                        "body": ["16px", { lineHeight: "1.5", fontWeight: "400" }],
+                        "h3": ["18px", { lineHeight: "1.4", fontWeight: "600" }],
+                        "h1-mobile": ["24px", { lineHeight: "1.3", fontWeight: "700" }],
+                        "display": ["36px", { lineHeight: "1.2", fontWeight: "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+          font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-neutral-50 font-body text-body text-on-surface antialiased flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="w-[260px] h-screen fixed left-0 top-0 border-r border-dark-border shadow-md dark:bg-dark-bg flex flex-col z-20 bg-dark-bg">
+<!-- Logo Area -->
+<div class="px-sp-6 py-sp-8 flex flex-col gap-sp-2 border-b border-dark-border/50"><div class="flex items-center gap-2"><span class="material-symbols-outlined fill text-primary-container text-[28px]" data-icon="water_drop">water_drop</span><span class="font-display text-h2 text-on-primary">LifeLine</span></div><span class="font-caption text-caption text-dark-text-muted tracking-wider uppercase text-xs">Admin Dashboard</span></div>
+<!-- Navigation Links -->
+<nav class="flex-1 px-sp-4 py-sp-6 flex flex-col gap-sp-2 overflow-y-auto"><a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary transition-colors duration-200 rounded-lg group hover:bg-dark-surface" href="#"><span class="material-symbols-outlined" data-icon="dashboard">dashboard</span><span class="font-body-sm text-body-sm font-medium">Dashboard</span></a><a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-white rounded-lg transition-colors duration-200" href="#"><span class="material-symbols-outlined fill" data-icon="group">group</span><span class="font-body-sm text-body-sm font-medium">User Management</span></a><a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary transition-colors duration-200 rounded-lg group hover:bg-dark-surface" href="#"><span class="material-symbols-outlined" data-icon="security">security</span><span class="font-body-sm text-body-sm font-medium">Role Management</span></a><a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary transition-colors duration-200 rounded-lg group hover:bg-dark-surface" href="#"><span class="material-symbols-outlined" data-icon="monitor_heart">monitor_heart</span><span class="font-body-sm text-body-sm font-medium">System Monitoring</span></a><a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary transition-colors duration-200 rounded-lg group hover:bg-dark-surface" href="#"><span class="material-symbols-outlined" data-icon="settings">settings</span><span class="font-body-sm text-body-sm font-medium">System Configuration</span></a></nav>
+<!-- User Profile -->
+<div class="mt-auto p-sp-4 border-t border-dark-border/50"><div class="flex flex-col gap-4"><button class="w-full py-3 bg-primary-container hover:bg-primary text-on-primary font-button text-button rounded-lg shadow-sm transition-all flex items-center justify-center gap-2"><span class="material-symbols-outlined text-lg" data-icon="person_add">person_add</span>Register Donor</button><a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary transition-colors duration-200 rounded-lg group hover:bg-dark-surface" href="#"><span class="material-symbols-outlined" data-icon="logout">logout</span><span class="font-body-sm text-body-sm font-medium">Logout</span></a></div></div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="w-[calc(100%-260px)] ml-[260px] h-screen flex flex-col bg-neutral-50 relative z-10">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest h-sp-16 border-b border-neutral-200 flex justify-between items-center px-sp-6 w-full shrink-0 bg-white">
+<div class="flex flex-col">
+<h1 class="font-h2 text-h2 text-neutral-900 m-0 leading-tight">User Management</h1>
+<span class="font-caption text-caption text-neutral-500 uppercase tracking-wide mt-1">VIEW AND MANAGE SYSTEM ACCOUNTS</span>
+</div>
+<div class="flex items-center gap-sp-6">
+<!-- Search -->
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-sm" data-icon="search">search</span>
+<input class="w-64 h-10 pl-10 pr-4 bg-neutral-50 border border-neutral-200 rounded-full font-body-sm text-body-sm text-neutral-900 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-shadow bg-neutral-100" placeholder="Search users..." type="text">
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-4 border-l border-neutral-200 pl-6">
+<button aria-label="Notifications" class="relative p-2 text-neutral-500 hover:text-primary-container transition-colors rounded-full hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-container/20">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2.5 w-2 h-2 bg-primary-container rounded-full border border-white"></span>
+</button>
+<button aria-label="Settings" class="p-2 text-neutral-500 hover:text-primary-container transition-colors rounded-full hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-container/20">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Scrollable Canvas -->
+<main class="flex-1 overflow-y-auto p-sp-6 bg-neutral-50"><div class="max-w-[1200px] mx-auto w-full flex flex-col gap-sp-6"><div class="flex justify-end w-full"><button class="h-[44px] px-6 bg-primary-container hover:bg-primary text-on-primary font-button text-button rounded shadow-sm hover:shadow transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-container/50 focus:ring-offset-2"><span class="material-symbols-outlined text-lg" data-icon="add">add</span>Create Account</button></div><div class="bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden border border-neutral-100"><div class="overflow-x-auto w-full">{{DATA:ROWS_PLACEHOLDER}}<table class="w-full text-left border-collapse min-w-[800px]"><thead><tr class="bg-neutral-50 border-b border-neutral-200"><th class="py-4 px-6 font-caption text-caption text-neutral-700 font-semibold uppercase tracking-wider">Username</th><th class="py-4 px-6 font-caption text-caption text-neutral-700 font-semibold uppercase tracking-wider">Full Name</th><th class="py-4 px-6 font-caption text-caption text-neutral-700 font-semibold uppercase tracking-wider">Role</th><th class="py-4 px-6 font-caption text-caption text-neutral-700 font-semibold uppercase tracking-wider">Status</th><th class="py-4 px-6 font-caption text-caption text-neutral-700 font-semibold uppercase tracking-wider">Registration Date</th><th class="py-4 px-6 font-caption text-caption text-neutral-700 font-semibold uppercase tracking-wider text-right">Actions</th></tr></thead><tbody class="font-body-sm text-body-sm text-neutral-900 divide-y divide-neutral-100"><tr class="hover:bg-neutral-50 transition-colors group"><td class="py-4 px-6 font-medium">hnguyen_donor</td><td class="py-4 px-6">Hoang Nguyen</td><td class="py-4 px-6 text-neutral-500">Donor</td><td class="py-4 px-6"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#DCFCE7] text-[#166534]">Active</span></td><td class="py-4 px-6 text-neutral-500">Oct 12, 2023</td><td class="py-4 px-6 text-right"><div class="flex justify-end gap-2"><button class="p-1.5 text-neutral-400 hover:text-primary-container transition-colors" title="Edit"><span class="material-symbols-outlined text-[20px]">edit</span></button><button class="p-1.5 text-neutral-400 hover:text-danger transition-colors" title="Delete"><span class="material-symbols-outlined text-[20px]">delete</span></button></div></td></tr><tr class="hover:bg-neutral-50 transition-colors group"><td class="py-4 px-6 font-medium">staff_bcenter01</td><td class="py-4 px-6">Mai Tran</td><td class="py-4 px-6 text-neutral-500">Blood Center Staff</td><td class="py-4 px-6"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#DCFCE7] text-[#166534]">Active</span></td><td class="py-4 px-6 text-neutral-500">Sep 28, 2023</td><td class="py-4 px-6 text-right"><div class="flex justify-end gap-2"><button class="p-1.5 text-neutral-400 hover:text-primary-container transition-colors" title="Edit"><span class="material-symbols-outlined text-[20px]">edit</span></button><button class="p-1.5 text-neutral-400 hover:text-danger transition-colors" title="Delete"><span class="material-symbols-outlined text-[20px]">delete</span></button></div></td></tr><tr class="hover:bg-neutral-50 transition-colors group"><td class="py-4 px-6 font-medium">vle_hosp22</td><td class="py-4 px-6">Vu Le</td><td class="py-4 px-6 text-neutral-500">Hospital Staff</td><td class="py-4 px-6"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FEE2E2] text-[#991B1B]">Suspended</span></td><td class="py-4 px-6 text-neutral-500">Nov 02, 2023</td><td class="py-4 px-6 text-right"><div class="flex justify-end gap-2"><button class="p-1.5 text-neutral-400 hover:text-primary-container transition-colors" title="Edit"><span class="material-symbols-outlined text-[20px]">edit</span></button><button class="p-1.5 text-neutral-400 hover:text-danger transition-colors" title="Delete"><span class="material-symbols-outlined text-[20px]">delete</span></button></div></td></tr></tbody></table></div></div></div></main>
+</div>
+
+
+</body></html>

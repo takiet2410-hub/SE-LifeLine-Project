@@ -75,6 +75,15 @@ export const SOSAlertsPage: React.FC = () => {
 
   useEffect(() => {
     fetchAlerts();
+
+    const handleUpdate = () => {
+      fetchAlerts();
+    };
+
+    window.addEventListener('notifications-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('notifications-updated', handleUpdate);
+    };
   }, []);
 
   const handleAccept = async (alert: SOSAlert) => {

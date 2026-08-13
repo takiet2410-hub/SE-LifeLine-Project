@@ -1,0 +1,230 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Create User Account - LifeLine Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#a0caff",
+                        "on-primary-fixed-variant": "#93000b",
+                        "on-primary-container": "#ffcdc7",
+                        "secondary-fixed-dim": "#adc8f5",
+                        "primary-fixed-dim": "#ffb4ab",
+                        "neutral-900": "#121212",
+                        "on-tertiary-container": "#c1dbff",
+                        "primary-container": "#b91c1c",
+                        "secondary-container": "#b5d0fd",
+                        "inverse-primary": "#ffb4ab",
+                        "tertiary-container": "#0061a6",
+                        "neutral-300": "#CED4DA",
+                        "dark-text-primary": "#EAEAEA",
+                        "dark-bg": "#1A1A2E",
+                        "tertiary": "#00497f",
+                        "on-background": "#271816",
+                        "danger": "#EF4444",
+                        "surface-container-low": "#fff0ee",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#001c37",
+                        "dark-text-muted": "#8E8EA0",
+                        "surface-container": "#ffe9e6",
+                        "on-secondary-fixed": "#001c3b",
+                        "primary-fixed": "#ffdad6",
+                        "on-primary-fixed": "#410002",
+                        "dark-border": "#2C2C44",
+                        "surface-variant": "#f9dcd8",
+                        "inverse-surface": "#3e2c2a",
+                        "secondary-dark": "#152A43",
+                        "neutral-200": "#DEE2E6",
+                        "dark-surface": "#16213E",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#d2e4ff",
+                        "neutral-700": "#343A40",
+                        "background": "#fff8f7",
+                        "primary-light": "#FEE2E2",
+                        "surface-dim": "#f1d3d0",
+                        "on-secondary-fixed-variant": "#2d486d",
+                        "neutral-100": "#F1F3F5",
+                        "dark-surface-alt": "#0F3460",
+                        "error-container": "#ffdad6",
+                        "surface": "#fff8f7",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#455f87",
+                        "surface-bright": "#fff8f7",
+                        "on-secondary-container": "#3e5980",
+                        "primary-dark": "#7F1D1D",
+                        "on-primary": "#ffffff",
+                        "secondary-light": "#D6E4F0",
+                        "on-surface": "#271816",
+                        "primary": "#93000b",
+                        "neutral-50": "#F8F9FA",
+                        "on-tertiary-fixed-variant": "#00497e",
+                        "inverse-on-surface": "#ffedea",
+                        "surface-tint": "#b91c1c",
+                        "on-surface-variant": "#5b403d",
+                        "outline": "#8f6f6c",
+                        "outline-variant": "#e4beb9",
+                        "surface-container-highest": "#f9dcd8",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "neutral-500": "#6C757D",
+                        "warning": "#F59E0B",
+                        "success": "#16A34A",
+                        "on-error": "#ffffff",
+                        "info": "#3B82F6",
+                        "surface-container-high": "#ffe2de",
+                        "secondary-fixed": "#d5e3ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sp-12": "48px",
+                        "sp-5": "20px",
+                        "sp-3": "12px",
+                        "sp-2": "8px",
+                        "sp-8": "32px",
+                        "sp-16": "64px",
+                        "sp-4": "16px",
+                        "sp-10": "40px",
+                        "sp-1": "4px",
+                        "base": "4px",
+                        "sp-6": "24px"
+                    },
+                    "fontFamily": {
+                        "h3": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body": ["Inter"],
+                        "mono": ["JetBrains Mono"],
+                        "h1-mobile": ["Inter"],
+                        "h1": ["Inter"],
+                        "display": ["Inter"],
+                        "caption": ["Inter"],
+                        "button": ["Inter"],
+                        "h2": ["Inter"]
+                    },
+                    "fontSize": {
+                        "h3": ["18px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "body": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "mono": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "h1-mobile": ["24px", { "lineHeight": "1.3", "fontWeight": "700" }],
+                        "h1": ["28px", { "lineHeight": "1.3", "fontWeight": "700" }],
+                        "display": ["36px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "caption": ["12px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "button": ["14px", { "lineHeight": "1.0", "fontWeight": "600" }],
+                        "h2": ["22px", { "lineHeight": "1.3", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-neutral-50 text-on-surface font-body antialiased flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<nav class="w-[260px] h-screen fixed left-0 top-0 border-r border-dark-border shadow-md dark:bg-dark-bg flex flex-col z-20 bg-dark-bg"><div class="p-sp-6 border-b border-dark-border flex flex-col gap-sp-2"><div class="flex items-center gap-sp-3"><img class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVnhylcCmn_gfoNVnR8OWzwN09-seBzifBsG98RCeO2S-W4ZPwL1IlO512QLE02i9YAFk8pzh4_gfqPvMrl2P_T0i74bh9VPKmPGbgoVGTmakaNVpu1a6Z0Aps5j6LvAB9TrHgel0OjVPQuNaait8Va-6fIfu-X7vws_kcdiFdyEVatR2oEsyPKdA0fRoswjO6zvsNsK4ZgjXFkzqD1uX5la0T4AiCQbpJcsoOmk2VSppXxXO6zmY7"><div><h1 class="font-display text-h2 text-white">LifeLine</h1><p class="font-caption text-caption text-dark-text-muted">Admin Dashboard</p></div></div></div><div class="flex-1 overflow-y-auto py-sp-4"><ul class="flex flex-col gap-sp-1 px-sp-2"><li class=""><a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface-alt transition-colors duration-200 rounded-lg" href="#"><span class="material-symbols-outlined">dashboard</span><span class="font-body text-body">Dashboard</span></a></li><li class=""><a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-white rounded-lg" href="#"><span class="material-symbols-outlined text-primary">group</span><span class="font-body text-body font-medium">User Management</span></a></li><li class=""><a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface-alt transition-colors duration-200 rounded-lg" href="#"><span class="material-symbols-outlined">security</span><span class="font-body text-body">Role Management</span></a></li><li class=""><a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface-alt transition-colors duration-200 rounded-lg" href="#"><span class="material-symbols-outlined">monitor_heart</span><span class="font-body text-body">System Monitoring</span></a></li><li class=""><a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface-alt transition-colors duration-200 rounded-lg" href="#"><span class="material-symbols-outlined">settings</span><span class="font-body text-body">System Configuration</span></a></li></ul></div><div class="p-sp-4 border-t border-dark-border flex flex-col gap-sp-3"><button class="w-full h-[44px] bg-primary-container text-white font-button text-button rounded-lg flex items-center justify-center gap-sp-2 hover:bg-primary-dark transition-colors shadow-sm"><span class="material-symbols-outlined">add</span>Register Donor</button><a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary transition-colors" href="#"><span class="material-symbols-outlined">logout</span><span class="font-body text-body">Logout</span></a></div></nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-[260px] flex flex-col h-screen">
+<!-- TopNavBar (Simplified for Form Context) -->
+<header class="h-sp-16 bg-surface dark:bg-dark-bg border-b border-neutral-200 dark:border-dark-border flex justify-between items-center px-sp-6 w-full flex-shrink-0 z-10">
+<div class="flex items-center gap-sp-4">
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-neutral-100 transition-colors text-neutral-500">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<div>
+<p class="font-caption text-caption text-neutral-500 uppercase tracking-wider">ADD A NEW SYSTEM USER</p>
+<h1 class="font-h1 text-h1 text-on-surface font-bold">Create User Account</h1>
+</div>
+</div>
+<div class="flex items-center gap-sp-4"><div class="flex items-center gap-sp-4"><div class="relative hidden md:block"><input type="text" placeholder="Search..." class="h-10 w-48 pl-10 pr-4 rounded-full bg-neutral-100 border-none text-body-sm focus:ring-1 focus:ring-primary-container"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" style="font-size: 20px;">search</span></div><button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-neutral-100 transition-colors text-neutral-500"><span class="material-symbols-outlined">notifications</span></button><button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-neutral-100 transition-colors text-neutral-500"><span class="material-symbols-outlined">settings</span></button><div class="h-8 w-px bg-neutral-200 mx-2"></div><img class="w-10 h-10 rounded-full object-cover border-2 border-surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwj0pac8bmcphybMqNmYcKeETNdddWQRItqAVrnWkmoQ617G1fjEaVc7lDxZf9mzfrTp9uqqc1_ZY8Id5-e1xtEVglc25mr6cByb1twsvrHBQpLz-AUcwqzHYyrEk7BUptRaGD1-ULGapRQ-tjH0e6_7ToyzevrJu0LdZ7PZfSdOXQbTupL6gkasdt6LucQZ4O8JhXTb0yifFC89aBMFssLh5CECbNii3bY-4C_XRNB3Cf-tyijRnQ"></div></div>
+</header>
+<!-- Form Canvas -->
+<main class="flex-1 overflow-y-auto bg-neutral-50 p-sp-8">
+<div class="max-w-[600px] mx-auto">
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-neutral-200 overflow-hidden">
+<div class="p-sp-6 flex flex-col gap-sp-6">
+<!-- Form Section -->
+<div class="grid grid-cols-1 gap-sp-5"><div class="grid grid-cols-1 md:grid-cols-2 gap-sp-5"><div class="flex flex-col gap-sp-1"><label class="font-caption text-caption text-neutral-700" for="fullName">Full Name</label><input class="h-[44px] px-sp-4 border border-neutral-300 rounded-lg font-body text-body text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-shadow bg-surface-container-lowest placeholder:text-neutral-400" id="fullName" placeholder="e.g. Dr. Sarah Jenkins" type="text"></div><div class="flex flex-col gap-sp-1"><label class="font-caption text-caption text-neutral-700" for="idNumber">ID Number (CCCD/Passport)</label><input class="h-[44px] px-sp-4 border border-neutral-300 rounded-lg font-body text-body text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-shadow bg-surface-container-lowest placeholder:text-neutral-400" id="idNumber" placeholder="Enter valid identification" type="text"></div></div><div class="flex flex-col gap-sp-1"><label class="font-caption text-caption text-neutral-700" for="email">Email</label><input class="h-[44px] px-sp-4 border border-neutral-300 rounded-lg font-body text-body text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-shadow bg-surface-container-lowest placeholder:text-neutral-400" id="email" placeholder="sarah.j@lifeline.org" type="email"></div><div class="flex flex-col gap-sp-1"><label class="font-caption text-caption text-neutral-700" for="phone">Phone Number</label><input class="h-[44px] px-sp-4 border border-neutral-300 rounded-lg font-body text-body text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-shadow bg-surface-container-lowest placeholder:text-neutral-400" id="phone" placeholder="+1 (555) 000-0000" type="tel"></div><div class="flex flex-col gap-sp-1"><label class="font-caption text-caption text-neutral-700" for="password">Initial Password</label><div class="relative"><input class="h-[44px] w-full pl-sp-4 pr-12 border border-neutral-300 rounded-lg font-mono text-mono text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-shadow bg-surface-container-lowest" id="password" type="password" value="Temporary123!"><button class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-700"><span class="material-symbols-outlined">visibility</span></button></div><p class="font-caption text-caption text-neutral-500 mt-1">User will be forced to change this upon first login.</p></div></div>
+<hr class="border-neutral-200">
+<!-- Role Selection -->
+<div class="flex flex-col gap-sp-3">
+<label class="font-caption text-caption text-neutral-700">System Role</label>
+<div class="grid grid-cols-1 gap-sp-3">
+<label class="flex items-start gap-sp-3 p-sp-4 border border-neutral-200 rounded-lg cursor-pointer hover:border-primary-container transition-colors has-[:checked]:border-primary-container has-[:checked]:bg-surface-container-low relative">
+<div class="flex items-center h-5">
+<input class="w-4 h-4 text-primary-container border-neutral-300 focus:ring-primary-container rounded-lg" name="role" type="radio" value="donor">
+</div>
+<div class="flex flex-col">
+<span class="font-body text-body font-semibold text-on-surface">Donor</span>
+<span class="font-caption text-caption text-neutral-500">Public user account for scheduling donations and viewing history.</span>
+</div>
+<span class="material-symbols-outlined text-neutral-300 absolute right-4 top-4" data-icon="volunteer_activism">volunteer_activism</span>
+</label>
+<label class="flex items-start gap-sp-3 p-sp-4 border border-neutral-200 rounded-lg cursor-pointer hover:border-primary-container transition-colors has-[:checked]:border-primary-container has-[:checked]:bg-surface-container-low relative border-primary">
+<div class="flex items-center h-5">
+<input checked="" class="w-4 h-4 text-primary-container border-neutral-300 focus:ring-primary-container rounded-lg" name="role" type="radio" value="staff">
+</div>
+<div class="flex flex-col">
+<span class="font-body text-body font-semibold text-on-surface">Blood Center Staff</span>
+<span class="font-caption text-caption text-neutral-500">Internal personnel managing inventory, drives, and donor processing.</span>
+</div>
+<span class="material-symbols-outlined text-primary-container absolute right-4 top-4" data-icon="medication">medication</span>
+</label>
+<label class="flex items-start gap-sp-3 p-sp-4 border border-neutral-200 rounded-lg cursor-pointer hover:border-primary-container transition-colors has-[:checked]:border-primary-container has-[:checked]:bg-surface-container-low relative">
+<div class="flex items-center h-5">
+<input class="w-4 h-4 text-primary-container border-neutral-300 focus:ring-primary-container rounded-lg" name="role" type="radio" value="hospital">
+</div>
+<div class="flex flex-col">
+<span class="font-body text-body font-semibold text-on-surface">Hospital Staff</span>
+<span class="font-caption text-caption text-neutral-500">External partner requesting blood units for clinical use.</span>
+</div>
+<span class="material-symbols-outlined text-neutral-300 absolute right-4 top-4" data-icon="local_hospital">local_hospital</span>
+</label>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="bg-neutral-50 px-sp-6 py-sp-4 border-t border-neutral-200 flex justify-end gap-sp-3">
+<button class="h-[44px] px-sp-6 font-button text-button text-neutral-700 bg-transparent border border-neutral-300 rounded-lg hover:bg-neutral-100 transition-colors">
+                            Cancel
+                        </button>
+<button class="h-[44px] px-sp-6 font-button text-button text-on-primary bg-primary-container rounded-lg hover:bg-primary-dark transition-colors shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="save" style="font-size: 18px;">save</span>
+                            Save Account
+                        </button>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+
+
+
+</body></html>

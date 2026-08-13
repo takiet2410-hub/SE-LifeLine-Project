@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, Edit3, Trash2, Calendar, User, Clock, CheckCircle2, Save } from 'lucide-react';
 import { articleApi } from '../services/articleApi';
 import { PerformancePanel } from '../components/PerformancePanel';
@@ -13,7 +13,9 @@ import type { Article, ArticleCategory, ArticleStatus, TargetAudience } from '..
 export const ArticleDetailPage: React.FC = () => {
   const { articleId } = useParams<{ articleId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+  const basePath = location.pathname.startsWith('/hospital') ? '/hospital' : '/bc';
 
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,7 +120,7 @@ export const ArticleDetailPage: React.FC = () => {
     try {
       const res = await articleApi.deleteArticle(articleId);
       if (res.success) {
-        navigate('/bc/content');
+        navigate(`${basePath}/content`);
       }
     } catch (e: any) {
       alert(e.message || 'Failed to delete article');
@@ -143,7 +145,7 @@ export const ArticleDetailPage: React.FC = () => {
           {error || 'Article not found or has been deleted'}
         </div>
         <button
-          onClick={() => navigate('/bc/content')}
+          onClick={() => navigate(`${basePath}/content`)}
           className="px-4 py-2 bg-gray-900 text-white text-xs font-semibold rounded-lg"
         >
           Return to Article List
@@ -158,7 +160,7 @@ export const ArticleDetailPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <button
-            onClick={() => navigate('/bc/content')}
+            onClick={() => navigate(`${basePath}/content`)}
             className="p-2 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

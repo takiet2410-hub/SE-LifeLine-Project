@@ -32,6 +32,18 @@ export const DashboardLayout: React.FC = () => {
       } catch (err) {}
     };
     fetchCount();
+
+    const handleUpdate = () => {
+      fetchCount();
+    };
+
+    window.addEventListener('notifications-updated', handleUpdate);
+    const intervalId = setInterval(fetchCount, 10000);
+
+    return () => {
+      window.removeEventListener('notifications-updated', handleUpdate);
+      clearInterval(intervalId);
+    };
   }, []);
 
   // Handle click outside to close dropdown

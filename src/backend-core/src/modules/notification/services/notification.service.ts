@@ -34,7 +34,8 @@ export class NotificationService {
     const { page, limit, type, status, channel, startDate, endDate } = filters;
     const skip = (page - 1) * limit;
 
-    const query: any = { recipientUserId: new Types.ObjectId(userId) };
+    const userFilter = Types.ObjectId.isValid(userId) ? { $in: [userId, new Types.ObjectId(userId)] } : userId;
+    const query: any = { recipientUserId: userFilter };
 
     // Default UI channel filter to InApp to prevent showing duplicate WebPush + InApp entries
     if (channel && channel !== 'all') {
@@ -75,20 +76,35 @@ export class NotificationService {
    * Get single notification by ID (with ownership check)
    */
   static async getNotificationById(id: string, userId: string): Promise<INotification | null> {
-    if (!Types.ObjectId.isValid(id)) return null;
-    return Notification.findOne({ _id: id, recipientUserId: userId }).lean();
+    const userFilter = Types.ObjectId.isValid(userId) ? { $in: [userId, new Types.ObjectId(userId)] } : userId;
+    const idFilter = Types.ObjectId.isValid(id) ? { $in: [id, new Types.ObjectId(id)] } : id;
+    return Notification.findOne({ _id: idFilter, recipientUserId: userFilter }).lean();
   }
 
   /**
    * Mark single notification as read
    */
   static async markAsRead(id: string, userId: string): Promise<INotification | null> {
-    if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(userId)) return null;
-    return Notification.findOneAndUpdate(
-      { _id: new Types.ObjectId(id), recipientUserId: new Types.ObjectId(userId), readAt: null },
-      { readAt: new Date() },
-      { returnDocument: 'after' }
-    ).lean();
+    const userFilter = Types.ObjectId.isValid(userId) ? { $in: [userId, new Types.ObjectId(userId)] } : userId;
+    const idFilter = Types.ObjectId.isValid(id) ? { $in: [id, new Types.ObjectId(id)] } : id;
+    
+    const notif = await Notification.findOne({ _id: idFilter, recipientUserId: userFilter });
+    if (!notif) return null;
+
+    const now = new Date();
+    await Notification.updateMany(
+      {
+        recipientUserId: notif.recipientUserId,
+        $or: [
+          { _id: notif._id },
+          { sourceRefId: notif.sourceRefId, sourceRefType: notif.sourceRefType }
+        ]
+      },
+      { readAt: now }
+    );
+
+    notif.readAt = now;
+    return notif;
   }
 
   /**
@@ -99,11 +115,12 @@ export class NotificationService {
     ids?: string[],
     markAllAsRead = false
   ): Promise<{ modifiedCount: number }> {
-    if (!Types.ObjectId.isValid(userId)) return { modifiedCount: 0 };
-    const query: any = { recipientUserId: new Types.ObjectId(userId), readAt: null };
+    const userFilter = Types.ObjectId.isValid(userId) ? { $in: [userId, new Types.ObjectId(userId)] } : userId;
+    const query: any = { recipientUserId: userFilter, readAt: null };
     
     if (!markAllAsRead && ids && ids.length > 0) {
-      query._id = { $in: ids.filter(Types.ObjectId.isValid).map(id => new Types.ObjectId(id)) };
+      const idFilters = ids.flatMap(id => Types.ObjectId.isValid(id) ? [id, new Types.ObjectId(id)] : [id]);
+      query._id = { $in: idFilters };
     }
 
     const result = await Notification.updateMany(query, { readAt: new Date() });
@@ -146,7 +163,8 @@ export class NotificationService {
    * Get unread count for badge
    */
   static async getUnreadCount(userId: string): Promise<number> {
-    return Notification.countDocuments({ recipientUserId: userId, readAt: null, channel: 'InApp' });
+    const userFilter = Types.ObjectId.isValid(userId) ? { $in: [userId, new Types.ObjectId(userId)] } : userId;
+    return Notification.countDocuments({ recipientUserId: userFilter, readAt: null, channel: 'InApp' });
   }
 
   /**
@@ -258,7 +276,14 @@ export class NotificationService {
           deliveryStatus: 'Pending',
         });
 
-        await this.queueDelivery(notification._id.toString(), [channel]);
+        const notifIdStr = notification._id.toString();
+        await this.queueDelivery(notifIdStr, [channel]);
+
+        // Immediate background dispatch (ensures instant delivery without waiting for queue worker drain)
+        this.processDelivery(notifIdStr, channel).catch(err => {
+          console.warn(`[NotificationService] Immediate delivery fallback notice for ${notifIdStr}:`, err?.message || err);
+        });
+
         results.push({ recipientUserId: recipientId, notificationId: notification._id, channel });
       }
     }
@@ -273,7 +298,7 @@ export class NotificationService {
    */
   static async processDelivery(notificationId: string, channel: import('../models/Notification').NotificationChannel) {
     const notification = await Notification.findById(notificationId);
-    if (!notification || notification.channel !== channel) return;
+    if (!notification || notification.channel !== channel || notification.deliveryStatus === 'Sent') return;
 
     try {
       let success = false;

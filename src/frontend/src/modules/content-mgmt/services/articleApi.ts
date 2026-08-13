@@ -16,6 +16,15 @@ const mapBEArticleToFE = (beArticle: any): Article => ({
     (beArticle.targetAudience ? [beArticle.targetAudience] : ['Donors']),
   // Map category if needed
   category: beArticle.category === 'Educational' ? 'Educational' : beArticle.category,
+  authorName: typeof beArticle.authorStaffId === 'object' && beArticle.authorStaffId?.fullName
+    ? beArticle.authorStaffId.fullName
+    : (beArticle.authorName || 'Blood Center Staff'),
+  performance: {
+    viewsCount: beArticle.viewsCount ?? beArticle.performance?.viewsCount ?? 0,
+    publicReachCount: beArticle.performance?.publicReachCount ?? beArticle.performance?.reach ?? 0,
+    sharesCount: beArticle.performance?.sharesCount ?? beArticle.performance?.shares ?? 0,
+    engagementNote: beArticle.performance?.engagementNote || ''
+  }
 });
 
 export const articleApi = {

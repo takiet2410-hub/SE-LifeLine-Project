@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Clock, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { apiService } from '../../../services/apiClient';
 import type { NotificationData } from '../../../services/mockData';
@@ -9,6 +9,8 @@ import { format } from 'date-fns';
 export const NotificationDetailPage: React.FC = () => {
   const { notifId } = useParams<{ notifId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const backPath = location.pathname.startsWith('/hospital') ? '/hospital/notifications' : '/bc/notifications';
 
   const [notification, setNotification] = useState<NotificationData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -17,6 +19,9 @@ export const NotificationDetailPage: React.FC = () => {
     if (notifId) {
       apiService.getNotificationById(notifId).then((data) => {
         setNotification(data);
+        if (data && !data.readAt) {
+          apiService.markNotificationAsRead(data._id);
+        }
         setLoading(false);
       });
     }
@@ -28,7 +33,7 @@ export const NotificationDetailPage: React.FC = () => {
       <div className="text-center py-12">
         <p className="text-slate-600">Không tìm thấy thông báo.</p>
         <button
-          onClick={() => navigate('/bc/notifications')}
+          onClick={() => navigate(backPath)}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm"
         >
           Quay lại danh sách thông báo
@@ -45,7 +50,7 @@ export const NotificationDetailPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center gap-3">
         <button
-          onClick={() => navigate('/bc/notifications')}
+          onClick={() => navigate(backPath)}
           className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />

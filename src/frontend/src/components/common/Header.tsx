@@ -43,6 +43,18 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
       } catch (err) {}
     };
     fetchCount();
+
+    const handleUpdate = () => {
+      fetchCount();
+    };
+
+    window.addEventListener('notifications-updated', handleUpdate);
+    const intervalId = setInterval(fetchCount, 10000);
+
+    return () => {
+      window.removeEventListener('notifications-updated', handleUpdate);
+      clearInterval(intervalId);
+    };
   }, []);
 
   // Handle click outside to close dropdown
@@ -86,10 +98,9 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
     }
     if (isHospital) {
       if (notif.type === 'SOS') {
-        // We could route to the specific request if we knew it, or just the list
         navigate('/hospital/sos-requests');
       } else {
-        navigate('/hospital/sos-requests'); // Adjust if hospitals have their own notification list
+        navigate(`/hospital/notifications/${notif._id}`);
       }
     } else {
       navigate(`/bc/notifications/${notif._id}`);
@@ -117,6 +128,12 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
     }
     if (path.includes('/hospital/sos-reports')) {
       return { title: 'SOS Reports', subtitle: 'VIEW REPORTS AND ANALYTICS FOR SOS REQUESTS' };
+    }
+    if (path.includes('/hospital/content')) {
+      return { title: 'Hospital Content & News', subtitle: 'BROWSE ADVISORIES, BLOOD GUIDELINES & ANNOUNCEMENTS' };
+    }
+    if (path.includes('/hospital/notifications')) {
+      return { title: 'Hospital Notifications', subtitle: 'REVIEW SYSTEM NOTIFICATIONS AND EMERGENCY RESPONSES' };
     }
     if (path.includes('/inventory')) {
       return { title: 'Blood Inventory Management', subtitle: 'MONITOR BLOOD BAG STOCK, FEFO EXPIRATION & DISPATCH' };

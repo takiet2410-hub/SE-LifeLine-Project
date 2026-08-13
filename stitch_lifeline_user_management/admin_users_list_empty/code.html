@@ -1,0 +1,308 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>LifeLine - Admin User Management (Empty)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary": "#93000b",
+                    "on-tertiary-container": "#c1dbff",
+                    "surface-variant": "#f9dcd8",
+                    "neutral-700": "#343A40",
+                    "dark-bg": "#1A1A2E",
+                    "dark-text-primary": "#EAEAEA",
+                    "neutral-200": "#DEE2E6",
+                    "surface-bright": "#fff8f7",
+                    "on-primary": "#ffffff",
+                    "secondary-light": "#D6E4F0",
+                    "success": "#16A34A",
+                    "surface-container": "#ffe9e6",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#00497f",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-container": "#b5d0fd",
+                    "danger": "#EF4444",
+                    "outline-variant": "#e4beb9",
+                    "on-primary-fixed-variant": "#93000b",
+                    "surface": "#fff8f7",
+                    "secondary-fixed-dim": "#adc8f5",
+                    "on-background": "#271816",
+                    "inverse-surface": "#3e2c2a",
+                    "outline": "#8f6f6c",
+                    "surface-dim": "#f1d3d0",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed": "#001c3b",
+                    "neutral-900": "#121212",
+                    "neutral-500": "#6C757D",
+                    "secondary-fixed": "#d5e3ff",
+                    "tertiary-fixed": "#d2e4ff",
+                    "on-secondary-container": "#3e5980",
+                    "inverse-on-surface": "#ffedea",
+                    "dark-surface-alt": "#0F3460",
+                    "secondary-dark": "#152A43",
+                    "background": "#fff8f7",
+                    "neutral-100": "#F1F3F5",
+                    "neutral-300": "#CED4DA",
+                    "on-surface-variant": "#5b403d",
+                    "on-tertiary-fixed-variant": "#00497e",
+                    "surface-container-high": "#ffe2de",
+                    "primary-container": "#b91c1c",
+                    "inverse-primary": "#ffb4ab",
+                    "surface-container-low": "#fff0ee",
+                    "primary-fixed": "#ffdad6",
+                    "neutral-50": "#F8F9FA",
+                    "primary-fixed-dim": "#ffb4ab",
+                    "surface-container-highest": "#f9dcd8",
+                    "warning": "#F59E0B",
+                    "on-error": "#ffffff",
+                    "dark-text-muted": "#8E8EA0",
+                    "primary-dark": "#7F1D1D",
+                    "tertiary-container": "#0061a6",
+                    "secondary": "#455f87",
+                    "primary-light": "#FEE2E2",
+                    "info": "#3B82F6",
+                    "error": "#ba1a1a",
+                    "on-primary-fixed": "#410002",
+                    "tertiary-fixed-dim": "#a0caff",
+                    "on-secondary-fixed-variant": "#2d486d",
+                    "dark-border": "#2C2C44",
+                    "on-tertiary-fixed": "#001c37",
+                    "on-secondary": "#ffffff",
+                    "surface-tint": "#b91c1c",
+                    "on-primary-container": "#ffcdc7",
+                    "dark-surface": "#16213E",
+                    "on-error-container": "#93000a",
+                    "on-surface": "#271816"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sp-8": "32px",
+                    "sp-2": "8px",
+                    "sp-12": "48px",
+                    "sp-6": "24px",
+                    "sp-10": "40px",
+                    "sp-1": "4px",
+                    "sp-5": "20px",
+                    "base": "4px",
+                    "sp-4": "16px",
+                    "sp-16": "64px",
+                    "sp-3": "12px"
+            },
+            "fontFamily": {
+                    "button": [
+                            "Inter"
+                    ],
+                    "body": [
+                            "Inter"
+                    ],
+                    "mono": [
+                            "JetBrains Mono"
+                    ],
+                    "h3": [
+                            "Inter"
+                    ],
+                    "h2": [
+                            "Inter"
+                    ],
+                    "caption": [
+                            "Inter"
+                    ],
+                    "h1-mobile": [
+                            "Inter"
+                    ],
+                    "h1": [
+                            "Inter"
+                    ],
+                    "display": [
+                            "Inter"
+                    ],
+                    "body-sm": [
+                            "Inter"
+                    ]
+            },
+            "fontSize": {
+                    "button": [
+                            "14px",
+                            {
+                                    "lineHeight": "1.0",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body": [
+                            "16px",
+                            {
+                                    "lineHeight": "1.5",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "mono": [
+                            "14px",
+                            {
+                                    "lineHeight": "1.5",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "h3": [
+                            "18px",
+                            {
+                                    "lineHeight": "1.4",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "h2": [
+                            "22px",
+                            {
+                                    "lineHeight": "1.3",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "caption": [
+                            "12px",
+                            {
+                                    "lineHeight": "1.4",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "h1-mobile": [
+                            "24px",
+                            {
+                                    "lineHeight": "1.3",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "h1": [
+                            "28px",
+                            {
+                                    "lineHeight": "1.3",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "display": [
+                            "36px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "1.5",
+                                    "fontWeight": "400"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+    </style>
+</head>
+<body class="bg-neutral-50 text-neutral-900 font-body min-h-screen flex">
+<!-- SideNavBar -->
+<aside class="w-[260px] h-screen fixed left-0 top-0 bg-secondary-dark border-r border-dark-border shadow-md flex flex-col z-20 min-h-screen" style="background-color: rgb(26, 26, 46);">
+<div class="px-sp-6 py-sp-8 flex items-center gap-sp-3 border-b border-dark-border/50"><span class="material-symbols-outlined text-primary text-3xl" style="color: rgb(185, 28, 28); font-variation-settings: &quot;FILL&quot; 1;">favorite</span><div><h1 class="font-display text-h2 font-bold tracking-tight" style="color: #FFFFFF;">LifeLine</h1><p class="font-body text-body-sm" style="color: #8E8EA0;">Admin Dashboard</p></div></div>
+<nav class="flex-1 overflow-y-auto py-sp-4 px-sp-2 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface-alt transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body text-body">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 border-l-4 border-primary bg-secondary text-on-primary-fixed rounded-r-lg" href="#" style="border-left: 3px solid rgb(185, 28, 28); background-color: rgb(15, 52, 96); color: rgb(255, 255, 255);">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-body text-body font-medium">User Management</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface-alt transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">security</span>
+<span class="font-body text-body">Role Management</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface-alt transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">monitor_heart</span>
+<span class="font-body text-body">System Monitoring</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface-alt transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body text-body">System Configuration</span>
+</a>
+</nav>
+<div class="p-sp-4 border-t border-dark-border/50"><a class="flex items-center gap-3 px-4 py-3 mb-sp-2 text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-surface-alt transition-colors duration-200 rounded-lg" href="#" style="color: rgb(142, 142, 160);"><span class="material-symbols-outlined">logout</span><span class="font-body text-body">Logout</span></a>
+<button class="w-full bg-primary hover:bg-primary-dark text-on-primary font-button text-button h-11 rounded-lg flex items-center justify-center gap-2 transition-colors" style="background-color: rgb(185, 28, 28);">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                Register Donor
+            </button>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-[260px] flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="w-full h-sp-16 bg-surface border-b border-neutral-200 flex justify-between items-center px-sp-6 sticky top-0 z-10">
+<div class="flex-1 flex items-center">
+<div class="relative w-full max-w-md focus-within:ring-2 focus-within:ring-primary rounded-lg transition-shadow">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">search</span>
+<input class="w-full h-11 pl-10 pr-4 bg-white border border-neutral-200 rounded-lg font-body text-body text-neutral-900 focus:outline-none focus:border-primary" placeholder="Search users..." type="text" value="nguyen van xyz" style="background-color: rgb(241, 243, 245);">
+</div>
+</div>
+<div class="flex items-center gap-sp-4">
+<button class="h-11 px-4 border border-primary text-primary font-button text-button rounded-lg hover:bg-primary-light transition-colors">
+                    Export CSV
+                </button>
+<button class="h-11 px-4 bg-primary text-on-primary font-button text-button rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2" style="background-color: rgb(185, 28, 28);"><span class="material-symbols-outlined text-[20px]">person_add</span>+ Create Account</button>
+<div class="h-8 w-px bg-neutral-200 mx-2"></div>
+<button class="text-neutral-500 hover:text-primary transition-colors p-2 rounded-full hover:bg-neutral-100">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-neutral-500 hover:text-primary transition-colors p-2 rounded-full hover:bg-neutral-100">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="ml-sp-2">
+<img alt="Admin Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0G6EkoZryyJTfo7aA3t0a0Zu4MxEoTMB4lz7xvMUt3BmzVJia5gEU60Jd5SdLntJZvmQC6KHK0LLarWLFBpD0W692vebsa2e35mHHeTCPiPxfneECDSLKj7-ajYSOHHVgdB75UJK5-ujFYA5JwQqs19903bh-ZxrVEcRtPNKOc2LUxkK6kuDKMciQAdRBlpglOc6cHw_YOEAEifC-qAr6EJ3BT4dDlRMhRUsSesyNJhxoST9npyp1">
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 bg-neutral-50 p-sp-6" style="background-color: rgb(248, 249, 250);">
+<div class="mb-sp-6 flex justify-between items-end">
+<div>
+<h2 class="font-h2 text-h2 text-neutral-900">User Management</h2>
+<p class="font-body text-body-sm text-neutral-500 mt-1">Manage donors, staff, and system administrators.</p>
+</div>
+</div>
+<!-- Empty State Card -->
+<div class="bg-white rounded-xl border border-neutral-200 shadow-sm flex flex-col items-center justify-center p-sp-12 min-h-[400px]" style="border-radius: 12px;">
+<div class="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-sp-6">
+<span class="material-symbols-outlined text-[40px] text-neutral-300">search_off</span>
+</div>
+<h3 class="font-h3 text-h3 text-neutral-900 mb-sp-2 text-center">No matching accounts found</h3>
+<p class="font-body-sm text-body-sm text-neutral-500 mb-sp-8 text-center max-w-sm">
+                    Adjust your search filters and try again
+                </p>
+<button class="h-11 px-sp-6 border border-primary text-primary font-button text-button rounded-lg hover:bg-primary-light transition-colors" style="color: rgb(185, 28, 28); border-color: rgb(185, 28, 28);">
+                    Clear Filters
+                </button>
+</div>
+</main>
+</div>
+
+
+
+
+</body></html>

@@ -40,6 +40,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnrea
       } catch (err) {}
     };
     fetchCount();
+
+    const handleUpdate = () => {
+      fetchCount();
+    };
+
+    window.addEventListener('notifications-updated', handleUpdate);
+    const intervalId = setInterval(fetchCount, 10000);
+
+    return () => {
+      window.removeEventListener('notifications-updated', handleUpdate);
+      clearInterval(intervalId);
+    };
   }, [initialUnreadCount]);
 
   const words = userName.trim().split(/\s+/);
@@ -71,6 +83,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnrea
     ? [
         { to: '/hospital/sos-requests', label: 'SOS Requests', icon: Bell },
         { to: '/hospital/sos-reports', label: 'SOS Reports', icon: FileText },
+        { to: '/hospital/content', label: t('common.content') || 'Content & News', icon: FileText },
+        {
+          to: '/hospital/notifications',
+          label: t('common.notifications') || 'Notifications & SOS',
+          icon: Bell,
+          badge: unreadCount > 0 ? unreadCount : undefined,
+        },
       ]
     : [
         { to: '/bc/campaigns', label: t('common.campaigns') || 'Campaign Management', icon: Calendar },

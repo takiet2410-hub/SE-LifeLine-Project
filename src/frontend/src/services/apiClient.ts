@@ -14,6 +14,7 @@ import {
   initialBloodBags,
 } from './mockData';
 import { apiClient } from '../shared/api/apiClient';
+import { notifyNotificationsChanged } from '../utils/notificationEvents';
 
 // Local in-memory fallbacks
 let campaigns = [...initialCampaigns];
@@ -58,6 +59,7 @@ export const apiService = {
   async markNotificationAsRead(id: string) {
     const res = await apiClient.patch(`/notifications/${id}/read`);
     const rawData = res.data?.data || res.data;
+    notifyNotificationsChanged();
     if (rawData) return rawData as NotificationData;
     return null;
   },
@@ -77,6 +79,7 @@ export const apiService = {
       // If no ids passed, mark all unread as read
       const body = ids.length > 0 ? { ids } : { markAllAsRead: true };
       const res = await apiClient.patch('/notifications/read-all', body);
+      notifyNotificationsChanged();
       return res.data;
     } catch (err) {
       console.warn('[apiService] Backend markMultipleNotificationsAsRead failed, using fallback:', err);
@@ -86,18 +89,21 @@ export const apiService = {
     notifications = notifications.map((n) =>
       ids.includes(n._id) ? { ...n, readAt: new Date().toISOString() } : n
     );
+    notifyNotificationsChanged();
     return { modifiedCount: ids.length };
   },
 
   async removeNotification(id: string) {
     try {
       await apiClient.delete(`/notifications/${id}`);
+      notifyNotificationsChanged();
     } catch (err) {
       console.warn('[apiService] Backend removeNotification failed, using fallback:', err);
     }
 
     await delay();
     notifications = notifications.filter((n) => n._id !== id);
+    notifyNotificationsChanged();
   },
 
   async getUnreadCount() {

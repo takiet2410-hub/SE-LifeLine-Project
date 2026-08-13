@@ -35,6 +35,15 @@ export const DonorNotificationPage: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
+
+    const handleUpdate = () => {
+      fetchNotifications();
+    };
+
+    window.addEventListener('notifications-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('notifications-updated', handleUpdate);
+    };
   }, [fetchNotifications]);
 
   const handleNotificationClick = async (notif: NotificationData) => {

@@ -71,7 +71,7 @@ export class SOSBroadcastService {
             title: `CẤP CỨU: Cần ${request.requiredQuantityMl}ml máu ${request.bloodType} gấp`,
             body: `${hospitalName} yêu cầu cung cấp gấp ${request.requiredQuantityMl}ml máu ${request.bloodType} cho bệnh nhân cấp cứu. Hạn chót: ${request.fulfillmentDeadline ? request.fulfillmentDeadline.toLocaleDateString() : 'Không rõ'}`,
             payload: payload,
-            channels: ['WebPush', 'InApp'] as any
+            channels: ['WebPush', 'InApp', 'Email'] as any
           });
           console.log(`[SOSBroadcastService] Broadcasted to ${staffIds.length} blood center staff`);
         } catch (err) {
@@ -120,10 +120,10 @@ export class SOSBroadcastService {
         await NotificationService.sendNotification({
           recipientIds: newDonorIds.map((id: any) => id.toString()),
           type: 'SOS',
-          title: `KHẨN CẤP: ${hospitalName} đang cần máu ${request.bloodType}`,
-          body: `Nhóm máu ${request.bloodType} của bạn có thể cứu sống một bệnh nhân ngay lúc này. Xin vui lòng hiến máu khẩn cấp!`,
+          title: `🚨 KHẨN CẤP: ${hospitalName} đang cần gấp nhóm máu ${request.bloodType}`,
+          body: `Bệnh viện ${hospitalName} đang cần gấp ${request.requiredQuantityMl}ml máu nhóm ${request.bloodType}. Nhóm máu tương thích của bạn có thể cứu sống bệnh nhân ngay lúc này!`,
           payload: payload,
-          channels: ['WebPush', 'InApp'] as any
+          channels: ['WebPush', 'InApp', 'Email'] as any
         });
         
         console.log(`[SOSBroadcastService] Broadcasted to ${newDonorIds.length} new donors (skipped ${donorIds.length - newDonorIds.length} duplicates)`);

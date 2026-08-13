@@ -83,6 +83,7 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
         print(f" -> isEligibleNow: {donor_context.get('isEligibleNow')}")
         print(f" -> bloodType: {donor_context.get('bloodType')}")
         print(f" -> Active Campaigns: {len(donor_context.get('nearbyCampaigns', []))}")
+        print(f" -> Donation History: {len(donor_context.get('donationHistory', []))} records")
     else:
         print(f"\n[DEBUG CONTEXT] Anonymous Guest (No Donor Context injected)")
 

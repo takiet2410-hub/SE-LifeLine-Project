@@ -78,6 +78,44 @@ export const InteractiveMapPage: React.FC = () => {
   const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
   const [showPermissionPrompt, setShowPermissionPrompt] = useState<boolean>(false);
   const [permissionDenied, setPermissionDenied] = useState<boolean>(false);
+  
+  // Manual Address state
+  const [manualAddress, setManualAddress] = useState('');
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [isManualLocation, setIsManualLocation] = useState(false);
+
+  const handleManualGeocode = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!manualAddress.trim()) {
+      toast.error('Vui lòng nhập địa chỉ của bạn');
+      return;
+    }
+    setIsGeocoding(true);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(manualAddress)}&limit=1`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lng = parseFloat(data[0].lon);
+        const coords: [number, number] = [lat, lng];
+        setUserCoords(coords);
+        setIsManualLocation(true);
+        setPermissionDenied(false); 
+        setShowPermissionPrompt(false);
+        toast.success('Đã cập nhật vị trí của bạn!');
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.flyTo(coords, 14);
+        }
+      } else {
+        toast.error('Không tìm thấy tọa độ cho địa chỉ này');
+      }
+    } catch (err) {
+      console.error('Geocode error:', err);
+      toast.error('Lỗi khi tìm kiếm địa chỉ');
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
 
   // Load locations strictly from backend API campaigns
   const fetchMapLocations = async () => {
@@ -183,6 +221,7 @@ export const InteractiveMapPage: React.FC = () => {
         (position) => {
           const coords: [number, number] = [position.coords.latitude, position.coords.longitude];
           setUserCoords(coords);
+          setIsManualLocation(false);
           setPermissionDenied(false);
           setShowPermissionPrompt(false);
           toast.success('Đã xác định vị trí GPS của bạn và hiển thị điểm hiến máu gần nhất!');
@@ -190,10 +229,12 @@ export const InteractiveMapPage: React.FC = () => {
             mapInstanceRef.current.flyTo(coords, 14);
           }
         },
-        () => {
+        (error) => {
           setPermissionDenied(true);
+          // Only show prompt if it was a denial or timeout, not if it's completely unsupported
           setShowPermissionPrompt(true);
-        }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
       setPermissionDenied(true);
@@ -260,6 +301,11 @@ export const InteractiveMapPage: React.FC = () => {
         if (isExplicitAllTypes) {
           // User explicitly selected "Tất cả các nhóm máu" -> Only show campaigns that require ALL TYPES
           return acceptsAll;
+        }
+
+        // If the campaign accepts all blood types, it inherently accepts whatever specific blood types the user selected.
+        if (acceptsAll) {
+          return true;
         }
 
         // Strict matching: only include campaigns that explicitly contain the selected blood types
@@ -417,7 +463,7 @@ export const InteractiveMapPage: React.FC = () => {
       });
       const userMarker = L.marker(userCoords, { icon: userIcon, zIndexOffset: 2000 })
         .addTo(map)
-        .bindPopup('<div style="font-weight:bold; font-size:13px; color:#1e3a8a;">📍 Vị trí trung tâm GPS của bạn</div>');
+        .bindPopup(`<div style="font-weight:bold; font-size:13px; color:#1e3a8a;">📍 Vị trí trung tâm ${isManualLocation ? 'của bạn' : 'GPS của bạn'}</div>`);
       markersRef.current.push(userMarker);
     }
 
@@ -524,6 +570,7 @@ export const InteractiveMapPage: React.FC = () => {
       (position) => {
         const coords: [number, number] = [position.coords.latitude, position.coords.longitude];
         setUserCoords(coords);
+        setIsManualLocation(false);
         setPermissionDenied(false);
         setShowPermissionPrompt(false);
         toast.success('Đã bật định vị GPS và xác định vị trí của bạn!');
@@ -533,12 +580,19 @@ export const InteractiveMapPage: React.FC = () => {
         }
         setLoading(false);
       },
-      () => {
+      (error) => {
         setPermissionDenied(true);
         setShowPermissionPrompt(false);
-        toast.error('Bạn đã từ chối quyền truy cập vị trí. Hãy sử dụng tìm kiếm thủ công.');
+        
+        let msg = 'Không thể lấy được vị trí GPS.';
+        if (error.code === 1) msg = 'Bạn đã từ chối quyền vị trí. Vui lòng bấm vào biểu tượng ổ khóa trên thanh địa chỉ trình duyệt, chọn "Cho phép" vị trí và thử lại.';
+        else if (error.code === 2) msg = 'Không có tín hiệu GPS (Position unavailable).';
+        else if (error.code === 3) msg = 'Quá thời gian chờ lấy GPS (Timeout).';
+        
+        toast.error(msg);
         setLoading(false);
-      }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
@@ -546,8 +600,9 @@ export const InteractiveMapPage: React.FC = () => {
   const handleToggleGps = () => {
     if (userCoords) {
       setUserCoords(null);
+      setIsManualLocation(false);
       setPermissionDenied(true);
-      toast.info('Đã tắt định vị GPS. Hệ thống chuyển sang tìm kiếm vị trí mặc định / thủ công.');
+      toast.info(isManualLocation ? 'Đã xóa vị trí thủ công. Quay về mặc định.' : 'Đã tắt định vị GPS. Hệ thống chuyển sang tìm kiếm vị trí mặc định / thủ công.');
       if (mapInstanceRef.current) {
         mapInstanceRef.current.flyTo(DEFAULT_CENTER, 13);
       }
@@ -577,10 +632,10 @@ export const InteractiveMapPage: React.FC = () => {
             <Compass className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-[18px] font-bold text-[#271816] leading-none">
+            <h1 className="text-[18px] font-bold text-[#271816] leading-none whitespace-nowrap">
               Bản Đồ Điểm Hiến Máu
             </h1>
-            <p className="text-[12px] text-[#6c757d] mt-0.5">
+            <p className="text-[12px] text-[#6c757d] mt-0.5 whitespace-nowrap">
               Tìm kiếm chiến dịch và điểm hiến máu gần bạn nhất
             </p>
           </div>
@@ -596,9 +651,9 @@ export const InteractiveMapPage: React.FC = () => {
             placeholder="Tìm theo tên bệnh viện, địa chỉ, quận/huyện..."
             className="w-full h-10 pl-10 pr-4 bg-[#f8f9fa] border border-[#dee2e6] rounded-full text-[13px] font-medium text-[#271816] focus:bg-white focus:border-[#93000b] focus:ring-1 focus:ring-[#93000b] outline-none transition-all"
           />
-          {permissionDenied && (
+          {!userCoords && (
             <span className="absolute -bottom-5 left-4 text-[10px] font-semibold text-[#93000b]">
-              * Quyền vị trí tắt: Đang áp dụng tìm kiếm thủ công
+              * Quyền vị trí tắt: Vui lòng nhập địa chỉ ở bộ lọc hoặc bật GPS để tìm điểm gần nhất
             </span>
           )}
           {searchQuery && (
@@ -614,10 +669,10 @@ export const InteractiveMapPage: React.FC = () => {
         {/* Right Action Controls */}
         <div className="flex items-center gap-2">
           {/* GPS Toggle Control */}
-          <div className="flex items-center gap-1 bg-[#f8f9fa] border border-[#dee2e6] rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-[#f8f9fa] border border-[#dee2e6] rounded-xl p-1 shrink-0">
             <button
               onClick={handleToggleGps}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer whitespace-nowrap ${
                 userCoords
                   ? 'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700'
                   : 'bg-white text-[#6c757d] hover:text-[#271816] border border-[#dee2e6]'
@@ -625,10 +680,17 @@ export const InteractiveMapPage: React.FC = () => {
               title={userCoords ? 'GPS đang BẬT. Nhấn để tắt định vị GPS' : 'GPS đang TẮT. Nhấn để bật định vị GPS'}
             >
               {userCoords ? (
-                <>
-                  <Navigation className="w-3.5 h-3.5 animate-pulse fill-white" />
-                  <span>GPS: BẬT</span>
-                </>
+                isManualLocation ? (
+                  <>
+                    <MapPin className="w-3.5 h-3.5 fill-white" />
+                    <span>VỊ TRÍ: THỦ CÔNG</span>
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="w-3.5 h-3.5 animate-pulse fill-white" />
+                    <span>GPS: BẬT</span>
+                  </>
+                )
               ) : (
                 <>
                   <MapPinOff className="w-3.5 h-3.5 text-[#6c757d]" />
@@ -653,10 +715,10 @@ export const InteractiveMapPage: React.FC = () => {
           </div>
 
           {/* Map vs List View Toggle */}
-          <div className="bg-[#f8f9fa] border border-[#dee2e6] rounded-xl p-1 flex items-center">
+          <div className="bg-[#f8f9fa] border border-[#dee2e6] rounded-xl p-1 flex items-center shrink-0">
             <button
               onClick={() => setViewMode('map')}
-              className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all whitespace-nowrap ${
                 viewMode === 'map'
                   ? 'bg-[#93000b] text-white shadow-sm'
                   : 'text-[#6c757d] hover:text-[#271816]'
@@ -666,7 +728,7 @@ export const InteractiveMapPage: React.FC = () => {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all whitespace-nowrap ${
                 viewMode === 'list'
                   ? 'bg-[#93000b] text-white shadow-sm'
                   : 'text-[#6c757d] hover:text-[#271816]'
@@ -696,6 +758,32 @@ export const InteractiveMapPage: React.FC = () => {
           </div>
 
           <div className="space-y-5">
+            {/* User Location */}
+            {(!userCoords || isManualLocation) && (
+              <div>
+                <label className="text-[13px] font-semibold text-[#5b403d] block mb-2">
+                  Vị trí của bạn (Nhập thủ công)
+                </label>
+                <form onSubmit={handleManualGeocode} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={manualAddress}
+                    onChange={(e) => setManualAddress(e.target.value)}
+                    placeholder="Nhập địa chỉ..."
+                    className="flex-1 h-9 pl-3 pr-2 bg-white border border-[#dee2e6] rounded-lg text-[13px] text-[#271816] focus:border-[#93000b] focus:ring-1 focus:ring-[#93000b] outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isGeocoding}
+                    className="px-3 h-9 bg-[#271816] hover:bg-[#93000b] text-white rounded-lg text-[12px] font-bold disabled:opacity-50 transition-colors flex items-center justify-center min-w-[50px]"
+                  >
+                    {isGeocoding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Tìm'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Radius Slider */}
             {/* Radius Slider */}
             <div>
               <div className="flex justify-between items-center mb-1.5">
@@ -1125,6 +1213,26 @@ export const InteractiveMapPage: React.FC = () => {
             <p className="text-[13px] text-[#6c757d]">
               LifeLine cần quyền truy cập vị trí GPS để tự động gợi ý điểm hiến máu gần nhất trong bán kính {radius}km.
             </p>
+
+            <div className="bg-[#f8f9fa] p-3 rounded-xl text-left border border-[#dee2e6]">
+              <label className="text-[12px] font-bold text-[#5b403d] mb-1.5 block">Hoặc nhập địa chỉ thủ công:</label>
+              <form onSubmit={handleManualGeocode} className="flex gap-2">
+                <input
+                  type="text"
+                  value={manualAddress}
+                  onChange={(e) => setManualAddress(e.target.value)}
+                  placeholder="VD: 123 Nguyễn Văn Cừ, Quận 5..."
+                  className="flex-1 h-10 pl-3 pr-3 bg-white border border-[#dee2e6] rounded-lg text-[13px] text-[#271816] focus:border-[#93000b] focus:ring-1 focus:ring-[#93000b] outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={isGeocoding}
+                  className="px-4 h-10 bg-[#271816] hover:bg-[#93000b] text-white rounded-lg text-[13px] font-bold disabled:opacity-50 shrink-0 flex items-center justify-center min-w-[60px]"
+                >
+                  {isGeocoding ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Tìm'}
+                </button>
+              </form>
+            </div>
 
             <div className="pt-2 flex flex-col gap-2">
               <button

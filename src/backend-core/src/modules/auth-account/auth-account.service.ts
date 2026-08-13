@@ -134,7 +134,9 @@ export class AuthAccountService {
   }
 
   static async login(data: LoginInput) {
-    const user = await User.findOne({ idDocumentNumber: data.idDocumentNumber });
+    const user = await User.findOne({
+      $or: [{ idDocumentNumber: data.idDocumentNumber }, { email: data.idDocumentNumber }],
+    });
     if (!user) throw new Error('Invalid credentials');
 
     if (user.accountStatus === 'Suspended' && user.lockUntil && user.lockUntil > new Date()) {

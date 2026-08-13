@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { chatbotApi } from '../api/chatbot.api';
 import { useAuth } from '../../../shared/contexts/AuthContext';
-import { Send, Bot, User, Loader2, X, Minimize2, Maximize2, MessageSquare, Calendar, MapPin, Droplet } from 'lucide-react';
+import { Send, Bot, User, X, Minimize2, Maximize2, MessageSquare, Calendar, MapPin, Droplet } from 'lucide-react';
 import { toast } from 'sonner';
-import { isAxiosError } from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface Message {
@@ -37,7 +36,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = fal
   const [isTimedOut, setIsTimedOut] = useState(false);
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<any>(null);
 
   const resetTimer = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -440,7 +439,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ isFullScreen = fal
 
       {/* Input Area */}
       <footer className="bg-white border-t p-3 relative">
-        {(messages.length === 0 || messages[messages.length - 1]?.sender === 'System') && !isTimedOut && !isMaintenanceMode && (
+        {(messages.length === 0 || (messages[messages.length - 1]?.sender as string) === 'System') && !isTimedOut && !isMaintenanceMode && (
           <div className="absolute bottom-[calc(100%+8px)] left-0 w-full px-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {SUGGESTED_QUESTIONS.map((q, idx) => (
               <button

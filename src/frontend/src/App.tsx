@@ -74,6 +74,15 @@ import { SOSReportsPage } from './modules/sos-requests/pages/SOSReportsPage';
 import { SOSAlertsPage } from './modules/notifications/pages/SOSAlertsPage';
 import { DonorNotificationPage } from './modules/notifications/pages/DonorNotificationPage';
 
+// System Admin Module
+import { AdminDashboardPage } from './modules/admin/pages/AdminDashboardPage';
+import { UserListPage } from './modules/admin/pages/UserListPage';
+import { UserFormPage } from './modules/admin/pages/UserFormPage';
+import { RoleManagementPage } from './modules/admin/pages/RoleManagementPage';
+import { ActivityLogsPage } from './modules/admin/pages/ActivityLogsPage';
+import { SystemConfigPage } from './modules/admin/pages/SystemConfigPage';
+import { FeatureTogglesPage } from './modules/admin/pages/FeatureTogglesPage';
+
 import { ScrollToTop } from './shared/components/ScrollToTop';
 
 function App() {
@@ -136,7 +145,7 @@ function App() {
         </Route>
       </Route>
 
-      {/* 4. Blood Center Admin Routes */}
+      {/* 4. Blood Center / Hospital / System Admin Routes */}
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/bc" element={<Navigate to="/bc/campaigns" replace />} />
@@ -167,6 +176,17 @@ function App() {
           <Route path="/hospital/sos-requests/create" element={<CreateSOSRequestPage />} />
           <Route path="/hospital/sos-requests/:id" element={<SOSRequestDetailPage />} />
           <Route path="/hospital/sos-reports" element={<SOSReportsPage />} />
+
+          {/* System Administrator Routes */}
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/users" element={<UserListPage />} />
+          <Route path="/admin/users/create" element={<UserFormPage />} />
+          <Route path="/admin/users/:userId/edit" element={<UserFormPage />} />
+          <Route path="/admin/roles" element={<RoleManagementPage />} />
+          <Route path="/admin/logs" element={<ActivityLogsPage />} />
+          <Route path="/admin/config" element={<SystemConfigPage />} />
+          <Route path="/admin/toggles" element={<FeatureTogglesPage />} />
         </Route>
       </Route>
 

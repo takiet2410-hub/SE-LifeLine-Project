@@ -73,11 +73,19 @@ export const DashboardLayout: React.FC = () => {
       setUnreadCount(prev => Math.max(0, prev - 1));
       setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, readAt: new Date().toISOString() } : n));
     }
-    if (notif.type === 'SOS') {
+
+    // Direct redirect to specific article page if notification is for an article
+    const articleId = notif.payload?.articleId || (notif.sourceRefType === 'Article' ? notif.sourceRefId : null);
+    if (articleId) {
+      navigate(`/news/${articleId}`);
+      return;
+    }
+
+    if (notif.type === 'SOS' || notif.sourceRefType === 'SOSRequest') {
       navigate('/sos-alerts');
-    } else if ((notif.type as string) === 'Appointment') {
+    } else if ((notif.type as string) === 'Appointment' || notif.sourceRefType === 'Appointment') {
       navigate('/my-appointments');
-    } else if (notif.type === 'Campaign') {
+    } else {
       navigate('/news');
     }
   };

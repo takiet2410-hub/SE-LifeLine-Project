@@ -68,6 +68,72 @@ export const ROLE_OPTIONS = [
   },
 ] as const;
 
+export const TEST_ACCOUNT_PRESETS = [
+  {
+    id: 'donor_q1',
+    label: '🔴 Donor (Quận 1 - Máu O+)',
+    email: 'donor@lifeline.vn',
+    idDocumentNumber: '079099000998',
+    password: 'Password123!',
+    role: 'Donor',
+    description: 'Chợ Bến Thành, Q.1 (GPS: 106.6983, 10.7719)',
+  },
+  {
+    id: 'donor_o_minus',
+    label: '🚨 Donor (Máu O- Hiếm - Q.5)',
+    email: 'donor.o_minus@lifeline.vn',
+    idDocumentNumber: '079099000888',
+    password: 'Password123!',
+    role: 'Donor',
+    description: 'BV Chợ Rẫy, Q.5 (GPS: 106.6597, 10.7554)',
+  },
+  {
+    id: 'donor_q10',
+    label: '🟡 Donor (Quận 10 - Máu AB+)',
+    email: 'donor.ab@lifeline.vn',
+    idDocumentNumber: '079099000777',
+    password: 'Password123!',
+    role: 'Donor',
+    description: 'BV 115, Q.10 (GPS: 106.6667, 10.7733)',
+  },
+  {
+    id: 'hospital_cho_ray',
+    label: '🏥 Bệnh viện Chợ Rẫy (Cấp Cứu)',
+    email: 'hospital@lifeline.vn',
+    idDocumentNumber: '079088000457',
+    password: 'Password123!',
+    role: 'HospitalStaff',
+    description: 'Khoa Cấp Cứu BV Chợ Rẫy, Q.5',
+  },
+  {
+    id: 'hospital_115',
+    label: '🏥 Bệnh viện Nhân Dân 115',
+    email: 'hospital.115@lifeline.vn',
+    idDocumentNumber: '079088000458',
+    password: 'Password123!',
+    role: 'HospitalStaff',
+    description: 'Bệnh viện Nhân Dân 115, Q.10',
+  },
+  {
+    id: 'blood_center',
+    label: '🩸 TT Truyền máu TP.HCM',
+    email: 'bloodcenter@lifeline.vn',
+    idDocumentNumber: '079099000112',
+    password: 'Password123!',
+    role: 'BloodCenterStaff',
+    description: 'TT Truyền máu Huyết học, Q.5',
+  },
+  {
+    id: 'admin',
+    label: '🛡️ Quản trị viên (Admin)',
+    email: 'admin@lifeline.gov.vn',
+    idDocumentNumber: '079077000790',
+    password: 'Password123!',
+    role: 'Administrator',
+    description: 'Toàn quyền Admin & Diagnostics',
+  },
+];
+
 export const LoginForm: React.FC<LoginFormProps> = ({
   onSubmit,
   isLoading = false,
@@ -83,6 +149,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem('rememberedId'));
   const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('');
 
   const handleRoleSelect = (roleId: string) => {
     setSelectedRole(roleId);
@@ -94,25 +161,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     if (validationError) setValidationError(null);
   };
 
-  const handleQuickFillDonor = () => {
-    setIdDocumentNumber('079099000999');
-    setPassword('StrongPass123!');
-    setSelectedRole('Donor');
-    setValidationError(null);
-  };
-
-  const handleQuickFillStaff = () => {
-    setIdDocumentNumber('079099000111');
-    setPassword('StrongPass123!');
-    setSelectedRole('BloodCenterStaff');
-    setValidationError(null);
-  };
-
-  const handleQuickFillHospital = () => {
-    setIdDocumentNumber('079088000456');
-    setPassword('StrongPass123!');
-    setSelectedRole('HospitalStaff');
-    setValidationError(null);
+  const handleSelectTestPreset = (presetId: string) => {
+    setSelectedPresetId(presetId);
+    const preset = TEST_ACCOUNT_PRESETS.find((p) => p.id === presetId);
+    if (preset) {
+      setIdDocumentNumber(preset.email || preset.idDocumentNumber);
+      setPassword(preset.password);
+      setSelectedRole(preset.role);
+      setValidationError(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -120,7 +177,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     setValidationError(null);
 
     if (!idDocumentNumber.trim()) {
-      setValidationError('Vui lòng nhập số CCCD (12 chữ số).');
+      setValidationError('Vui lòng nhập email hoặc số CCCD.');
       return;
     }
     if (!password) {
@@ -144,7 +201,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   return (
     <div className="w-full max-w-[480px] bg-white border border-[#f1f3f5] rounded-2xl p-7 md:p-8 shadow-sm transition-all hover:shadow-md">
       {/* Form Header */}
-      <div className="mb-6 text-left">
+      <div className="mb-5 text-left">
         <div className="flex items-center justify-between">
           <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
             Đăng Nhập Hệ Thống
@@ -159,6 +216,32 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <p className="text-[13px] font-normal text-[#6c757d] mt-1">
           Chọn vai trò làm việc tương ứng để truy cập Cổng công tác thích hợp.
         </p>
+      </div>
+
+      {/* Quick Test Account Selector Banner */}
+      <div className="mb-6 p-3.5 bg-gradient-to-r from-red-50/80 to-amber-50/80 dark:from-red-950/20 dark:to-amber-950/20 border border-red-200/80 dark:border-red-900/50 rounded-xl text-left space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 font-bold text-xs text-[#93000b]">
+            <Zap className="w-4 h-4 fill-[#93000b]" />
+            <span>Chọn nhanh tài khoản Test GPS & SOS:</span>
+          </div>
+          <span className="text-[10px] bg-[#93000b] text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+            Demo QA
+          </span>
+        </div>
+
+        <select
+          value={selectedPresetId}
+          onChange={(e) => handleSelectTestPreset(e.target.value)}
+          className="w-full px-3 py-2 bg-white text-slate-900 border border-red-300 rounded-lg text-xs font-semibold shadow-xs focus:ring-2 focus:ring-red-500 outline-hidden cursor-pointer"
+        >
+          <option value="">-- Click chọn tài khoản Test nhanh --</option>
+          {TEST_ACCOUNT_PRESETS.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label} - [{p.description}]
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Role Selector Section */}
@@ -222,32 +305,32 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={handleQuickFillDonor}
+                onClick={() => handleSelectTestPreset('donor_q1')}
                 className="text-[11px] font-bold text-[#93000b] hover:underline flex items-center gap-1 cursor-pointer"
                 title="Tải nhanh tài khoản Mẫu Donor"
               >
                 <Zap className="w-3 h-3 text-[#93000b]" />
-                <span>Mẫu Donor</span>
+                <span>Donor Q.1</span>
               </button>
               <span className="text-[#a3a3a3] text-[10px]">•</span>
               <button
                 type="button"
-                onClick={handleQuickFillStaff}
-                className="text-[11px] font-bold text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
-                title="Tải nhanh tài khoản Mẫu Staff"
-              >
-                <Zap className="w-3 h-3 text-blue-700" />
-                <span>Mẫu Staff</span>
-              </button>
-              <span className="text-[#a3a3a3] text-[10px]">•</span>
-              <button
-                type="button"
-                onClick={handleQuickFillHospital}
+                onClick={() => handleSelectTestPreset('hospital_cho_ray')}
                 className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer"
                 title="Tải nhanh tài khoản Mẫu Hospital"
               >
                 <Zap className="w-3 h-3 text-emerald-700" />
-                <span>Mẫu Hospital</span>
+                <span>BV Chợ Rẫy</span>
+              </button>
+              <span className="text-[#a3a3a3] text-[10px]">•</span>
+              <button
+                type="button"
+                onClick={() => handleSelectTestPreset('blood_center')}
+                className="text-[11px] font-bold text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
+                title="Tải nhanh tài khoản Mẫu Staff"
+              >
+                <Zap className="w-3 h-3 text-blue-700" />
+                <span>TT Máu</span>
               </button>
             </div>
           </div>

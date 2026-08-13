@@ -7,6 +7,11 @@ import {
   Bell,
   LogOut,
   Building2,
+  LayoutDashboard,
+  Users,
+  Shield,
+  Sliders,
+  ToggleLeft,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../shared/contexts/AuthContext';
@@ -22,7 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnrea
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const userName = user?.fullName || 'BS. Nguyễn Văn A';
+  const userName = user?.fullName || 'Administrator';
   
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount || 0);
 
@@ -38,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnrea
   }, [initialUnreadCount]);
 
   const words = userName.trim().split(/\s+/);
-  let initials = 'BC';
+  let initials = 'AD';
   if (words.length >= 2) {
     initials = (words[0][0] + words[words.length - 1][0]).toUpperCase();
   } else if (words.length === 1 && words[0].length > 0) {
@@ -50,42 +55,34 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnrea
     navigate('/login');
   };
 
+  const isAdmin = user?.role === 'Administrator' || (user as any)?.roles?.includes('Administrator');
   const isHospital = user?.role === 'HospitalStaff' || user?.role?.toLowerCase().includes('hospital');
 
-  const navItems = isHospital ? [
-    {
-      to: '/hospital/sos-requests',
-      label: 'SOS Requests',
-      icon: Bell,
-    },
-    {
-      to: '/hospital/sos-reports',
-      label: 'SOS Reports',
-      icon: FileText,
-    }
-  ] : [
-    {
-      to: '/bc/campaigns',
-      label: t('common.campaigns') || 'Campaign Management',
-      icon: Calendar,
-    },
-    {
-      to: '/bc/inventory',
-      label: t('common.inventory') || 'Inventory Management',
-      icon: Package,
-    },
-    {
-      to: '/bc/content',
-      label: t('common.content') || 'Content Management',
-      icon: FileText,
-    },
-    {
-      to: '/bc/notifications',
-      label: t('common.notifications') || 'Notifications & SOS',
-      icon: Bell,
-      badge: unreadCount > 0 ? unreadCount : undefined,
-    },
-  ];
+  const navItems = isAdmin
+    ? [
+        { to: '/admin/dashboard', label: 'Admin Dashboard', icon: LayoutDashboard },
+        { to: '/admin/users', label: 'User Accounts', icon: Users },
+        { to: '/admin/roles', label: 'Roles & Permissions', icon: Shield },
+        { to: '/admin/logs', label: 'Activity Logs', icon: FileText },
+        { to: '/admin/config', label: 'System Configuration', icon: Sliders },
+        { to: '/admin/toggles', label: 'Feature Toggles', icon: ToggleLeft },
+      ]
+    : isHospital
+    ? [
+        { to: '/hospital/sos-requests', label: 'SOS Requests', icon: Bell },
+        { to: '/hospital/sos-reports', label: 'SOS Reports', icon: FileText },
+      ]
+    : [
+        { to: '/bc/campaigns', label: t('common.campaigns') || 'Campaign Management', icon: Calendar },
+        { to: '/bc/inventory', label: t('common.inventory') || 'Inventory Management', icon: Package },
+        { to: '/bc/content', label: t('common.content') || 'Content Management', icon: FileText },
+        {
+          to: '/bc/notifications',
+          label: t('common.notifications') || 'Notifications & SOS',
+          icon: Bell,
+          badge: unreadCount > 0 ? unreadCount : undefined,
+        },
+      ];
 
   return (
     <aside className="w-64 h-screen bg-[#1a1a2e] text-white flex flex-col shrink-0 selection:bg-[#93000b]/30">

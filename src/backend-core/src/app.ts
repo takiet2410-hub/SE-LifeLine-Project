@@ -91,6 +91,7 @@ app.get(['/', '/swagger', '/docs'], (req, res) => {
 
 import hospitalRoutes from './modules/auth-account/hospital.routes';
 import chatbotRoutes from './modules/chatbot/chatbot.routes';
+import adminRoutes from './modules/admin/admin.routes';
 
 // Base routing structure
 app.use('/api/v1/users', authAccountRoutes);
@@ -104,6 +105,7 @@ app.use('/api/v1/bc/articles', articleRoutes);
 app.use('/api/v1/articles', publicArticleRoutes);
 app.use('/api/v1/hospital/sos-requests', sosRequestRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 app.use(errorHandler);
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Calendar, LayoutDashboard, Bell, Heart, LogOut, Map, Newspaper, AlertTriangle, Bot } from 'lucide-react';
+import { Calendar, LayoutDashboard, Bell, Heart, LogOut, Map, Newspaper, AlertTriangle } from 'lucide-react';
 import { LifeLineLogo } from '../../../modules/auth-account/components/LifeLineLogo';
 import { useAuth } from '../../contexts/AuthContext';
 

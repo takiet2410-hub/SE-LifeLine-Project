@@ -425,10 +425,19 @@ export class AuthAccountService {
     // Y học thực tế: 1 đơn vị máu toàn phần có thể tách làm 3 chế phẩm (Hồng cầu, Huyết tương, Tiểu cầu) để cứu 3 người
     const livesImpacted = totalDonations * 3; 
 
-    // Tính trạng thái hiến máu (Cách nhau tối thiểu 12 tuần / 84 ngày đối với hiến máu toàn phần)
+    // Tính trạng thái hiến máu (Cấu hình bởi Admin trong SystemConfig, mặc định 84 ngày)
+    let donationIntervalDays = 84;
+    try {
+      const { SystemConfig } = await import('../admin/models/system-config.model');
+      const config = await SystemConfig.findOne({ key: 'donationIntervalDays' }).lean();
+      if (config && typeof config.value === 'number') {
+        donationIntervalDays = config.value;
+      }
+    } catch (e) {}
+
     let eligibilityStatus = 'Eligible Now';
     if (lastDonationDate) {
-      const nextEligibleDate = new Date(lastDonationDate.getTime() + 84 * 24 * 60 * 60 * 1000);
+      const nextEligibleDate = new Date(lastDonationDate.getTime() + donationIntervalDays * 24 * 60 * 60 * 1000);
       const currentDate = new Date(); 
       
       if (currentDate < nextEligibleDate) {

@@ -22,18 +22,30 @@ export class SOSEvaluationService {
     }
     const [lng, lat] = hospital.location.coordinates;
 
+    // Check SystemConfig for initial and max search radius (Configurable by Admin)
+    let initialRadiusKm = 10;
+    let maxRadiusKm = 50;
+    try {
+      const { SystemConfig } = await import('../../admin/models/system-config.model');
+      const configs = await SystemConfig.find({ key: { $in: ['sosSearchRadiusKm', 'sosMaxRadiusKm'] } }).lean();
+      for (const c of configs) {
+        if (c.key === 'sosSearchRadiusKm' && typeof c.value === 'number') initialRadiusKm = c.value;
+        if (c.key === 'sosMaxRadiusKm' && typeof c.value === 'number') maxRadiusKm = c.value;
+      }
+    } catch (e) {}
+
     // Check if there is an existing eval log to determine current radius
-    let currentRadiusKm = 10;
+    let currentRadiusKm = initialRadiusKm;
     let expansionCount = 0;
     
     if (expandRadius) {
       const lastLog = await SOSEvaluationLog.findOne({ sosRequestId }).sort({ evaluatedAt: -1 });
       if (lastLog) {
-        currentRadiusKm = lastLog.searchRadiusKmUsed + 10;
+        currentRadiusKm = lastLog.searchRadiusKmUsed + initialRadiusKm;
         expansionCount = lastLog.radiusExpansionCount + 1;
-        if (currentRadiusKm > 50) {
-          console.log(`[SOSEvaluationService] Reached maximum search radius (50km)`);
-          currentRadiusKm = 50; // Cap at 50km
+        if (currentRadiusKm > maxRadiusKm) {
+          console.log(`[SOSEvaluationService] Reached maximum search radius (${maxRadiusKm}km)`);
+          currentRadiusKm = maxRadiusKm; // Cap at maxRadiusKm
         }
       }
     }

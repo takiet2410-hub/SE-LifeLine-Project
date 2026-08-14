@@ -198,11 +198,11 @@ export const UserFormPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-[#271816] mb-1">
-              Full Name *
+              Full Name {isEdit ? <span className="text-[#6c757d] font-normal">(Optional)</span> : '*'}
             </label>
             <input
               type="text"
-              required
+              required={!isEdit}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="e.g. Nguyễn Văn A"
@@ -212,11 +212,11 @@ export const UserFormPage: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-[#271816] mb-1">
-              Email Address *
+              Email Address {isEdit ? <span className="text-[#6c757d] font-normal">(Optional)</span> : '*'}
             </label>
             <input
               type="email"
-              required
+              required={!isEdit}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="user@example.com"
@@ -226,11 +226,11 @@ export const UserFormPage: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-[#271816] mb-1">
-              ID Document Number (CCCD) *
+              ID Document Number (CCCD) {isEdit ? <span className="text-[#6c757d] font-normal">(Fixed)</span> : '*'}
             </label>
             <input
               type="text"
-              required
+              required={!isEdit}
               disabled={isEdit}
               value={idDocumentNumber}
               onChange={(e) => setIdDocumentNumber(e.target.value)}
@@ -241,7 +241,7 @@ export const UserFormPage: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-[#271816] mb-1">
-              Phone Number
+              Phone Number <span className="text-[#6c757d] font-normal">(Optional)</span>
             </label>
             <input
               type="text"

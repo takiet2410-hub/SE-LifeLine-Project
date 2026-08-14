@@ -13,7 +13,11 @@ export interface UserItem {
 
 export interface UserListResponse {
   items: UserItem[];
-  pagination: {
+  total?: number;
+  page?: number;
+  limit?: number;
+  pages?: number;
+  pagination?: {
     total: number;
     page: number;
     limit: number;

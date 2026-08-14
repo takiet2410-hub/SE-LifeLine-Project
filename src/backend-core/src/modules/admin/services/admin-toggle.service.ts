@@ -1,6 +1,15 @@
 import { FeatureToggle, IFeatureToggle } from '../models/feature-toggle.model';
 import { AdminAuditLog } from '../models/audit-log.model';
 
+export const isFeatureEnabled = async (key: string): Promise<boolean> => {
+  try {
+    const toggle = await FeatureToggle.findOne({ key }).lean();
+    return toggle ? toggle.isEnabled : true;
+  } catch (err) {
+    return true;
+  }
+};
+
 export class AdminToggleService {
   async getFeatureToggles() {
     let toggles = await FeatureToggle.find().lean();

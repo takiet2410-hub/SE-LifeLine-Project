@@ -8,6 +8,7 @@ export interface GetUsersQuery {
   page?: number;
   limit?: number;
   search?: string;
+  searchField?: string;
   role?: string;
   accountStatus?: string;
   sortBy?: string;
@@ -39,43 +40,25 @@ export function validateAndNormalizeRoles(data: { role?: string; roles?: string[
   roles: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
   primaryRole: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
 } {
-  let assignedRoles: string[] = [];
-  if (Array.isArray(data.roles) && data.roles.length > 0) {
-    assignedRoles = data.roles;
-  } else if (data.role) {
-    assignedRoles = [data.role];
-  } else {
-    assignedRoles = ['Donor'];
-  }
+  const inputRoles = Array.isArray(data.roles) && data.roles.length > 0
+    ? data.roles
+    : data.role
+    ? [data.role]
+    : ['Donor'];
 
-  assignedRoles = Array.from(new Set(assignedRoles));
-  const validRoles = ['Donor', 'BloodCenterStaff', 'HospitalStaff', 'Administrator'];
+  const normalizedRoles = Array.from(new Set(inputRoles)) as ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
+  const managementRoles = normalizedRoles.filter((r) => r !== 'Donor');
 
-  for (const r of assignedRoles) {
-    if (!validRoles.includes(r)) {
-      throw new Error(`Role không hợp lệ: ${r}`);
-    }
-  }
-
-  if (assignedRoles.length === 0) {
-    throw new Error('Tài khoản phải có ít nhất một vai trò (role).');
-  }
-
-  // Management roles (BloodCenterStaff, HospitalStaff, Administrator): At most 1 allowed per account
-  const managementRoles = assignedRoles.filter((r) => r !== 'Donor');
   if (managementRoles.length > 1) {
-    throw new Error('Một tài khoản chỉ có thể giữ tối đa 1 vai trò quản lý (BloodCenterStaff, HospitalStaff, hoặc Administrator) kết hợp với Donor.');
+    throw new Error('Tài khoản chỉ có thể giữ tối đa 1 vai trò quản lý (BloodCenterStaff, HospitalStaff, hoặc Administrator) kết hợp với Donor.');
   }
 
   let primaryRole: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator' = 'Donor';
-  if (assignedRoles.includes('Administrator')) primaryRole = 'Administrator';
-  else if (assignedRoles.includes('BloodCenterStaff')) primaryRole = 'BloodCenterStaff';
-  else if (assignedRoles.includes('HospitalStaff')) primaryRole = 'HospitalStaff';
+  if (normalizedRoles.includes('Administrator')) primaryRole = 'Administrator';
+  else if (normalizedRoles.includes('BloodCenterStaff')) primaryRole = 'BloodCenterStaff';
+  else if (normalizedRoles.includes('HospitalStaff')) primaryRole = 'HospitalStaff';
 
-  return {
-    roles: assignedRoles as ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[],
-    primaryRole,
-  };
+  return { roles: normalizedRoles, primaryRole };
 }
 
 export class AdminUserService {
@@ -84,23 +67,59 @@ export class AdminUserService {
     const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
     const skip = (page - 1) * limit;
 
-    const filter: Record<string, any> = {};
+    const andConditions: any[] = [];
 
     if (query.role && query.role !== 'All') {
-      filter.$or = [{ role: query.role }, { roles: query.role }];
+      andConditions.push({
+        $or: [{ role: query.role }, { roles: query.role }],
+      });
     }
 
     if (query.accountStatus && query.accountStatus !== 'All') {
-      filter.accountStatus = query.accountStatus;
+      andConditions.push({ accountStatus: query.accountStatus });
     }
 
-    if (query.search) {
-      const searchRegex = new RegExp(query.search, 'i');
-      filter.$or = [
-        { email: searchRegex },
-        { idDocumentNumber: searchRegex },
-        { phone: searchRegex },
-      ];
+    if (query.search && query.search.trim()) {
+      const searchTerm = query.search.trim();
+      const escapedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escapedSearch, 'i');
+
+      // Also search in DonorProfile fullName
+      const matchingDonorProfiles = await DonorProfile.find({ fullName: searchRegex }).select('userId').lean();
+      const donorUserIds = matchingDonorProfiles.map((p) => p.userId);
+
+      const field = query.searchField || 'all';
+
+      if (field === 'name') {
+        andConditions.push({
+          $or: [{ email: searchRegex }, { _id: { $in: donorUserIds } }],
+        });
+      } else if (field === 'email') {
+        andConditions.push({ email: searchRegex });
+      } else if (field === 'cccd') {
+        // Prefix match for CCCD so typing "04" matches "04..." at start (e.g. province codes)
+        const cccdPrefixRegex = new RegExp(`^${escapedSearch}`, 'i');
+        andConditions.push({ idDocumentNumber: cccdPrefixRegex });
+      } else if (field === 'phone') {
+        // Prefix match for Phone numbers
+        const phonePrefixRegex = new RegExp(`^${escapedSearch}`, 'i');
+        andConditions.push({ phone: phonePrefixRegex });
+      } else {
+        // 'all' mode: search across email, idDocumentNumber, phone, and donorProfile fullName
+        andConditions.push({
+          $or: [
+            { email: searchRegex },
+            { idDocumentNumber: searchRegex },
+            { phone: searchRegex },
+            { _id: { $in: donorUserIds } },
+          ],
+        });
+      }
+    }
+
+    const filter: Record<string, any> = {};
+    if (andConditions.length > 0) {
+      filter.$and = andConditions;
     }
 
     const sortField = query.sortBy || 'createdAt';
@@ -137,13 +156,19 @@ export class AdminUserService {
       };
     });
 
+    const totalPages = Math.ceil(total / limit) || 1;
+
     return {
       items,
+      total,
+      page,
+      limit,
+      pages: totalPages,
       pagination: {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages,
       },
     };
   }

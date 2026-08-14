@@ -135,7 +135,21 @@ export class SOSRequestService {
       return { success: true, status: 'declined', message: 'Response recorded successfully' };
     }
 
-    // 1. Eligibility Check (Medical interval & Age)
+    // 1. Eligibility Check (Medical interval & Age dynamically configured by Admin in SystemConfig)
+    const { SystemConfig } = await import('../../admin/models/system-config.model');
+    const configs = await SystemConfig.find({ 
+      key: { $in: ['donationIntervalDays', 'minDonorAge', 'maxDonorAge'] } 
+    }).lean();
+
+    const configMap: Record<string, number> = {
+      donationIntervalDays: 84,
+      minDonorAge: 18,
+      maxDonorAge: 60
+    };
+    for (const c of configs) {
+      if (typeof c.value === 'number') configMap[c.key] = c.value;
+    }
+
     const donorProfile = await DonorProfile.findOne({
       $or: [
         { userId: mongoose.Types.ObjectId.isValid(donorId) ? new mongoose.Types.ObjectId(donorId) : donorId },
@@ -144,23 +158,24 @@ export class SOSRequestService {
     });
 
     if (donorProfile) {
-      // Check lastDonationDate (minimum 84 days interval for whole blood safety)
+      // Check lastDonationDate (interval days configured by Admin)
+      const requiredInterval = configMap.donationIntervalDays;
       if (donorProfile.lastDonationDate) {
         const diffMs = Date.now() - new Date(donorProfile.lastDonationDate).getTime();
         const daysSinceLast = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        if (daysSinceLast >= 0 && daysSinceLast < 84) {
-          const daysRemaining = 84 - daysSinceLast;
-          const error = new Error(`Cảm ơn bạn, nhưng bạn cần đợi thêm ${daysRemaining} ngày nữa (khoảng cách an toàn 84 ngày giữa 2 lần hiến máu) để đảm bảo sức khỏe.`);
+        if (daysSinceLast >= 0 && daysSinceLast < requiredInterval) {
+          const daysRemaining = requiredInterval - daysSinceLast;
+          const error = new Error(`Cảm ơn bạn, nhưng bạn cần đợi thêm ${daysRemaining} ngày nữa (khoảng cách an toàn ${requiredInterval} ngày giữa 2 lần hiến máu) để đảm bảo sức khỏe.`);
           (error as any).statusCode = 400;
           throw error;
         }
       }
 
-      // Check age (18 - 60 years old)
+      // Check age (min/max age configured by Admin)
       if (donorProfile.dateOfBirth) {
         const age = Math.floor((Date.now() - new Date(donorProfile.dateOfBirth).getTime()) / (1000 * 60 * 60 * 24 * 365.25));
-        if (age < 18 || age > 60) {
-          const error = new Error(`Độ tuổi hiến máu quy định theo chuẩn y tế là từ 18 đến 60 tuổi (Hiện tại: ${age} tuổi).`);
+        if (age < configMap.minDonorAge || age > configMap.maxDonorAge) {
+          const error = new Error(`Độ tuổi hiến máu quy định theo chuẩn y tế là từ ${configMap.minDonorAge} đến ${configMap.maxDonorAge} tuổi (Hiện tại: ${age} tuổi).`);
           (error as any).statusCode = 400;
           throw error;
         }

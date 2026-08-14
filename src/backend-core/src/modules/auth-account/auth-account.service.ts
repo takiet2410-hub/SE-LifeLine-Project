@@ -139,8 +139,16 @@ export class AuthAccountService {
     });
     if (!user) throw new Error('Invalid credentials');
 
-    if (user.accountStatus === 'Suspended' && user.lockUntil && user.lockUntil > new Date()) {
-      throw new Error('Account is suspended. Try again later.');
+    if (user.accountStatus === 'Suspended') {
+      if (user.lockUntil && user.lockUntil <= new Date()) {
+        // Auto-unlock temporary lockout
+        user.accountStatus = 'Active';
+        user.lockUntil = undefined;
+        user.failedLoginAttempts = 0;
+        await user.save();
+      } else {
+        throw new Error('Tài khoản của bạn đã bị tạm khóa / đình chỉ. Vui lòng liên hệ Quản trị viên.');
+      }
     }
 
     const isValid = await bcrypt.compare(data.password, user.passwordHash);
@@ -174,14 +182,13 @@ export class AuthAccountService {
 
     // Reset attempts on successful login
     user.failedLoginAttempts = 0;
-    user.accountStatus = 'Active';
     user.lockUntil = undefined;
     try {
       await user.save();
     } catch (saveErr) {
       await User.updateOne(
         { _id: user._id },
-        { $set: { failedLoginAttempts: 0, accountStatus: 'Active' }, $unset: { lockUntil: 1 } }
+        { $set: { failedLoginAttempts: 0 }, $unset: { lockUntil: 1 } }
       ).catch(() => {});
     }
 

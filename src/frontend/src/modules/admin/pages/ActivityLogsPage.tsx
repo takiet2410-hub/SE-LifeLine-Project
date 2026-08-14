@@ -86,15 +86,15 @@ export const ActivityLogsPage: React.FC = () => {
             onChange={(e) => setCategory(e.target.value)}
             className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
-            <option value="All">All Categories</option>
-            <option value="Authentication">Authentication</option>
-            <option value="User Management">User Management</option>
-            <option value="Role Management">Role Management</option>
-            <option value="System Configuration">System Configuration</option>
-            <option value="Feature Toggle">Feature Toggle</option>
-            <option value="SOS Request">SOS Request</option>
-            <option value="Content Management">Content Management</option>
-            <option value="Registration">Registration</option>
+            <option value="All" className="bg-white text-[#271816]">All Categories</option>
+            <option value="Authentication" className="bg-white text-[#271816]">Authentication</option>
+            <option value="User Management" className="bg-white text-[#271816]">User Management</option>
+            <option value="Role Management" className="bg-white text-[#271816]">Role Management</option>
+            <option value="System Configuration" className="bg-white text-[#271816]">System Configuration</option>
+            <option value="Feature Toggle" className="bg-white text-[#271816]">Feature Toggle</option>
+            <option value="SOS Request" className="bg-white text-[#271816]">SOS Request</option>
+            <option value="Content Management" className="bg-white text-[#271816]">Content Management</option>
+            <option value="Registration" className="bg-white text-[#271816]">Registration</option>
           </select>
 
           <select
@@ -102,9 +102,9 @@ export const ActivityLogsPage: React.FC = () => {
             onChange={(e) => setStatus(e.target.value)}
             className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
-            <option value="All">All Statuses</option>
-            <option value="Success">Success</option>
-            <option value="Failure">Failure</option>
+            <option value="All" className="bg-white text-[#271816]">All Statuses</option>
+            <option value="Success" className="bg-white text-[#271816]">Success</option>
+            <option value="Failure" className="bg-white text-[#271816]">Failure</option>
           </select>
         </div>
       </div>

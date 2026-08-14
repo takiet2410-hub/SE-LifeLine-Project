@@ -9,10 +9,16 @@ import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
 import { EmptyState } from '../../../components/common/EmptyState';
 import { format } from 'date-fns';
 import { getArticleIdFromNotification, getArticleRouteForRole } from '../../../utils/notificationHelpers';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 
 export const NotificationListPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+
+  const isHospitalPage = location.pathname.startsWith('/hospital') || user?.role === 'hospital' || user?.role === 'HospitalStaff';
+  const isAdminPage = location.pathname.startsWith('/admin') || user?.role === 'admin' || user?.role === 'Administrator';
+  const isBcPage = location.pathname.startsWith('/bc') || user?.role === 'staff' || user?.role === 'BloodCenterStaff' || (!isHospitalPage && !isAdminPage);
 
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -305,7 +311,7 @@ export const NotificationListPage: React.FC = () => {
                     </div>
 
                     {/* Interactive Action for BC SOS */}
-                    {isSOS && (
+                    {isSOS && isBcPage && (
                       <div className="mt-4 flex gap-2 pl-[56px]">
                         <button
                           onClick={(e) => {
@@ -315,6 +321,19 @@ export const NotificationListPage: React.FC = () => {
                           className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors"
                         >
                           Chuyển máu cho bệnh viện →
+                        </button>
+                      </div>
+                    )}
+                    {isSOS && isHospitalPage && (
+                      <div className="mt-4 flex gap-2 pl-[56px]">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/hospital/sos-requests`);
+                          }}
+                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors"
+                        >
+                          Xem yêu cầu SOS →
                         </button>
                       </div>
                     )}

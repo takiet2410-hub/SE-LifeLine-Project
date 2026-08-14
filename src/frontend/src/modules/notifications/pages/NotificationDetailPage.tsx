@@ -6,12 +6,19 @@ import type { NotificationData } from '../../../services/mockData';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
 import { format } from 'date-fns';
 import { getArticleIdFromNotification, getArticleRouteForRole } from '../../../utils/notificationHelpers';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 
 export const NotificationDetailPage: React.FC = () => {
   const { notifId } = useParams<{ notifId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const backPath = location.pathname.startsWith('/admin') ? '/admin/notifications' : location.pathname.startsWith('/hospital') ? '/hospital/notifications' : '/bc/notifications';
+  const { user } = useAuth();
+
+  const isHospitalPage = location.pathname.startsWith('/hospital') || user?.role === 'hospital' || user?.role === 'HospitalStaff';
+  const isAdminPage = location.pathname.startsWith('/admin') || user?.role === 'admin' || user?.role === 'Administrator';
+  const isBcPage = location.pathname.startsWith('/bc') || user?.role === 'staff' || user?.role === 'BloodCenterStaff' || (!isHospitalPage && !isAdminPage);
+
+  const backPath = isAdminPage ? '/admin/notifications' : isHospitalPage ? '/hospital/notifications' : '/bc/notifications';
 
   const [notification, setNotification] = useState<NotificationData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,20 +130,32 @@ export const NotificationDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-2 flex justify-end gap-3">
-            <button
-              onClick={() => navigate('/bc/inventory')}
-              className="px-4 py-2 bg-red-700 text-white hover:bg-red-800 font-bold text-xs rounded-lg shadow-xs transition-colors"
-            >
-              Kiểm tra kho máu
-            </button>
-            <button
-              onClick={() => navigate(`/bc/inventory/stock-out?reason=Transfer`)}
-              className="px-4 py-2 bg-white text-red-700 border border-white hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors"
-            >
-              Chuyển máu cho bệnh viện →
-            </button>
-          </div>
+          {isBcPage && (
+            <div className="pt-2 flex justify-end gap-3">
+              <button
+                onClick={() => navigate('/bc/inventory')}
+                className="px-4 py-2 bg-red-700 text-white hover:bg-red-800 font-bold text-xs rounded-lg shadow-xs transition-colors"
+              >
+                Kiểm tra kho máu
+              </button>
+              <button
+                onClick={() => navigate(`/bc/inventory/stock-out?reason=Transfer`)}
+                className="px-4 py-2 bg-white text-red-700 border border-white hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors"
+              >
+                Chuyển máu cho bệnh viện →
+              </button>
+            </div>
+          )}
+          {isHospitalPage && (
+            <div className="pt-2 flex justify-end gap-3">
+              <button
+                onClick={() => navigate('/hospital/sos-requests')}
+                className="px-4 py-2 bg-white text-red-700 border border-white hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors"
+              >
+                Xem danh sách yêu cầu SOS →
+              </button>
+            </div>
+          )}
         </div>
       )}
 

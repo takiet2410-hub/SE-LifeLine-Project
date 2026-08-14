@@ -84,6 +84,27 @@ export class AdminController {
     }
   }
 
+  static async hardDeleteUser(req: AuthRequest, res: Response) {
+    try {
+      const adminUser = {
+        id: req.user?._id?.toString() || 'admin_id',
+        name: req.user?.email || 'Administrator',
+      };
+      const { confirmationUsername } = req.body;
+      const ipAddress = req.ip || req.socket.remoteAddress || '127.0.0.1';
+
+      const result = await userService.hardDeleteUser(
+        adminUser,
+        req.params.userId as string,
+        confirmationUsername,
+        ipAddress
+      );
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(400).json({ code: 'BAD_REQUEST', message: err.message });
+    }
+  }
+
   // --- AD-UC-03: Roles & Permissions ---
   static async getRoles(req: AuthRequest, res: Response) {
     try {

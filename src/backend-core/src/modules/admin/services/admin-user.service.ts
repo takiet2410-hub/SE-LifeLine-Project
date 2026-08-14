@@ -20,7 +20,8 @@ export interface CreateUserData {
   fullName: string;
   phone?: string;
   password: string;
-  role: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
+  role?: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
+  roles?: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
   bloodCenterId?: string;
 }
 
@@ -29,8 +30,52 @@ export interface UpdateUserData {
   email?: string;
   phone?: string;
   role?: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
+  roles?: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
   accountStatus?: 'PendingVerification' | 'Active' | 'Suspended';
   bloodCenterId?: string;
+}
+
+export function validateAndNormalizeRoles(data: { role?: string; roles?: string[] }): {
+  roles: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
+  primaryRole: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
+} {
+  let assignedRoles: string[] = [];
+  if (Array.isArray(data.roles) && data.roles.length > 0) {
+    assignedRoles = data.roles;
+  } else if (data.role) {
+    assignedRoles = [data.role];
+  } else {
+    assignedRoles = ['Donor'];
+  }
+
+  assignedRoles = Array.from(new Set(assignedRoles));
+  const validRoles = ['Donor', 'BloodCenterStaff', 'HospitalStaff', 'Administrator'];
+
+  for (const r of assignedRoles) {
+    if (!validRoles.includes(r)) {
+      throw new Error(`Role không hợp lệ: ${r}`);
+    }
+  }
+
+  if (assignedRoles.length === 0) {
+    throw new Error('Tài khoản phải có ít nhất một vai trò (role).');
+  }
+
+  // Management roles (BloodCenterStaff, HospitalStaff, Administrator): At most 1 allowed per account
+  const managementRoles = assignedRoles.filter((r) => r !== 'Donor');
+  if (managementRoles.length > 1) {
+    throw new Error('Một tài khoản chỉ có thể giữ tối đa 1 vai trò quản lý (BloodCenterStaff, HospitalStaff, hoặc Administrator) kết hợp với Donor.');
+  }
+
+  let primaryRole: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator' = 'Donor';
+  if (assignedRoles.includes('Administrator')) primaryRole = 'Administrator';
+  else if (assignedRoles.includes('BloodCenterStaff')) primaryRole = 'BloodCenterStaff';
+  else if (assignedRoles.includes('HospitalStaff')) primaryRole = 'HospitalStaff';
+
+  return {
+    roles: assignedRoles as ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[],
+    primaryRole,
+  };
 }
 
 export class AdminUserService {
@@ -77,13 +122,15 @@ export class AdminUserService {
 
     const items = users.map((user) => {
       const profile = donorMap.get(user._id.toString());
+      const userRoles = Array.from(new Set([user.role, ...(Array.isArray(user.roles) ? user.roles : [])].filter(Boolean)));
       return {
         id: user._id.toString(),
         idDocumentNumber: user.idDocumentNumber,
         email: user.email,
         phone: user.phone || 'N/A',
         fullName: profile?.fullName || user.email.split('@')[0],
-        role: user.role || user.roles[0] || 'Donor',
+        role: user.role || userRoles[0] || 'Donor',
+        roles: userRoles.length > 0 ? userRoles : ['Donor'],
         accountStatus: user.accountStatus,
         createdAt: user.createdAt,
         lastLoginAt: user.lastLoginAt,
@@ -126,6 +173,7 @@ export class AdminUserService {
       throw new Error('User with this email or ID Document Number already exists.');
     }
 
+    const { roles, primaryRole } = validateAndNormalizeRoles(data);
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(data.password, salt);
 
@@ -134,13 +182,13 @@ export class AdminUserService {
       email: data.email,
       phone: data.phone,
       passwordHash,
-      roles: [data.role],
-      role: data.role,
+      roles,
+      role: primaryRole,
       accountStatus: 'Active',
       bloodCenterId: data.bloodCenterId,
     });
 
-    if (data.role === 'Donor') {
+    if (roles.includes('Donor')) {
       await DonorProfile.create({
         userId: newUser._id,
         fullName: data.fullName,
@@ -160,7 +208,7 @@ export class AdminUserService {
       actionCategory: 'User Management',
       resourceType: 'User',
       resourceId: newUser._id.toString(),
-      newValue: { email: data.email, role: data.role, fullName: data.fullName },
+      newValue: { email: data.email, role: primaryRole, roles, fullName: data.fullName },
       ipAddress,
       status: 'Success',
     });
@@ -176,15 +224,17 @@ export class AdminUserService {
 
     const previousValue = {
       email: user.email,
-      role: user.role || user.roles[0],
+      role: user.role || user.roles?.[0],
+      roles: user.roles,
       accountStatus: user.accountStatus,
     };
 
     if (data.email) user.email = data.email;
     if (data.phone) user.phone = data.phone;
-    if (data.role) {
-      user.role = data.role;
-      user.roles = [data.role];
+    if (data.roles || data.role) {
+      const { roles, primaryRole } = validateAndNormalizeRoles(data);
+      user.roles = roles as any;
+      user.role = primaryRole as any;
     }
     if (data.accountStatus) user.accountStatus = data.accountStatus;
     if (data.bloodCenterId) user.bloodCenterId = data.bloodCenterId as any;
@@ -254,5 +304,52 @@ export class AdminUserService {
     });
 
     return { message: 'User account successfully suspended/deactivated.' };
+  }
+
+  async hardDeleteUser(
+    adminUser: { id: string; name: string },
+    userId: string,
+    confirmationUsername: string,
+    ipAddress: string
+  ) {
+    if (adminUser.id === userId) {
+      throw new Error('Administrators cannot delete their own account.');
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User account not found.');
+    }
+
+    if (confirmationUsername.toLowerCase() !== user.email.toLowerCase()) {
+      throw new Error('Confirmation username does not match account email.');
+    }
+
+    const previousValue = {
+      email: user.email,
+      fullName: (user as any).fullName || '',
+      idDocumentNumber: user.idDocumentNumber,
+      accountStatus: user.accountStatus,
+      role: user.role,
+    };
+
+    // Hard-delete implementation: Permanently delete document from MongoDB
+    await User.deleteOne({ _id: userId });
+
+    await AdminAuditLog.create({
+      actorUserId: adminUser.id,
+      actorName: adminUser.name,
+      action: 'Hard Delete User (Permanent Removal)',
+      actionCategory: 'User Management',
+      resourceType: 'User',
+      resourceId: userId,
+      previousValue,
+      newValue: { deleted: true },
+      details: `Permanently removed user account ${user.email} (${user.idDocumentNumber}) from database.`,
+      ipAddress,
+      status: 'Success',
+    });
+
+    return { message: 'User account permanently deleted from database.' };
   }
 }

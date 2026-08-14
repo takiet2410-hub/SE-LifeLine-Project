@@ -22,8 +22,8 @@ export const authenticateJWT = async (req: AuthRequest, res: Response, next: Nex
       const decoded = jwt.verify(token, env.JWT_SECRET) as any;
       const user = await User.findById(decoded.userId);
 
-      if (!user) {
-        return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Invalid token' });
+      if (!user || user.accountStatus === 'Suspended') {
+        return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Tài khoản đã bị đình chỉ hoặc không hợp lệ' });
       }
 
       req.user = user;
@@ -41,8 +41,14 @@ export const authorizeRoles = (...allowedRoles: string[]) => {
     if (!req.user) {
       return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Authentication required' });
     }
-    const userRole = req.user.role;
-    if (!allowedRoles.includes(userRole)) {
+    const userRoles = Array.from(
+      new Set([
+        req.user.role,
+        ...(Array.isArray(req.user.roles) ? req.user.roles : [])
+      ].filter(Boolean))
+    );
+    const hasRole = allowedRoles.some((role) => userRoles.includes(role));
+    if (!hasRole) {
       return res.status(403).json({
         code: 'FORBIDDEN',
         message: `Access denied. Action requires one of the following roles: ${allowedRoles.join(', ')}`,

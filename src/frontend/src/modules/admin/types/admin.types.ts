@@ -5,6 +5,7 @@ export interface UserItem {
   fullName: string;
   phone: string;
   role: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
+  roles?: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
   accountStatus: 'PendingVerification' | 'Active' | 'Suspended';
   createdAt: string;
   lastLoginAt?: string;

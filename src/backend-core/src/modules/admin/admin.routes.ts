@@ -13,6 +13,7 @@ router.get('/users/export', AdminController.exportUsersCsv);
 router.post('/users', AdminController.createUser);
 router.put('/users/:userId', AdminController.updateUser);
 router.delete('/users/:userId', AdminController.softDeleteUser);
+router.delete('/users/:userId/permanent', AdminController.hardDeleteUser);
 
 // AD-UC-03: Roles & Permissions
 router.get('/roles', AdminController.getRoles);

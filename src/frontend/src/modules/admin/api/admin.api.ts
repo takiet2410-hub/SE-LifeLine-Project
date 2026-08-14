@@ -48,6 +48,13 @@ export const adminApi = {
     return res.data;
   },
 
+  hardDeleteUser: async (userId: string, confirmationUsername: string) => {
+    const res = await apiClient.delete(`/admin/users/${userId}/permanent`, {
+      data: { confirmationUsername },
+    });
+    return res.data;
+  },
+
   // AD-UC-03: Roles
   getRoles: async (): Promise<{ roles: RoleItem[]; availablePermissions: string[] }> => {
     const res = await apiClient.get('/admin/roles');

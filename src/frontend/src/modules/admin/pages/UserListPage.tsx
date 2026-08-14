@@ -52,14 +52,19 @@ export const UserListPage: React.FC = () => {
     }
   };
 
-  const handleSoftDelete = async (reason: string, confirmationUsername: string) => {
+  const handleAccountAction = async (reason: string, confirmationUsername: string, isPermanent: boolean) => {
     if (!selectedUserForDelete) return;
     try {
-      await adminApi.softDeleteUser(selectedUserForDelete.id, reason, confirmationUsername);
-      toast.success(`Account for ${selectedUserForDelete.email} deactivated.`);
+      if (isPermanent) {
+        await adminApi.hardDeleteUser(selectedUserForDelete.id, confirmationUsername);
+        toast.success(`Account for ${selectedUserForDelete.email} permanently deleted from database.`);
+      } else {
+        await adminApi.softDeleteUser(selectedUserForDelete.id, reason, confirmationUsername);
+        toast.success(`Account for ${selectedUserForDelete.email} suspended.`);
+      }
       fetchUsers();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || 'Deactivation failed');
+      toast.error(err.response?.data?.message || err.message || 'Action failed');
     }
   };
 
@@ -136,11 +141,11 @@ export const UserListPage: React.FC = () => {
             onChange={(e) => setRole(e.target.value)}
             className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
-            <option value="All">All Roles</option>
-            <option value="Donor">Donor</option>
-            <option value="BloodCenterStaff">Blood Center Staff</option>
-            <option value="HospitalStaff">Hospital Staff</option>
-            <option value="Administrator">Administrator</option>
+            <option value="All" className="bg-white text-[#271816]">All Roles</option>
+            <option value="Donor" className="bg-white text-[#271816]">Donor</option>
+            <option value="BloodCenterStaff" className="bg-white text-[#271816]">Blood Center Staff</option>
+            <option value="HospitalStaff" className="bg-white text-[#271816]">Hospital Staff</option>
+            <option value="Administrator" className="bg-white text-[#271816]">Administrator</option>
           </select>
 
           <select
@@ -148,10 +153,10 @@ export const UserListPage: React.FC = () => {
             onChange={(e) => setStatus(e.target.value)}
             className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
-            <option value="All">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Suspended">Suspended</option>
-            <option value="PendingVerification">Pending Verification</option>
+            <option value="All" className="bg-white text-[#271816]">All Statuses</option>
+            <option value="Active" className="bg-white text-[#271816]">Active</option>
+            <option value="Suspended" className="bg-white text-[#271816]">Suspended</option>
+            <option value="PendingVerification" className="bg-white text-[#271816]">Pending Verification</option>
           </select>
 
           {(search || role !== 'All' || status !== 'All') && (
@@ -209,7 +214,24 @@ export const UserListPage: React.FC = () => {
                       {u.idDocumentNumber}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="font-semibold text-[#271816] text-xs">{u.role}</span>
+                      <div className="flex flex-wrap gap-1">
+                        {(u.roles && u.roles.length > 0 ? u.roles : [u.role]).map((r) => (
+                          <span
+                            key={r}
+                            className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${
+                              r === 'Administrator'
+                                ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                : r === 'BloodCenterStaff'
+                                ? 'bg-red-50 text-[#93000b] border-red-200'
+                                : r === 'HospitalStaff'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            }`}
+                          >
+                            {r}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4">{renderStatusBadge(u.accountStatus)}</td>
                     <td className="py-3.5 px-4 text-xs font-medium text-[#6c757d]">
@@ -246,7 +268,7 @@ export const UserListPage: React.FC = () => {
         isOpen={!!selectedUserForDelete}
         user={selectedUserForDelete}
         onClose={() => setSelectedUserForDelete(null)}
-        onConfirm={handleSoftDelete}
+        onConfirm={handleAccountAction}
       />
     </div>
   );

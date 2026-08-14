@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Clock, MapPin, Heart, HeartHandshake, ShieldAlert, Check, X, ArrowLeft, MapPin as MapPinIcon, Phone as PhoneIcon } from 'lucide-react';
+import { AlertTriangle, Clock, MapPin, Heart, HeartHandshake, ShieldAlert, Check, X, ArrowLeft, MapPin as MapPinIcon, Phone as PhoneIcon, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { type SOSUrgency } from '../../sos-requests/services/sosApi';
@@ -44,26 +44,42 @@ export const SOSAlertsPage: React.FC = () => {
       const result = await apiService.getNotifications({ type: 'SOS' });
       const notifications = result.data;
       
-      const sosAlerts: SOSAlert[] = (notifications || []).map((notif: any) => {
-        const payload = notif.payload || notif.sosRequestInfo || {};
-        return {
-          id: notif._id,
-          sosRequestId: notif.sourceRefId || notif.referenceId || payload.id || notif._id,
-          bloodType: payload.bloodType || 'Unknown',
-          urgencyLevel: payload.urgencyLevel || 'High',
-          status: 'NotificationsDispatched',
-          hospitalName: payload.hospitalName || 'Unknown Hospital',
-          hospitalAddress: payload.hospitalAddress || 'Address not available',
-          patientReference: payload.patientReference || 'N/A',
-          requiredQuantityMl: payload.requiredQuantityMl || 250,
-          fulfillmentDeadline: payload.fulfillmentDeadline || notif.createdAt || new Date().toISOString(),
-          createdAt: notif.createdAt || new Date().toISOString(),
-          readAt: notif.readAt || null,
-          donorResponse: payload.donorResponse || null,
-          hospitalLocation: payload.hospitalLocation,
-          hospitalPhone: payload.hospitalPhone || '02838554137',
-        };
-      });
+      const sosAlerts: SOSAlert[] = (notifications || [])
+        .filter((notif: any) => {
+          const payload = notif.payload || notif.sosRequestInfo || {};
+          const title = (notif.title || '').toLowerCase();
+          // Filter out completion / thank-you / dispatch status notifications
+          if (
+            title.includes('hoàn tất') || 
+            title.includes('tiếp nhận hiến máu') || 
+            title.includes('đã nhận máu') || 
+            title.includes('máu từ kho')
+          ) {
+            return false;
+          }
+          // Must have valid blood request info
+          return (payload.bloodType && payload.bloodType !== 'Unknown') || (payload.hospitalName && payload.hospitalName !== 'Unknown Hospital');
+        })
+        .map((notif: any) => {
+          const payload = notif.payload || notif.sosRequestInfo || {};
+          return {
+            id: notif._id,
+            sosRequestId: notif.sourceRefId || notif.referenceId || payload.id || notif._id,
+            bloodType: payload.bloodType || 'Unknown',
+            urgencyLevel: payload.urgencyLevel || 'High',
+            status: 'NotificationsDispatched',
+            hospitalName: payload.hospitalName || 'Bệnh viện đối tác LifeLine',
+            hospitalAddress: payload.hospitalAddress || 'Address not available',
+            patientReference: payload.patientReference || 'N/A',
+            requiredQuantityMl: payload.requiredQuantityMl || 250,
+            fulfillmentDeadline: payload.fulfillmentDeadline || notif.createdAt || new Date().toISOString(),
+            createdAt: notif.createdAt || new Date().toISOString(),
+            readAt: notif.readAt || null,
+            donorResponse: payload.donorResponse || null,
+            hospitalLocation: payload.hospitalLocation,
+            hospitalPhone: payload.hospitalPhone || '02838554137',
+          };
+        });
       
       setAlerts(sosAlerts);
     } catch (error) {
@@ -96,9 +112,10 @@ export const SOSAlertsPage: React.FC = () => {
       setResponseStatus('accepted');
       setSelectedAlert(alert);
       setShowDetail(true);
-      toast.success('Thank you! Your response has been recorded.');
-    } catch (error) {
-      toast.error('Failed to record response');
+      toast.success('Cảm ơn bạn! Phản hồi sẵn sàng hiến máu đã được ghi nhận.');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.message || 'Không thể ghi nhận phản hồi';
+      toast.error(msg);
     }
   };
 
@@ -112,9 +129,10 @@ export const SOSAlertsPage: React.FC = () => {
       setResponseStatus('declined');
       setSelectedAlert(alert);
       setShowDetail(true);
-      toast.info('Response recorded. Thank you for your time.');
-    } catch (error) {
-      toast.error('Failed to record response');
+      toast.info('Đã ghi nhận phản hồi. Cảm ơn bạn!');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.message || 'Không thể ghi nhận phản hồi';
+      toast.error(msg);
     }
   };
 
@@ -134,15 +152,10 @@ export const SOSAlertsPage: React.FC = () => {
       }
     }
 
-    // 2. If already responded, show their response detail
-    if (alert.donorResponse) {
-      setSelectedAlert(alert);
-      setResponseStatus(alert.donorResponse);
-      setShowDetail(true);
-    }
-    // Note: If they haven't responded yet, we don't show the detail modal
-    // because that modal is specifically for AFTER responding. They can use
-    // the 'I Can Help' or 'Not Now' buttons instead.
+    // 2. Open detail modal (shows instructions, maps & phone if accepted)
+    setSelectedAlert(alert);
+    setResponseStatus(alert.donorResponse || 'accepted');
+    setShowDetail(true);
   };
 
   const getUrgencyColor = (urgency: SOSUrgency) => {
@@ -478,9 +491,19 @@ export const SOSAlertsPage: React.FC = () => {
                       {/* Actions */}
                       <div className="flex flex-col items-end gap-2 shrink-0">
                         {hasResponded ? (
-                          <span className="px-3 py-1.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                            ✓ Responded
-                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAlert(alert);
+                              setResponseStatus(alert.donorResponse || 'accepted');
+                              setShowDetail(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold rounded-lg transition-colors cursor-pointer border border-emerald-300"
+                            title="Bấm để xem lại hướng dẫn, mã ưu tiên và chỉ đường"
+                          >
+                            <span>✓ {alert.donorResponse === 'accepted' ? 'Xem hướng dẫn' : 'Đã phản hồi'}</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
                         ) : isExpired ? (
                           <span className="px-3 py-1.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-full">
                             Expired

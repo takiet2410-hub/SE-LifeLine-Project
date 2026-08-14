@@ -110,6 +110,19 @@ export const NotificationListPage: React.FC = () => {
     }
   };
 
+  const extractSOSId = (item: NotificationData): string | null => {
+    if (item.payload?.sosRequestId) return String(item.payload.sosRequestId);
+    if (item.payload?.sourceRefId) return String(item.payload.sourceRefId);
+    if ((item as any).sourceRefId) return String((item as any).sourceRefId);
+    if (item.payload?.deepLink) {
+      const m = item.payload.deepLink.match(/sos-requests\/([a-f0-9]{24})/i);
+      if (m && m[1]) return m[1];
+    }
+    const bodyMatch = item.body?.match(/([a-f0-9]{24})/i);
+    if (bodyMatch && bodyMatch[1]) return bodyMatch[1];
+    return null;
+  };
+
   const handleNotificationClick = async (item: NotificationData) => {
     if (item.readAt === null) {
       await handleMarkAsRead(item._id);
@@ -119,6 +132,19 @@ export const NotificationListPage: React.FC = () => {
       navigate(getArticleRouteForRole(articleId, location.pathname));
       return;
     }
+
+    if (item.type === 'SOS') {
+      const sosId = extractSOSId(item);
+      if (isBcPage) {
+        navigate(sosId ? `/bc/sos-requests/${sosId}` : `/bc/sos-requests`);
+        return;
+      }
+      if (isHospitalPage) {
+        navigate(sosId ? `/hospital/sos-requests/${sosId}` : `/hospital/sos-requests`);
+        return;
+      }
+    }
+
     const isHospital = location.pathname.startsWith('/hospital');
     const isAdmin = location.pathname.startsWith('/admin');
     const basePath = isAdmin ? '/admin' : isHospital ? '/hospital' : '/bc';
@@ -316,10 +342,10 @@ export const NotificationListPage: React.FC = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            const sosId = item.payload?.sourceRefId || (item as any).sourceRefId;
+                            const sosId = extractSOSId(item);
                             navigate(sosId ? `/bc/sos-requests/${sosId}` : `/bc/sos-requests`);
                           }}
-                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors"
+                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer"
                         >
                           Xử lý yêu cầu SOS →
                         </button>
@@ -330,9 +356,10 @@ export const NotificationListPage: React.FC = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/hospital/sos-requests`);
+                            const sosId = extractSOSId(item);
+                            navigate(sosId ? `/hospital/sos-requests/${sosId}` : `/hospital/sos-requests`);
                           }}
-                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors"
+                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer"
                         >
                           Xem yêu cầu SOS →
                         </button>

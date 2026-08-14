@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { Request, Response, NextFunction } from 'express';
 import { Notification, INotification } from '../models/Notification';
 import { NotificationPreference } from '../models/NotificationPreference';
@@ -126,21 +126,30 @@ export class NotificationController {
 
   public static async respondToSOS(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?._id || (req as any).user?.id;
-      const { id } = req.params;
+      const rawUserId = (req as any).user?._id || (req as any).user?.id || (req as any).user?.userId;
+      const userIdStr = typeof rawUserId === 'object' ? rawUserId.toString() : String(rawUserId || '');
+      const rawId = req.params.id;
+      const idStr = Array.isArray(rawId) ? String(rawId[0]) : String(rawId || '');
       const { response } = req.body; // 'accepted' or 'declined'
 
-      const notif = await Notification.findOne({ _id: String(id), recipientUserId: userId });
+      const userFilter: any = Types.ObjectId.isValid(userIdStr) ? { $in: [userIdStr, new Types.ObjectId(userIdStr)] } : userIdStr;
+      const idFilter: any = Types.ObjectId.isValid(idStr) ? { $in: [idStr, new Types.ObjectId(idStr)] } : idStr;
+
+      const notif = await Notification.findOne({ _id: idFilter, recipientUserId: userFilter });
       if (!notif) {
         return res.status(404).json({ success: false, message: 'Notification not found' });
       }
 
+      const sosRequestId = notif.sourceRefId?.toString() || (notif.payload as any)?.sourceRefId || (notif.payload as any)?.id;
+      if (!sosRequestId) {
+        return res.status(400).json({ success: false, message: 'Mã yêu cầu SOS không hợp lệ' });
+      }
+
       // Call SOSRequestService to record it and handle concurrency
       const { SOSRequestService } = await import('../../sos-request/services/sos-request.service');
-      const sosResult = await SOSRequestService.recordDonorResponse(notif.sourceRefId.toString(), userId, response);
+      const sosResult = await SOSRequestService.recordDonorResponse(sosRequestId, userIdStr, response);
 
       // We only record 'accepted' or 'declined' into the payload if it wasn't already fulfilled
-      // Or if the SOS service returned fulfilled, we might want to record 'fulfilled'
       const finalResponseState = sosResult.status === 'fulfilled' ? 'fulfilled' : response;
 
       notif.payload = {
@@ -151,8 +160,9 @@ export class NotificationController {
       await notif.save();
 
       res.status(200).json({ success: true, data: notif, sosResult });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      const status = error.statusCode || error.status || 400;
+      res.status(status).json({ success: false, message: error.message || 'Lỗi khi ghi nhận phản hồi SOS' });
     }
   }
 
@@ -220,6 +230,15 @@ export class NotificationController {
         { $set: updates },
         { returnDocument: 'after', upsert: true, runValidators: true }
       );
+
+      // Sync emergencyOptIn to DonorProfile if sosEnabled was changed
+      if (updates.sosEnabled !== undefined) {
+        const { DonorProfile } = await import('../../auth-account/models/donor-profile.model');
+        await DonorProfile.updateOne(
+          { userId },
+          { $set: { emergencyOptIn: Boolean(updates.sosEnabled) } }
+        );
+      }
 
       res.status(200).json({ success: true, data: prefs });
     } catch (error) {

@@ -98,6 +98,21 @@ export const apiService = {
     }
   },
 
+  async updateLocation(location: { coordinates: [number, number] }) {
+    try {
+      const res = await apiClient.patch('/auth/me/location', {
+        location: {
+          type: 'Point',
+          coordinates: location.coordinates,
+        },
+      });
+      return res.data;
+    } catch (err) {
+      console.error('Failed to update location:', err);
+      throw err;
+    }
+  },
+
   async getNotificationPreferences() {
     try {
       const res = await apiClient.get('/notifications/preferences');

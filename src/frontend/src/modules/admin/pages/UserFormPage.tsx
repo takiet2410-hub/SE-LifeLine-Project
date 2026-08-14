@@ -14,6 +14,8 @@ export const UserFormPage: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [idDocumentNumber, setIdDocumentNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [permanentAddress, setPermanentAddress] = useState('');
+  const [currentAddress, setCurrentAddress] = useState('');
   const [roles, setRoles] = useState<('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[]>(['Donor']);
   const [accountStatus, setAccountStatus] = useState<'PendingVerification' | 'Active' | 'Suspended'>('Active');
   const [submitting, setSubmitting] = useState(false);
@@ -29,6 +31,11 @@ export const UserFormPage: React.FC = () => {
           setIdDocumentNumber(u.idDocumentNumber);
           setRoles(u.roles && u.roles.length > 0 ? u.roles : u.role ? [u.role] : ['Donor']);
           setAccountStatus(u.accountStatus);
+          if ((u as any).permanentAddress) setPermanentAddress((u as any).permanentAddress);
+          if ((u as any).currentAddress) {
+            const c = (u as any).currentAddress;
+            setCurrentAddress(typeof c === 'object' ? c.fullAddress || '' : c);
+          }
         }
       });
     }
@@ -86,6 +93,8 @@ export const UserFormPage: React.FC = () => {
           role: primaryRole,
           roles,
           accountStatus,
+          permanentAddress,
+          currentAddress,
         });
         toast.success('User account updated successfully.');
       } else {
@@ -97,6 +106,8 @@ export const UserFormPage: React.FC = () => {
           password,
           role: primaryRole,
           roles,
+          permanentAddress,
+          currentAddress,
         });
         toast.success('User account created successfully.');
       }
@@ -248,6 +259,34 @@ export const UserFormPage: React.FC = () => {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="0901234567"
+              className="w-full px-3.5 py-2.5 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-semibold text-[#271816] placeholder:text-slate-400 focus:ring-2 focus:ring-[#93000b] outline-hidden"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#271816] mb-1">
+              Permanent Address (Thường trú theo CCCD) {isEdit ? <span className="text-[#6c757d] font-normal">(Fixed theo CCCD)</span> : ''}
+            </label>
+            <input
+              type="text"
+              disabled={isEdit}
+              value={permanentAddress}
+              onChange={(e) => setPermanentAddress(e.target.value)}
+              placeholder="e.g. 123 Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM"
+              className="w-full px-3.5 py-2.5 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-semibold text-[#271816] placeholder:text-slate-400 focus:ring-2 focus:ring-[#93000b] outline-hidden disabled:opacity-60"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#271816] mb-1 flex items-center justify-between">
+              <span>Current Residential Address (Nơi ở hiện tại)</span>
+              <span className="text-[10px] text-emerald-700 font-medium font-mono">📍 Quét toạ độ SOS</span>
+            </label>
+            <input
+              type="text"
+              value={currentAddress}
+              onChange={(e) => setCurrentAddress(e.target.value)}
+              placeholder="e.g. 45 Hoàng Hoa Thám, Phường 13, Tân Bình, TP.HCM"
               className="w-full px-3.5 py-2.5 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-semibold text-[#271816] placeholder:text-slate-400 focus:ring-2 focus:ring-[#93000b] outline-hidden"
             />
           </div>

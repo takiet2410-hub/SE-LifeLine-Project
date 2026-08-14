@@ -102,6 +102,8 @@ export const MyProfilePage: React.FC = () => {
               profileData ? {
                 ...profileData.personalInfo,
                 ...profileData.contactInfo,
+                permanentAddress: profileData.contactInfo?.permanentAddress || (profileData.profileInfo as any)?.permanentAddress,
+                currentAddress: profileData.contactInfo?.currentAddress || (profileData.profileInfo as any)?.currentAddress,
                 address: profileData.contactInfo?.permanentAddress,
                 id: user?.id || ''
               } as any : undefined

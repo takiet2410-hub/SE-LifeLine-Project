@@ -4,6 +4,38 @@ import { apiService } from '../../../services/apiClient';
 export type SOSUrgency = 'Critical' | 'High' | 'Medium';
 export type SOSStatus = 'Pending' | 'EvaluationInProgress' | 'NotificationsDispatched' | 'InventoryDispatched' | 'Fulfilled' | 'Expired' | 'Cancelled' | 'EvaluationFailed';
 
+export interface SOSShipment {
+  _id?: string;
+  id?: string;
+  shipmentCode: string;
+  bloodCenterId?: string;
+  bloodCenterName?: string;
+  dispatchedByStaffId: string;
+  dispatchedStaffName?: string;
+  bloodBagIds: string[];
+  volumeMl: number;
+  bloodType: string;
+  dispatchedAt: string;
+  status: 'InTransit' | 'Received' | 'Cancelled';
+  receivedAt?: string;
+  receivedByStaffId?: string;
+}
+
+export interface DirectDonation {
+  _id?: string;
+  id?: string;
+  donorId?: string;
+  donorName: string;
+  idDocumentNumber?: string;
+  donorPhone?: string;
+  bloodType?: string;
+  fastTrackCode?: string;
+  volumeMl: number;
+  recordedAt: string;
+  recordedByStaffId: string;
+  note?: string;
+}
+
 export interface SOSRequest {
   id: string;
   hospitalId: string;
@@ -11,6 +43,10 @@ export interface SOSRequest {
   bloodType: string;
   requiredQuantityMl: number;
   collectedQuantityMl?: number;
+  receivedQuantityMl?: number;
+  inTransitQuantityMl?: number;
+  shipments?: SOSShipment[];
+  directDonations?: DirectDonation[];
   acceptedDonorIds?: string[];
   urgencyLevel: SOSUrgency;
   patientReference?: string;
@@ -93,7 +129,8 @@ export interface SOSEvaluationLog {
 
 export const sosApi = {
   async getHospitals(): Promise<HospitalInfo[]> {
-    return await apiService.getHospitals();
+    const data = await apiService.getHospitals();
+    return data || [];
   },
 
   async createSOSRequest(payload: CreateSOSRequestPayload): Promise<SOSRequest> {
@@ -150,6 +187,30 @@ export const sosApi = {
 
   async confirmReceived(id: string): Promise<any> {
     const response = await apiClient.patch(`/hospital/sos-requests/${id}/confirm-received`, {});
+    return response.data;
+  },
+
+  async confirmShipmentReceived(id: string, shipmentId: string): Promise<any> {
+    const response = await apiClient.patch(`/hospital/sos-requests/${id}/shipments/${shipmentId}/confirm-received`, {});
+    return response.data;
+  },
+
+  async recordDirectDonation(id: string, payload: {
+    volumeMl: number;
+    fastTrackCode?: string;
+    donorId?: string;
+    donorName: string;
+    idDocumentNumber?: string;
+    donorPhone?: string;
+    bloodType?: string;
+    note?: string;
+  }): Promise<any> {
+    const response = await apiClient.post(`/hospital/sos-requests/${id}/direct-donations`, payload);
+    return response.data;
+  },
+
+  async lookupDonor(id: string, query: string): Promise<{ success: boolean; data: any[] }> {
+    const response = await apiClient.get(`/hospital/sos-requests/${id}/lookup-donor?query=${encodeURIComponent(query)}`);
     return response.data;
   }
 };

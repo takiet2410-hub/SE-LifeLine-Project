@@ -5,6 +5,7 @@ export type RegisterCitizenIdPayload = {
   email: string;
   phoneNumber: string;
   password: string;
+  currentAddress?: string;
 };
 
 export async function registerCitizenId(payload: RegisterCitizenIdPayload) {

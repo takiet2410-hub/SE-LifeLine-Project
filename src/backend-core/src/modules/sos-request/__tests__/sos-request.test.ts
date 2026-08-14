@@ -1,9 +1,11 @@
 import { SOSRequestService } from '../services/sos-request.service';
 import { SOSRequest } from '../models/sos-request.model';
 import { AdminAuditLog } from '../../admin/models/audit-log.model';
+import { Hospital } from '../../auth-account/models/hospital.model';
 
 jest.mock('../models/sos-request.model');
 jest.mock('../../admin/models/audit-log.model');
+jest.mock('../../auth-account/models/hospital.model');
 jest.mock('../../notification/services/notification.service');
 jest.mock('../../../config/queue.config', () => ({
   sosEvaluationQueue: {
@@ -18,6 +20,13 @@ describe('SOS Request Module Unit Tests', () => {
 
   describe('createSOSRequest', () => {
     it('should create SOS request with Pending status and write audit log to shared audit_logs collection', async () => {
+      const validHospitalId = '507f1f77bcf86cd799439011';
+      (Hospital.findById as jest.Mock).mockResolvedValue({
+        _id: validHospitalId,
+        name: 'Bệnh viện Chợ Rẫy',
+        location: { coordinates: [106.659, 10.757] },
+      });
+
       const mockSave = jest.fn().mockImplementation(function (this: any) {
         this._id = 'sos_request_999';
         return Promise.resolve(this);
@@ -38,7 +47,7 @@ describe('SOS Request Module Unit Tests', () => {
         fulfillmentDeadline: new Date(Date.now() + 86400000).toISOString(),
       };
 
-      const result = await SOSRequestService.createSOSRequest(input, 'staff_001', 'hosp_115');
+      const result = await SOSRequestService.createSOSRequest(input, 'staff_001', validHospitalId);
 
       expect(mockSave).toHaveBeenCalled();
       expect(AdminAuditLog.create).toHaveBeenCalledWith(

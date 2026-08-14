@@ -10,9 +10,12 @@ export const errorHandler = (
   console.error(err);
 
   if (err instanceof ZodError) {
+    const firstIssue = err.issues?.[0]?.message;
     return res.status(400).json({
       code: 'VALIDATION_ERROR',
-      message: 'Invalid request data',
+      message: firstIssue && firstIssue !== 'Required' && !firstIssue.includes('Invalid') 
+        ? firstIssue 
+        : `Dữ liệu không hợp lệ: ${err.issues?.[0]?.path?.join('.') || ''} (${firstIssue || 'Invalid'})`,
       details: err.issues,
     });
   }

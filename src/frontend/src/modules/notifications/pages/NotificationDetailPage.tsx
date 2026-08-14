@@ -134,13 +134,16 @@ export const NotificationDetailPage: React.FC = () => {
             <div className="pt-2 flex justify-end gap-3">
               <button
                 onClick={() => navigate('/bc/inventory')}
-                className="px-4 py-2 bg-red-700 text-white hover:bg-red-800 font-bold text-xs rounded-lg shadow-xs transition-colors"
+                className="px-4 py-2 bg-red-700 text-white hover:bg-red-800 font-bold text-xs rounded-lg shadow-xs transition-colors cursor-pointer"
               >
                 Kiểm tra kho máu
               </button>
               <button
-                onClick={() => navigate(`/bc/sos-requests/${notification?.payload?.sourceRefId}`)}
-                className="px-4 py-2 bg-white text-red-700 border border-white hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors"
+                onClick={() => {
+                  const sosId = notification?.payload?.sosRequestId || notification?.payload?.sourceRefId || (notification as any)?.sourceRefId || (notification.body?.match(/([a-f0-9]{24})/i)?.[1]);
+                  navigate(sosId ? `/bc/sos-requests/${sosId}` : `/bc/sos-requests`);
+                }}
+                className="px-4 py-2 bg-white text-red-700 border border-white hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors cursor-pointer"
               >
                 Xử lý yêu cầu SOS →
               </button>
@@ -149,10 +152,13 @@ export const NotificationDetailPage: React.FC = () => {
           {isHospitalPage && (
             <div className="pt-2 flex justify-end gap-3">
               <button
-                onClick={() => navigate('/hospital/sos-requests')}
-                className="px-4 py-2 bg-white text-red-700 border border-white hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors"
+                onClick={() => {
+                  const sosId = notification?.payload?.sosRequestId || notification?.payload?.sourceRefId || (notification as any)?.sourceRefId || (notification.body?.match(/([a-f0-9]{24})/i)?.[1]);
+                  navigate(sosId ? `/hospital/sos-requests/${sosId}` : `/hospital/sos-requests`);
+                }}
+                className="px-4 py-2 bg-white text-red-700 border border-white hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors cursor-pointer"
               >
-                Xem danh sách yêu cầu SOS →
+                Xem chi tiết ca SOS →
               </button>
             </div>
           )}

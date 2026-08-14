@@ -2,6 +2,7 @@ import { User, IUser } from '../../auth-account/models/user.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { BloodCenter } from '../../auth-account/models/blood-center.model';
 import { AdminAuditLog } from '../models/audit-log.model';
+import { geocodeAddress } from '../../../shared/geocoding.util';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 
@@ -25,6 +26,9 @@ export interface CreateUserData {
   role?: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
   roles?: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
   bloodCenterId?: string;
+  permanentAddress?: string;
+  currentAddress?: string;
+  address?: string;
 }
 
 export interface UpdateUserData {
@@ -35,6 +39,9 @@ export interface UpdateUserData {
   roles?: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
   accountStatus?: 'PendingVerification' | 'Active' | 'Suspended';
   bloodCenterId?: string;
+  permanentAddress?: string;
+  currentAddress?: string;
+  address?: string;
 }
 
 export function validateAndNormalizeRoles(data: { role?: string; roles?: string[] }): {
@@ -149,6 +156,8 @@ export class AdminUserService {
         email: user.email,
         phone: user.phone || 'N/A',
         fullName: profile?.fullName || user.email.split('@')[0],
+        permanentAddress: profile?.permanentAddress || '',
+        currentAddress: profile?.currentAddress?.fullAddress || (typeof profile?.currentAddress === 'string' ? profile?.currentAddress : '') || '',
         role: user.role || userRoles[0] || 'Donor',
         roles: userRoles.length > 0 ? userRoles : ['Donor'],
         accountStatus: user.accountStatus,
@@ -226,6 +235,10 @@ export class AdminUserService {
     });
 
     if (roles.includes('Donor')) {
+      const permanentAddr = data.permanentAddress || data.address || 'TP. Hồ Chí Minh';
+      const currentAddr = data.currentAddress || data.address || permanentAddr;
+      const coords = await geocodeAddress(currentAddr || permanentAddr);
+
       await DonorProfile.create({
         userId: newUser._id,
         fullName: data.fullName,
@@ -234,7 +247,9 @@ export class AdminUserService {
         gender: 'Other',
         bloodType: 'O+',
         phoneNumber: data.phone || '0900000000',
-        permanentAddress: 'N/A',
+        permanentAddress: permanentAddr,
+        currentAddress: currentAddr ? { fullAddress: currentAddr } : undefined,
+        location: coords ? { type: 'Point', coordinates: coords } : undefined,
         emergencyOptIn: true,
       });
     }
@@ -288,8 +303,54 @@ export class AdminUserService {
 
     await user.save();
 
-    if (data.fullName) {
-      await DonorProfile.updateOne({ userId: user._id }, { $set: { fullName: data.fullName } });
+    if (user.roles?.includes('Donor') || user.role === 'Donor') {
+      const existingProfile = await DonorProfile.findOne({ userId: user._id });
+      if (!existingProfile) {
+        const permanentAddr = data.permanentAddress || data.address || 'TP. Hồ Chí Minh';
+        const currentAddr = data.currentAddress || data.address || permanentAddr;
+        const coords = await geocodeAddress(currentAddr || permanentAddr);
+        await DonorProfile.create({
+          userId: user._id,
+          fullName: data.fullName || user.email.split('@')[0],
+          idDocumentNumber: user.idDocumentNumber,
+          dateOfBirth: new Date('1995-01-01'),
+          gender: 'Other',
+          bloodType: 'O+',
+          phoneNumber: data.phone || user.phone || '0900000000',
+          permanentAddress: permanentAddr,
+          currentAddress: currentAddr ? { fullAddress: currentAddr } : undefined,
+          location: coords ? { type: 'Point', coordinates: coords } : undefined,
+          emergencyOptIn: true,
+        });
+      } else {
+        const profileUpdates: any = {};
+        if (data.fullName) profileUpdates.fullName = data.fullName;
+        if (data.permanentAddress) profileUpdates.permanentAddress = data.permanentAddress;
+        if (data.currentAddress || data.address) {
+          const addrStr = data.currentAddress || data.address;
+          profileUpdates.currentAddress = { fullAddress: addrStr };
+        }
+
+        if (data.permanentAddress || data.currentAddress || data.address) {
+          const targetAddress =
+            data.currentAddress ||
+            data.address ||
+            (existingProfile?.currentAddress as any)?.fullAddress ||
+            data.permanentAddress ||
+            existingProfile?.permanentAddress;
+
+          if (targetAddress) {
+            const coords = await geocodeAddress(targetAddress);
+            if (coords) {
+              profileUpdates.location = { type: 'Point', coordinates: coords };
+            }
+          }
+        }
+
+        if (Object.keys(profileUpdates).length > 0) {
+          await DonorProfile.updateOne({ userId: user._id }, { $set: profileUpdates });
+        }
+      }
     }
 
     await AdminAuditLog.create({

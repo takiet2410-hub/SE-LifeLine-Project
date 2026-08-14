@@ -578,6 +578,7 @@ export const InteractiveMapPage: React.FC = () => {
         if (mapInstanceRef.current) {
           mapInstanceRef.current.flyTo(coords, 14);
         }
+
         setLoading(false);
       },
       (error) => {

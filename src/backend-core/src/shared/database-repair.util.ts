@@ -42,7 +42,7 @@ export async function runDatabaseSelfHealing(): Promise<void> {
       console.log(`[DB-SelfHealing] Repaired ${usersWithoutPrimaryRole.length} users with missing primary 'role'.`);
     }
 
-    // 3. Repair DonorProfiles missing emergencyOptIn
+    // 3. Repair DonorProfiles missing emergencyOptIn or having false despite active profile
     const optInResult = await DonorProfile.updateMany(
       { $or: [{ emergencyOptIn: { $exists: false } }, { emergencyOptIn: null }] },
       { $set: { emergencyOptIn: true } }
@@ -51,22 +51,41 @@ export async function runDatabaseSelfHealing(): Promise<void> {
       console.log(`[DB-SelfHealing] Repaired ${optInResult.modifiedCount} donor profiles with missing emergencyOptIn.`);
     }
 
-    // 4. Repair DonorProfiles with invalid / empty location objects
-    const allProfiles = await DonorProfile.find({ location: { $exists: true, $ne: null } });
-    let fixedLocationsCount = 0;
-    for (const p of allProfiles) {
-      const coords = p.location?.coordinates;
-      const isValid = Array.isArray(coords) &&
-        coords.length === 2 &&
-        typeof coords[0] === 'number' &&
-        typeof coords[1] === 'number' &&
-        !isNaN(coords[0]) &&
-        !isNaN(coords[1]);
+    // 4. Repair & Geocode DonorProfiles based on their actual living/permanent address
+    const { geocodeAddress } = await import('./geocoding.util');
+    const allProfiles = await DonorProfile.find({});
+    let geocodedCount = 0;
 
-      if (!isValid) {
-        await DonorProfile.updateOne({ _id: p._id }, { $unset: { location: "" } });
-        fixedLocationsCount++;
+    for (const p of allProfiles) {
+      const addrToGeocode =
+        (p.currentAddress as any)?.fullAddress ||
+        (typeof p.currentAddress === 'string' ? p.currentAddress : '') ||
+        p.permanentAddress;
+
+      const hasValidLocation =
+        p.location &&
+        Array.isArray(p.location.coordinates) &&
+        p.location.coordinates.length === 2 &&
+        typeof p.location.coordinates[0] === 'number' &&
+        typeof p.location.coordinates[1] === 'number' &&
+        !isNaN(p.location.coordinates[0]);
+
+      if (!hasValidLocation && addrToGeocode) {
+        const coords = await geocodeAddress(addrToGeocode);
+        if (coords) {
+          p.location = {
+            type: 'Point',
+            coordinates: coords
+          } as any;
+          p.emergencyOptIn = true;
+          await p.save();
+          geocodedCount++;
+        }
       }
+    }
+
+    if (geocodedCount > 0) {
+      console.log(`[DB-SelfHealing] Geocoded and updated coordinates for ${geocodedCount} donor profiles based on their addresses.`);
     }
     // 5. Repair BloodBags missing bloodCenterId or all marked Used
     const { BloodBag } = await import('../modules/blood-inventory/models/blood-bag.model');

@@ -12,6 +12,8 @@ import { sendVerificationEmail, sendResetEmail } from '../../utils/email.util';
 import { DEFAULT_AVATAR_URL } from '../../utils/cloudinary.util';
 import { Appointment, AppointmentStatus } from '../booking/models/appointment.model';
 import { Badge } from './models/badge.model';
+import { geocodeAddress } from '../../shared/geocoding.util';
+
 export class AuthAccountService {
   
   static async register(data: RegisterInput) {
@@ -75,15 +77,21 @@ export class AuthAccountService {
 
     await user.save();
 
+    // Geocode address for SOS coordination (prioritizing currentAddress over permanentAddress)
+    const effectiveAddress = data.currentAddress || addressString;
+    const initialCoords = await geocodeAddress(effectiveAddress);
+
     // 4. Khởi tạo hồ sơ DonorProfile
     const profile = new DonorProfile({
       userId: user._id,
       fullName: fullName,
       dateOfBirth: dateOfBirth,
       idDocumentNumber: idDocumentNumber,
-      phoneNumber: data.phoneNumber, // Lấy từ input lưu vào collection donor_profiles[cite: 28]
-      permanentAddress: addressString, 
-      bloodType: 'Unknown', 
+      phoneNumber: data.phoneNumber,
+      permanentAddress: addressString,
+      currentAddress: data.currentAddress ? { fullAddress: data.currentAddress } : undefined,
+      location: initialCoords ? { type: 'Point', coordinates: initialCoords } : undefined,
+      bloodType: 'Unknown',
       gender: mappedGender,
       email: data.email,
 
@@ -93,9 +101,6 @@ export class AuthAccountService {
       donorLevel: 1, // Khởi tạo cấp độ 1 (Bronze/Starter)
       emergencyOptIn: true,
       avatarUrl: DEFAULT_AVATAR_URL
-      // BỎ ĐI 2 DÒNG DƯỚI ĐÂY ĐỂ TRÁNH LỖI MONGODB VALIDATION
-      //location: {}, // Object trống theo schema, sau này có thể parse tọa độ
-      //lastDonationDate: null // Chưa hiến lần nào
     });
 
     await profile.save();
@@ -335,10 +340,9 @@ export class AuthAccountService {
       await User.findByIdAndUpdate(userId, { phone: data.phoneNumber });
     }
 
-    // Cập nhật Địa chỉ thường trú (Nối chuỗi để lưu vào string theo schema)
-    if (data.permanentAddress) {
+    // Địa chỉ thường trú được cố định theo CCCD, chỉ cập nhật nếu hồ sơ chưa từng có
+    if (data.permanentAddress && (!profile.permanentAddress || profile.permanentAddress === 'N/A')) {
       const { province, ward, street } = data.permanentAddress;
-      // Tạo chuỗi VD: "12/18 Trịnh Đình Trọng, Phường Tân Phú, Thành phố Hồ Chí Minh"
       profile.permanentAddress = `${street}, ${ward}, ${province}`;
     }
 
@@ -350,6 +354,18 @@ export class AuthAccountService {
         street: data.currentAddress.street,
         fullAddress: `${data.currentAddress.street}, ${data.currentAddress.ward}, ${data.currentAddress.province}`
       };
+    }
+
+    // Auto geocode effective address for SOS coordination (prioritize currentAddress over permanentAddress)
+    const addressToGeocode = profile.currentAddress?.fullAddress || profile.permanentAddress;
+    if (addressToGeocode) {
+      const coords = await geocodeAddress(addressToGeocode);
+      if (coords) {
+        profile.location = {
+          type: 'Point',
+          coordinates: coords
+        };
+      }
     }
 
     // Nếu có gửi link avatarUrl trực tiếp thông qua API này
@@ -403,16 +419,27 @@ export class AuthAccountService {
       throw new Error('Không tìm thấy hồ sơ người hiến máu');
     }
 
-    // 2. Query lịch sử hiến máu từ collection appointments
-    // Vì donorId trong Appointment tham chiếu đến User._id, ta truyền thẳng userId vào đây
+    // 2. Query lịch sử hiến máu từ collection appointments & SOS direct donations
     const completedAppointments = await Appointment.find({
       donorId: userId, 
-      status: AppointmentStatus.Completed // Dùng enum thay vì chuỗi string
-    }).sort({ appointmentDate: -1 }).lean(); // Sắp xếp ngày hiến gần nhất lên đầu
+      status: AppointmentStatus.Completed
+    }).sort({ appointmentDate: -1 }).lean();
+
+    let sosDonations: any[] = [];
+    try {
+      const { SOSRequest } = await import('../sos-request/models/sos-request.model');
+      const sosList = await SOSRequest.find({
+        'directDonations.donorId': userId
+      }).lean();
+      for (const sos of sosList) {
+        const matching = (sos.directDonations || []).filter((d: any) => d.donorId?.toString() === userId.toString());
+        sosDonations.push(...matching);
+      }
+    } catch (err) {}
 
     // 3. Tính toán các chỉ số động cho UI
-    const totalDonations = completedAppointments.length;
-    const completedDate = totalDonations > 0 ? new Date(completedAppointments[0].appointmentDate) : null;
+    const totalDonations = Math.max(completedAppointments.length + sosDonations.length, profile.totalDonations || 0);
+    const completedDate = completedAppointments.length > 0 ? new Date(completedAppointments[0].appointmentDate) : null;
     const profileDate = profile.lastDonationDate ? new Date(profile.lastDonationDate) : null;
 
     let lastDonationDate: Date | null = null;
@@ -488,6 +515,7 @@ export class AuthAccountService {
       },
       contactInfo: {
         permanentAddress: profile.permanentAddress,
+        currentAddress: profile.currentAddress?.fullAddress || (typeof profile.currentAddress === 'string' ? profile.currentAddress : null),
         phoneNumber: profile.phoneNumber,
         email: profile.email
       }

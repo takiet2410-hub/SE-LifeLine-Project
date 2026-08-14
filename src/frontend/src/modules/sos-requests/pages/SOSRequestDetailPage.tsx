@@ -4,10 +4,11 @@ import { sosApi, type SOSRequest } from '../services/sosApi';
 import { SOSStatusBadge } from '../components/SOSStatusBadge';
 import { SOSTimeline } from '../components/SOSTimeline';
 import { HospitalMapModal } from '../components/HospitalMapModal';
-import { ArrowLeft, User, Calendar, Hospital, Activity, AlertCircle, MapPin, Phone, CheckCircle, Package } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Hospital, Activity, AlertCircle, MapPin, Phone, CheckCircle, Package, UserCheck, Truck, Clock, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { FulfillSOSModal } from '../components/FulfillSOSModal';
+import { RecordDirectDonationModal } from '../components/RecordDirectDonationModal';
 
 export const SOSRequestDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,33 +18,55 @@ export const SOSRequestDetailPage: React.FC = () => {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [evaluationLog, setEvaluationLog] = useState<any>(null);
   const [isFulfillModalOpen, setIsFulfillModalOpen] = useState(false);
+  const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+  const [confirmingShipmentId, setConfirmingShipmentId] = useState<string | null>(null);
 
   const authUser = JSON.parse(localStorage.getItem('user') || '{}');
   const canFulfill = authUser.role === 'BloodCenterStaff';
+  const isHospitalStaff = authUser.role === 'HospitalStaff';
 
   useEffect(() => {
+    let intervalId: any = null;
 
-    const fetchRequest = async () => {
+    const fetchRequest = async (isSilent = false) => {
       if (!id) return;
       try {
-        setIsLoading(true);
+        if (!isSilent) setIsLoading(true);
         const [requestData, logData] = await Promise.all([
           sosApi.getSOSRequestById(id),
-          sosApi.getEvaluationLog(id),
+          sosApi.getEvaluationLog(id).catch(() => null),
         ]);
         setRequest(requestData);
-        setEvaluationLog(logData);
+        if (logData) setEvaluationLog(logData);
+
+        // Auto poll if evaluation is in progress or pending
+        if (['Pending', 'EvaluationInProgress'].includes(requestData?.status)) {
+          if (!intervalId) {
+            intervalId = setInterval(() => {
+              fetchRequest(true);
+            }, 3000);
+          }
+        } else if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
       } catch (error: any) {
         console.error('Failed to fetch SOS request:', error);
-        toast.error('Failed to load request details');
-        navigate('/hospital/sos-requests');
+        if (!isSilent) {
+          toast.error('Failed to load request details');
+          navigate(isHospitalStaff ? '/hospital/sos-requests' : '/bc/sos-requests');
+        }
       } finally {
-        setIsLoading(false);
+        if (!isSilent) setIsLoading(false);
       }
     };
 
     fetchRequest();
-  }, [id, navigate]);
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [id, navigate, isHospitalStaff]);
 
   if (isLoading) {
     return (
@@ -60,10 +83,10 @@ export const SOSRequestDetailPage: React.FC = () => {
         <AlertCircle className="w-12 h-12 text-brand-error" />
         <p className="text-brand-text-muted">SOS request not found</p>
         <button 
-          onClick={() => navigate('/hospital/sos-requests')}
+          onClick={() => navigate(isHospitalStaff ? '/hospital/sos-requests' : '/bc/sos-requests')}
           className="mt-4 bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2 rounded-lg"
         >
-          Back to Dashboard
+          Quay lại danh sách SOS
         </button>
       </div>
     );
@@ -91,8 +114,8 @@ export const SOSRequestDetailPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button 
-            onClick={() => navigate('/hospital/sos-requests')}
-            className="p-2 hover:bg-brand-bg-muted rounded-full transition-colors text-brand-text-secondary"
+            onClick={() => navigate(isHospitalStaff ? '/hospital/sos-requests' : '/bc/sos-requests')}
+            className="p-2 hover:bg-brand-bg-muted rounded-full transition-colors text-brand-text-secondary cursor-pointer"
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
@@ -108,121 +131,221 @@ export const SOSRequestDetailPage: React.FC = () => {
             </p>
           </div>
         </div>
-        {/* Only show Cancel button when request is still pending evaluation (Hospital Staff cannot fulfill from inventory) */}
-        {(request.status === 'Pending' || request.status === 'EvaluationInProgress' || request.status === 'NotificationsDispatched') && (
-          <div className="flex gap-2">
-            {(request.status === 'Pending' || request.status === 'EvaluationInProgress') && (
-              <button 
-                onClick={handleCancelRequest}
-                className="bg-brand-error/10 text-brand-error hover:bg-brand-error/20 px-4 py-2 rounded-lg font-medium transition-colors"
-              >
-                Huỷ yêu cầu
-              </button>
-            )}
-            
-            {canFulfill && (request.status === 'Pending' || request.status === 'EvaluationInProgress' || request.status === 'NotificationsDispatched') && (
-              <button 
-                onClick={() => setIsFulfillModalOpen(true)}
-                className="bg-brand-primary text-white hover:bg-brand-primary/90 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm"
-              >
-                <Package className="w-4 h-4" />
-                Fulfill from Inventory
-              </button>
-            )}
-          </div>
-        )}
-        
-        {/* Hospital confirmation when BloodCenter has dispatched the blood */}
-        {request.status === 'InventoryDispatched' && (
-          <button
-            onClick={async () => {
-              if (!confirm('Xác nhận bệnh viện đã nhận được máu từ Trung tâm máu?')) return;
-              try {
-                await sosApi.confirmReceived(request.id || (request as any)._id);
-                setRequest(prev => prev ? { ...prev, status: 'Fulfilled' } : null);
-                toast.success('Đã xác nhận nhận máu! Yêu cầu SOS hoàn tất.');
-              } catch (error) {
-                toast.error('Không thể xác nhận. Vui lòng thử lại.');
-              }
-            }}
-            className="bg-brand-success text-white hover:bg-brand-success/90 px-5 py-2.5 rounded-lg font-semibold transition-colors shadow-sm flex items-center gap-2"
-          >
-            <CheckCircle className="w-4 h-4" />
-            Xác nhận đã nhận máu
-          </button>
-        )}
-        
-        {/* Reopen / Replace Donor Button (For No-Show scenario) */}
-        {(request.status === 'Fulfilled' && (request.acceptedDonorIds && request.acceptedDonorIds.length > 0)) && (
-          <button 
-            onClick={async () => {
-              // Note: In a real app, this should open a modal to select WHICH donor didn't show up.
-              // For simplicity, we just use the first donor in the list for this MVP demo.
-              const donorIdToCancel = request.acceptedDonorIds?.[0];
-              if (!donorIdToCancel) return;
+        {/* Header Actions */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Hospital Staff: Direct Donation Record Button */}
+          {isHospitalStaff && !['Cancelled', 'Expired', 'Fulfilled'].includes(request.status) && (
+            <button
+              onClick={() => setIsRecordModalOpen(true)}
+              className="bg-red-600 hover:bg-red-700 active:scale-98 text-white px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+            >
+              <UserCheck className="w-4 h-4" />
+              + Tiếp nhận hiến máu trực tiếp
+            </button>
+          )}
 
-              if (!confirm('Donor did not show up? Re-open request and find replacement?')) return;
-              try {
-                await sosApi.reopenSOSRequest(request.id || (request as any)._id, donorIdToCancel);
-                toast.success('SOS Request reopened. Broadcasting to find new donors!');
-                // Force a page reload or refetch to update status
-                window.location.reload();
-              } catch (error) {
-                toast.error('Failed to reopen request');
-              }
-            }}
-            className="bg-brand-warning/10 text-brand-warning hover:bg-brand-warning/20 px-4 py-2 rounded-lg font-medium transition-colors border border-brand-warning/20"
-          >
-            No-Show? Find Replacement
-          </button>
-        )}
+          {/* Only show Cancel button when request is still pending evaluation */}
+          {(request.status === 'Pending' || request.status === 'EvaluationInProgress') && (
+            <button 
+              onClick={handleCancelRequest}
+              className="bg-brand-error/10 text-brand-error hover:bg-brand-error/20 px-4 py-2 rounded-xl font-medium transition-colors"
+            >
+              Huỷ yêu cầu
+            </button>
+          )}
+          
+          {/* Blood Center Staff: Fulfill from inventory */}
+          {canFulfill && (request.status === 'Pending' || request.status === 'EvaluationInProgress' || request.status === 'NotificationsDispatched' || request.status === 'InventoryDispatched') && (
+            <button 
+              onClick={() => setIsFulfillModalOpen(true)}
+              className="bg-brand-primary text-white hover:bg-brand-primary/90 px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <Package className="w-4 h-4" />
+              Xuất kho gửi máu
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Details */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Blood & Progress */}
-          <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
-            <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-6">
-              <Activity className="w-5 h-5 text-brand-primary" />
-              Fulfillment Progress
-            </h2>
-            
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-xl">
-                  {request.bloodType}
-                </div>
-                <div>
-                  <p className="text-sm text-brand-text-muted">Target Quantity</p>
-                  <p className="font-semibold text-brand-text-main">{request.requiredQuantityMl} ml</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-brand-text-muted">Status</p>
-                <SOSStatusBadge status={request.status} />
-              </div>
-            </div>
-            
-            <div className="w-full bg-brand-bg-muted rounded-full h-3 mb-2 overflow-hidden">
-              <div 
-                className="bg-brand-primary h-3 rounded-full transition-all duration-1000" 
-                style={{ width: `${request.status === 'Fulfilled' ? 100 : request.status === 'NotificationsDispatched' ? 50 : 25}%` }}
-              ></div>
-            </div>
-            <p className="text-right text-xs font-medium text-brand-text-muted">
-              {request.status === 'Fulfilled' ? '100% Complete' : 
-               request.status === 'NotificationsDispatched' ? '50% - Notifications Dispatched' : 
-               '25% - Evaluation In Progress'}
-            </p>
-          </div>
+      {(() => {
+        const currentReceived = request.receivedQuantityMl || request.collectedQuantityMl || 0;
+        const currentInTransit = request.inTransitQuantityMl || 0;
+        const targetVolume = request.requiredQuantityMl || 1;
+        const receivedPercent = Math.min(100, Math.round((currentReceived / targetVolume) * 100));
+        const inTransitPercent = Math.min(100 - receivedPercent, Math.round((currentInTransit / targetVolume) * 100));
+        const remainingNeeded = Math.max(0, targetVolume - currentReceived);
 
-          {/* Timeline */}
-          <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
-            <h2 className="text-lg font-bold text-brand-text-main mb-4">Request Timeline</h2>
-            <SOSTimeline currentStatus={request.status} />
-          </div>
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Details */}
+            <div className="lg:col-span-2 space-y-6">
+              
+              {/* Blood & Progress */}
+              <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
+                <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-4">
+                  <Activity className="w-5 h-5 text-brand-primary" />
+                  Tiến Độ Tiếp Nhận Máu Cấp Cứu
+                </h2>
+                
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center font-extrabold text-xl shadow-xs">
+                      {request.bloodType}
+                    </div>
+                    <div>
+                      <p className="text-xs text-brand-text-muted">Tổng nhu cầu mục tiêu</p>
+                      <p className="text-lg font-extrabold text-brand-text-main">{request.requiredQuantityMl} ml</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-brand-text-muted mb-1">Trạng thái</p>
+                    <SOSStatusBadge status={request.status} />
+                  </div>
+                </div>
+
+                {/* Multi-segment Progress Bar */}
+                <div className="w-full bg-gray-100 rounded-full h-3.5 mb-2 overflow-hidden flex shadow-inner">
+                  <div 
+                    className="bg-emerald-600 h-3.5 transition-all duration-700" 
+                    style={{ width: `${receivedPercent}%` }}
+                    title={`Đã nhận chính thức: ${currentReceived}ml (${receivedPercent}%)`}
+                  />
+                  <div 
+                    className="bg-amber-400 h-3.5 transition-all duration-700" 
+                    style={{ width: `${inTransitPercent}%` }}
+                    title={`Đang vận chuyển: ${currentInTransit}ml (${inTransitPercent}%)`}
+                  />
+                </div>
+
+                {/* Progress Legend & Stats */}
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs pt-1">
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center gap-1.5 font-semibold text-emerald-800">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
+                      Đã nhận: {currentReceived} ml ({receivedPercent}%)
+                    </span>
+                    {currentInTransit > 0 && (
+                      <span className="flex items-center gap-1.5 font-semibold text-amber-800">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                        Đang chuyển tới: {currentInTransit} ml ({inTransitPercent}%)
+                      </span>
+                    )}
+                  </div>
+                  <span className="font-bold text-red-600">
+                    {remainingNeeded > 0 ? `Còn thiếu: ${remainingNeeded} ml` : '✅ Đã đủ lượng máu!'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Shipments from Blood Centers Card */}
+              {request.shipments && request.shipments.length > 0 && (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
+                  <h3 className="text-base font-bold text-gray-900 flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <Truck className="w-5 h-5 text-amber-600" />
+                      Đợt Máu Điều Phối Từ Trung Tâm Máu ({request.shipments.length})
+                    </span>
+                  </h3>
+
+                  <div className="divide-y divide-gray-100">
+                    {request.shipments.map((s, idx) => (
+                      <div key={idx} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm text-gray-900">{s.bloodCenterName || 'Trung tâm máu'}</span>
+                            <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-700">
+                              {s.shipmentCode}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            Thể tích: <strong className="text-gray-900">{s.volumeMl} ml</strong> ({s.bloodType}) • Xuất lúc: {formatDate(s.dispatchedAt)}
+                          </div>
+                        </div>
+
+                        <div>
+                          {s.status === 'InTransit' ? (
+                            isHospitalStaff ? (
+                              <button
+                                type="button"
+                                disabled={confirmingShipmentId === (s._id || s.id)}
+                                onClick={async () => {
+                                  if (!confirm(`Xác nhận bệnh viện đã nhận được ${s.volumeMl}ml máu từ ${s.bloodCenterName}?`)) return;
+                                  try {
+                                    setConfirmingShipmentId(s._id || s.id || null);
+                                    await sosApi.confirmShipmentReceived(request.id || (request as any)._id, (s._id || s.id)!);
+                                    toast.success(`Đã xác nhận nhận đợt máu ${s.shipmentCode} thành công!`);
+                                    const refreshed = await sosApi.getSOSRequestById(request.id || (request as any)._id);
+                                    setRequest(refreshed);
+                                  } catch (err: any) {
+                                    toast.error(err.response?.data?.message || 'Không thể xác nhận nhận đợt máu');
+                                  } finally {
+                                    setConfirmingShipmentId(null);
+                                  }
+                                }}
+                                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-98 cursor-pointer disabled:opacity-50"
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                {confirmingShipmentId === (s._id || s.id) ? 'Đang xác nhận...' : 'Xác nhận đã nhận đợt này'}
+                              </button>
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                                <Truck className="w-3.5 h-3.5 animate-pulse" />
+                                Đang vận chuyển
+                              </span>
+                            )
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              Bệnh viện đã nhận
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Direct Donations at Hospital Card */}
+              {request.directDonations && request.directDonations.length > 0 && (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
+                  <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-red-600" />
+                    Hiến Máu Tiếp Nhận Trực Tiếp Tại Bệnh Viện ({request.directDonations.length})
+                  </h3>
+
+                  <div className="divide-y divide-gray-100">
+                    {request.directDonations.map((d, idx) => (
+                      <div key={idx} className="py-2.5 flex items-center justify-between text-xs">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-gray-900">{d.donorName}</span>
+                            {d.fastTrackCode && (
+                              <span className="font-mono text-[10px] bg-red-100 text-red-800 px-1.5 py-0.2 rounded font-bold">
+                                {d.fastTrackCode}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-gray-500 mt-0.5">
+                            CCCD: {d.idDocumentNumber || 'N/A'} • Tiếp nhận lúc: {formatDate(d.recordedAt)}
+                            {d.note && <span className="italic ml-1">({d.note})</span>}
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="text-sm font-extrabold text-emerald-700">+{d.volumeMl} ml</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Timeline */}
+              <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
+                <h2 className="text-lg font-bold text-brand-text-main mb-4">Request Timeline</h2>
+                <SOSTimeline currentStatus={request.status} />
+              </div>
 
           {/* Evaluation Details */}
           {evaluationLog && (
@@ -360,6 +483,8 @@ export const SOSRequestDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+      );
+    })()}
 
 
       {/* Map Modal */}
@@ -382,9 +507,23 @@ export const SOSRequestDetailPage: React.FC = () => {
           isOpen={isFulfillModalOpen}
           onClose={() => setIsFulfillModalOpen(false)}
           request={request}
-          onSuccess={() => {
+          onSuccess={async () => {
             setIsFulfillModalOpen(false);
-            setRequest(prev => prev ? { ...prev, status: 'InventoryDispatched' } : null);
+            const refreshed = await sosApi.getSOSRequestById(request.id || (request as any)._id);
+            setRequest(refreshed);
+          }}
+        />
+      )}
+
+      {request && (
+        <RecordDirectDonationModal
+          isOpen={isRecordModalOpen}
+          onClose={() => setIsRecordModalOpen(false)}
+          request={request}
+          onSuccess={async () => {
+            setIsRecordModalOpen(false);
+            const refreshed = await sosApi.getSOSRequestById(request.id || (request as any)._id);
+            setRequest(refreshed);
           }}
         />
       )}

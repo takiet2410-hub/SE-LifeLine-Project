@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { SOSRequestController } from '../controllers/sos-request.controller';
 import { validateRequest } from '../../../shared/validate.middleware';
 import { authenticateJWT, authorizeRoles } from '../../../shared/auth.middleware';
-import { CreateSOSRequestSchema, UpdateSOSStatusSchema, SOSQuerySchema, RespondSOSSchema, FulfillFromInventorySchema } from '../schemas/sos-request.schema';
+import { CreateSOSRequestSchema, UpdateSOSStatusSchema, SOSQuerySchema, RespondSOSSchema, FulfillFromInventorySchema, RecordDirectDonationSchema } from '../schemas/sos-request.schema';
 
 const router = Router();
 
@@ -139,12 +139,37 @@ router.post(
   SOSRequestController.fulfillFromInventory
 );
 
-// Hospital confirms they received the blood from BloodCenter
+// Hospital confirms they received the blood from BloodCenter (HospitalStaff ONLY)
 router.patch(
   '/:id/confirm-received',
   authenticateJWT,
-  authorizeRoles('HospitalStaff', 'Administrator'),
+  authorizeRoles('HospitalStaff'),
   SOSRequestController.confirmReceived
+);
+
+// Hospital confirms receipt of a specific shipment from a Blood Center
+router.patch(
+  '/:id/shipments/:shipmentId/confirm-received',
+  authenticateJWT,
+  authorizeRoles('HospitalStaff'),
+  SOSRequestController.confirmShipmentReceived
+);
+
+// Hospital records direct blood donation from a Donor (Fast Track Code or Walk-in)
+router.post(
+  '/:id/direct-donations',
+  authenticateJWT,
+  authorizeRoles('HospitalStaff'),
+  validateRequest(RecordDirectDonationSchema),
+  SOSRequestController.recordDirectDonation
+);
+
+// Hospital looks up Donor info by Fast Track Code, CCCD, Phone, or Name
+router.get(
+  '/:id/lookup-donor',
+  authenticateJWT,
+  authorizeRoles('HospitalStaff'),
+  SOSRequestController.lookupDonor
 );
 
 export default router;

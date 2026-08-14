@@ -32,7 +32,10 @@ export function RegisterCitizenIdPage() {
     fullName: 'NGUYEN VAN AN',
     dateOfBirth: '01/01/1990',
     idNumber: '001090XXXXXX',
+    permanentAddress: '',
   });
+  const [currentAddress, setCurrentAddress] = useState('');
+  const [differentLivingAddress, setDifferentLivingAddress] = useState(false);
   const [qrPayload, setQrPayload] = useState('');
 
   const passwordTooShort = isPasswordTooShort(password);
@@ -71,6 +74,7 @@ export function RegisterCitizenIdPage() {
               fullName: parts[2] || '',
               // Convert ddmmyyyy to dd/mm/yyyy
               dateOfBirth: parts[3] ? `${parts[3].slice(0, 2)}/${parts[3].slice(2, 4)}/${parts[3].slice(4, 8)}` : '',
+              permanentAddress: parts[5] || '',
             });
             setStatusTone('success');
             setStatusMessage('QR Code scanned successfully!');
@@ -104,6 +108,7 @@ export function RegisterCitizenIdPage() {
         email,
         phoneNumber,
         password,
+        currentAddress: differentLivingAddress && currentAddress.trim() ? currentAddress.trim() : undefined,
       });
 
       setStatusTone('success');
@@ -320,6 +325,49 @@ export function RegisterCitizenIdPage() {
                         </svg>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Permanent Address from CCCD */}
+                  <div className="flex w-full flex-col gap-1">
+                    <div className="flex flex-col pb-px">
+                      <p className="text-xs font-medium leading-[16.8px] text-[#6C757D]">Permanent Address (Theo CCCD)</p>
+                    </div>
+                    <div className="relative flex min-h-11 w-full items-start overflow-hidden rounded-lg border border-[#DEE2E6] bg-[#F1F3F5] px-4 py-[11px]">
+                      <input
+                        value={extractedIdentity.permanentAddress || 'Trích xuất từ mã QR CCCD'}
+                        readOnly
+                        className="w-full border-0 bg-transparent p-0 text-xs sm:text-sm font-medium text-[#343A40] outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Optional Current Address */}
+                  <div className="flex w-full flex-col gap-2 rounded-lg border border-[#E9ECEF] bg-white p-3">
+                    <label className="flex items-center gap-2 text-xs font-medium text-[#495057] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={differentLivingAddress}
+                        onChange={(e) => setDifferentLivingAddress(e.target.checked)}
+                        className="w-4 h-4 accent-[#93000B] rounded cursor-pointer"
+                      />
+                      Nơi ở hiện tại khác với địa chỉ thường trú (Tạm trú / Nhà trọ)
+                    </label>
+
+                    {differentLivingAddress && (
+                      <div className="flex flex-col gap-1 pt-1 animate-in fade-in duration-150">
+                        <p className="text-[11px] text-[#6C757D]">
+                          Nhập nơi ở hiện tại để nhận thông báo hiến máu cấp cứu SOS quanh bạn:
+                        </p>
+                        <div className="flex min-h-10 w-full items-start overflow-hidden rounded-lg border border-[#DEE2E6] bg-white px-3 py-2">
+                          <input
+                            value={currentAddress}
+                            onChange={(e) => setCurrentAddress(e.target.value)}
+                            placeholder="Số nhà, tên đường, phường/xã, quận/huyện, TP..."
+                            className="w-full border-0 bg-transparent p-0 text-xs sm:text-sm text-[#271816] outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

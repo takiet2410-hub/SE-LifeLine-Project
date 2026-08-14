@@ -1,5 +1,5 @@
 export type SOSUrgency = 'Critical' | 'High' | 'Medium';
-export type SOSStatus = 'Pending' | 'EvaluationInProgress' | 'NotificationsDispatched' | 'Fulfilled' | 'Expired' | 'Cancelled' | 'EvaluationFailed';
+export type SOSStatus = 'Pending' | 'EvaluationInProgress' | 'NotificationsDispatched' | 'InventoryDispatched' | 'Fulfilled' | 'Expired' | 'Cancelled' | 'EvaluationFailed';
 
 export interface SOSRequest {
   id: string;

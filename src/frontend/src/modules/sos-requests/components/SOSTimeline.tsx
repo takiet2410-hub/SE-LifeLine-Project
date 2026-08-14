@@ -15,10 +15,11 @@ interface TimelineStep {
 }
 
 const STEPS: TimelineStep[] = [
-  { status: 'Pending', label: 'Request Submitted', description: 'Waiting for Blood Center review' },
-  { status: 'EvaluationInProgress', label: 'Validating Request', description: 'Verifying hospital and patient details' },
-  { status: 'NotificationsDispatched', label: 'Processing Blood', description: 'Preparing blood units for dispatch' },
-  { status: 'Fulfilled', label: 'Request Fulfilled', description: 'Blood dispatched to hospital' },
+  { status: 'Pending', label: 'Yêu cầu được gửi', description: 'Đang chờ Trung tâm máu xem xét' },
+  { status: 'EvaluationInProgress', label: 'Đang đánh giá', description: 'Hệ thống tìm kiếm nguồn máu tương thích' },
+  { status: 'NotificationsDispatched', label: 'Đã thông báo', description: 'Trung tâm máu và Donors đã được thông báo' },
+  { status: 'InventoryDispatched', label: 'Đã xuất kho máu', description: 'Trung tâm máu đã xuất kho — đang chờ BV xác nhận' },
+  { status: 'Fulfilled', label: 'Hoàn tất', description: 'Bệnh viện đã xác nhận nhận máu' },
 ];
 
 interface SOSTimelineProps {

@@ -2,6 +2,7 @@ import React from 'react';
 import { WelcomeHero } from '../components/WelcomeHero';
 import { QuickActions } from '../components/QuickActions';
 import { EmergencyBanner } from '../components/EmergencyBanner';
+import { LocationPromptBanner } from '../components/LocationPromptBanner';
 import { UpcomingAppointment } from '../components/UpcomingAppointment';
 import { CampaignList } from '../components/CampaignList';
 import { NewsTipsGrid } from '../components/NewsTipsGrid';
@@ -20,6 +21,7 @@ export const DashboardPage: React.FC = () => {
         
         {/* Left Column (Main Focus) */}
         <div className="lg:col-span-8 flex flex-col">
+          <LocationPromptBanner />
           <EmergencyBanner />
           <UpcomingAppointment />
           <div className="mt-auto pt-6">

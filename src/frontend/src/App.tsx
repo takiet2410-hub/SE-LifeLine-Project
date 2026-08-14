@@ -69,6 +69,7 @@ import { SOSDashboardPage } from './modules/sos-requests/pages/SOSDashboardPage'
 import { CreateSOSRequestPage } from './modules/sos-requests/pages/CreateSOSRequestPage';
 import { SOSRequestDetailPage } from './modules/sos-requests/pages/SOSRequestDetailPage';
 import { SOSReportsPage } from './modules/sos-requests/pages/SOSReportsPage';
+import { DonorSOSDetailPage } from './modules/sos-requests/pages/DonorSOSDetailPage';
 
 // User SOS Alerts Module
 import { SOSAlertsPage } from './modules/notifications/pages/SOSAlertsPage';
@@ -170,12 +171,18 @@ function App() {
           <Route path="/bc/inventory/stats" element={<InventoryStatsPage />} />
           <Route path="/bc/inventory/:bagId" element={<BloodBagDetailPage />} />
 
+          <Route path="/bc/sos-requests" element={<SOSDashboardPage />} />
+          <Route path="/bc/sos-requests/:id" element={<SOSRequestDetailPage />} />
+
           {/* Hospital Routes */}
           <Route path="/hospital" element={<Navigate to="/hospital/sos-requests" replace />} />
           <Route path="/hospital/sos-requests" element={<SOSDashboardPage />} />
           <Route path="/hospital/sos-requests/create" element={<CreateSOSRequestPage />} />
           <Route path="/hospital/sos-requests/:id" element={<SOSRequestDetailPage />} />
           <Route path="/hospital/sos-reports" element={<SOSReportsPage />} />
+
+          {/* Donor SOS detail — accessible from SOS email notifications */}
+          <Route path="/donor/sos-requests/:id" element={<DonorSOSDetailPage />} />
 
           <Route path="/hospital/content" element={<ArticleListPage />} />
           <Route path="/hospital/content/create" element={<CreateArticlePage />} />

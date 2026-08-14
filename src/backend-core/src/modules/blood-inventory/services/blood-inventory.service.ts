@@ -15,12 +15,17 @@ export class BloodInventoryService {
     sort?: string;
     startDate?: string;
     endDate?: string;
+    bloodCenterId?: string;
   }) {
     const page = Math.max(1, params?.page || 1);
     const limit = Math.max(1, params?.limit || 10);
     const skip = (page - 1) * limit;
 
     const query: any = {};
+
+    if (params?.bloodCenterId) {
+      query.bloodCenterId = params.bloodCenterId;
+    }
 
     if (params?.search) {
       query.bagCode = { $regex: params.search, $options: 'i' };
@@ -52,7 +57,8 @@ export class BloodInventoryService {
       BloodBag.countDocuments(query)
     ]);
 
-    const allBags = await BloodBag.find({}).lean();
+    const summaryQuery: any = params?.bloodCenterId ? { bloodCenterId: params.bloodCenterId } : {};
+    const allBags = await BloodBag.find(summaryQuery).lean();
     const totalBags = allBags.length;
     const availableBags = allBags.filter((b) => b.status === 'Available').length;
     const usedBags = allBags.filter((b) => b.status === 'Used').length;
@@ -175,7 +181,7 @@ export class BloodInventoryService {
     return bag;
   }
 
-  static async stockInBatch(entries: StockInEntryInput[], staffName: string = 'Staff') {
+  static async stockInBatch(entries: StockInEntryInput[], staffName: string = 'Staff', bloodCenterId?: any) {
     const createdBags: IBloodBag[] = [];
 
     for (const entry of entries) {
@@ -187,6 +193,7 @@ export class BloodInventoryService {
         collectionDate: new Date(entry.collectionDate),
         expiryDate: new Date(entry.expiryDate),
         storageLocation: entry.storageLocation,
+        bloodCenterId: bloodCenterId || (entry as any).bloodCenterId,
         status: 'Available',
         statusHistory: [
           {

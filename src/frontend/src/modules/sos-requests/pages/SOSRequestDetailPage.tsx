@@ -4,21 +4,25 @@ import { sosApi, type SOSRequest } from '../services/sosApi';
 import { SOSStatusBadge } from '../components/SOSStatusBadge';
 import { SOSTimeline } from '../components/SOSTimeline';
 import { HospitalMapModal } from '../components/HospitalMapModal';
-import { FulfillSOSModal } from '../components/FulfillSOSModal';
-import { ArrowLeft, User, Calendar, Hospital, Activity, AlertCircle, MapPin, Phone, Truck } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Hospital, Activity, AlertCircle, MapPin, Phone, CheckCircle, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { FulfillSOSModal } from '../components/FulfillSOSModal';
 
 export const SOSRequestDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [request, setRequest] = useState<SOSRequest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFulfillModalOpen, setIsFulfillModalOpen] = useState(false);
-  const [evaluationLog, setEvaluationLog] = useState<any>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
+  const [evaluationLog, setEvaluationLog] = useState<any>(null);
+  const [isFulfillModalOpen, setIsFulfillModalOpen] = useState(false);
+
+  const authUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const canFulfill = authUser.role === 'BloodCenterStaff';
 
   useEffect(() => {
+
     const fetchRequest = async () => {
       if (!id) return;
       try {
@@ -104,21 +108,48 @@ export const SOSRequestDetailPage: React.FC = () => {
             </p>
           </div>
         </div>
-        {(request.status === 'Pending' || request.status === 'EvaluationInProgress') && (
+        {/* Only show Cancel button when request is still pending evaluation (Hospital Staff cannot fulfill from inventory) */}
+        {(request.status === 'Pending' || request.status === 'EvaluationInProgress' || request.status === 'NotificationsDispatched') && (
           <div className="flex gap-2">
-            <button 
-              onClick={() => setIsFulfillModalOpen(true)}
-              className="bg-brand-primary text-white hover:bg-brand-primary/90 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
-            >
-              Fulfill from Inventory
-            </button>
-            <button 
-              onClick={handleCancelRequest}
-              className="bg-brand-error/10 text-brand-error hover:bg-brand-error/20 px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Cancel Request
-            </button>
+            {(request.status === 'Pending' || request.status === 'EvaluationInProgress') && (
+              <button 
+                onClick={handleCancelRequest}
+                className="bg-brand-error/10 text-brand-error hover:bg-brand-error/20 px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Huỷ yêu cầu
+              </button>
+            )}
+            
+            {canFulfill && (request.status === 'Pending' || request.status === 'EvaluationInProgress' || request.status === 'NotificationsDispatched') && (
+              <button 
+                onClick={() => setIsFulfillModalOpen(true)}
+                className="bg-brand-primary text-white hover:bg-brand-primary/90 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <Package className="w-4 h-4" />
+                Fulfill from Inventory
+              </button>
+            )}
           </div>
+        )}
+        
+        {/* Hospital confirmation when BloodCenter has dispatched the blood */}
+        {request.status === 'InventoryDispatched' && (
+          <button
+            onClick={async () => {
+              if (!confirm('Xác nhận bệnh viện đã nhận được máu từ Trung tâm máu?')) return;
+              try {
+                await sosApi.confirmReceived(request.id || (request as any)._id);
+                setRequest(prev => prev ? { ...prev, status: 'Fulfilled' } : null);
+                toast.success('Đã xác nhận nhận máu! Yêu cầu SOS hoàn tất.');
+              } catch (error) {
+                toast.error('Không thể xác nhận. Vui lòng thử lại.');
+              }
+            }}
+            className="bg-brand-success text-white hover:bg-brand-success/90 px-5 py-2.5 rounded-lg font-semibold transition-colors shadow-sm flex items-center gap-2"
+          >
+            <CheckCircle className="w-4 h-4" />
+            Xác nhận đã nhận máu
+          </button>
         )}
         
         {/* Reopen / Replace Donor Button (For No-Show scenario) */}
@@ -302,7 +333,7 @@ export const SOSRequestDetailPage: React.FC = () => {
           {/* Action Buttons */}
           <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
             <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-4">
-              <Truck className="w-5 h-5 text-brand-primary" />
+              <MapPin className="w-5 h-5 text-brand-primary" />
               Quick Actions
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -330,15 +361,6 @@ export const SOSRequestDetailPage: React.FC = () => {
         </div>
       </div>
 
-      <FulfillSOSModal
-        request={request}
-        isOpen={isFulfillModalOpen}
-        onClose={() => setIsFulfillModalOpen(false)}
-        onSuccess={() => {
-          setIsFulfillModalOpen(false);
-          window.location.reload();
-        }}
-      />
 
       {/* Map Modal */}
       {(() => {
@@ -354,6 +376,18 @@ export const SOSRequestDetailPage: React.FC = () => {
           />
         );
       })()}
+
+      {request && (
+        <FulfillSOSModal
+          isOpen={isFulfillModalOpen}
+          onClose={() => setIsFulfillModalOpen(false)}
+          request={request}
+          onSuccess={() => {
+            setIsFulfillModalOpen(false);
+            setRequest(prev => prev ? { ...prev, status: 'InventoryDispatched' } : null);
+          }}
+        />
+      )}
     </div>
   );
 };

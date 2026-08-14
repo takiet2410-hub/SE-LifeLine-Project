@@ -1,5 +1,6 @@
 import { User, IUser } from '../../auth-account/models/user.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
+import { BloodCenter } from '../../auth-account/models/blood-center.model';
 import { AdminAuditLog } from '../models/audit-log.model';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
@@ -199,6 +200,17 @@ export class AdminUserService {
     }
 
     const { roles, primaryRole } = validateAndNormalizeRoles(data);
+
+    if (data.bloodCenterId) {
+      if (!mongoose.Types.ObjectId.isValid(data.bloodCenterId)) {
+        throw new Error(`Mã Blood Center (bloodCenterId: '${data.bloodCenterId}') không hợp lệ.`);
+      }
+      const center = await BloodCenter.findById(data.bloodCenterId);
+      if (!center) {
+        throw new Error(`Blood Center với ID '${data.bloodCenterId}' không tồn tại trong hệ thống.`);
+      }
+    }
+
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(data.password, salt);
 
@@ -223,6 +235,7 @@ export class AdminUserService {
         bloodType: 'O+',
         phoneNumber: data.phone || '0900000000',
         permanentAddress: 'N/A',
+        emergencyOptIn: true,
       });
     }
 
@@ -262,7 +275,16 @@ export class AdminUserService {
       user.role = primaryRole as any;
     }
     if (data.accountStatus) user.accountStatus = data.accountStatus;
-    if (data.bloodCenterId) user.bloodCenterId = data.bloodCenterId as any;
+    if (data.bloodCenterId) {
+      if (!mongoose.Types.ObjectId.isValid(data.bloodCenterId)) {
+        throw new Error(`Mã Blood Center (bloodCenterId: '${data.bloodCenterId}') không hợp lệ.`);
+      }
+      const center = await BloodCenter.findById(data.bloodCenterId);
+      if (!center) {
+        throw new Error(`Blood Center với ID '${data.bloodCenterId}' không tồn tại trong hệ thống.`);
+      }
+      user.bloodCenterId = data.bloodCenterId as any;
+    }
 
     await user.save();
 

@@ -39,6 +39,7 @@ export class SOSEvaluationWorker {
 
         const stalledRequests = await SOSRequest.find({
           status: { $in: ['Pending', 'NotificationsDispatched', 'EvaluationInProgress'] },
+          // Note: InventoryDispatched is excluded — blood is on the way, stop re-broadcasting
           fulfillmentDeadline: { $gte: now }, // not expired
           createdAt: { $lt: fiveMinsAgo },    // created more than 5 min ago
           $expr: { $lt: ['$collectedQuantityMl', '$requiredQuantityMl'] }

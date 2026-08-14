@@ -95,6 +95,13 @@ export const SOSStatusBadge: React.FC<SOSStatusBadgeProps> = ({ status, urgency,
         icon: Loader,
         label: 'Notified',
       },
+      InventoryDispatched: {
+        bg: 'bg-brand-warning/10',
+        text: 'text-brand-warning',
+        border: 'border-brand-warning/20',
+        icon: Loader,
+        label: 'Đã xuất kho',
+      },
       Fulfilled: {
         bg: 'bg-brand-success/10',
         text: 'text-brand-success',

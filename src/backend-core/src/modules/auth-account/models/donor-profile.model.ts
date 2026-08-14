@@ -77,6 +77,25 @@ const donorProfileSchema = new Schema<IDonorProfile>({
   collection: 'donor_profiles'
 });
 
+// Self-cleaning hook: Sanitize incomplete or invalid GeoJSON locations
+donorProfileSchema.pre('validate', function() {
+  if (this.location) {
+    const coords = this.location.coordinates;
+    const isValidCoords = Array.isArray(coords) &&
+      coords.length === 2 &&
+      typeof coords[0] === 'number' &&
+      typeof coords[1] === 'number' &&
+      !isNaN(coords[0]) &&
+      !isNaN(coords[1]);
+
+    if (!isValidCoords) {
+      this.location = undefined;
+    } else {
+      this.location.type = 'Point';
+    }
+  }
+});
+
 donorProfileSchema.index({ location: '2dsphere' });
 
 export const DonorProfile = model<IDonorProfile>('DonorProfile', donorProfileSchema);

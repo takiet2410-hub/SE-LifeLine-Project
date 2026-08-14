@@ -121,6 +121,20 @@ export class SOSRequestController {
 
       const result = await SOSRequestService.fulfillFromInventory(String(id), bagIds, userId);
       res.status(200).json(result);
+    } catch (error: any) {
+      const statusCode = error.statusCode || 400;
+      res.status(statusCode).json({ message: error.message || 'Fulfillment failed' });
+    }
+  }
+  public static async confirmReceived(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user?.userId || (req as any).user?._id?.toString() || (req as any).user?.id?.toString();
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      const { id } = req.params;
+      const result = await SOSRequestService.hospitalConfirmReceived(String(id), userId);
+      res.status(200).json(result);
     } catch (error) {
       next(error);
     }

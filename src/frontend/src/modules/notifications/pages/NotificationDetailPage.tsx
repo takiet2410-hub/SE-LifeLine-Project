@@ -139,10 +139,10 @@ export const NotificationDetailPage: React.FC = () => {
                 Kiểm tra kho máu
               </button>
               <button
-                onClick={() => navigate(`/bc/inventory/stock-out?reason=Transfer`)}
+                onClick={() => navigate(`/bc/sos-requests/${notification?.payload?.sourceRefId}`)}
                 className="px-4 py-2 bg-white text-red-700 border border-white hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors"
               >
-                Chuyển máu cho bệnh viện →
+                Xử lý yêu cầu SOS →
               </button>
             </div>
           )}

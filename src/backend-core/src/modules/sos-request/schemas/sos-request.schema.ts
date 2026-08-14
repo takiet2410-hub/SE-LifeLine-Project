@@ -13,7 +13,7 @@ export const CreateSOSRequestSchema = z.object({
 
 export const UpdateSOSStatusSchema = z.object({
   body: z.object({
-    status: z.enum(['Pending', 'EvaluationInProgress', 'NotificationsDispatched', 'Fulfilled', 'Expired', 'Cancelled', 'EvaluationFailed'])
+    status: z.enum(['Pending', 'EvaluationInProgress', 'NotificationsDispatched', 'InventoryDispatched', 'Fulfilled', 'Expired', 'Cancelled', 'EvaluationFailed'])
   })
 });
 

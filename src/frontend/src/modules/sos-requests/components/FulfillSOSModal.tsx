@@ -30,7 +30,7 @@ export const FulfillSOSModal: React.FC<FulfillSOSModalProps> = ({ request, isOpe
     try {
       setLoading(true);
       const res = await inventoryApi.getInventory({
-        bloodType: request.bloodType,
+        // bloodType: request.bloodType,
         status: 'Available',
         limit: 100
       });
@@ -45,7 +45,7 @@ export const FulfillSOSModal: React.FC<FulfillSOSModalProps> = ({ request, isOpe
   };
 
   const handleToggleSelect = (bagId: string) => {
-    setSelectedBagIds(prev => 
+    setSelectedBagIds(prev =>
       prev.includes(bagId) ? prev.filter(id => id !== bagId) : [...prev, bagId]
     );
   };
@@ -58,7 +58,7 @@ export const FulfillSOSModal: React.FC<FulfillSOSModalProps> = ({ request, isOpe
       toast.success('Successfully fulfilled SOS Request from inventory!');
       onSuccess();
     } catch (error: any) {
-      toast.error(error.response?.data?.error?.message || error.message || 'Failed to fulfill request');
+      toast.error(error.response?.data?.message || error.response?.data?.error?.message || error.message || 'Failed to fulfill request');
     } finally {
       setSubmitting(false);
     }
@@ -70,7 +70,7 @@ export const FulfillSOSModal: React.FC<FulfillSOSModalProps> = ({ request, isOpe
     const bag = bags.find(b => b._id === id || b.id === id);
     return sum + (bag?.volumeMl || 0);
   }, 0);
-  
+
   const isFulfilledAmount = selectedVolume >= remainingMl;
 
   if (!isOpen) return null;
@@ -128,8 +128,8 @@ export const FulfillSOSModal: React.FC<FulfillSOSModalProps> = ({ request, isOpe
                       const bagId = bag._id || bag.id;
                       const isSelected = selectedBagIds.includes(bagId);
                       return (
-                        <tr 
-                          key={bagId} 
+                        <tr
+                          key={bagId}
                           onClick={() => handleToggleSelect(bagId)}
                           className={`border-t border-[#f1f3f5] cursor-pointer hover:bg-[#f8f9fa] transition-colors ${isSelected ? 'bg-brand-primary/5' : ''}`}
                         >
@@ -159,7 +159,7 @@ export const FulfillSOSModal: React.FC<FulfillSOSModalProps> = ({ request, isOpe
             </p>
           </div>
           <div className="flex gap-3">
-            <button 
+            <button
               onClick={onClose}
               disabled={submitting}
               className="px-6 py-2 border border-[#dee2e6] rounded-xl font-medium text-[#6c757d] hover:bg-white transition-colors"
@@ -169,11 +169,10 @@ export const FulfillSOSModal: React.FC<FulfillSOSModalProps> = ({ request, isOpe
             <button
               onClick={handleSubmit}
               disabled={selectedBagIds.length === 0 || submitting || !isFulfilledAmount}
-              className={`px-6 py-2 rounded-xl font-medium text-white transition-colors ${
-                selectedBagIds.length === 0 || submitting || !isFulfilledAmount
-                  ? 'bg-[#dee2e6] cursor-not-allowed'
-                  : 'bg-brand-primary hover:bg-brand-primary/90 shadow-sm'
-              }`}
+              className={`px-6 py-2 rounded-xl font-medium text-white transition-colors ${selectedBagIds.length === 0 || submitting || !isFulfilledAmount
+                ? 'bg-[#dee2e6] cursor-not-allowed'
+                : 'bg-brand-primary hover:bg-brand-primary/90 shadow-sm'
+                }`}
             >
               {submitting ? 'Processing...' : 'Submit Fulfillment'}
             </button>

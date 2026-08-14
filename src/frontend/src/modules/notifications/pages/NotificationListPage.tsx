@@ -316,11 +316,12 @@ export const NotificationListPage: React.FC = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/bc/inventory/stock-out?reason=Transfer`);
+                            const sosId = item.payload?.sourceRefId || (item as any).sourceRefId;
+                            navigate(sosId ? `/bc/sos-requests/${sosId}` : `/bc/sos-requests`);
                           }}
                           className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors"
                         >
-                          Chuyển máu cho bệnh viện →
+                          Xử lý yêu cầu SOS →
                         </button>
                       </div>
                     )}

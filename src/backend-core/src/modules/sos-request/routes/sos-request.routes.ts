@@ -139,4 +139,12 @@ router.post(
   SOSRequestController.fulfillFromInventory
 );
 
+// Hospital confirms they received the blood from BloodCenter
+router.patch(
+  '/:id/confirm-received',
+  authenticateJWT,
+  authorizeRoles('HospitalStaff', 'Administrator'),
+  SOSRequestController.confirmReceived
+);
+
 export default router;

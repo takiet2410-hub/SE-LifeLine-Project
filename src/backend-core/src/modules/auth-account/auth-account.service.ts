@@ -91,7 +91,7 @@ export class AuthAccountService {
       totalDonations: 0,
       xp: 0,
       donorLevel: 1, // Khởi tạo cấp độ 1 (Bronze/Starter)
-      emergencyOptIn: false,
+      emergencyOptIn: true,
       avatarUrl: DEFAULT_AVATAR_URL
       // BỎ ĐI 2 DÒNG DƯỚI ĐÂY ĐỂ TRÁNH LỖI MONGODB VALIDATION
       //location: {}, // Object trống theo schema, sau này có thể parse tọa độ

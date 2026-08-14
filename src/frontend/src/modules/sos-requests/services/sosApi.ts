@@ -2,7 +2,7 @@ import { apiClient } from '../../../shared/api/apiClient';
 import { apiService } from '../../../services/apiClient';
 
 export type SOSUrgency = 'Critical' | 'High' | 'Medium';
-export type SOSStatus = 'Pending' | 'EvaluationInProgress' | 'NotificationsDispatched' | 'Fulfilled' | 'Expired' | 'Cancelled' | 'EvaluationFailed';
+export type SOSStatus = 'Pending' | 'EvaluationInProgress' | 'NotificationsDispatched' | 'InventoryDispatched' | 'Fulfilled' | 'Expired' | 'Cancelled' | 'EvaluationFailed';
 
 export interface SOSRequest {
   id: string;
@@ -145,6 +145,11 @@ export const sosApi = {
 
   async fulfillFromInventory(id: string, bagIds: string[]): Promise<any> {
     const response = await apiClient.post(`/hospital/sos-requests/${id}/fulfill-from-inventory`, { bagIds });
+    return response.data;
+  },
+
+  async confirmReceived(id: string): Promise<any> {
+    const response = await apiClient.patch(`/hospital/sos-requests/${id}/confirm-received`, {});
     return response.data;
   }
 };

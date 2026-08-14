@@ -12,6 +12,7 @@ import {
   Shield,
   Sliders,
   ToggleLeft,
+  HeartPulse,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../shared/contexts/AuthContext';
@@ -101,6 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnrea
     : [
         { to: '/bc/campaigns', label: t('common.campaigns') || 'Campaign Management', icon: Calendar },
         { to: '/bc/inventory', label: t('common.inventory') || 'Inventory Management', icon: Package },
+        { to: '/bc/sos-requests', label: 'SOS Requests', icon: HeartPulse },
         { to: '/bc/content', label: t('common.content') || 'Content Management', icon: FileText },
         {
           to: '/bc/notifications',

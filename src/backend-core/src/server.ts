@@ -6,6 +6,8 @@ dns.setServers(['8.8.8.8', '1.1.1.1']);
 import { initCampaignStatusJob } from './modules/campaign/jobs/campaign-status.job';
 import { NotificationWorker } from './modules/notification/jobs/notification.worker';
 
+import { runDatabaseSelfHealing } from './shared/database-repair.util';
+
 process.on('uncaughtException', (err: any) => {
   console.error('[Server] Uncaught Exception caught (preventing crash):', err?.message || err);
 });
@@ -17,6 +19,7 @@ process.on('unhandledRejection', (reason: any) => {
 const startServer = async () => {
   try {
     await connectDB();
+    await runDatabaseSelfHealing();
   } catch (dbErr) {
     console.error('[Server] DB Connection warning:', dbErr);
   }

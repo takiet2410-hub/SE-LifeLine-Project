@@ -8,9 +8,10 @@ export interface ISOSRequest extends Document {
   urgencyLevel: 'Critical' | 'High' | 'Medium';
   patientReference?: string;
   fulfillmentDeadline: Date;
-  status: 'Pending' | 'EvaluationInProgress' | 'NotificationsDispatched' | 'Fulfilled' | 'Expired' | 'Cancelled' | 'EvaluationFailed';
+  status: 'Pending' | 'EvaluationInProgress' | 'NotificationsDispatched' | 'InventoryDispatched' | 'Fulfilled' | 'Expired' | 'Cancelled' | 'EvaluationFailed';
   collectedQuantityMl: number;
   acceptedDonorIds: Types.ObjectId[];
+  fulfilledByStaffId?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,12 +26,13 @@ const sosRequestSchema = new Schema<ISOSRequest>({
   fulfillmentDeadline: { type: Date, required: true },
   status: {
     type: String,
-    enum: ['Pending', 'EvaluationInProgress', 'NotificationsDispatched', 'Fulfilled', 'Expired', 'Cancelled', 'EvaluationFailed'],
+    enum: ['Pending', 'EvaluationInProgress', 'NotificationsDispatched', 'InventoryDispatched', 'Fulfilled', 'Expired', 'Cancelled', 'EvaluationFailed'],
     default: 'Pending',
     index: true
   },
   collectedQuantityMl: { type: Number, default: 0 },
-  acceptedDonorIds: [{ type: Schema.Types.ObjectId, ref: 'User' }]
+  acceptedDonorIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  fulfilledByStaffId: { type: Schema.Types.ObjectId, ref: 'User' }
 }, {
   timestamps: true,
   collection: 'sos_requests'

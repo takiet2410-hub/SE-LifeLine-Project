@@ -1,16 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertCircle, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { apiService } from '../../../services/apiClient';
 
 export const EmergencyBanner: React.FC = () => {
   const { t } = useTranslation();
   
-  // In a real app, this would be fetched from an API
-  const emergency = {
-    hospital: 'Bệnh viện Đa khoa Đà Nẵng',
-    bloodTypes: ['O+', 'A-'],
-  };
+  const [emergency, setEmergency] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchSOS = async () => {
+      try {
+        const res = await apiService.getNotifications({ type: 'SOS' });
+        const notifications = res.data || [];
+        
+        if (notifications.length > 0) {
+          const latest = notifications[0];
+          const payload = latest.payload || latest.sosRequestInfo || {};
+          setEmergency({
+            hospital: payload.hospitalName || 'Unknown Hospital',
+            bloodTypes: [payload.bloodType || 'Unknown'],
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch emergency data', err);
+      }
+    };
+    fetchSOS();
+  }, []);
 
   if (!emergency) return null;
 

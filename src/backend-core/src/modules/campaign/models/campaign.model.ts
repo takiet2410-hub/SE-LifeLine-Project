@@ -43,7 +43,7 @@ export interface ICampaign extends Document {
 const CampaignSchema = new Schema<ICampaign>({
   campaignCode: { type: String, required: true, unique: true, index: true },
   name: { type: String, required: true, index: true },
-  description: { type: String, required: true },
+  description: { type: String },
   venue: { type: String, required: true },
   fullAddress: { type: String, required: true },
   location: {

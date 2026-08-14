@@ -63,10 +63,19 @@ export const UpcomingAppointment: React.FC = () => {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-6 items-center">
-        {/* QR Code */}
-        <div className="w-24 h-24 bg-[#f8f9fa] border border-[#e9ecef] rounded-xl flex items-center justify-center shrink-0 overflow-hidden p-2">
-          <img src={qrUrl} alt="QR Code" className="w-full h-full object-contain opacity-90 mix-blend-multiply" />
-        </div>
+        {/* QR Code or Pending Placeholder */}
+        {isPending ? (
+          <div className="w-24 h-24 bg-orange-50 border border-orange-100 rounded-xl flex flex-col items-center justify-center shrink-0 p-2 text-orange-600 gap-1.5 shadow-inner">
+            <CalendarClock className="w-7 h-7 opacity-80" />
+            <span className="text-[9px] font-bold uppercase leading-tight opacity-80 text-center">
+              {t('dashboard.upcoming.pending')}
+            </span>
+          </div>
+        ) : (
+          <div className="w-24 h-24 bg-[#f8f9fa] border border-[#e9ecef] rounded-xl flex items-center justify-center shrink-0 overflow-hidden p-2">
+            <img src={qrUrl} alt="QR Code" className="w-full h-full object-contain opacity-90 mix-blend-multiply" />
+          </div>
+        )}
         
         {/* Details */}
         <div className="flex-1 w-full">

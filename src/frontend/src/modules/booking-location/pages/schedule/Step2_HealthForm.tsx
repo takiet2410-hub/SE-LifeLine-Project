@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useScheduleContext } from '../../context/ScheduleContext';
 import { ArrowLeft, ArrowRight, AlertTriangle } from 'lucide-react';
@@ -8,6 +8,13 @@ import { toast } from 'sonner';
 export const Step2_HealthForm: React.FC = () => {
   const navigate = useNavigate();
   const { data, updateData } = useScheduleContext();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }
+  }, []);
 
   const [showEligibilityOverlay, setShowEligibilityOverlay] = useState(false);
   const [eligibilityReason, setEligibilityReason] = useState('');
@@ -163,7 +170,7 @@ export const Step2_HealthForm: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-[956px] mx-auto">
+    <div ref={containerRef} className="flex flex-col gap-6 w-full max-w-[956px] mx-auto">
       
       {/* Warning Notice if any section is missing */}
       {missingSections.length > 0 && (

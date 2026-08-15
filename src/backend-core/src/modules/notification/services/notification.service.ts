@@ -294,15 +294,25 @@ export class NotificationService {
 
 
   /**
-   * Process delivery for a specific channel
+   * Process delivery for a specific channel with atomic lock to prevent duplicate sends
    */
   static async processDelivery(notificationId: string, channel: import('../models/Notification').NotificationChannel) {
-    const notification = await Notification.findById(notificationId);
-    if (!notification || notification.channel !== channel || notification.deliveryStatus === 'Sent') return;
+    const notification = await Notification.findOneAndUpdate(
+      { 
+        _id: notificationId, 
+        channel: channel, 
+        deliveryStatus: { $in: ['Pending', 'Failed'] } 
+      },
+      { 
+        $set: { deliveryStatus: 'Sending' } 
+      },
+      { new: true }
+    );
+
+    if (!notification) return;
 
     try {
       let success = false;
-      notification.deliveryStatus = 'Sent';
 
       switch (channel) {
         case 'Email':
@@ -318,17 +328,15 @@ export class NotificationService {
 
       if (success) {
         notification.deliveryStatus = 'Sent';
+        await notification.save();
       } else {
         notification.deliveryStatus = 'Failed';
         await notification.save();
-        throw new Error(`Failed to deliver via ${channel}`);
       }
-
-      await notification.save();
-    } catch (error) {
+    } catch (err: any) {
       notification.deliveryStatus = 'Failed';
       await notification.save();
-      throw error; // N12: Ensure BullMQ catches this for retries
+      throw err;
     }
   }
 

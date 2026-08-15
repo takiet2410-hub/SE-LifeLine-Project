@@ -140,7 +140,10 @@ export const RecordDirectDonationModal: React.FC<RecordDirectDonationModalProps>
 
   if (!isOpen) return null;
 
-  const currentReceived = request.receivedQuantityMl || request.collectedQuantityMl || 0;
+  const currentReceived = request.receivedQuantityMl ?? (
+    (request.shipments || []).filter((s: any) => s.status === 'Received').reduce((acc: number, s: any) => acc + (s.volumeMl || 0), 0) +
+    (request.directDonations || []).reduce((acc: number, d: any) => acc + (d.volumeMl || 0), 0)
+  );
   const currentInTransit = request.inTransitQuantityMl || 0;
   const remainingNeeded = Math.max(0, request.requiredQuantityMl - currentReceived);
 

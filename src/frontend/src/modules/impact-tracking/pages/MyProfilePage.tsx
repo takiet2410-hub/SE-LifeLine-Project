@@ -111,11 +111,11 @@ export const MyProfilePage: React.FC = () => {
           )}
           
           {(activeTab === 'Profile Info' || activeTab === 'Donation Timeline') && (
-            <DonationTimeline userId={user?.id} />
+            <DonationTimeline userId={user?.id} profileData={profileData} />
           )}
 
           {(activeTab === 'Profile Info' || activeTab === 'Achievements') && (
-            <XPActivityLog userId={user?.id} />
+            <XPActivityLog userId={user?.id} profileData={profileData} />
           )}
           
           {activeTab === 'Donor Level' && (

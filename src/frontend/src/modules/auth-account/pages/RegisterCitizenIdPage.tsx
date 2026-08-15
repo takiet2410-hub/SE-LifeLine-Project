@@ -7,6 +7,7 @@ import { AuthFooter } from '../components/AuthFooter';
 import { LifeLineLogo } from '../components/LifeLineLogo';
 
 import jsQR from 'jsqr';
+import vnProvinces from '../../../data/vietnam_provinces.json';
 
 const actionButtonShadow = 'shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10),0_2px_4px_-2px_rgba(0,0,0,0.10)]';
 
@@ -34,9 +35,19 @@ export function RegisterCitizenIdPage() {
     idNumber: '001090XXXXXX',
     permanentAddress: '',
   });
-  const [currentAddress, setCurrentAddress] = useState('');
   const [differentLivingAddress, setDifferentLivingAddress] = useState(false);
+  const [currentAddressDetails, setCurrentAddressDetails] = useState({
+    province: 'Thành phố Hồ Chí Minh',
+    district: '',
+    ward: '',
+    street: ''
+  });
   const [qrPayload, setQrPayload] = useState('');
+
+  const selectedProvince = (vnProvinces as any[]).find((p: any) => p.name === currentAddressDetails.province);
+  const availableDistricts = selectedProvince ? selectedProvince.districts : [];
+  const selectedDistrict = (availableDistricts as any[]).find((d: any) => d.name === currentAddressDetails.district);
+  const availableWards = selectedDistrict ? selectedDistrict.wards : [];
 
   const passwordTooShort = isPasswordTooShort(password);
   const passwordMissingRequirements = isPasswordMissingDigitOrLetter(password);
@@ -103,12 +114,19 @@ export function RegisterCitizenIdPage() {
     setStatusMessage('');
 
     try {
+      const fullLivingAddr = [
+        currentAddressDetails.street,
+        currentAddressDetails.ward,
+        currentAddressDetails.district,
+        currentAddressDetails.province
+      ].filter(Boolean).join(', ');
+
       const response = await registerCitizenId({
         qrPayload,
         email,
         phoneNumber,
         password,
-        currentAddress: differentLivingAddress && currentAddress.trim() ? currentAddress.trim() : undefined,
+        currentAddress: differentLivingAddress && fullLivingAddr.trim() ? fullLivingAddr.trim() : undefined,
       });
 
       setStatusTone('success');
@@ -354,15 +372,76 @@ export function RegisterCitizenIdPage() {
                     </label>
 
                     {differentLivingAddress && (
-                      <div className="flex flex-col gap-1 pt-1 animate-in fade-in duration-150">
+                      <div className="flex flex-col gap-2.5 pt-1.5 animate-in fade-in duration-150">
                         <p className="text-[11px] text-[#6C757D]">
-                          Nhập nơi ở hiện tại để nhận thông báo hiến máu cấp cứu SOS quanh bạn:
+                          Chọn nơi ở hiện tại để nhận thông báo hiến máu cấp cứu SOS quanh bạn:
                         </p>
+                        
+                        {/* 3 Cascading Dropdowns */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          {/* Province */}
+                          <select
+                            value={currentAddressDetails.province}
+                            onChange={(e) => {
+                              setCurrentAddressDetails(prev => ({
+                                ...prev,
+                                province: e.target.value,
+                                district: '',
+                                ward: ''
+                              }));
+                            }}
+                            className="w-full px-2 py-2 bg-white border border-[#DEE2E6] rounded-lg text-xs font-medium text-[#271816] focus:border-[#93000B] outline-none truncate"
+                          >
+                            <option value="">-- Tỉnh / Thành phố --</option>
+                            {(vnProvinces as any[]).map((p: any) => (
+                              <option key={p.code || p.name} value={p.name}>{p.name}</option>
+                            ))}
+                          </select>
+
+                          {/* District */}
+                          <select
+                            value={currentAddressDetails.district}
+                            disabled={!currentAddressDetails.province}
+                            onChange={(e) => {
+                              setCurrentAddressDetails(prev => ({
+                                ...prev,
+                                district: e.target.value,
+                                ward: ''
+                              }));
+                            }}
+                            className="w-full px-2 py-2 bg-white border border-[#DEE2E6] rounded-lg text-xs font-medium text-[#271816] focus:border-[#93000B] outline-none disabled:bg-gray-100 disabled:text-gray-400 truncate"
+                          >
+                            <option value="">-- Quận / Huyện --</option>
+                            {(availableDistricts as any[]).map((d: any) => (
+                              <option key={d.code || d.name} value={d.name}>{d.name}</option>
+                            ))}
+                          </select>
+
+                          {/* Ward */}
+                          <select
+                            value={currentAddressDetails.ward}
+                            disabled={!currentAddressDetails.district}
+                            onChange={(e) => {
+                              setCurrentAddressDetails(prev => ({
+                                ...prev,
+                                ward: e.target.value
+                              }));
+                            }}
+                            className="w-full px-2 py-2 bg-white border border-[#DEE2E6] rounded-lg text-xs font-medium text-[#271816] focus:border-[#93000B] outline-none disabled:bg-gray-100 disabled:text-gray-400 truncate"
+                          >
+                            <option value="">-- Phường / Xã --</option>
+                            {(availableWards as any[]).map((w: any) => (
+                              <option key={w.code || w.name} value={w.name}>{w.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Street & House number */}
                         <div className="flex min-h-10 w-full items-start overflow-hidden rounded-lg border border-[#DEE2E6] bg-white px-3 py-2">
                           <input
-                            value={currentAddress}
-                            onChange={(e) => setCurrentAddress(e.target.value)}
-                            placeholder="Số nhà, tên đường, phường/xã, quận/huyện, TP..."
+                            value={currentAddressDetails.street}
+                            onChange={(e) => setCurrentAddressDetails(prev => ({ ...prev, street: e.target.value }))}
+                            placeholder="Số nhà, tên đường (VD: 127 Ni Sư Huỳnh Liên)..."
                             className="w-full border-0 bg-transparent p-0 text-xs sm:text-sm text-[#271816] outline-none"
                           />
                         </div>

@@ -52,7 +52,13 @@ export class AuthAccountService {
       $or: [{ email: data.email }, { idDocumentNumber: idDocumentNumber }] 
     });
     if (existingUser) {
-      throw new Error('User with this email or ID Document already exists');
+      if (existingUser.accountStatus === 'PendingVerification') {
+        // Cho phép đăng ký lại nếu tài khoản trước đó chưa kích hoạt hoặc bị lỗi dở dang
+        await DonorProfile.deleteOne({ userId: existingUser._id });
+        await User.deleteOne({ _id: existingUser._id });
+      } else {
+        throw new Error('Email hoặc số CCCD này đã được đăng ký tài khoản trong hệ thống.');
+      }
     }
 
     // 3. Khởi tạo tài khoản User
@@ -103,7 +109,12 @@ export class AuthAccountService {
       avatarUrl: DEFAULT_AVATAR_URL
     });
 
-    await profile.save();
+    try {
+      await profile.save();
+    } catch (profileErr) {
+      await User.deleteOne({ _id: user._id });
+      throw profileErr;
+    }
 
     try {
       await sendVerificationEmail(user.email, verificationToken); // Gửi chuỗi thường vào link
@@ -423,17 +434,23 @@ export class AuthAccountService {
     const completedAppointments = await Appointment.find({
       donorId: userId, 
       status: AppointmentStatus.Completed
-    }).sort({ appointmentDate: -1 }).lean();
+    }).sort({ appointmentDate: -1 }).populate('campaignId', 'name location address').lean();
 
     let sosDonations: any[] = [];
     try {
       const { SOSRequest } = await import('../sos-request/models/sos-request.model');
       const sosList = await SOSRequest.find({
         'directDonations.donorId': userId
-      }).lean();
+      }).populate('hospitalId', 'name address').lean();
       for (const sos of sosList) {
         const matching = (sos.directDonations || []).filter((d: any) => d.donorId?.toString() === userId.toString());
-        sosDonations.push(...matching);
+        for (const m of matching) {
+          sosDonations.push({
+            ...m,
+            hospitalName: (sos as any).hospitalName || (sos.hospitalId as any)?.name || (sos as any).patientReference || 'Bệnh viện tiếp nhận cấp cứu',
+            sosRequestId: sos._id
+          });
+        }
       }
     } catch (err) {}
 
@@ -476,13 +493,57 @@ export class AuthAccountService {
     }
 
     // Tính toán Streak (Chuỗi hiến máu liên tiếp - Logic cơ bản: Nếu có hiến thì tính là 1)
-    // Tương lai bạn có thể viết logic kiểm tra hiến máu đều đặn mỗi năm để tăng streak
     const currentStreak = totalDonations > 0 ? 1 : 0; 
 
     // 4. Query badges earned by user
     const badges = profile.achievements || [];
 
-    // 5. Định dạng dữ liệu trả về khớp hoàn toàn với thiết kế UI Frontend
+    // 5. Chuẩn bị danh sách Donation Timeline & XP Activity Log thống nhất
+    const timelineItems = [
+      ...completedAppointments.map(a => ({
+        id: a._id.toString(),
+        type: 'StandardDonation',
+        title: 'Hiến máu toàn phần định kỳ',
+        date: a.appointmentDate,
+        locationName: (a.campaignId as any)?.name || 'Chiến dịch Hiến máu LifeLine',
+        bloodType: profile.bloodType || 'O+',
+        volume: '350 ml',
+        status: 'completed',
+        certificateNo: `CERT-${new Date(a.appointmentDate).getFullYear()}-LL${a._id.toString().slice(-6).toUpperCase()}`
+      })),
+      ...sosDonations.map(s => ({
+        id: (s._id || s.fastTrackCode || Math.random()).toString(),
+        type: 'SOSDirectDonation',
+        title: 'Hiến máu cấp cứu khẩn cấp (SOS)',
+        date: s.recordedAt || new Date(),
+        locationName: s.hospitalName || 'Bệnh viện tiếp nhận cấp cứu',
+        bloodType: s.bloodType || profile.bloodType || 'O+',
+        volume: `${s.volumeMl || 250} ml`,
+        status: 'completed',
+        certificateNo: `CERT-SOS-${new Date(s.recordedAt || Date.now()).getFullYear()}-LL${(s.fastTrackCode || s._id?.toString() || '').slice(-6).toUpperCase()}`
+      }))
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const xpLogs = [
+      ...completedAppointments.map(a => ({
+        id: a._id.toString(),
+        activity: 'Hiến máu toàn phần (Chiến dịch)',
+        date: a.appointmentDate,
+        locationName: (a.campaignId as any)?.name || 'Chiến dịch Hiến máu LifeLine',
+        xp: 250,
+        impact: '♥️ x3'
+      })),
+      ...sosDonations.map(s => ({
+        id: (s._id || s.fastTrackCode || Math.random()).toString(),
+        activity: 'Ứng cứu hiến máu khẩn cấp SOS',
+        date: s.recordedAt || new Date(),
+        locationName: s.hospitalName || 'Bệnh viện tiếp nhận cấp cứu SOS',
+        xp: 150,
+        impact: '🛡️ Cứu sống ca SOS'
+      }))
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    // 6. Định dạng dữ liệu trả về khớp hoàn toàn với thiết kế UI Frontend
     return {
       profileInfo: {
         avatarUrl: profile.avatarUrl,
@@ -499,6 +560,8 @@ export class AuthAccountService {
         xp: profile.xp,
         donorLevel: profile.donorLevel
       },
+      donationTimeline: timelineItems,
+      xpActivityLog: xpLogs,
       achievements: badges.map(b => ({
         badgeType: b.badgeType,
         title: b.title,

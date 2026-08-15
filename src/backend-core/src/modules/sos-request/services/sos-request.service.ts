@@ -392,7 +392,7 @@ export class SOSRequestService {
         throw new Error('Total volume of selected bags is 0');
       }
 
-      const currentReceived = sosRequest.receivedQuantityMl || sosRequest.collectedQuantityMl || 0;
+      const currentReceived = sosRequest.receivedQuantityMl ?? 0;
       const currentInTransit = sosRequest.inTransitQuantityMl || 0;
       const remainingNeeded = Math.max(0, sosRequest.requiredQuantityMl - currentReceived - currentInTransit);
 

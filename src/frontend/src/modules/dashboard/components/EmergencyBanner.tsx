@@ -15,13 +15,29 @@ export const EmergencyBanner: React.FC = () => {
         const res = await apiService.getNotifications({ type: 'SOS' });
         const notifications = res.data || [];
         
-        if (notifications.length > 0) {
-          const latest = notifications[0];
-          const payload = latest.payload || latest.sosRequestInfo || {};
+        // Find the most recent active emergency alert requesting blood
+        const activeNotif = notifications.find((n: any) => {
+          const payload = n.payload || n.sosRequestInfo || {};
+          const isSuccessNotice = n.title?.includes('thành công') || n.body?.includes('thành công');
+          return (
+            !isSuccessNotice &&
+            payload.hospitalName &&
+            payload.hospitalName !== 'Unknown Hospital' &&
+            payload.bloodType &&
+            payload.bloodType !== 'Unknown'
+          );
+        });
+
+        if (activeNotif) {
+          const payload = activeNotif.payload || activeNotif.sosRequestInfo || {};
           setEmergency({
-            hospital: payload.hospitalName || 'Unknown Hospital',
-            bloodTypes: [payload.bloodType || 'Unknown'],
+            hospital: payload.hospitalName,
+            bloodTypes: [payload.bloodType],
+            deepLink: payload.deepLink || `/donor/sos-requests/${payload.sourceRefId || activeNotif.sourceRefId || ''}`,
+            hospitalLocation: payload.hospitalLocation,
           });
+        } else {
+          setEmergency(null);
         }
       } catch (err) {
         console.error('Failed to fetch emergency data', err);
@@ -51,8 +67,8 @@ export const EmergencyBanner: React.FC = () => {
       
       <div className="flex items-center gap-2 w-full md:w-auto">
         <Link 
-          to="/my-appointments/schedule" 
-          className="flex-1 md:flex-none text-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors text-[14px] shadow-sm"
+          to={emergency.deepLink || '/donor/sos-requests'} 
+          className="flex-1 md:flex-none text-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors text-[14px] shadow-sm whitespace-nowrap"
         >
           {t('dashboard.emergency.action')}
         </Link>

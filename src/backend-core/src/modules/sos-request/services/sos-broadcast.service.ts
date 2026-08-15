@@ -80,7 +80,7 @@ export class SOSBroadcastService {
               title: `CẤP CỨU: Cần ${request.requiredQuantityMl}ml máu ${request.bloodType} gấp`,
               body: `${hospitalName} yêu cầu cung cấp gấp ${request.requiredQuantityMl}ml máu ${request.bloodType} cho bệnh nhân cấp cứu. Hạn chót: ${request.fulfillmentDeadline ? request.fulfillmentDeadline.toLocaleDateString() : 'Không rõ'}`,
               payload: payload,
-              channels: ['WebPush', 'InApp', 'Email'] as any
+              channels: ['WebPush', 'InApp'] as any
             });
             console.log(`[SOSBroadcastService] Broadcasted to ${newStaffIds.length} blood center staff (skipped ${alreadyNotifiedStaffIds.size} already notified)`);
           } catch (err) {

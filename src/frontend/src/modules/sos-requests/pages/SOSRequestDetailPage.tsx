@@ -82,7 +82,7 @@ export const SOSRequestDetailPage: React.FC = () => {
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <AlertCircle className="w-12 h-12 text-brand-error" />
         <p className="text-brand-text-muted">SOS request not found</p>
-        <button 
+        <button
           onClick={() => navigate(isHospitalStaff ? '/hospital/sos-requests' : '/bc/sos-requests')}
           className="mt-4 bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2 rounded-lg"
         >
@@ -95,7 +95,7 @@ export const SOSRequestDetailPage: React.FC = () => {
 
   const handleCancelRequest = async () => {
     if (!confirm('Are you sure you want to cancel this SOS request?')) return;
-    
+
     try {
       await sosApi.updateSOSRequestStatus(id!, { status: 'Cancelled' });
       setRequest(prev => prev ? { ...prev, status: 'Cancelled' } : null);
@@ -113,7 +113,7 @@ export const SOSRequestDetailPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={() => navigate(isHospitalStaff ? '/hospital/sos-requests' : '/bc/sos-requests')}
             className="p-2 hover:bg-brand-bg-muted rounded-full transition-colors text-brand-text-secondary cursor-pointer"
           >
@@ -146,17 +146,17 @@ export const SOSRequestDetailPage: React.FC = () => {
 
           {/* Only show Cancel button when request is still pending evaluation */}
           {(request.status === 'Pending' || request.status === 'EvaluationInProgress') && (
-            <button 
+            <button
               onClick={handleCancelRequest}
               className="bg-brand-error/10 text-brand-error hover:bg-brand-error/20 px-4 py-2 rounded-xl font-medium transition-colors"
             >
               Huỷ yêu cầu
             </button>
           )}
-          
+
           {/* Blood Center Staff: Fulfill from inventory */}
           {canFulfill && (request.status === 'Pending' || request.status === 'EvaluationInProgress' || request.status === 'NotificationsDispatched' || request.status === 'InventoryDispatched') && (
-            <button 
+            <button
               onClick={() => setIsFulfillModalOpen(true)}
               className="bg-brand-primary text-white hover:bg-brand-primary/90 px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm"
             >
@@ -168,25 +168,29 @@ export const SOSRequestDetailPage: React.FC = () => {
       </div>
 
       {(() => {
-        const currentReceived = request.receivedQuantityMl || request.collectedQuantityMl || 0;
-        const currentInTransit = request.inTransitQuantityMl || 0;
+        const currentReceived = request.receivedQuantityMl ?? (
+          (request.shipments || []).filter((s: any) => s.status === 'Received').reduce((acc: number, s: any) => acc + (s.volumeMl || 0), 0) +
+          (request.directDonations || []).reduce((acc: number, d: any) => acc + (d.volumeMl || 0), 0)
+        );
+        const currentInTransit = request.inTransitQuantityMl || (request.shipments || []).filter((s: any) => s.status === 'InTransit').reduce((acc: number, s: any) => acc + (s.volumeMl || 0), 0);
         const targetVolume = request.requiredQuantityMl || 1;
         const receivedPercent = Math.min(100, Math.round((currentReceived / targetVolume) * 100));
         const inTransitPercent = Math.min(100 - receivedPercent, Math.round((currentInTransit / targetVolume) * 100));
         const remainingNeeded = Math.max(0, targetVolume - currentReceived);
+        const committedDonorsCount = request.acceptedDonorIds?.length || 0;
 
         return (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Details */}
             <div className="lg:col-span-2 space-y-6">
-              
+
               {/* Blood & Progress */}
               <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
                 <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-4">
                   <Activity className="w-5 h-5 text-brand-primary" />
                   Tiến Độ Tiếp Nhận Máu Cấp Cứu
                 </h2>
-                
+
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center font-extrabold text-xl shadow-xs">
@@ -205,13 +209,13 @@ export const SOSRequestDetailPage: React.FC = () => {
 
                 {/* Multi-segment Progress Bar */}
                 <div className="w-full bg-gray-100 rounded-full h-3.5 mb-2 overflow-hidden flex shadow-inner">
-                  <div 
-                    className="bg-emerald-600 h-3.5 transition-all duration-700" 
+                  <div
+                    className="bg-emerald-600 h-3.5 transition-all duration-700"
                     style={{ width: `${receivedPercent}%` }}
                     title={`Đã nhận chính thức: ${currentReceived}ml (${receivedPercent}%)`}
                   />
-                  <div 
-                    className="bg-amber-400 h-3.5 transition-all duration-700" 
+                  <div
+                    className="bg-amber-400 h-3.5 transition-all duration-700"
                     style={{ width: `${inTransitPercent}%` }}
                     title={`Đang vận chuyển: ${currentInTransit}ml (${inTransitPercent}%)`}
                   />
@@ -219,7 +223,7 @@ export const SOSRequestDetailPage: React.FC = () => {
 
                 {/* Progress Legend & Stats */}
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs pt-1">
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                     <span className="flex items-center gap-1.5 font-semibold text-emerald-800">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
                       Đã nhận: {currentReceived} ml ({receivedPercent}%)
@@ -228,6 +232,12 @@ export const SOSRequestDetailPage: React.FC = () => {
                       <span className="flex items-center gap-1.5 font-semibold text-amber-800">
                         <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
                         Đang chuyển tới: {currentInTransit} ml ({inTransitPercent}%)
+                      </span>
+                    )}
+                    {committedDonorsCount > 0 && (
+                      <span className="flex items-center gap-1.5 font-semibold text-blue-700" title="Tình nguyện viên đã bấm đồng ý đến hiến máu">
+                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                        {committedDonorsCount} tình nguyện viên đã xác nhận đến
                       </span>
                     )}
                   </div>
@@ -347,144 +357,144 @@ export const SOSRequestDetailPage: React.FC = () => {
                 <SOSTimeline currentStatus={request.status} />
               </div>
 
-          {/* Evaluation Details */}
-          {evaluationLog && (
-            <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
-              <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-6">
-                <Activity className="w-5 h-5 text-brand-primary" />
-                Evaluation Details
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold text-brand-text-main mb-3">Blood Centers Identified</h3>
-                  {evaluationLog.rankedBloodCenters?.length > 0 ? (
-                    <div className="space-y-2">
-                      {evaluationLog.rankedBloodCenters.slice(0, 5).map((center: any, idx: number) => (
-                        <div key={idx} className="p-3 bg-brand-bg-muted rounded-lg border border-brand-border">
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium text-brand-text-main">Center #{idx + 1}</span>
-                            <span className="text-sm text-brand-text-secondary">{center.distanceKm?.toFixed(1)} km</span>
-                          </div>
-                          <div className="flex justify-between text-sm text-brand-text-muted mt-1">
-                            <span>Inventory: {center.inventoryVolume} ml</span>
-                            <span>Score: {center.score?.toFixed(2)}</span>
-                          </div>
+              {/* Evaluation Details */}
+              {evaluationLog && (
+                <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
+                  <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-6">
+                    <Activity className="w-5 h-5 text-brand-primary" />
+                    Evaluation Details
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="font-semibold text-brand-text-main mb-3">Blood Centers Identified</h3>
+                      {evaluationLog.rankedBloodCenters?.length > 0 ? (
+                        <div className="space-y-2">
+                          {evaluationLog.rankedBloodCenters.slice(0, 5).map((center: any, idx: number) => (
+                            <div key={idx} className="p-3 bg-brand-bg-muted rounded-lg border border-brand-border">
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium text-brand-text-main">Center #{idx + 1}</span>
+                                <span className="text-sm text-brand-text-secondary">{center.distanceKm?.toFixed(1)} km</span>
+                              </div>
+                              <div className="flex justify-between text-sm text-brand-text-muted mt-1">
+                                <span>Inventory: {center.inventoryVolume} ml</span>
+                                <span>Score: {center.score?.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      ) : (
+                        <p className="text-brand-text-muted">No blood centers with matching inventory found</p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-brand-text-muted">No blood centers with matching inventory found</p>
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-brand-text-main mb-3">Donors Notified</h3>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="px-2 py-1 bg-brand-info/10 text-brand-info rounded text-sm">
-                      {evaluationLog.rankedDonors?.length || 0} donors
-                    </span>
-                    <span className="px-2 py-1 bg-brand-warning/10 text-brand-warning rounded text-sm">
-                      Radius: {evaluationLog.searchRadiusKmUsed} km
-                    </span>
-                    <span className="px-2 py-1 bg-brand-info/10 text-brand-info rounded text-sm">
-                      Expansions: {evaluationLog.radiusExpansionCount}
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-sm text-brand-text-secondary">Blood Centers Notified: <span className="font-medium text-brand-text-main">{evaluationLog.notificationDeliveryStats?.bloodCentersNotified || 0}</span></div>
-                    <div className="text-sm text-brand-text-secondary">Donors Notified: <span className="font-medium text-brand-text-main">{evaluationLog.notificationDeliveryStats?.donorsNotified || 0}</span></div>
-                    <div className="text-sm text-brand-text-secondary">Timestamp: <span className="font-medium text-brand-text-main">{evaluationLog.notificationDeliveryStats?.timestamp ? formatDate(evaluationLog.notificationDeliveryStats.timestamp) : 'N/A'}</span></div>
+                    <div>
+                      <h3 className="font-semibold text-brand-text-main mb-3">Donors Notified</h3>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="px-2 py-1 bg-brand-info/10 text-brand-info rounded text-sm">
+                          {evaluationLog.rankedDonors?.length || 0} donors
+                        </span>
+                        <span className="px-2 py-1 bg-brand-warning/10 text-brand-warning rounded text-sm">
+                          Radius: {evaluationLog.searchRadiusKmUsed} km
+                        </span>
+                        <span className="px-2 py-1 bg-brand-info/10 text-brand-info rounded text-sm">
+                          Expansions: {evaluationLog.radiusExpansionCount}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-sm text-brand-text-secondary">Blood Centers Notified: <span className="font-medium text-brand-text-main">{evaluationLog.notificationDeliveryStats?.bloodCentersNotified || 0}</span></div>
+                        <div className="text-sm text-brand-text-secondary">Donors Notified: <span className="font-medium text-brand-text-main">{evaluationLog.notificationDeliveryStats?.donorsNotified || 0}</span></div>
+                        <div className="text-sm text-brand-text-secondary">Timestamp: <span className="font-medium text-brand-text-main">{evaluationLog.notificationDeliveryStats?.timestamp ? formatDate(evaluationLog.notificationDeliveryStats.timestamp) : 'N/A'}</span></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Right Column - Info */}
-        <div className="space-y-6">
-          <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
-            <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-4">
-              <User className="w-5 h-5 text-brand-primary" />
-              Patient Information
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-brand-text-muted">Reference</p>
-                <p className="font-medium text-brand-text-main">{request.patientReference || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-brand-text-muted">Urgency Level</p>
-                <SOSStatusBadge urgency={request.urgencyLevel} />
-              </div>
-              <div>
-                <p className="text-sm text-brand-text-muted">Required Quantity</p>
-                <p className="font-medium text-brand-text-main">{request.requiredQuantityMl} ml</p>
-              </div>
-              <div>
-                <p className="text-sm text-brand-text-muted">Fulfillment Deadline</p>
-                <p className="font-medium text-brand-text-main">{formatDate(request.fulfillmentDeadline)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
-            <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-4">
-              <Hospital className="w-5 h-5 text-brand-primary" />
-              Hospital Details
-            </h2>
-            {(() => {
-              const hospitalData: any = request.hospital || request.hospitalId;
-              return (
+            {/* Right Column - Info */}
+            <div className="space-y-6">
+              <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
+                <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-4">
+                  <User className="w-5 h-5 text-brand-primary" />
+                  Patient Information
+                </h2>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-brand-text-muted">Hospital Name</p>
-                    <p className="font-medium text-brand-text-main">{hospitalData?.name || 'N/A'}</p>
+                    <p className="text-sm text-brand-text-muted">Reference</p>
+                    <p className="font-medium text-brand-text-main">{request.patientReference || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-brand-text-muted">Address</p>
-                    <p className="font-medium text-brand-text-main">{hospitalData?.address || 'N/A'}</p>
+                    <p className="text-sm text-brand-text-muted">Urgency Level</p>
+                    <SOSStatusBadge urgency={request.urgencyLevel} />
                   </div>
                   <div>
-                    <p className="text-sm text-brand-text-muted">Contact</p>
-                    <p className="font-medium text-brand-text-main">{hospitalData?.contactPhone || 'Blood Transfusion Dept.'}</p>
+                    <p className="text-sm text-brand-text-muted">Required Quantity</p>
+                    <p className="font-medium text-brand-text-main">{request.requiredQuantityMl} ml</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-brand-text-muted">Fulfillment Deadline</p>
+                    <p className="font-medium text-brand-text-main">{formatDate(request.fulfillmentDeadline)}</p>
                   </div>
                 </div>
-              );
-            })()}
-          </div>
+              </div>
 
-          {/* Action Buttons */}
-          <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
-            <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-4">
-              <MapPin className="w-5 h-5 text-brand-primary" />
-              Quick Actions
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button 
-                onClick={() => setIsMapOpen(true)}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 rounded-lg border border-brand-primary/20 transition-colors"
-              >
-                <MapPin className="w-5 h-5" />
-                Get Directions
-              </button>
-              <a 
-                href={`tel:${(request.hospital || request.hospitalId as any)?.contactPhone || ''}`}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 rounded-lg border border-brand-primary/20 transition-colors"
-              >
-                <Phone className="w-5 h-5" />
-                <span className="flex flex-col items-center">
-                  <span>Call Hospital</span>
-                  {(request.hospital || request.hospitalId as any)?.contactPhone && (
-                    <span className="text-xs font-semibold">{(request.hospital || request.hospitalId as any).contactPhone}</span>
-                  )}
-                </span>
-              </a>
+              <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
+                <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-4">
+                  <Hospital className="w-5 h-5 text-brand-primary" />
+                  Hospital Details
+                </h2>
+                {(() => {
+                  const hospitalData: any = request.hospital || request.hospitalId;
+                  return (
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-sm text-brand-text-muted">Hospital Name</p>
+                        <p className="font-medium text-brand-text-main">{hospitalData?.name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-brand-text-muted">Address</p>
+                        <p className="font-medium text-brand-text-main">{hospitalData?.address || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-brand-text-muted">Contact</p>
+                        <p className="font-medium text-brand-text-main">{hospitalData?.contactPhone || 'Blood Transfusion Dept.'}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-6">
+                <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-4">
+                  <MapPin className="w-5 h-5 text-brand-primary" />
+                  Quick Actions
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setIsMapOpen(true)}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 rounded-lg border border-brand-primary/20 transition-colors"
+                  >
+                    <MapPin className="w-5 h-5" />
+                    Get Directions
+                  </button>
+                  <a
+                    href={`tel:${(request.hospital || request.hospitalId as any)?.contactPhone || ''}`}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 rounded-lg border border-brand-primary/20 transition-colors"
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span className="flex flex-col items-center">
+                      <span>Call Hospital</span>
+                      {(request.hospital || request.hospitalId as any)?.contactPhone && (
+                        <span className="text-xs font-semibold">{(request.hospital || request.hospitalId as any).contactPhone}</span>
+                      )}
+                    </span>
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-      );
-    })()}
+        );
+      })()}
 
 
       {/* Map Modal */}
@@ -492,7 +502,7 @@ export const SOSRequestDetailPage: React.FC = () => {
         const hospitalData: any = request.hospital || request.hospitalId;
         if (!hospitalData || !hospitalData.location) return null;
         return (
-          <HospitalMapModal 
+          <HospitalMapModal
             isOpen={isMapOpen}
             onClose={() => setIsMapOpen(false)}
             hospitalName={hospitalData.name}

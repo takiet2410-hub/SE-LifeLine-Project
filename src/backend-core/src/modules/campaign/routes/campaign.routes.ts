@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { CampaignController } from '../controllers/campaign.controller';
-import { authenticateJWT } from '../../../shared/auth.middleware';
+import { authenticateJWT, authorizeRoles } from '../../../shared/auth.middleware';
 import { validateRequest } from '../../../shared/validate.middleware';
 import {
   CreateCampaignSchema,
@@ -143,7 +143,7 @@ router.get('/', validateRequest(QueryCampaignSchema), CampaignController.listCam
  *       400:
  *         description: Validation error
  */
-router.post('/', authenticateJWT, validateRequest(CreateCampaignSchema), CampaignController.createCampaign);
+router.post('/', authenticateJWT, authorizeRoles('BloodCenterStaff', 'Administrator'), validateRequest(CreateCampaignSchema), CampaignController.createCampaign);
 
 /**
  * @openapi
@@ -238,7 +238,7 @@ router.get('/:id', validateRequest(GetCampaignDetailsSchema), CampaignController
  *       404:
  *         description: Campaign not found
  */
-router.put('/:id', authenticateJWT, validateRequest(UpdateCampaignSchema), CampaignController.updateCampaign);
+router.put('/:id', authenticateJWT, authorizeRoles('BloodCenterStaff', 'Administrator'), validateRequest(UpdateCampaignSchema), CampaignController.updateCampaign);
 
 /**
  * @openapi

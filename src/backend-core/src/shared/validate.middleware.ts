@@ -26,6 +26,7 @@ export const validate = (schema: ZodSchema) => {
       
       next();
     } catch (error) {
+      console.error('--- [DEBUG] validateRequest Error ---', req.originalUrl, error);
       next(error);
     }
   };

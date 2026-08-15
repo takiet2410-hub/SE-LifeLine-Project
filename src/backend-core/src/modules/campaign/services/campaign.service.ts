@@ -187,10 +187,16 @@ export class CampaignService {
       throw new Error('INVALID_CAPACITY_OR_GOAL');
     }
 
-    // Auto-generate unique campaign code if not provided
     const year = new Date().getFullYear();
-    const count = await Campaign.countDocuments();
-    const campaignCode = data.campaignCode || `CMP-${year}-${String(count + 1).padStart(3, '0')}`;
+    const latestCampaign = await Campaign.findOne({ campaignCode: new RegExp(`^CMP-${year}-`) }).sort({ createdAt: -1 });
+    let nextNum = 1;
+    if (latestCampaign && latestCampaign.campaignCode) {
+      const parts = latestCampaign.campaignCode.split('-');
+      if (parts.length === 3 && !isNaN(parseInt(parts[2], 10))) {
+        nextNum = parseInt(parts[2], 10) + 1;
+      }
+    }
+    const campaignCode = data.campaignCode || `CMP-${year}-${String(nextNum).padStart(4, '0')}`;
 
     let status = data.status || 'Upcoming';
     if (data.isDraft || data.status === 'Draft') {

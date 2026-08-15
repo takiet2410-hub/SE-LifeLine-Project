@@ -713,3 +713,34 @@ Sau đó có thể thực thi đơn giản bằng lệnh:
 npm run test:booking:export
 ```
 
+---
+
+## 5. TEST EXECUTION (KẾT QUẢ THỰC THI KIỂM THỬ)
+
+| ID Test Case | Ngày Thực Thi | Người Thực Thi | Trạng Thái (Pass/Fail) | Kết Quả Thực Tế (Actual Result) | Ghi Chú |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `TC_UC06_001` | 08/08/2026 | SQA Team | Pass | Hiển thị vị trí GPS và các điểm hiến máu bán kính 15km | |
+| `TC_UC07_002` | 08/08/2026 | SQA Team | Pass | Trạng thái "Pending", điều hướng trang lịch hẹn | |
+| `TC_UC07_003` | 08/08/2026 | SQA Team | Fail | Hệ thống cho phép đặt lịch dù mới hiến máu 50 ngày trước | Đã log Bug ID: `BUG-BA-01` |
+| `TC_UC07_003` (Re-test) | 09/08/2026 | SQA Team | Pass | Chặn đặt lịch và hiển thị Toast lỗi "chưa đủ 84 ngày" | Đã fix `BUG-BA-01` |
+| `TC_UC07_014` | 08/08/2026 | SQA Team | Pass | Đổi màu xám và disabled các khung giờ quá hạn | |
+| `TC_UC09_001` | 08/08/2026 | SQA Team | Pass | Hủy lịch thành công, trạng thái "Cancelled" | |
+
+*(Các Test Cases còn lại đều Pass trên hệ thống CI/CD)*
+
+---
+
+## 6. BUG REPORT & TEST SUMMARY
+
+### 6.1. Báo cáo Lỗi (Bug Report)
+
+| Bug ID | Mảng/Tính năng | Mô tả lỗi (Description) | Các bước tái hiện (Steps to Reproduce) | Kết quả mong đợi (Expected) | Kết quả thực tế (Actual) | Mức độ nghiêm trọng (Severity) | Trạng thái (Status) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `BUG-BA-01` | Đặt lịch (Business Rule 84 ngày) | Không chặn người dùng mới hiến máu < 84 ngày khi đặt lịch mới | 1. Đăng nhập user vừa hiến 50 ngày trước. 2. Tiến hành đặt lịch bình thường. | Báo lỗi ELIGIBILITY_FAILED_84_DAYS và không lưu record. | Vẫn tạo lịch hẹn thành công trạng thái Pending. | Critical | Closed (Đã fix) |
+
+### 6.2. Tổng kết Kiểm thử (Test Summary)
+- **Số lượng tính năng kiểm thử (Features tested):** 5 (LL-UC-06 đến LL-UC-10, Booking/E-ticket)
+- **Tổng số Test Cases (Total test cases):** 35
+- **Số Test Cases Pass (Passed test cases):** 35 (Sau khi re-test)
+- **Số Test Cases Fail (Failed test cases):** 1 (Trong lần chạy đầu tiên `BUG-BA-01`)
+

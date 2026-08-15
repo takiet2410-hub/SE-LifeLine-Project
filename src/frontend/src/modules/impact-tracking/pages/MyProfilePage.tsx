@@ -102,6 +102,8 @@ export const MyProfilePage: React.FC = () => {
               profileData ? {
                 ...profileData.personalInfo,
                 ...profileData.contactInfo,
+                permanentAddress: profileData.contactInfo?.permanentAddress || (profileData.profileInfo as any)?.permanentAddress,
+                currentAddress: profileData.contactInfo?.currentAddress || (profileData.profileInfo as any)?.currentAddress,
                 address: profileData.contactInfo?.permanentAddress,
                 id: user?.id || ''
               } as any : undefined
@@ -109,11 +111,11 @@ export const MyProfilePage: React.FC = () => {
           )}
           
           {(activeTab === 'Profile Info' || activeTab === 'Donation Timeline') && (
-            <DonationTimeline userId={user?.id} />
+            <DonationTimeline userId={user?.id} profileData={profileData} />
           )}
 
           {(activeTab === 'Profile Info' || activeTab === 'Achievements') && (
-            <XPActivityLog userId={user?.id} />
+            <XPActivityLog userId={user?.id} profileData={profileData} />
           )}
           
           {activeTab === 'Donor Level' && (

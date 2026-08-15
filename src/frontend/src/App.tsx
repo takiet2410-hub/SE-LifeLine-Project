@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { ChatbotWidget } from './modules/chatbot/components/ChatbotWidget';
 
 // Auth Module
 import {
@@ -62,15 +63,26 @@ import { HowItWorksPage } from './modules/landing-page/pages/HowItWorksPage';
 import { FindLocationsPage } from './modules/landing-page/pages/FindLocationsPage';
 import { HealthTipsPage } from './modules/landing-page/pages/HealthTipsPage';
 
+
 // Hospital SOS Requests Module
 import { SOSDashboardPage } from './modules/sos-requests/pages/SOSDashboardPage';
 import { CreateSOSRequestPage } from './modules/sos-requests/pages/CreateSOSRequestPage';
 import { SOSRequestDetailPage } from './modules/sos-requests/pages/SOSRequestDetailPage';
 import { SOSReportsPage } from './modules/sos-requests/pages/SOSReportsPage';
+import { DonorSOSDetailPage } from './modules/sos-requests/pages/DonorSOSDetailPage';
 
 // User SOS Alerts Module
 import { SOSAlertsPage } from './modules/notifications/pages/SOSAlertsPage';
 import { DonorNotificationPage } from './modules/notifications/pages/DonorNotificationPage';
+
+// System Admin Module
+import { AdminDashboardPage } from './modules/admin/pages/AdminDashboardPage';
+import { UserListPage } from './modules/admin/pages/UserListPage';
+import { UserFormPage } from './modules/admin/pages/UserFormPage';
+import { RoleManagementPage } from './modules/admin/pages/RoleManagementPage';
+import { ActivityLogsPage } from './modules/admin/pages/ActivityLogsPage';
+import { SystemConfigPage } from './modules/admin/pages/SystemConfigPage';
+import { FeatureTogglesPage } from './modules/admin/pages/FeatureTogglesPage';
 
 import { ScrollToTop } from './shared/components/ScrollToTop';
 
@@ -79,6 +91,7 @@ function App() {
     <>
       <ScrollToTop />
       <Toaster position="top-right" />
+      <ChatbotWidget />
       <Routes>
       {/* 1. Public Landing Pages */}
       <Route path="/" element={<LandingPage />} />
@@ -90,7 +103,6 @@ function App() {
       <Route path="/tips" element={<Navigate to="/health-tips#pre-donation" replace />} />
       <Route path="/care" element={<Navigate to="/health-tips#post-donation" replace />} />
       <Route path="/faq" element={<Navigate to="/health-tips#faq" replace />} />
-
       {/* 2. Public Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/login" element={<Navigate to="/login" replace />} />
@@ -123,7 +135,6 @@ function App() {
           <Route path="/sos-alerts" element={<SOSAlertsPage />} />
           <Route path="/news" element={<NewsFeedPage />} />
           <Route path="/news/:articleId" element={<PublicArticleDetailPage />} />
-
           {/* Booking Schedule Flow */}
           <Route path="/my-appointments/schedule" element={<ScheduleLayout />}>
             <Route index element={<Navigate to="step-1" replace />} />
@@ -135,7 +146,7 @@ function App() {
         </Route>
       </Route>
 
-      {/* 4. Blood Center Admin Routes */}
+      {/* 4. Blood Center / Hospital / System Admin Routes */}
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/bc" element={<Navigate to="/bc/campaigns" replace />} />
@@ -160,12 +171,43 @@ function App() {
           <Route path="/bc/inventory/stats" element={<InventoryStatsPage />} />
           <Route path="/bc/inventory/:bagId" element={<BloodBagDetailPage />} />
 
+          <Route path="/bc/sos-requests" element={<SOSDashboardPage />} />
+          <Route path="/bc/sos-requests/:id" element={<SOSRequestDetailPage />} />
+
           {/* Hospital Routes */}
           <Route path="/hospital" element={<Navigate to="/hospital/sos-requests" replace />} />
           <Route path="/hospital/sos-requests" element={<SOSDashboardPage />} />
           <Route path="/hospital/sos-requests/create" element={<CreateSOSRequestPage />} />
           <Route path="/hospital/sos-requests/:id" element={<SOSRequestDetailPage />} />
           <Route path="/hospital/sos-reports" element={<SOSReportsPage />} />
+
+          {/* Donor SOS detail — accessible from SOS email notifications */}
+          <Route path="/donor/sos-requests/:id" element={<DonorSOSDetailPage />} />
+
+          <Route path="/hospital/content" element={<ArticleListPage />} />
+          <Route path="/hospital/content/create" element={<CreateArticlePage />} />
+          <Route path="/hospital/content/:articleId" element={<ArticleDetailPage />} />
+
+          <Route path="/hospital/notifications" element={<NotificationListPage />} />
+          <Route path="/hospital/notifications/:notifId" element={<NotificationDetailPage />} />
+
+          {/* System Administrator Routes */}
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/users" element={<UserListPage />} />
+          <Route path="/admin/users/create" element={<UserFormPage />} />
+          <Route path="/admin/users/:userId/edit" element={<UserFormPage />} />
+          <Route path="/admin/roles" element={<RoleManagementPage />} />
+          <Route path="/admin/logs" element={<ActivityLogsPage />} />
+          <Route path="/admin/config" element={<SystemConfigPage />} />
+          <Route path="/admin/toggles" element={<FeatureTogglesPage />} />
+
+          {/* Admin Content & Notifications */}
+          <Route path="/admin/content" element={<ArticleListPage />} />
+          <Route path="/admin/content/create" element={<CreateArticlePage />} />
+          <Route path="/admin/content/:articleId" element={<ArticleDetailPage />} />
+          <Route path="/admin/notifications" element={<NotificationListPage />} />
+          <Route path="/admin/notifications/:notifId" element={<NotificationDetailPage />} />
         </Route>
       </Route>
 

@@ -130,17 +130,21 @@ export const SOSReportsPage: React.FC = () => {
 
   const handleExportCSV = () => {
     const headers = ['Request ID', 'Blood Type', 'Quantity (ml)', 'Urgency', 'Status', 'Request Date', 'Patient Reference', 'Hospital', 'Fulfillment Deadline'];
-    const rows = requests.map(req => [
-      req.id,
-      req.bloodType,
-      req.requiredQuantityMl,
-      req.urgencyLevel,
-      req.status,
-      format(new Date(req.createdAt), 'yyyy-MM-dd HH:mm'),
-      req.patientReference || '',
-      req.hospital?.name || '',
-      format(new Date(req.fulfillmentDeadline), 'yyyy-MM-dd HH:mm'),
-    ]);
+    const rows = requests.map(req => {
+      const reqId = req.id || (req as any)._id;
+      const hospitalName = (req.hospital as any)?.name || (req.hospitalId as any)?.name || 'N/A';
+      return [
+        reqId,
+        req.bloodType,
+        req.requiredQuantityMl,
+        req.urgencyLevel,
+        req.status,
+        format(new Date(req.createdAt), 'yyyy-MM-dd HH:mm'),
+        req.patientReference || '',
+        hospitalName,
+        format(new Date(req.fulfillmentDeadline), 'yyyy-MM-dd HH:mm'),
+      ];
+    });
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -371,9 +375,12 @@ export const SOSReportsPage: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-brand-border">
                 {requests.length > 0 ? (
-                  requests.map((req) => (
-                    <tr key={req.id} className="hover:bg-brand-bg-muted/30 transition-colors">
-                      <td className="px-6 py-4 font-medium text-brand-text-main">{req.id}</td>
+                  requests.map((req) => {
+                    const reqId = req.id || (req as any)._id;
+                    const hospitalName = (req.hospital as any)?.name || (req.hospitalId as any)?.name || 'N/A';
+                    return (
+                    <tr key={reqId} className="hover:bg-brand-bg-muted/30 transition-colors">
+                      <td className="px-6 py-4 font-medium text-brand-text-main">{reqId}</td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary font-bold text-xs">
                           {req.bloodType}
@@ -384,10 +391,11 @@ export const SOSReportsPage: React.FC = () => {
                       <td className="px-6 py-4"><SOSStatusBadge status={req.status} /></td>
                       <td className="px-6 py-4 text-brand-text-muted">{format(new Date(req.createdAt), 'MMM dd, yyyy HH:mm')}</td>
                       <td className="px-6 py-4 text-brand-text-secondary">{req.patientReference || 'N/A'}</td>
-                      <td className="px-6 py-4 text-brand-text-secondary">{req.hospital?.name || 'N/A'}</td>
+                      <td className="px-6 py-4 text-brand-text-secondary">{hospitalName}</td>
                       <td className="px-6 py-4 text-brand-text-muted">{format(new Date(req.fulfillmentDeadline), 'MMM dd, yyyy HH:mm')}</td>
                     </tr>
-                  ))
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan={9} className="px-6 py-12 text-center text-brand-text-muted">

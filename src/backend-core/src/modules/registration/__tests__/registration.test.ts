@@ -349,8 +349,13 @@ describe('Donor Registration & Health Screening Module (BC-UC-04, BC-UC-05)', ()
       );
 
       expect(mockDonorProfileUpdate).toHaveBeenCalledWith(
-        { userId: '65f1a2b3c4d5e6f7a8b9c000' },
-        { bloodType: 'B+' },
+        {
+          $or: [
+            { userId: '65f1a2b3c4d5e6f7a8b9c000' },
+            { _id: '65f1a2b3c4d5e6f7a8b9c000' }
+          ]
+        },
+        { $set: { bloodType: 'B+' } },
         expect.any(Object)
       );
     });

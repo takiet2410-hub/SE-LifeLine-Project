@@ -6,6 +6,7 @@ import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiService } from '../../services/apiClient';
 import type { NotificationData } from '../../services/mockData';
 import { format } from 'date-fns';
+import { getArticleIdFromNotification, getArticleRouteForRole } from '../../utils/notificationHelpers';
 
 interface HeaderProps {
   onToggleMobileMenu?: () => void;
@@ -25,15 +26,16 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
   const [loadingNotifs, setLoadingNotifs] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const isAdmin = user?.role === 'Administrator' || (user as any)?.roles?.includes('Administrator') || location.pathname.startsWith('/admin');
+  const isHospital = user?.role === 'HospitalStaff' || user?.role?.toLowerCase().includes('hospital') || location.pathname.startsWith('/hospital');
+
   const words = userName.trim().split(/\s+/);
-  let initials = 'BC';
+  let initials = isAdmin ? 'AD' : isHospital ? 'HS' : 'BC';
   if (words.length >= 2) {
     initials = (words[0][0] + words[words.length - 1][0]).toUpperCase();
   } else if (words.length === 1 && words[0].length > 0) {
     initials = words[0].substring(0, 2).toUpperCase();
   }
-
-  const isHospital = user?.role === 'HospitalStaff' || user?.role?.toLowerCase().includes('hospital');
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -43,6 +45,18 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
       } catch (err) {}
     };
     fetchCount();
+
+    const handleUpdate = () => {
+      fetchCount();
+    };
+
+    window.addEventListener('notifications-updated', handleUpdate);
+    const intervalId = setInterval(fetchCount, 10000);
+
+    return () => {
+      window.removeEventListener('notifications-updated', handleUpdate);
+      clearInterval(intervalId);
+    };
   }, []);
 
   // Handle click outside to close dropdown
@@ -84,12 +98,19 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
       setUnreadCount(prev => Math.max(0, prev - 1));
       setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, readAt: new Date().toISOString() } : n));
     }
-    if (isHospital) {
+    const articleId = getArticleIdFromNotification(notif);
+    if (articleId) {
+      navigate(getArticleRouteForRole(articleId, location.pathname));
+      return;
+    }
+
+    if (isAdmin) {
+      navigate('/admin/logs');
+    } else if (isHospital) {
       if (notif.type === 'SOS') {
-        // We could route to the specific request if we knew it, or just the list
         navigate('/hospital/sos-requests');
       } else {
-        navigate('/hospital/sos-requests'); // Adjust if hospitals have their own notification list
+        navigate(`/hospital/notifications/${notif._id}`);
       }
     } else {
       navigate(`/bc/notifications/${notif._id}`);
@@ -112,11 +133,35 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
 
   const getPageMeta = () => {
     const path = location.pathname;
+    if (path.includes('/admin/dashboard')) {
+      return { title: 'Admin Dashboard', subtitle: 'MONITOR SYSTEM METRICS, ACTIVE SESSIONS & DIAGNOSTICS' };
+    }
+    if (path.includes('/admin/users')) {
+      return { title: 'User Account Management', subtitle: 'MANAGE ACCOUNTS, ROLES & DEACTIVATIONS' };
+    }
+    if (path.includes('/admin/roles')) {
+      return { title: 'Roles & Permissions', subtitle: 'CONFIGURE RBAC PERMISSIONS AND SYSTEM ACCESS' };
+    }
+    if (path.includes('/admin/logs')) {
+      return { title: 'Activity Logs & Audit', subtitle: 'MONITOR AUDIT TRAIL, SECURITY EVENTS & EXPORTS' };
+    }
+    if (path.includes('/admin/config')) {
+      return { title: 'System Configuration', subtitle: 'MANAGE GLOBAL ELIGIBILITY RULES & OPERATIONAL CONSTANTS' };
+    }
+    if (path.includes('/admin/toggles')) {
+      return { title: 'Feature Toggles', subtitle: 'CONTROL SYSTEM FEATURE FLAGS & EXPERIMENTAL MODULES' };
+    }
     if (path.includes('/hospital/sos-requests')) {
       return { title: 'SOS Requests Dashboard', subtitle: 'MONITOR AND MANAGE EMERGENCY BLOOD REQUESTS' };
     }
     if (path.includes('/hospital/sos-reports')) {
       return { title: 'SOS Reports', subtitle: 'VIEW REPORTS AND ANALYTICS FOR SOS REQUESTS' };
+    }
+    if (path.includes('/hospital/content')) {
+      return { title: 'Hospital Content & News', subtitle: 'BROWSE ADVISORIES, BLOOD GUIDELINES & ANNOUNCEMENTS' };
+    }
+    if (path.includes('/hospital/notifications')) {
+      return { title: 'Hospital Notifications', subtitle: 'REVIEW SYSTEM NOTIFICATIONS AND EMERGENCY RESPONSES' };
     }
     if (path.includes('/inventory')) {
       return { title: 'Blood Inventory Management', subtitle: 'MONITOR BLOOD BAG STOCK, FEFO EXPIRATION & DISPATCH' };
@@ -147,9 +192,15 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
             <h1 className="text-[20px] font-bold text-[#271816] leading-tight">
               {pageMeta.title}
             </h1>
-            <span className="px-2 py-0.5 text-[10px] font-bold text-[#93000b] bg-red-50 rounded-md border border-red-100 flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-[#93000b]" />
-              Staff Portal
+            <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border flex items-center gap-1 ${
+              isAdmin
+                ? 'text-purple-700 bg-purple-50 border-purple-200'
+                : isHospital
+                ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                : 'text-[#93000b] bg-red-50 border-red-100'
+            }`}>
+              <ShieldCheck className={`w-3 h-3 ${isAdmin ? 'text-purple-700' : isHospital ? 'text-emerald-700' : 'text-[#93000b]'}`} />
+              {isAdmin ? 'System Admin' : isHospital ? 'Hospital Portal' : 'Staff Portal'}
             </span>
           </div>
           <p className="text-[11px] font-semibold text-[#6c757d] uppercase tracking-wider mt-0.5">
@@ -242,7 +293,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
                 <button 
                   onClick={() => {
                     setIsDropdownOpen(false);
-                    navigate(isHospital ? '/hospital/sos-requests' : '/bc/notifications');
+                    navigate(isAdmin ? '/admin/logs' : isHospital ? '/hospital/sos-requests' : '/bc/notifications');
                   }}
                   className="w-full py-2 text-center text-sm font-semibold text-[#93000b] hover:bg-red-50 rounded-lg transition-colors"
                 >
@@ -262,8 +313,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
             <span className="text-[13px] font-bold text-[#271816] leading-tight truncate max-w-[130px]">
               {userName}
             </span>
-            <span className="text-[10px] text-[#93000b] font-semibold uppercase tracking-wider">
-              {user?.role || 'BloodCenterStaff'}
+            <span className={`text-[10px] font-semibold uppercase tracking-wider ${isAdmin ? 'text-purple-600' : isHospital ? 'text-emerald-600' : 'text-[#93000b]'}`}>
+              {user?.role || (isAdmin ? 'Administrator' : isHospital ? 'HospitalStaff' : 'BloodCenterStaff')}
             </span>
           </div>
         </div>

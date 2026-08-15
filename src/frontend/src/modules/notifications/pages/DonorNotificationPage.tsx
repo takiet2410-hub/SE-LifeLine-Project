@@ -5,6 +5,7 @@ import { apiService } from '../../../services/apiClient';
 import type { NotificationData } from '../../../services/mockData';
 import { NotificationPreferences } from '../components/NotificationPreferences';
 import { format } from 'date-fns';
+import { getArticleIdFromNotification } from '../../../utils/notificationHelpers';
 
 export const DonorNotificationPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,6 +36,15 @@ export const DonorNotificationPage: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
+
+    const handleUpdate = () => {
+      fetchNotifications();
+    };
+
+    window.addEventListener('notifications-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('notifications-updated', handleUpdate);
+    };
   }, [fetchNotifications]);
 
   const handleNotificationClick = async (notif: NotificationData) => {
@@ -47,11 +57,18 @@ export const DonorNotificationPage: React.FC = () => {
       setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, readAt: new Date().toISOString() } : n));
     }
 
-    if (notif.type === 'SOS') {
+    // Direct redirect to specific article page if notification is for an article
+    const articleId = getArticleIdFromNotification(notif);
+    if (articleId) {
+      navigate(`/news/${articleId}`);
+      return;
+    }
+
+    if (notif.type === 'SOS' || notif.sourceRefType === 'SOSRequest') {
       navigate('/sos-alerts');
-    } else if ((notif.type as string) === 'Appointment') {
+    } else if ((notif.type as string) === 'Appointment' || notif.sourceRefType === 'Appointment') {
       navigate('/my-appointments');
-    } else if (notif.type === 'Campaign' || notif.type === 'Routine') {
+    } else {
       navigate('/news');
     }
   };

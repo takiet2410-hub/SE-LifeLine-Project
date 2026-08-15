@@ -15,10 +15,11 @@ interface TimelineStep {
 }
 
 const STEPS: TimelineStep[] = [
-  { status: 'Pending', label: 'Request Submitted', description: 'Waiting for Blood Center review' },
-  { status: 'EvaluationInProgress', label: 'Validating Request', description: 'Verifying hospital and patient details' },
-  { status: 'NotificationsDispatched', label: 'Processing Blood', description: 'Preparing blood units for dispatch' },
-  { status: 'Fulfilled', label: 'Request Fulfilled', description: 'Blood dispatched to hospital' },
+  { status: 'Pending', label: 'Yêu cầu được gửi', description: 'Đang chờ Trung tâm máu xem xét' },
+  { status: 'EvaluationInProgress', label: 'Đang đánh giá', description: 'Hệ thống tìm kiếm nguồn máu tương thích' },
+  { status: 'NotificationsDispatched', label: 'Đã thông báo', description: 'Trung tâm máu và Donors đã được thông báo' },
+  { status: 'InventoryDispatched', label: 'Đã xuất kho máu', description: 'Trung tâm máu đã xuất kho — đang chờ BV xác nhận' },
+  { status: 'Fulfilled', label: 'Hoàn tất', description: 'Bệnh viện đã xác nhận nhận máu' },
 ];
 
 interface SOSTimelineProps {
@@ -47,8 +48,8 @@ export const SOSTimeline: React.FC<SOSTimelineProps> = ({ currentStatus, classNa
         <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-brand-border-dark hidden md:block" />
         <div className="space-y-8 relative">
           {STEPS.map((step, index) => {
-            const isCompleted = index < currentIndex;
-            const isCurrent = index === currentIndex;
+            const isCompleted = currentStatus === 'Fulfilled' ? index <= currentIndex : index < currentIndex;
+            const isCurrent = currentStatus !== 'Fulfilled' && index === currentIndex;
 
             return (
               <div key={step.status} className="flex gap-4 md:gap-6 relative">
@@ -56,12 +57,12 @@ export const SOSTimeline: React.FC<SOSTimelineProps> = ({ currentStatus, classNa
                   <div 
                     className={cn(
                       "w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 z-10 bg-brand-bg-card transition-colors duration-300",
-                      isCompleted ? "border-brand-success bg-brand-success text-white" :
+                      isCompleted ? "border-emerald-600 bg-emerald-600 text-white" :
                       isCurrent ? "border-brand-primary text-brand-primary ring-4 ring-brand-primary/10" :
                       "border-brand-border-dark text-brand-text-muted"
                     )}
                   >
-                    {isCompleted ? <Check className="w-5 h-5" /> :
+                    {isCompleted ? <Check className="w-5 h-5 stroke-[2.5]" /> :
                      isCurrent ? <Loader2 className="w-5 h-5 animate-spin" /> :
                      <Clock className="w-5 h-5" />}
                   </div>
@@ -69,7 +70,7 @@ export const SOSTimeline: React.FC<SOSTimelineProps> = ({ currentStatus, classNa
                   {index !== STEPS.length - 1 && (
                     <div className={cn(
                       "w-0.5 h-full mt-2 md:hidden",
-                      isCompleted ? "bg-brand-success" : "bg-brand-border-dark"
+                      isCompleted ? "bg-emerald-600" : "bg-brand-border-dark"
                     )} />
                   )}
                 </div>

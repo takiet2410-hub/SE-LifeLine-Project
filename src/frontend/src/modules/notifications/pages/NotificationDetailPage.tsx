@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, Clock, CheckCircle2, ShieldAlert, FileText, ExternalLink } from 'lucide-react';
 import { apiService } from '../../../services/apiClient';
 import type { NotificationData } from '../../../services/mockData';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
 import { format } from 'date-fns';
+import { getArticleIdFromNotification, getArticleRouteForRole } from '../../../utils/notificationHelpers';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 
 export const NotificationDetailPage: React.FC = () => {
   const { notifId } = useParams<{ notifId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+
+  const isHospitalPage = location.pathname.startsWith('/hospital') || user?.role === 'hospital' || user?.role === 'HospitalStaff';
+  const isAdminPage = location.pathname.startsWith('/admin') || user?.role === 'admin' || user?.role === 'Administrator';
+  const isBcPage = location.pathname.startsWith('/bc') || user?.role === 'staff' || user?.role === 'BloodCenterStaff' || (!isHospitalPage && !isAdminPage);
+
+  const backPath = isAdminPage ? '/admin/notifications' : isHospitalPage ? '/hospital/notifications' : '/bc/notifications';
 
   const [notification, setNotification] = useState<NotificationData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -17,6 +27,9 @@ export const NotificationDetailPage: React.FC = () => {
     if (notifId) {
       apiService.getNotificationById(notifId).then((data) => {
         setNotification(data);
+        if (data && !data.readAt) {
+          apiService.markNotificationAsRead(data._id);
+        }
         setLoading(false);
       });
     }
@@ -28,7 +41,7 @@ export const NotificationDetailPage: React.FC = () => {
       <div className="text-center py-12">
         <p className="text-slate-600">Không tìm thấy thông báo.</p>
         <button
-          onClick={() => navigate('/bc/notifications')}
+          onClick={() => navigate(backPath)}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm"
         >
           Quay lại danh sách thông báo
@@ -39,13 +52,14 @@ export const NotificationDetailPage: React.FC = () => {
 
   const isSOS = notification.type === 'SOS';
   const sosInfo = notification.sosRequestInfo;
+  const articleId = getArticleIdFromNotification(notification);
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3">
         <button
-          onClick={() => navigate('/bc/notifications')}
+          onClick={() => navigate(backPath)}
           className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -55,6 +69,28 @@ export const NotificationDetailPage: React.FC = () => {
           <p className="text-xs text-slate-500">Mã thông báo: {notification._id}</p>
         </div>
       </div>
+
+      {/* Article Notification Action Banner */}
+      {articleId && (
+        <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-xl p-5 shadow-md flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-red-600/20 text-red-400 rounded-lg border border-red-500/30">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm">Thông báo bài viết tin tức</h3>
+              <p className="text-xs text-slate-300">Nhấn nút bên cạnh để xem nội dung và thông số bài viết.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate(getArticleRouteForRole(articleId, location.pathname))}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shrink-0"
+          >
+            <span>Xem bài viết</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* SOS Emergency Prominent Alert Banner (NFR-U-03) */}
       {isSOS && sosInfo && (
@@ -94,20 +130,38 @@ export const NotificationDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-2 flex justify-end gap-3">
-            <button
-              onClick={() => navigate('/bc/inventory')}
-              className="px-4 py-2 bg-red-700 text-white hover:bg-red-800 font-bold text-xs rounded-lg shadow-xs transition-colors"
-            >
-              Kiểm tra kho máu
-            </button>
-            <button
-              onClick={() => navigate(`/bc/inventory/stock-out?reason=Transfer`)}
-              className="px-4 py-2 bg-white text-red-700 border border-white hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors"
-            >
-              Chuyển máu cho bệnh viện →
-            </button>
-          </div>
+          {isBcPage && (
+            <div className="pt-2 flex justify-end gap-3">
+              <button
+                onClick={() => navigate('/bc/inventory')}
+                className="px-4 py-2 bg-red-700 text-white hover:bg-red-800 font-bold text-xs rounded-lg shadow-xs transition-colors cursor-pointer"
+              >
+                Kiểm tra kho máu
+              </button>
+              <button
+                onClick={() => {
+                  const sosId = notification?.payload?.sosRequestId || notification?.payload?.sourceRefId || (notification as any)?.sourceRefId || (notification.body?.match(/([a-f0-9]{24})/i)?.[1]);
+                  navigate(sosId ? `/bc/sos-requests/${sosId}` : `/bc/sos-requests`);
+                }}
+                className="px-4 py-2 bg-white text-red-700 border border-white hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors cursor-pointer"
+              >
+                Xử lý yêu cầu SOS →
+              </button>
+            </div>
+          )}
+          {isHospitalPage && (
+            <div className="pt-2 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  const sosId = notification?.payload?.sosRequestId || notification?.payload?.sourceRefId || (notification as any)?.sourceRefId || (notification.body?.match(/([a-f0-9]{24})/i)?.[1]);
+                  navigate(sosId ? `/hospital/sos-requests/${sosId}` : `/hospital/sos-requests`);
+                }}
+                className="px-4 py-2 bg-white text-red-700 border border-white hover:bg-red-50 font-bold text-xs rounded-lg shadow-xs transition-colors cursor-pointer"
+              >
+                Xem chi tiết ca SOS →
+              </button>
+            </div>
+          )}
         </div>
       )}
 

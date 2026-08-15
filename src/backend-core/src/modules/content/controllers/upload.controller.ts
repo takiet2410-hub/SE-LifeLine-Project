@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { uploadImageToCloudinary } from '../../../utils/cloudinary.util';
+import { uploadImageToCloudinary, DEFAULT_AVATAR_URL } from '../../../utils/cloudinary.util';
 
 export class ArticleUploadController {
   static async uploadImage(req: Request, res: Response) {
@@ -21,20 +21,23 @@ export class ArticleUploadController {
         try {
           imageUrl = await uploadImageToCloudinary(file.buffer, 'articles');
         } catch (e) {
-          console.warn('Cloudinary upload error:', e);
+          console.warn('Cloudinary upload failed, falling back to base64 data URL:', e);
+          const mimeType = file.mimetype || 'image/png';
+          imageUrl = `data:${mimeType};base64,${file.buffer.toString('base64')}`;
         }
       } else if (imageBase64 && typeof imageBase64 === 'string' && imageBase64.startsWith('data:image')) {
-        const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
         try {
+          const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
           imageUrl = await uploadImageToCloudinary(buffer, 'articles');
         } catch (e) {
-          console.warn('Cloudinary upload error:', e);
+          console.warn('Cloudinary upload failed, keeping base64 data URL:', e);
+          imageUrl = imageBase64;
         }
       }
 
       if (!imageUrl) {
-        imageUrl = `https://res.cloudinary.com/lifeline/articles/img-${Date.now()}.jpg`;
+        imageUrl = DEFAULT_AVATAR_URL;
       }
 
       return res.status(200).json({

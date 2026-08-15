@@ -28,6 +28,8 @@ export const notificationWorker = new Worker<NotificationJobData>(
   {
     connection: redisConnection,
     concurrency: 5, // Process up to 5 notifications in parallel
+    drainDelay: 30, // Poll every 30s instead of 5s to save Upstash Redis commands
+    stalledInterval: 300000, // Check stalled jobs every 5 minutes
   }
 );
 

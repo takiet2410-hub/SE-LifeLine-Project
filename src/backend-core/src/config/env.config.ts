@@ -19,6 +19,11 @@ const envSchema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string().default(''),
   CLOUDINARY_API_KEY: z.string().default(''),
   CLOUDINARY_API_SECRET: z.string().default(''),
+
+  AI_SERVICE_TOKEN_SECRET_CURRENT: z.string().default('super-secret-local-dev-key'),
+  AI_SERVICE_TOKEN_SECRET_PREVIOUS: z.string().default(''),
+  AI_SERVICE_TOKEN_KID: z.string().default('local-dev-key-1'),
+  AI_SERVICE_URL: z.string().url().default('http://127.0.0.1:8000'),
 });
 
 const _env = envSchema.safeParse(process.env);

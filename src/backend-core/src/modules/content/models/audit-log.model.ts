@@ -22,7 +22,7 @@ const ContentAuditLogSchema: Schema = new Schema({
   ipAddress: { type: String, default: '127.0.0.1' }
 }, {
   timestamps: true,
-  collection: 'content_audit_logs'
+  collection: 'audit_logs'
 });
 
 export const ContentAuditLog = mongoose.model<IContentAuditLog>('ContentAuditLog', ContentAuditLogSchema);

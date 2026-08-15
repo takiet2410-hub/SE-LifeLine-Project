@@ -45,6 +45,25 @@ export interface ProfileData {
     xp?: number;
     donorLevel?: number;
   };
+  donationTimeline?: Array<{
+    id: string;
+    type: string;
+    title: string;
+    date: string;
+    locationName: string;
+    bloodType: string;
+    volume: string;
+    status: string;
+    certificateNo: string;
+  }>;
+  xpActivityLog?: Array<{
+    id: string;
+    activity: string;
+    date: string;
+    locationName: string;
+    xp: number;
+    impact: string;
+  }>;
   achievements?: Array<{
     badgeType: string;
     title: string;

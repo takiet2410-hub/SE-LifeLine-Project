@@ -1,7 +1,13 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { ArticleController } from '../controllers/article.controller';
 import { ArticleUploadController } from '../controllers/upload.controller';
 import { authenticateJWT, authorizeRoles } from '../../../shared/auth.middleware';
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
 
 const router = Router();
 
@@ -37,7 +43,7 @@ router.get('/stats/summary', ...staffAuth, ArticleController.getContentStats);
  *     security:
  *       - bearerAuth: []
  */
-router.post('/upload-image', ...staffAuth, ArticleUploadController.uploadImage);
+router.post('/upload-image', ...staffAuth, upload.single('image'), ArticleUploadController.uploadImage);
 
 /**
  * @openapi

@@ -11,6 +11,8 @@ export const SOSDashboardPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const authUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const isHospital = authUser.role === 'HospitalStaff';
   
   const [requests, setRequests] = useState<SOSRequest[]>([]);
   const [total, setTotal] = useState(0);
@@ -84,13 +86,15 @@ export const SOSDashboardPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-brand-text-main">SOS Requests Dashboard</h1>
           <p className="text-brand-text-secondary mt-1">Monitor and manage emergency blood requests</p>
         </div>
-        <button 
-          onClick={() => navigate('/hospital/sos-requests/create')}
-          className="bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm"
-        >
-          <Plus className="w-5 h-5" />
-          Create SOS Request
-        </button>
+        {isHospital && (
+          <button 
+            onClick={() => navigate('/hospital/sos-requests/create')}
+            className="bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm"
+          >
+            <Plus className="w-5 h-5" />
+            Create SOS Request
+          </button>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -193,7 +197,7 @@ export const SOSDashboardPage: React.FC = () => {
                       <td className="px-6 py-4 text-brand-text-muted">{req.createdAt ? format(new Date(req.createdAt), 'MMM dd, yyyy HH:mm') : ''}</td>
                       <td className="px-6 py-4 text-right">
                         <button 
-                          onClick={() => navigate(`/hospital/sos-requests/${reqId}`)}
+                          onClick={() => navigate(isHospital ? `/hospital/sos-requests/${reqId}` : `/bc/sos-requests/${reqId}`)}
                           className="p-2 text-brand-primary hover:bg-brand-primary/10 rounded-lg transition-colors inline-flex"
                         >
                           <ArrowRight className="w-5 h-5" />

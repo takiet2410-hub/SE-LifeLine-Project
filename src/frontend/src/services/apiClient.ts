@@ -1,26 +1,6 @@
-import type {
-  CampaignData,
-  RegistrationData,
-  ArticleData,
-  BloodBagData,
-  NotificationData,
-  NotificationPreference,
-} from './mockData';
-import {
-  initialCampaigns,
-  initialRegistrations,
-  initialArticles,
-  initialNotifications,
-  initialBloodBags,
-} from './mockData';
 import { apiClient } from '../shared/api/apiClient';
+import { notifyNotificationsChanged } from '../utils/notificationEvents';
 
-// Local in-memory fallbacks
-let campaigns = [...initialCampaigns];
-let registrations = [...initialRegistrations];
-let articles = [...initialArticles];
-let notifications = [...initialNotifications];
-let bloodBags = [...initialBloodBags];
 
 const delay = (ms = 200) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -35,31 +15,44 @@ export const apiService = {
     if (params?.page) queryParams.page = params.page;
     if (params?.limit) queryParams.limit = params.limit;
 
-    const res = await apiClient.get('/notifications', { params: queryParams });
-    const rawData = res.data?.data || res.data;
-    const pagination = res.data?.pagination;
-    if (Array.isArray(rawData)) {
-      return {
-        data: rawData as NotificationData[],
-        totalPages: pagination?.totalPages || 1,
-        total: pagination?.total || rawData.length,
-      };
+    try {
+      const res = await apiClient.get('/notifications', { params: queryParams });
+      const rawData = res.data?.data || res.data;
+      const pagination = res.data?.pagination;
+      if (Array.isArray(rawData)) {
+        return {
+          data: rawData as NotificationData[],
+          totalPages: pagination?.totalPages || 1,
+          total: pagination?.total || rawData.length,
+        };
+      }
+    } catch (err) {
+      console.error(err);
+      throw err;
     }
-    return { data: [] as NotificationData[], totalPages: 1, total: 0 };
   },
 
   async getNotificationById(id: string) {
-    const res = await apiClient.get(`/notifications/${id}`);
-    const rawData = res.data?.data || res.data;
-    if (rawData) return rawData as NotificationData;
-    return null;
+    try {
+      const res = await apiClient.get(`/notifications/${id}`);
+      const rawData = res.data?.data || res.data;
+      if (rawData) return rawData as NotificationData;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
   },
 
   async markNotificationAsRead(id: string) {
-    const res = await apiClient.patch(`/notifications/${id}/read`);
-    const rawData = res.data?.data || res.data;
-    if (rawData) return rawData as NotificationData;
-    return null;
+    try {
+      const res = await apiClient.patch(`/notifications/${id}/read`);
+      const rawData = res.data?.data || res.data;
+      notifyNotificationsChanged();
+      if (rawData) return rawData as NotificationData;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
   },
 
   async respondToSOS(notificationId: string, response: 'accepted' | 'declined') {
@@ -77,27 +70,22 @@ export const apiService = {
       // If no ids passed, mark all unread as read
       const body = ids.length > 0 ? { ids } : { markAllAsRead: true };
       const res = await apiClient.patch('/notifications/read-all', body);
+      notifyNotificationsChanged();
       return res.data;
     } catch (err) {
-      console.warn('[apiService] Backend markMultipleNotificationsAsRead failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    notifications = notifications.map((n) =>
-      ids.includes(n._id) ? { ...n, readAt: new Date().toISOString() } : n
-    );
-    return { modifiedCount: ids.length };
   },
 
   async removeNotification(id: string) {
     try {
       await apiClient.delete(`/notifications/${id}`);
+      notifyNotificationsChanged();
     } catch (err) {
-      console.warn('[apiService] Backend removeNotification failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    notifications = notifications.filter((n) => n._id !== id);
   },
 
   async getUnreadCount() {
@@ -105,11 +93,24 @@ export const apiService = {
       const res = await apiClient.get('/notifications/unread-count');
       return res.data?.count || 0;
     } catch (err) {
-      console.warn('[apiService] Backend getUnreadCount failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
+  },
 
-    await delay();
-    return notifications.filter((n) => n.readAt === null).length;
+  async updateLocation(location: { coordinates: [number, number] }) {
+    try {
+      const res = await apiClient.patch('/auth/me/location', {
+        location: {
+          type: 'Point',
+          coordinates: location.coordinates,
+        },
+      });
+      return res.data;
+    } catch (err) {
+      console.error('Failed to update location:', err);
+      throw err;
+    }
   },
 
   async getNotificationPreferences() {
@@ -117,20 +118,9 @@ export const apiService = {
       const res = await apiClient.get('/notifications/preferences');
       return (res.data?.data || res.data) as NotificationPreference;
     } catch (err) {
-      console.warn('[apiService] Backend getNotificationPreferences failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    return {
-      sosEnabled: true,
-      appointmentEnabled: true,
-      campaignEnabled: true,
-      emailEnabled: true,
-      pushEnabled: true,
-      quietHoursStart: null,
-      quietHoursEnd: null,
-      timezone: 'Asia/Ho_Chi_Minh',
-    };
   },
 
   async updateNotificationPreferences(prefs: Partial<NotificationPreference>) {
@@ -138,20 +128,9 @@ export const apiService = {
       const res = await apiClient.patch('/notifications/preferences', prefs);
       return (res.data?.data || res.data) as NotificationPreference;
     } catch (err) {
-      console.warn('[apiService] Backend updateNotificationPreferences failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    return {
-      sosEnabled: true,
-      appointmentEnabled: true,
-      campaignEnabled: true,
-      emailEnabled: true,
-      pushEnabled: true,
-      quietHoursStart: null,
-      quietHoursEnd: null,
-      timezone: 'Asia/Ho_Chi_Minh',
-    };
   },
 
   // ==================== CAMPAIGN APIs ====================
@@ -179,7 +158,7 @@ export const apiService = {
       }
       
       let rawData = res.data?.data || res.data;
-      if (Array.isArray(rawData) && rawData.length > 0) {
+      if (Array.isArray(rawData)) {
         if (!params?.status || params.status === 'All') {
           rawData = rawData.filter((c: any) => c.status !== 'Cancelled');
         }
@@ -210,11 +189,9 @@ export const apiService = {
         return res.data as CampaignData;
       }
     } catch (err) {
-      console.warn('[apiService] Backend getCampaignById failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    return campaigns.find((c) => c._id === id) || null;
   },
 
   async createCampaign(data: any) {
@@ -248,22 +225,9 @@ export const apiService = {
         return res.data as CampaignData;
       }
     } catch (err) {
-      console.warn('[apiService] Backend createCampaign failed, using fallback:', err);
+      console.error(err);
       throw err;
     }
-
-    await delay();
-    const newCampaign: CampaignData = {
-      ...data,
-      startDateTime: data.startDate || data.startDateTime || new Date().toISOString(),
-      endDateTime: data.endDate || data.endDateTime || new Date().toISOString(),
-      location: data.location || { type: 'Point', coordinates: [106.660172, 10.755498] },
-      _id: `cam-${Date.now()}`,
-      registeredCount: 0,
-      createdAt: new Date().toISOString(),
-    };
-    campaigns = [newCampaign, ...campaigns];
-    return newCampaign;
   },
 
   async updateCampaign(id: string, updates: Partial<CampaignData>) {
@@ -273,14 +237,9 @@ export const apiService = {
         return res.data as CampaignData;
       }
     } catch (err) {
-      console.warn('[apiService] Backend updateCampaign failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    const idx = campaigns.findIndex((c) => c._id === id);
-    if (idx === -1) return null;
-    campaigns[idx] = { ...campaigns[idx], ...updates };
-    return campaigns[idx];
   },
 
   // ==================== REGISTRATION APIs ====================
@@ -466,19 +425,9 @@ export const apiService = {
         } as RegistrationData;
       }
     } catch (err) {
-      console.warn('[apiService] Backend updateRegistration API failed, fallback to mock state:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    const idx = registrations.findIndex((r) => r._id === id);
-    if (idx === -1) {
-      return {
-        _id: id,
-        ...updates,
-      } as RegistrationData;
-    }
-    registrations[idx] = { ...registrations[idx], ...updates };
-    return registrations[idx];
   },
 
   async checkInQRCode(qrPayload: string) {
@@ -488,16 +437,9 @@ export const apiService = {
         return res.data;
       }
     } catch (err) {
-      console.warn('[apiService] Backend checkInQRCode failed, fallback to mock update:', err);
+      console.error(err);
+      throw err;
     }
-    await delay();
-    if (registrations.length > 0) {
-      if (registrations[0].status === 'Confirmed' || registrations[0].status === 'Pending') {
-        registrations[0].status = 'CheckedIn';
-      }
-      return registrations[0];
-    }
-    return null;
   },
 
   // ==================== ARTICLE APIs ====================
@@ -509,22 +451,13 @@ export const apiService = {
 
       const res = await apiClient.get('/bc/articles', { params: queryParams });
       const rawData = res.data?.data || res.data;
-      if (Array.isArray(rawData) && rawData.length > 0) {
+      if (Array.isArray(rawData)) {
         return rawData as ArticleData[];
       }
     } catch (err) {
-      console.warn('[apiService] Backend getArticles failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    let result = [...articles];
-    if (category && category !== 'All') {
-      result = result.filter((a) => a.category === category);
-    }
-    if (status && status !== 'All') {
-      result = result.filter((a) => a.status === status);
-    }
-    return result;
   },
 
   async getArticleById(id: string) {
@@ -534,11 +467,9 @@ export const apiService = {
         return res.data as ArticleData;
       }
     } catch (err) {
-      console.warn('[apiService] Backend getArticleById failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    return articles.find((a) => a._id === id) || null;
   },
 
   async createArticle(data: Omit<ArticleData, '_id' | 'createdAt' | 'authorStaffId' | 'authorName'>) {
@@ -546,19 +477,9 @@ export const apiService = {
       const res = await apiClient.post('/bc/articles', data);
       if (res.data) return res.data as ArticleData;
     } catch (err) {
-      console.warn('[apiService] Backend createArticle failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    const newArt: ArticleData = {
-      ...data,
-      _id: `art-${Date.now()}`,
-      authorStaffId: 'staff-01',
-      authorName: 'BS. Nguyễn Văn A',
-      createdAt: new Date().toISOString(),
-    };
-    articles = [newArt, ...articles];
-    return newArt;
   },
 
   async updateArticle(id: string, updates: Partial<ArticleData>) {
@@ -566,14 +487,9 @@ export const apiService = {
       const res = await apiClient.put(`/bc/articles/${id}`, updates);
       if (res.data) return res.data as ArticleData;
     } catch (err) {
-      console.warn('[apiService] Backend updateArticle failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    const idx = articles.findIndex((a) => a._id === id);
-    if (idx === -1) return null;
-    articles[idx] = { ...articles[idx], ...updates };
-    return articles[idx];
   },
 
   // ==================== INVENTORY APIs ====================
@@ -586,30 +502,13 @@ export const apiService = {
 
       const res = await apiClient.get('/bc/inventory', { params: queryParams });
       const rawData = res.data?.data || res.data;
-      if (Array.isArray(rawData) && rawData.length > 0) {
+      if (Array.isArray(rawData)) {
         return rawData as BloodBagData[];
       }
     } catch (err) {
-      console.warn('[apiService] Backend getInventory failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    let result = [...bloodBags];
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (b) =>
-          b.bagCode.toLowerCase().includes(q) ||
-          b.storageLocation.toLowerCase().includes(q)
-      );
-    }
-    if (bloodType && bloodType !== 'All') {
-      result = result.filter((b) => b.bloodType === bloodType);
-    }
-    if (status && status !== 'All') {
-      result = result.filter((b) => b.status === status);
-    }
-    return result;
   },
 
   async getBloodBagById(id: string) {
@@ -617,11 +516,9 @@ export const apiService = {
       const res = await apiClient.get(`/bc/inventory/${id}`);
       if (res.data) return res.data as BloodBagData;
     } catch (err) {
-      console.warn('[apiService] Backend getBloodBagById failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    return bloodBags.find((b) => b._id === id) || null;
   },
 
   async updateBloodBagStatus(id: string, newStatus: BloodBagData['status'], reason?: string) {
@@ -629,27 +526,9 @@ export const apiService = {
       const res = await apiClient.put(`/bc/inventory/${id}/status`, { status: newStatus, reason: reason || 'Cập nhật trạng thái' });
       if (res.data) return res.data as BloodBagData;
     } catch (err) {
-      console.warn('[apiService] Backend updateBloodBagStatus failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    const idx = bloodBags.findIndex((b) => b._id === id);
-    if (idx === -1) return null;
-
-    const historyEntry = {
-      previousStatus: bloodBags[idx].status,
-      newStatus,
-      changedBy: 'BS. Nguyễn Văn A',
-      changedAt: new Date().toISOString(),
-      reason: reason || 'Thay đổi trạng thái thủ công',
-    };
-
-    bloodBags[idx] = {
-      ...bloodBags[idx],
-      status: newStatus,
-      statusHistory: [historyEntry, ...(bloodBags[idx].statusHistory || [])],
-    };
-    return bloodBags[idx];
   },
 
   async stockIn(
@@ -665,32 +544,9 @@ export const apiService = {
       const res = await apiClient.post('/bc/inventory/stock-in', { entries });
       if (res.data) return res.data;
     } catch (err) {
-      console.warn('[apiService] Backend stockIn failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    const newBags: BloodBagData[] = entries.map((e, idx) => ({
-      _id: `bag-${Date.now()}-${idx}`,
-      bagCode: `BB-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-      bloodType: e.bloodType,
-      volumeMl: e.volumeMl,
-      collectionDate: e.collectionDate,
-      expiryDate: e.expiryDate,
-      storageLocation: e.storageLocation,
-      status: 'Available',
-      statusHistory: [
-        {
-          previousStatus: 'None',
-          newStatus: 'Available',
-          changedBy: 'BS. Nguyễn Văn A',
-          changedAt: new Date().toISOString(),
-          reason: 'Nhập kho hàng loạt',
-        },
-      ],
-    }));
-
-    bloodBags = [...newBags, ...bloodBags];
-    return newBags;
   },
 
   async stockOut(
@@ -702,30 +558,9 @@ export const apiService = {
       const res = await apiClient.post('/bc/inventory/stock-out', { bagIds, reason, notes });
       if (res.status === 200) return true;
     } catch (err) {
-      console.warn('[apiService] Backend stockOut failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    bloodBags = bloodBags.map((b) => {
-      if (bagIds.includes(b._id)) {
-        return {
-          ...b,
-          status: 'Used',
-          statusHistory: [
-            {
-              previousStatus: b.status,
-              newStatus: 'Used',
-              changedBy: 'BS. Nguyễn Văn A',
-              changedAt: new Date().toISOString(),
-              reason: `Xuất kho: ${reason}${notes ? ` (${notes})` : ''}`,
-            },
-            ...(b.statusHistory || []),
-          ],
-        };
-      }
-      return b;
-    });
-    return true;
   },
 
   async getInventoryStatistics() {
@@ -733,37 +568,9 @@ export const apiService = {
       const res = await apiClient.get('/bc/inventory/statistics');
       if (res.data) return res.data;
     } catch (err) {
-      console.warn('[apiService] Backend getInventoryStatistics failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-
-    await delay();
-    const totalUnits = bloodBags.length;
-    const availableUnits = bloodBags.filter((b) => b.status === 'Available').length;
-
-    const now = new Date();
-    const nearExpiryUnits = bloodBags.filter((b) => {
-      const exp = new Date(b.expiryDate);
-      const diffDays = (exp.getTime() - now.getTime()) / (1000 * 3600 * 24);
-      return diffDays > 0 && diffDays <= 7 && b.status === 'Available';
-    }).length;
-
-    const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-    const unitsByBloodType = bloodTypes.map((type) => {
-      const count = bloodBags.filter(
-        (b) => b.bloodType === type && b.status === 'Available'
-      ).length;
-      return { type, count };
-    });
-
-    const lowStockTypes = unitsByBloodType.filter((u) => u.count < 3).map((u) => u.type);
-
-    return {
-      totalUnits,
-      availableUnits,
-      nearExpiryUnits,
-      lowStockTypes,
-      unitsByBloodType,
-    };
   },
 
   // ==================== HOSPITAL APIs ====================
@@ -775,28 +582,8 @@ export const apiService = {
         return data;
       }
     } catch (err) {
-      console.warn('[apiService] Backend getHospitals failed, using fallback:', err);
+      console.error(err);
+      throw err;
     }
-    
-    // Fallback Mock Data
-    await delay();
-    return [
-      {
-        _id: '60d21b4667d0d8992e610c86',
-        name: 'Bệnh viện Chợ Rẫy (MOCK DATA)',
-        address: '201B Nguyễn Chí Thanh, Quận 5, TP.HCM',
-        location: { type: 'Point', coordinates: [106.659616, 10.757826] },
-        contactPhone: '02838554137',
-        isVerified: true
-      },
-      {
-        _id: '60d21b4667d0d8992e610c99',
-        name: 'Bệnh viện Truyền máu Huyết học (MOCK DATA)',
-        address: '118 Hồng Bàng, Phường 12, Quận 5, TP.HCM',
-        location: { type: 'Point', coordinates: [106.662700, 10.755490] },
-        contactPhone: '02839571342',
-        isVerified: true
-      }
-    ];
   },
 };

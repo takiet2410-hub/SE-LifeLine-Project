@@ -7,7 +7,8 @@ export const registerSchema = z.object({
     phoneNumber: z.string().regex(/(84|0[3|5|7|8|9])+([0-9]{8})\b/, "Invalid phone number format"), // Regex kiểm tra SĐT Việt Nam
     email: z.string().email("Invalid email format"),
     password: z.string().min(8, "Password must be at least 8 characters")
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/, "Password must include uppercase, lowercase, number, and special character")
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/, "Password must include uppercase, lowercase, number, and special character"),
+    currentAddress: z.string().optional()
   })
 });
 

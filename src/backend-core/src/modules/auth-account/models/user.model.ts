@@ -71,4 +71,23 @@ const userSchema = new Schema<IUser>({
   timestamps: true // Tự động quản lý createdAt và updatedAt
 });
 
+// Auto-sync hook: Ensure role and roles are always bidirectionally consistent
+userSchema.pre('validate', function() {
+  if (Array.isArray(this.roles) && this.roles.length > 0) {
+    // Normalize unique roles
+    this.roles = Array.from(new Set(this.roles)) as any;
+    if (!this.role || !this.roles.includes(this.role)) {
+      if (this.roles.includes('Administrator')) this.role = 'Administrator';
+      else if (this.roles.includes('BloodCenterStaff')) this.role = 'BloodCenterStaff';
+      else if (this.roles.includes('HospitalStaff')) this.role = 'HospitalStaff';
+      else this.role = this.roles[0] || 'Donor';
+    }
+  } else if (this.role) {
+    this.roles = [this.role];
+  } else {
+    this.roles = ['Donor'];
+    this.role = 'Donor';
+  }
+});
+
 export const User = model<IUser>('User', userSchema);

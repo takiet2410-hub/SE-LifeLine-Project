@@ -14,7 +14,7 @@ const EVENT_TEMPLATE_MAP: Record<string, { eventType: string; channels: ('in-app
   CampaignPublished: { eventType: 'CampaignPublished', channels: ['in-app', 'email'] },
   DonorEligibilityReached: { eventType: 'DonorEligibilityReached', channels: ['in-app', 'email', 'push'] },
   ProfileVerified: { eventType: 'ProfileVerified', channels: ['in-app', 'email'] },
-  SOSAlert: { eventType: 'SOSAlert', channels: ['in-app', 'push'] },
+  SOSAlert: { eventType: 'SOSAlert', channels: ['in-app', 'push', 'email'] },
   SOSResponseConfirmed: { eventType: 'SOSResponseConfirmed', channels: ['in-app', 'email'] },
   SOSRequestFulfilled: { eventType: 'SOSRequestFulfilled', channels: ['in-app', 'push'] },
   AppointmentCancelled: { eventType: 'AppointmentCancelled', channels: ['in-app', 'email'] },
@@ -176,8 +176,12 @@ export class NotificationEventHandler {
   private static async getEligibleDonorsForSOS(sosRequestId: string, bloodType?: string, location?: any, urgencyLevel?: string): Promise<string[]> {
     try {
       const DonorProfile = (await import('../../auth-account/models/donor-profile.model')).DonorProfile;
+      const { getCompatibleDonorBloodTypes } = await import('../../../shared/blood-type.utils');
       const query: any = { emergencyOptIn: true };
-      if (bloodType) query.bloodType = bloodType;
+      if (bloodType) {
+        const compatibleTypes = getCompatibleDonorBloodTypes(bloodType);
+        query.bloodType = { $in: compatibleTypes };
+      }
       const profiles = await DonorProfile.find(query).select('userId').lean();
       return profiles.filter((p: any) => p.userId).map((p: any) => p.userId.toString());
     } catch (error) {

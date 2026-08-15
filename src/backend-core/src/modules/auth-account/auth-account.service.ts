@@ -12,6 +12,8 @@ import { sendVerificationEmail, sendResetEmail } from '../../utils/email.util';
 import { DEFAULT_AVATAR_URL } from '../../utils/cloudinary.util';
 import { Appointment, AppointmentStatus } from '../booking/models/appointment.model';
 import { Badge } from './models/badge.model';
+import { geocodeAddress } from '../../shared/geocoding.util';
+
 export class AuthAccountService {
   
   static async register(data: RegisterInput) {
@@ -50,7 +52,13 @@ export class AuthAccountService {
       $or: [{ email: data.email }, { idDocumentNumber: idDocumentNumber }] 
     });
     if (existingUser) {
-      throw new Error('User with this email or ID Document already exists');
+      if (existingUser.accountStatus === 'PendingVerification') {
+        // Cho phép đăng ký lại nếu tài khoản trước đó chưa kích hoạt hoặc bị lỗi dở dang
+        await DonorProfile.deleteOne({ userId: existingUser._id });
+        await User.deleteOne({ _id: existingUser._id });
+      } else {
+        throw new Error('Email hoặc số CCCD này đã được đăng ký tài khoản trong hệ thống.');
+      }
     }
 
     // 3. Khởi tạo tài khoản User
@@ -75,15 +83,21 @@ export class AuthAccountService {
 
     await user.save();
 
+    // Geocode address for SOS coordination (prioritizing currentAddress over permanentAddress)
+    const effectiveAddress = data.currentAddress || addressString;
+    const initialCoords = await geocodeAddress(effectiveAddress);
+
     // 4. Khởi tạo hồ sơ DonorProfile
     const profile = new DonorProfile({
       userId: user._id,
       fullName: fullName,
       dateOfBirth: dateOfBirth,
       idDocumentNumber: idDocumentNumber,
-      phoneNumber: data.phoneNumber, // Lấy từ input lưu vào collection donor_profiles[cite: 28]
-      permanentAddress: addressString, 
-      bloodType: 'Unknown', 
+      phoneNumber: data.phoneNumber,
+      permanentAddress: addressString,
+      currentAddress: data.currentAddress ? { fullAddress: data.currentAddress } : undefined,
+      location: initialCoords ? { type: 'Point', coordinates: initialCoords } : undefined,
+      bloodType: 'Unknown',
       gender: mappedGender,
       email: data.email,
 
@@ -91,14 +105,16 @@ export class AuthAccountService {
       totalDonations: 0,
       xp: 0,
       donorLevel: 1, // Khởi tạo cấp độ 1 (Bronze/Starter)
-      emergencyOptIn: false,
+      emergencyOptIn: true,
       avatarUrl: DEFAULT_AVATAR_URL
-      // BỎ ĐI 2 DÒNG DƯỚI ĐÂY ĐỂ TRÁNH LỖI MONGODB VALIDATION
-      //location: {}, // Object trống theo schema, sau này có thể parse tọa độ
-      //lastDonationDate: null // Chưa hiến lần nào
     });
 
-    await profile.save();
+    try {
+      await profile.save();
+    } catch (profileErr) {
+      await User.deleteOne({ _id: user._id });
+      throw profileErr;
+    }
 
     try {
       await sendVerificationEmail(user.email, verificationToken); // Gửi chuỗi thường vào link
@@ -134,11 +150,21 @@ export class AuthAccountService {
   }
 
   static async login(data: LoginInput) {
-    const user = await User.findOne({ idDocumentNumber: data.idDocumentNumber });
+    const user = await User.findOne({
+      $or: [{ idDocumentNumber: data.idDocumentNumber }, { email: data.idDocumentNumber }],
+    });
     if (!user) throw new Error('Invalid credentials');
 
-    if (user.accountStatus === 'Suspended' && user.lockUntil && user.lockUntil > new Date()) {
-      throw new Error('Account is suspended. Try again later.');
+    if (user.accountStatus === 'Suspended') {
+      if (user.lockUntil && user.lockUntil <= new Date()) {
+        // Auto-unlock temporary lockout
+        user.accountStatus = 'Active';
+        user.lockUntil = undefined;
+        user.failedLoginAttempts = 0;
+        await user.save();
+      } else {
+        throw new Error('Tài khoản của bạn đã bị tạm khóa / đình chỉ. Vui lòng liên hệ Quản trị viên.');
+      }
     }
 
     const isValid = await bcrypt.compare(data.password, user.passwordHash);
@@ -172,14 +198,13 @@ export class AuthAccountService {
 
     // Reset attempts on successful login
     user.failedLoginAttempts = 0;
-    user.accountStatus = 'Active';
     user.lockUntil = undefined;
     try {
       await user.save();
     } catch (saveErr) {
       await User.updateOne(
         { _id: user._id },
-        { $set: { failedLoginAttempts: 0, accountStatus: 'Active' }, $unset: { lockUntil: 1 } }
+        { $set: { failedLoginAttempts: 0 }, $unset: { lockUntil: 1 } }
       ).catch(() => {});
     }
 
@@ -326,10 +351,9 @@ export class AuthAccountService {
       await User.findByIdAndUpdate(userId, { phone: data.phoneNumber });
     }
 
-    // Cập nhật Địa chỉ thường trú (Nối chuỗi để lưu vào string theo schema)
-    if (data.permanentAddress) {
+    // Địa chỉ thường trú được cố định theo CCCD, chỉ cập nhật nếu hồ sơ chưa từng có
+    if (data.permanentAddress && (!profile.permanentAddress || profile.permanentAddress === 'N/A')) {
       const { province, ward, street } = data.permanentAddress;
-      // Tạo chuỗi VD: "12/18 Trịnh Đình Trọng, Phường Tân Phú, Thành phố Hồ Chí Minh"
       profile.permanentAddress = `${street}, ${ward}, ${province}`;
     }
 
@@ -341,6 +365,18 @@ export class AuthAccountService {
         street: data.currentAddress.street,
         fullAddress: `${data.currentAddress.street}, ${data.currentAddress.ward}, ${data.currentAddress.province}`
       };
+    }
+
+    // Auto geocode effective address for SOS coordination (prioritize currentAddress over permanentAddress)
+    const addressToGeocode = profile.currentAddress?.fullAddress || profile.permanentAddress;
+    if (addressToGeocode) {
+      const coords = await geocodeAddress(addressToGeocode);
+      if (coords) {
+        profile.location = {
+          type: 'Point',
+          coordinates: coords
+        };
+      }
     }
 
     // Nếu có gửi link avatarUrl trực tiếp thông qua API này
@@ -394,16 +430,33 @@ export class AuthAccountService {
       throw new Error('Không tìm thấy hồ sơ người hiến máu');
     }
 
-    // 2. Query lịch sử hiến máu từ collection appointments
-    // Vì donorId trong Appointment tham chiếu đến User._id, ta truyền thẳng userId vào đây
+    // 2. Query lịch sử hiến máu từ collection appointments & SOS direct donations
     const completedAppointments = await Appointment.find({
       donorId: userId, 
-      status: AppointmentStatus.Completed // Dùng enum thay vì chuỗi string
-    }).sort({ appointmentDate: -1 }).lean(); // Sắp xếp ngày hiến gần nhất lên đầu
+      status: AppointmentStatus.Completed
+    }).sort({ appointmentDate: -1 }).populate('campaignId', 'name location address').lean();
+
+    let sosDonations: any[] = [];
+    try {
+      const { SOSRequest } = await import('../sos-request/models/sos-request.model');
+      const sosList = await SOSRequest.find({
+        'directDonations.donorId': userId
+      }).populate('hospitalId', 'name address').lean();
+      for (const sos of sosList) {
+        const matching = (sos.directDonations || []).filter((d: any) => d.donorId?.toString() === userId.toString());
+        for (const m of matching) {
+          sosDonations.push({
+            ...m,
+            hospitalName: (sos as any).hospitalName || (sos.hospitalId as any)?.name || (sos as any).patientReference || 'Bệnh viện tiếp nhận cấp cứu',
+            sosRequestId: sos._id
+          });
+        }
+      }
+    } catch (err) {}
 
     // 3. Tính toán các chỉ số động cho UI
-    const totalDonations = completedAppointments.length;
-    const completedDate = totalDonations > 0 ? new Date(completedAppointments[0].appointmentDate) : null;
+    const totalDonations = Math.max(completedAppointments.length + sosDonations.length, profile.totalDonations || 0);
+    const completedDate = completedAppointments.length > 0 ? new Date(completedAppointments[0].appointmentDate) : null;
     const profileDate = profile.lastDonationDate ? new Date(profile.lastDonationDate) : null;
 
     let lastDonationDate: Date | null = null;
@@ -416,10 +469,19 @@ export class AuthAccountService {
     // Y học thực tế: 1 đơn vị máu toàn phần có thể tách làm 3 chế phẩm (Hồng cầu, Huyết tương, Tiểu cầu) để cứu 3 người
     const livesImpacted = totalDonations * 3; 
 
-    // Tính trạng thái hiến máu (Cách nhau tối thiểu 12 tuần / 84 ngày đối với hiến máu toàn phần)
+    // Tính trạng thái hiến máu (Cấu hình bởi Admin trong SystemConfig, mặc định 84 ngày)
+    let donationIntervalDays = 84;
+    try {
+      const { SystemConfig } = await import('../admin/models/system-config.model');
+      const config = await SystemConfig.findOne({ key: 'donationIntervalDays' }).lean();
+      if (config && typeof config.value === 'number') {
+        donationIntervalDays = config.value;
+      }
+    } catch (e) {}
+
     let eligibilityStatus = 'Eligible Now';
     if (lastDonationDate) {
-      const nextEligibleDate = new Date(lastDonationDate.getTime() + 84 * 24 * 60 * 60 * 1000);
+      const nextEligibleDate = new Date(lastDonationDate.getTime() + donationIntervalDays * 24 * 60 * 60 * 1000);
       const currentDate = new Date(); 
       
       if (currentDate < nextEligibleDate) {
@@ -431,13 +493,57 @@ export class AuthAccountService {
     }
 
     // Tính toán Streak (Chuỗi hiến máu liên tiếp - Logic cơ bản: Nếu có hiến thì tính là 1)
-    // Tương lai bạn có thể viết logic kiểm tra hiến máu đều đặn mỗi năm để tăng streak
     const currentStreak = totalDonations > 0 ? 1 : 0; 
 
     // 4. Query badges earned by user
     const badges = profile.achievements || [];
 
-    // 5. Định dạng dữ liệu trả về khớp hoàn toàn với thiết kế UI Frontend
+    // 5. Chuẩn bị danh sách Donation Timeline & XP Activity Log thống nhất
+    const timelineItems = [
+      ...completedAppointments.map(a => ({
+        id: a._id.toString(),
+        type: 'StandardDonation',
+        title: 'Hiến máu toàn phần định kỳ',
+        date: a.appointmentDate,
+        locationName: (a.campaignId as any)?.name || 'Chiến dịch Hiến máu LifeLine',
+        bloodType: profile.bloodType || 'O+',
+        volume: '350 ml',
+        status: 'completed',
+        certificateNo: `CERT-${new Date(a.appointmentDate).getFullYear()}-LL${a._id.toString().slice(-6).toUpperCase()}`
+      })),
+      ...sosDonations.map(s => ({
+        id: (s._id || s.fastTrackCode || Math.random()).toString(),
+        type: 'SOSDirectDonation',
+        title: 'Hiến máu cấp cứu khẩn cấp (SOS)',
+        date: s.recordedAt || new Date(),
+        locationName: s.hospitalName || 'Bệnh viện tiếp nhận cấp cứu',
+        bloodType: s.bloodType || profile.bloodType || 'O+',
+        volume: `${s.volumeMl || 250} ml`,
+        status: 'completed',
+        certificateNo: `CERT-SOS-${new Date(s.recordedAt || Date.now()).getFullYear()}-LL${(s.fastTrackCode || s._id?.toString() || '').slice(-6).toUpperCase()}`
+      }))
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const xpLogs = [
+      ...completedAppointments.map(a => ({
+        id: a._id.toString(),
+        activity: 'Hiến máu toàn phần (Chiến dịch)',
+        date: a.appointmentDate,
+        locationName: (a.campaignId as any)?.name || 'Chiến dịch Hiến máu LifeLine',
+        xp: 250,
+        impact: '♥️ x3'
+      })),
+      ...sosDonations.map(s => ({
+        id: (s._id || s.fastTrackCode || Math.random()).toString(),
+        activity: 'Ứng cứu hiến máu khẩn cấp SOS',
+        date: s.recordedAt || new Date(),
+        locationName: s.hospitalName || 'Bệnh viện tiếp nhận cấp cứu SOS',
+        xp: 150,
+        impact: '🛡️ Cứu sống ca SOS'
+      }))
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    // 6. Định dạng dữ liệu trả về khớp hoàn toàn với thiết kế UI Frontend
     return {
       profileInfo: {
         avatarUrl: profile.avatarUrl,
@@ -454,6 +560,8 @@ export class AuthAccountService {
         xp: profile.xp,
         donorLevel: profile.donorLevel
       },
+      donationTimeline: timelineItems,
+      xpActivityLog: xpLogs,
       achievements: badges.map(b => ({
         badgeType: b.badgeType,
         title: b.title,
@@ -470,6 +578,7 @@ export class AuthAccountService {
       },
       contactInfo: {
         permanentAddress: profile.permanentAddress,
+        currentAddress: profile.currentAddress?.fullAddress || (typeof profile.currentAddress === 'string' ? profile.currentAddress : null),
         phoneNumber: profile.phoneNumber,
         email: profile.email
       }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Clock, MapPin, Heart, HeartHandshake, ShieldAlert, Check, X, ArrowLeft, MapPin as MapPinIcon, Phone as PhoneIcon } from 'lucide-react';
+import { AlertTriangle, Clock, MapPin, Heart, HeartHandshake, ShieldAlert, Check, X, ArrowLeft, MapPin as MapPinIcon, Phone as PhoneIcon, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { type SOSUrgency } from '../../sos-requests/services/sosApi';
@@ -44,26 +44,42 @@ export const SOSAlertsPage: React.FC = () => {
       const result = await apiService.getNotifications({ type: 'SOS' });
       const notifications = result.data;
       
-      const sosAlerts: SOSAlert[] = (notifications || []).map((notif: any) => {
-        const payload = notif.payload || notif.sosRequestInfo || {};
-        return {
-          id: notif._id,
-          sosRequestId: notif.sourceRefId || notif.referenceId || payload.id || notif._id,
-          bloodType: payload.bloodType || 'Unknown',
-          urgencyLevel: payload.urgencyLevel || 'High',
-          status: 'NotificationsDispatched',
-          hospitalName: payload.hospitalName || 'Unknown Hospital',
-          hospitalAddress: payload.hospitalAddress || 'Address not available',
-          patientReference: payload.patientReference || 'N/A',
-          requiredQuantityMl: payload.requiredQuantityMl || 250,
-          fulfillmentDeadline: payload.fulfillmentDeadline || notif.createdAt || new Date().toISOString(),
-          createdAt: notif.createdAt || new Date().toISOString(),
-          readAt: notif.readAt || null,
-          donorResponse: payload.donorResponse || null,
-          hospitalLocation: payload.hospitalLocation,
-          hospitalPhone: payload.hospitalPhone || '02838554137',
-        };
-      });
+      const sosAlerts: SOSAlert[] = (notifications || [])
+        .filter((notif: any) => {
+          const payload = notif.payload || notif.sosRequestInfo || {};
+          const title = (notif.title || '').toLowerCase();
+          // Filter out completion / thank-you / dispatch status notifications
+          if (
+            title.includes('hoàn tất') || 
+            title.includes('tiếp nhận hiến máu') || 
+            title.includes('đã nhận máu') || 
+            title.includes('máu từ kho')
+          ) {
+            return false;
+          }
+          // Must have valid blood request info
+          return (payload.bloodType && payload.bloodType !== 'Unknown') || (payload.hospitalName && payload.hospitalName !== 'Unknown Hospital');
+        })
+        .map((notif: any) => {
+          const payload = notif.payload || notif.sosRequestInfo || {};
+          return {
+            id: notif._id,
+            sosRequestId: notif.sourceRefId || notif.referenceId || payload.id || notif._id,
+            bloodType: payload.bloodType || 'Unknown',
+            urgencyLevel: payload.urgencyLevel || 'High',
+            status: 'NotificationsDispatched',
+            hospitalName: payload.hospitalName || 'Bệnh viện đối tác LifeLine',
+            hospitalAddress: payload.hospitalAddress || 'Address not available',
+            patientReference: payload.patientReference || 'N/A',
+            requiredQuantityMl: payload.requiredQuantityMl || 250,
+            fulfillmentDeadline: payload.fulfillmentDeadline || notif.createdAt || new Date().toISOString(),
+            createdAt: notif.createdAt || new Date().toISOString(),
+            readAt: notif.readAt || null,
+            donorResponse: payload.donorResponse || null,
+            hospitalLocation: payload.hospitalLocation,
+            hospitalPhone: payload.hospitalPhone || '02838554137',
+          };
+        });
       
       setAlerts(sosAlerts);
     } catch (error) {
@@ -75,6 +91,15 @@ export const SOSAlertsPage: React.FC = () => {
 
   useEffect(() => {
     fetchAlerts();
+
+    const handleUpdate = () => {
+      fetchAlerts();
+    };
+
+    window.addEventListener('notifications-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('notifications-updated', handleUpdate);
+    };
   }, []);
 
   const handleAccept = async (alert: SOSAlert) => {
@@ -87,9 +112,10 @@ export const SOSAlertsPage: React.FC = () => {
       setResponseStatus('accepted');
       setSelectedAlert(alert);
       setShowDetail(true);
-      toast.success('Thank you! Your response has been recorded.');
-    } catch (error) {
-      toast.error('Failed to record response');
+      toast.success('Cảm ơn bạn! Phản hồi sẵn sàng hiến máu đã được ghi nhận.');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.message || 'Không thể ghi nhận phản hồi';
+      toast.error(msg);
     }
   };
 
@@ -103,9 +129,10 @@ export const SOSAlertsPage: React.FC = () => {
       setResponseStatus('declined');
       setSelectedAlert(alert);
       setShowDetail(true);
-      toast.info('Response recorded. Thank you for your time.');
-    } catch (error) {
-      toast.error('Failed to record response');
+      toast.info('Đã ghi nhận phản hồi. Cảm ơn bạn!');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.message || 'Không thể ghi nhận phản hồi';
+      toast.error(msg);
     }
   };
 
@@ -125,15 +152,10 @@ export const SOSAlertsPage: React.FC = () => {
       }
     }
 
-    // 2. If already responded, show their response detail
-    if (alert.donorResponse) {
-      setSelectedAlert(alert);
-      setResponseStatus(alert.donorResponse);
-      setShowDetail(true);
-    }
-    // Note: If they haven't responded yet, we don't show the detail modal
-    // because that modal is specifically for AFTER responding. They can use
-    // the 'I Can Help' or 'Not Now' buttons instead.
+    // 2. Open detail modal (shows instructions, maps & phone if accepted)
+    setSelectedAlert(alert);
+    setResponseStatus(alert.donorResponse || 'accepted');
+    setShowDetail(true);
   };
 
   const getUrgencyColor = (urgency: SOSUrgency) => {
@@ -168,58 +190,81 @@ export const SOSAlertsPage: React.FC = () => {
               <div className="w-20 h-20 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
                 <HeartHandshake className="w-10 h-10 text-green-600" />
               </div>
-              <h3 className="text-2xl font-bold text-green-700">Thank You!</h3>
-              <p className="text-gray-600 mt-2">Your willingness to help has been recorded.</p>
+              <h3 className="text-2xl font-bold text-green-700">Cảm Ơn Bạn Đã Sẵn Sàng Cứu Người!</h3>
+              <p className="text-gray-600 mt-2">Phản hồi sẵn sàng hiến máu cấp cứu của bạn đã được ghi nhận.</p>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-xs font-semibold text-amber-800 mt-2">
+                <span>🌟 +150 XP & Huy hiệu "Hiệp Sĩ Cứu Người"</span>
+              </div>
             </div>
             
-            <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-              <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+            <div className="bg-green-50/70 rounded-xl p-4 border border-green-200 space-y-3">
+              {/* Fast Track Code */}
+              <div className="p-3 bg-white rounded-lg border border-green-200 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Mã tiếp nhận ưu tiên cấp cứu</span>
+                  <p className="text-lg font-bold text-red-600 font-mono">SOS-{(selectedAlert.id || '').slice(-6).toUpperCase()}</p>
+                </div>
+                <span className="px-2.5 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-md">Ưu tiên số 1</span>
+              </div>
+
+              <h4 className="font-semibold text-green-800 flex items-center gap-2 pt-1">
                 <MapPinIcon className="w-5 h-5" />
-                Next Steps
+                Hướng dẫn & Điểm đến
               </h4>
-              <div className="space-y-3">
+
+              <div className="space-y-2.5">
                 <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-100">
-                  <MapPinIcon className="w-5 h-5 text-green-600" />
+                  <MapPinIcon className="w-5 h-5 text-green-600 shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-800">Go to Hospital</p>
-                    <p className="text-sm text-gray-600">{selectedAlert.hospitalName}</p>
-                    <p className="text-xs text-gray-500">{selectedAlert.hospitalAddress}</p>
+                    <p className="font-semibold text-gray-800">{selectedAlert.hospitalName}</p>
+                    <p className="text-xs text-gray-600">{selectedAlert.hospitalAddress}</p>
                   </div>
                 </div>
+
                 <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-100">
-                  <Clock className="w-5 h-5 text-green-600" />
+                  <Clock className="w-5 h-5 text-green-600 shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-800">Arrive Before</p>
-                    <p className="text-sm text-gray-600">{format(new Date(selectedAlert.fulfillmentDeadline), 'MMMM dd, yyyy - HH:mm')}</p>
+                    <p className="font-semibold text-gray-800">Thời gian đến viện</p>
+                    <p className="text-xs text-gray-600">Trước: {format(new Date(selectedAlert.fulfillmentDeadline), 'HH:mm - dd/MM/yyyy')}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-100">
-                  <Heart className="w-5 h-5 text-red-500" />
-                  <div>
-                    <p className="font-medium text-gray-800">Bring With You</p>
-                    <p className="text-sm text-gray-600">National ID Card / CCCD</p>
-                  </div>
+
+                {/* Checklist */}
+                <div className="p-3 bg-amber-50/70 rounded-lg border border-amber-200/70 text-xs text-amber-900 space-y-1">
+                  <p className="font-bold flex items-center gap-1.5 text-amber-950">
+                    <Heart className="w-3.5 h-3.5 text-red-500" />
+                    Lưu ý chuẩn bị trước khi đến:
+                  </p>
+                  <ul className="list-disc list-inside space-y-0.5 text-[11px] text-amber-900/90 pl-1">
+                    <li>Mang theo CCCD hoặc ứng dụng VNeID.</li>
+                    <li>Không uống rượu, bia hoặc chất kích thích trong vòng 24h.</li>
+                    <li>Nên ăn nhẹ và uống nhiều nước (tránh đồ ăn nhiều dầu mỡ).</li>
+                  </ul>
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <button 
-                onClick={() => setIsMapModalOpen(true)}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                onClick={() => {
+                  const coords = selectedAlert.hospitalLocation?.coordinates;
+                  const query = coords ? `${coords[1]},${coords[0]}` : encodeURIComponent(selectedAlert.hospitalAddress || selectedAlert.hospitalName);
+                  window.open(`https://www.google.com/maps/dir/?api=1&destination=${query}`, '_blank');
+                }}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition-colors shadow-xs"
               >
-                <MapPinIcon className="w-5 h-5" />
-                Get Directions
+                <MapPinIcon className="w-4 h-4" />
+                Chỉ đường Google Maps
               </button>
               <button 
                 onClick={() => {
                   const phone = selectedAlert.hospitalPhone || '02838554137';
                   window.location.href = `tel:${phone}`;
                 }}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-white hover:bg-gray-50 border border-green-200 text-green-700 rounded-lg font-medium transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 border border-green-300 text-green-800 rounded-lg font-bold text-xs transition-colors"
               >
-                <PhoneIcon className="w-5 h-5" />
-                Call Hospital
+                <PhoneIcon className="w-4 h-4 text-green-600" />
+                Gọi Bệnh viện
               </button>
             </div>
           </div>
@@ -446,9 +491,19 @@ export const SOSAlertsPage: React.FC = () => {
                       {/* Actions */}
                       <div className="flex flex-col items-end gap-2 shrink-0">
                         {hasResponded ? (
-                          <span className="px-3 py-1.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                            ✓ Responded
-                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAlert(alert);
+                              setResponseStatus(alert.donorResponse || 'accepted');
+                              setShowDetail(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold rounded-lg transition-colors cursor-pointer border border-emerald-300"
+                            title="Bấm để xem lại hướng dẫn, mã ưu tiên và chỉ đường"
+                          >
+                            <span>✓ {alert.donorResponse === 'accepted' ? 'Xem hướng dẫn' : 'Đã phản hồi'}</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
                         ) : isExpired ? (
                           <span className="px-3 py-1.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-full">
                             Expired
@@ -457,8 +512,9 @@ export const SOSAlertsPage: React.FC = () => {
                           <>
                             <button
                               onClick={(e) => { e.stopPropagation(); handleAccept(alert); }}
-                              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors"
+                              className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors shadow-xs flex items-center gap-1.5"
                             >
+                              <Heart className="w-3.5 h-3.5" />
                               I Can Help
                             </button>
                             <button
@@ -467,24 +523,12 @@ export const SOSAlertsPage: React.FC = () => {
                             >
                               Not Now
                             </button>
-                            <button
-                              onClick={(e) => { 
-                                e.stopPropagation(); 
-                                setSelectedAlert(alert);
-                                setResponseStatus('ineligible');
-                                setShowDetail(true);
-                              }}
-                              className="px-3 py-1.5 border border-yellow-300 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 text-xs font-medium rounded-lg transition-colors"
-                              title="Demo: Simulate Ineligible Status"
-                            >
-                              [Demo] Ineligible
-                            </button>
                           </>
                         )}
                         {!isRead && !hasResponded && !isExpired && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDismiss(alert); }}
-                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                             title="Dismiss"
                           >
                             <X className="w-4 h-4" />

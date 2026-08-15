@@ -149,7 +149,16 @@ export class BookingService {
         throw new Error('CAMPAIGN_FULL');
       }
 
-      // 2. Validate 84-day eligibility
+      // 2. Validate donation interval eligibility (Configurable by Admin in SystemConfig)
+      let donationIntervalDays = 84;
+      try {
+        const { SystemConfig } = await import('../../admin/models/system-config.model');
+        const config = await SystemConfig.findOne({ key: 'donationIntervalDays' }).lean();
+        if (config && typeof config.value === 'number') {
+          donationIntervalDays = config.value;
+        }
+      } catch (e) {}
+
       const lastCompleted = await Appointment.findOne({ donorId, status: AppointmentStatus.Completed }).sort({ appointmentDate: -1 });
       const donorProfile = await DonorProfile.findOne({ userId: donorId });
 
@@ -164,7 +173,7 @@ export class BookingService {
       }
 
       if (lastDonationDate) {
-        const nextEligibleDate = new Date(lastDonationDate.getTime() + 84 * 24 * 60 * 60 * 1000);
+        const nextEligibleDate = new Date(lastDonationDate.getTime() + donationIntervalDays * 24 * 60 * 60 * 1000);
         const targetDate = new Date(appointmentDate);
         
         if (targetDate < nextEligibleDate) {

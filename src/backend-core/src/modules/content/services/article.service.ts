@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { Article, IArticle, ArticleStatus } from '../models/article.model';
 import { env } from '../../../config/env.config';
 import { ContentAuditLog } from '../models/audit-log.model';
+import { AdminAuditLog } from '../../admin/models/audit-log.model';
 import { CreateArticleInput, UpdateArticleInput } from '../schemas/article.schema';
 import { NotificationService } from '../../notification/services/notification.service';
 import { User } from '../../auth-account/models/user.model';
@@ -12,13 +13,20 @@ export class ArticleService {
       const { title, category, targetAudience } = article;
       
       const rolesToQuery: Array<'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator'> = [];
-      if (targetAudience?.includes('Donors')) rolesToQuery.push('Donor');
-      if (targetAudience?.includes('Staff') || targetAudience?.includes('BloodCenterStaff')) rolesToQuery.push('BloodCenterStaff');
-      if (targetAudience?.includes('Hospitals') || targetAudience?.includes('HospitalStaff')) rolesToQuery.push('HospitalStaff');
+      if (!targetAudience || targetAudience.length === 0) {
+        rolesToQuery.push('Donor', 'BloodCenterStaff', 'HospitalStaff');
+      } else {
+        if (targetAudience.includes('Donors')) rolesToQuery.push('Donor');
+        if (targetAudience.includes('Staff') || targetAudience.includes('BloodCenterStaff')) rolesToQuery.push('BloodCenterStaff');
+        if (targetAudience.includes('Hospitals') || targetAudience.includes('HospitalStaff')) rolesToQuery.push('HospitalStaff');
+      }
       
-      if (rolesToQuery.length === 0) return;
+      if (rolesToQuery.length === 0) rolesToQuery.push('Donor');
 
-      const users = await User.find({ $or: [{ roles: { $in: rolesToQuery } }, { role: { $in: rolesToQuery } }] }).select('_id').lean();
+      const users = await User.find({
+        accountStatus: 'Active',
+        $or: [{ roles: { $in: rolesToQuery } }, { role: { $in: rolesToQuery } }]
+      }).select('_id email').lean();
       if (users.length === 0) return;
 
       const recipientIds = users.map(u => u._id.toString());
@@ -87,6 +95,23 @@ export class ArticleService {
       ipAddress: ipAddress || '127.0.0.1'
     });
 
+    try {
+      await AdminAuditLog.create({
+        actorUserId,
+        actorName: 'Content Staff',
+        action: 'Create Article',
+        actionCategory: 'Content Management',
+        resourceType: 'Article',
+        resourceId: article._id.toString(),
+        newValue: { title: input.title, status: article.status, category: article.category },
+        details: `Created article "${input.title}" (${article.status})`,
+        ipAddress: ipAddress || '127.0.0.1',
+        status: 'Success'
+      });
+    } catch (auditErr) {
+      console.warn('[ArticleService] AdminAuditLog warning:', auditErr);
+    }
+
     if (status === 'Published') {
       this.broadcastArticleNotification(article);
     }
@@ -123,6 +148,7 @@ export class ArticleService {
 
     const [articles, total] = await Promise.all([
       Article.find(query)
+        .populate('authorStaffId', 'fullName role')
         .sort({ publishedAt: -1, createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -134,7 +160,14 @@ export class ArticleService {
 
     const mappedArticles = articles.map((article: any) => ({
       ...article,
-      coverImageUrl: article.imageUrls?.[0] || ''
+      authorName: (article.authorStaffId as any)?.fullName || 'Blood Center Staff',
+      coverImageUrl: article.imageUrls?.[0] || '',
+      performance: {
+        viewsCount: article.viewsCount || 0,
+        publicReachCount: article.performance?.reach || 0,
+        sharesCount: article.performance?.shares || 0,
+        engagementNote: ''
+      }
     }));
 
     return {
@@ -159,17 +192,33 @@ export class ArticleService {
       query.status = 'Published';
     }
 
-    const article = await Article.findOne(query).populate('authorStaffId', 'fullName role');
+    let article;
+    if (isPublicView) {
+      article = await Article.findOneAndUpdate(
+        query,
+        { $inc: { viewsCount: 1, 'performance.reach': 1 } },
+        { new: true }
+      ).populate('authorStaffId', 'fullName role');
+    } else {
+      article = await Article.findOne(query).populate('authorStaffId', 'fullName role');
+    }
     if (!article) {
       throw new Error('Article not found');
     }
 
     const articleObj = article.toObject();
     
-    // Map for frontend which expects coverImageUrl
+    // Map for frontend which expects coverImageUrl, authorName and performance
     return {
       ...articleObj,
-      coverImageUrl: articleObj.imageUrls?.[0] || ''
+      authorName: (articleObj.authorStaffId as any)?.fullName || 'Blood Center Staff',
+      coverImageUrl: articleObj.imageUrls?.[0] || '',
+      performance: {
+        viewsCount: articleObj.viewsCount || 0,
+        publicReachCount: articleObj.performance?.reach || 0,
+        sharesCount: articleObj.performance?.shares || 0,
+        engagementNote: ''
+      }
     };
   }
 
@@ -229,8 +278,22 @@ export class ArticleService {
       ipAddress: ipAddress || '127.0.0.1'
     });
 
-    if (input.status === 'Published' && previousValue.status !== 'Published') {
-      this.broadcastArticleNotification(article);
+    try {
+      await AdminAuditLog.create({
+        actorUserId,
+        actorName: 'Content Staff',
+        action: 'Update Article',
+        actionCategory: 'Content Management',
+        resourceType: 'Article',
+        resourceId: article._id.toString(),
+        previousValue: { title: previousValue.title, status: previousValue.status },
+        newValue: { title: article.title, status: article.status },
+        details: `Updated article "${article.title}"`,
+        ipAddress: ipAddress || '127.0.0.1',
+        status: 'Success'
+      });
+    } catch (auditErr) {
+      console.warn('[ArticleService] AdminAuditLog warning:', auditErr);
     }
 
     return article;
@@ -258,6 +321,23 @@ export class ArticleService {
       timestamp: new Date(),
       ipAddress: ipAddress || '127.0.0.1'
     });
+
+    try {
+      await AdminAuditLog.create({
+        actorUserId,
+        actorName: 'Content Staff',
+        action: 'Delete Article',
+        actionCategory: 'Content Management',
+        resourceType: 'Article',
+        resourceId: article._id.toString(),
+        previousValue: { title: article.title, status: article.status },
+        details: `Deleted article "${article.title}"`,
+        ipAddress: ipAddress || '127.0.0.1',
+        status: 'Success'
+      });
+    } catch (auditErr) {
+      console.warn('[ArticleService] AdminAuditLog warning:', auditErr);
+    }
 
     return articleId;
   }
@@ -294,6 +374,23 @@ export class ArticleService {
         timestamp: now,
         ipAddress: '127.0.0.1'
       });
+
+      try {
+        await AdminAuditLog.create({
+          actorUserId: article.authorStaffId?.toString(),
+          actorName: 'System Scheduler',
+          action: 'Publish Scheduled Article',
+          actionCategory: 'Content Management',
+          resourceType: 'Article',
+          resourceId: article._id.toString(),
+          newValue: { status: 'Published', publishedAt: now },
+          details: `Automatically published scheduled article "${article.title}"`,
+          ipAddress: '127.0.0.1',
+          status: 'Success'
+        });
+      } catch (auditErr) {
+        console.warn('[ArticleService] AdminAuditLog warning:', auditErr);
+      }
 
       this.broadcastArticleNotification(article);
     }

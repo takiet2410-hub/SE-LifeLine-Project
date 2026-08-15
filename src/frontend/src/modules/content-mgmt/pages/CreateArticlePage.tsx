@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save, Send, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { articleApi } from '../services/articleApi';
 import { FeaturedMediaUpload } from '../components/FeaturedMediaUpload';
@@ -10,8 +10,11 @@ import type { ArticleCategory, ArticleStatus, TargetAudience } from '../types/ar
 
 export const CreateArticlePage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith('/admin') ? '/admin' : location.pathname.startsWith('/hospital') ? '/hospital' : '/bc';
 
   const [draftId, setDraftId] = useState<string | null>(null);
+  const draftIdRef = React.useRef<string | null>(null);
   const [title, setTitle] = useState('');
   const [bodyContent, setBodyContent] = useState('');
   const [category, setCategory] = useState<ArticleCategory>('News');
@@ -30,7 +33,7 @@ export const CreateArticlePage: React.FC = () => {
   const { hasUnsavedChanges, lastSavedTime, isSaving, markSaved } = useAutosave({
     data: articleFormState,
     onSave: async (data) => {
-      if (!data.title.trim()) return;
+      if (!data.title.trim() || isSubmitting) return;
       const payload = {
         title: data.title,
         bodyContent: data.bodyContent,
@@ -41,23 +44,25 @@ export const CreateArticlePage: React.FC = () => {
         targetAudience: data.targetAudience
       };
       
-      if (draftId) {
-        await articleApi.updateArticle(draftId, payload);
+      const currentId = draftIdRef.current || draftId;
+      if (currentId) {
+        await articleApi.updateArticle(currentId, payload);
       } else {
         const res = await articleApi.createArticle(payload);
         if (res.success && res.data?._id) {
+          draftIdRef.current = res.data._id;
           setDraftId(res.data._id);
         }
       }
     },
-    enabled: true
+    enabled: !isSubmitting
   });
 
   const handleCancelClick = () => {
     if (hasUnsavedChanges) {
       setShowDiscardModal(true);
     } else {
-      navigate('/bc/content');
+      navigate(`${basePath}/content`);
     }
   };
 
@@ -81,17 +86,22 @@ export const CreateArticlePage: React.FC = () => {
       };
 
       let res;
-      if (draftId) {
-        res = await articleApi.updateArticle(draftId, payload);
+      const currentId = draftIdRef.current || draftId;
+      if (currentId) {
+        res = await articleApi.updateArticle(currentId, payload);
       } else {
         res = await articleApi.createArticle(payload);
+        if (res.success && res.data?._id) {
+          draftIdRef.current = res.data._id;
+          setDraftId(res.data._id);
+        }
       }
 
       if (res.success) {
         markSaved();
-        setToastMessage(res.message || 'Article saved successfully');
+        setToastMessage(res.message || (targetStatus === 'Published' ? 'Article published successfully' : 'Article saved successfully'));
         setTimeout(() => {
-          navigate('/bc/content');
+          navigate(`${basePath}/content`);
         }, 1200);
       }
     } catch (err: any) {
@@ -268,7 +278,7 @@ export const CreateArticlePage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/bc/content')}
+                onClick={() => navigate(`${basePath}/content`)}
                 className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg"
               >
                 Discard Changes

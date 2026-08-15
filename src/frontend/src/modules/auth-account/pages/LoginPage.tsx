@@ -52,13 +52,22 @@ export const LoginPage: React.FC = () => {
           localStorage.removeItem('rememberedRole');
         }
 
+        const isAdminRole = userRole === 'Administrator' || roleLower.includes('admin');
         const isHospitalStaff = userRole === 'HospitalStaff' || roleLower.includes('hospital');
-        const targetPortal = isHospitalStaff ? 'Hospital Portal' : isUserStaffRole ? 'Blood Center Management' : 'Donor Portal';
+        const targetPortal = isAdminRole
+          ? 'System Admin Portal'
+          : isHospitalStaff
+          ? 'Hospital Portal'
+          : isUserStaffRole
+          ? 'Blood Center Management'
+          : 'Donor Portal';
         setToastMessage(`Đăng nhập thành công (${userRole})! Đang chuyển hướng đến ${targetPortal}...`);
         setShowToast(true);
 
         setTimeout(() => {
-          if (isHospitalStaff) {
+          if (isAdminRole) {
+            navigate('/admin/dashboard', { replace: true });
+          } else if (isHospitalStaff) {
             navigate('/hospital/sos-requests', { replace: true });
           } else if (isUserStaffRole) {
             navigate('/bc/campaigns', { replace: true });

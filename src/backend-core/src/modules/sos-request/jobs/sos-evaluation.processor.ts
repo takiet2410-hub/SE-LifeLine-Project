@@ -57,6 +57,8 @@ export const sosEvaluationWorker = new Worker<SOSEvaluationJobData>(
   {
     connection: redisConnection,
     concurrency: 2, // High CPU task, limit concurrency
+    drainDelay: 30, // Poll every 30s instead of 5s to save Upstash Redis commands
+    stalledInterval: 300000, // Check stalled jobs every 5 minutes
   }
 );
 

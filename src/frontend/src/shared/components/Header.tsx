@@ -11,6 +11,7 @@ export const Header: React.FC = () => {
     { labelKey: 'How it Works', href: '/how-it-works' },
     { labelKey: 'Find Locations', href: '/find-locations' },
     { labelKey: 'Educational', href: '/health-tips' },
+
   ];
 
   return (

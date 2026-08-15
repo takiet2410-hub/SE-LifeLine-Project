@@ -6,6 +6,12 @@ export class BloodInventoryController {
   static async getInventoryList(req: Request, res: Response) {
     try {
       const { page, limit, search, bloodType, status, sort, startDate, endDate } = req.query;
+      const user = (req as any).user;
+      let userCenterId = req.query.bloodCenterId as string;
+      if (user && user.role === 'BloodCenterStaff' && user.bloodCenterId) {
+        userCenterId = user.bloodCenterId.toString();
+      }
+
       const result = await BloodInventoryService.getInventoryList({
         page: page ? Number(page) : undefined,
         limit: limit ? Number(limit) : undefined,
@@ -14,7 +20,8 @@ export class BloodInventoryController {
         status: status as string,
         sort: sort as string,
         startDate: startDate as string,
-        endDate: endDate as string
+        endDate: endDate as string,
+        bloodCenterId: userCenterId
       });
 
       return res.status(200).json({
@@ -54,9 +61,11 @@ export class BloodInventoryController {
   static async stockInBatch(req: Request, res: Response) {
     try {
       const parsed = stockInBatchSchema.parse(req.body);
-      const staffName = (req as any).user?.fullName || 'BS. Nguyễn Văn A';
+      const user = (req as any).user;
+      const staffName = user?.fullName || 'BS. Nguyễn Văn A';
+      const bloodCenterId = user?.bloodCenterId;
 
-      const created = await BloodInventoryService.stockInBatch(parsed.entries, staffName);
+      const created = await BloodInventoryService.stockInBatch(parsed.entries, staffName, bloodCenterId);
       return res.status(201).json({
         success: true,
         message: `Successfully stocked in ${created.length} blood bag(s)`,

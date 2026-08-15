@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+pymongo
+sentence-transformers
+langchain
+langchain-classic
+langchain-community
+langchain-google-genai
+faiss-cpu
+python-jose
+python-dotenv
+scikit-learn

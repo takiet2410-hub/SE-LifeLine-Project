@@ -9,6 +9,10 @@ interface PerformancePanelProps {
 export const PerformancePanel: React.FC<PerformancePanelProps> = ({ performance }) => {
   if (!performance) return null;
 
+  const viewsCount = performance.viewsCount ?? 0;
+  const publicReachCount = performance.publicReachCount ?? (performance as any).reach ?? 0;
+  const sharesCount = performance.sharesCount ?? (performance as any).shares ?? 0;
+
   return (
     <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-xl p-5 shadow-lg space-y-4">
       <div className="flex items-center justify-between border-b border-gray-700 pb-3">
@@ -26,7 +30,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ performance 
             <Eye className="w-3.5 h-3.5" />
             <span>Total Views</span>
           </div>
-          <p className="text-xl font-bold">{performance.viewsCount.toLocaleString()}</p>
+          <p className="text-xl font-bold">{viewsCount.toLocaleString()}</p>
         </div>
 
         <div className="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
@@ -34,7 +38,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ performance 
             <Users className="w-3.5 h-3.5" />
             <span>Public Reach</span>
           </div>
-          <p className="text-xl font-bold">{performance.publicReachCount.toLocaleString()}</p>
+          <p className="text-xl font-bold">{publicReachCount.toLocaleString()}</p>
         </div>
 
         <div className="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
@@ -42,7 +46,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ performance 
             <Share2 className="w-3.5 h-3.5" />
             <span>Shares</span>
           </div>
-          <p className="text-xl font-bold">{performance.sharesCount.toLocaleString()}</p>
+          <p className="text-xl font-bold">{sharesCount.toLocaleString()}</p>
         </div>
       </div>
 

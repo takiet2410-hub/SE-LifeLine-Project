@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { apiService } from '../../../services/apiClient';
 import type { NotificationData } from '../../../services/mockData';
 import { format } from 'date-fns';
+import { getArticleIdFromNotification, getArticleRouteForRole } from '../../../utils/notificationHelpers';
 
 
 export const DashboardLayout: React.FC = () => {
@@ -32,6 +33,18 @@ export const DashboardLayout: React.FC = () => {
       } catch (err) {}
     };
     fetchCount();
+
+    const handleUpdate = () => {
+      fetchCount();
+    };
+
+    window.addEventListener('notifications-updated', handleUpdate);
+    const intervalId = setInterval(fetchCount, 10000);
+
+    return () => {
+      window.removeEventListener('notifications-updated', handleUpdate);
+      clearInterval(intervalId);
+    };
   }, []);
 
   // Handle click outside to close dropdown
@@ -73,11 +86,19 @@ export const DashboardLayout: React.FC = () => {
       setUnreadCount(prev => Math.max(0, prev - 1));
       setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, readAt: new Date().toISOString() } : n));
     }
-    if (notif.type === 'SOS') {
+
+    // Direct redirect to specific article page if notification is for an article
+    const articleId = getArticleIdFromNotification(notif);
+    if (articleId) {
+      navigate(getArticleRouteForRole(articleId, user?.role || location.pathname));
+      return;
+    }
+
+    if (notif.type === 'SOS' || notif.sourceRefType === 'SOSRequest') {
       navigate('/sos-alerts');
-    } else if ((notif.type as string) === 'Appointment') {
+    } else if ((notif.type as string) === 'Appointment' || notif.sourceRefType === 'Appointment') {
       navigate('/my-appointments');
-    } else if (notif.type === 'Campaign') {
+    } else {
       navigate('/news');
     }
   };

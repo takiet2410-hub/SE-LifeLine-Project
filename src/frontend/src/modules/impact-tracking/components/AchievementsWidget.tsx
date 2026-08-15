@@ -56,8 +56,8 @@ export const AchievementsWidget: React.FC<AchievementsWidgetProps> = ({ profileD
       title: 'Emergency Responder',
       description: 'Tham gia ứng cứu khẩn cấp hoặc đạt 10 lần hiến máu',
       bg: 'bg-[#EC4899] text-white',
-      icon: '⭐',
-      active: unlockedTypes.has('EmergencyResponder') || donations >= 10
+      icon: '🛡️',
+      active: unlockedTypes.has('EmergencyResponder') || unlockedTypes.has('SOS_HERO') || donations >= 10
     }
   ];
 

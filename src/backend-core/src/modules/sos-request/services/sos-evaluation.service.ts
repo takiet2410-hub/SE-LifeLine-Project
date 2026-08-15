@@ -6,6 +6,7 @@ import { BloodCenter } from '../../auth-account/models/blood-center.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { BloodBag } from '../../blood-inventory/models/blood-bag.model';
 import { SOSBroadcastService } from './sos-broadcast.service';
+import { getCompatibleDonorBloodTypes } from '../../../shared/blood-type.utils';
 
 export class SOSEvaluationService {
   
@@ -21,18 +22,30 @@ export class SOSEvaluationService {
     }
     const [lng, lat] = hospital.location.coordinates;
 
+    // Check SystemConfig for initial and max search radius (Configurable by Admin)
+    let initialRadiusKm = 10;
+    let maxRadiusKm = 50;
+    try {
+      const { SystemConfig } = await import('../../admin/models/system-config.model');
+      const configs = await SystemConfig.find({ key: { $in: ['sosSearchRadiusKm', 'sosMaxRadiusKm'] } }).lean();
+      for (const c of configs) {
+        if (c.key === 'sosSearchRadiusKm' && typeof c.value === 'number') initialRadiusKm = c.value;
+        if (c.key === 'sosMaxRadiusKm' && typeof c.value === 'number') maxRadiusKm = c.value;
+      }
+    } catch (e) {}
+
     // Check if there is an existing eval log to determine current radius
-    let currentRadiusKm = 10;
+    let currentRadiusKm = initialRadiusKm;
     let expansionCount = 0;
     
     if (expandRadius) {
       const lastLog = await SOSEvaluationLog.findOne({ sosRequestId }).sort({ evaluatedAt: -1 });
       if (lastLog) {
-        currentRadiusKm = lastLog.searchRadiusKmUsed + 10;
+        currentRadiusKm = lastLog.searchRadiusKmUsed + initialRadiusKm;
         expansionCount = lastLog.radiusExpansionCount + 1;
-        if (currentRadiusKm > 50) {
-          console.log(`[SOSEvaluationService] Reached maximum search radius (50km)`);
-          currentRadiusKm = 50; // Cap at 50km
+        if (currentRadiusKm > maxRadiusKm) {
+          console.log(`[SOSEvaluationService] Reached maximum search radius (${maxRadiusKm}km)`);
+          currentRadiusKm = maxRadiusKm; // Cap at maxRadiusKm
         }
       }
     }
@@ -40,9 +53,13 @@ export class SOSEvaluationService {
     request.status = 'EvaluationInProgress';
     await request.save();
 
-    // 1. Evaluate Blood Centers
+    // Get list of compatible donor blood types for the requested blood type
+    const compatibleTypes = getCompatibleDonorBloodTypes(request.bloodType);
+    console.log(`[SOSEvaluationService] Requested blood type: ${request.bloodType}. Compatible donor blood types: [${compatibleTypes.join(', ')}]`);
+
+    // 1. Evaluate Blood Centers (matching compatible blood bags)
     const bloodBags = await BloodBag.aggregate([
-      { $match: { bloodType: request.bloodType, status: 'Available' } },
+      { $match: { bloodType: { $in: compatibleTypes }, status: 'Available' } },
       { $group: { _id: '$bloodCenterId', totalVolume: { $sum: '$volumeMl' } } }
     ]);
     
@@ -78,7 +95,7 @@ export class SOSEvaluationService {
       })
       .sort((a, b) => b.score - a.score);
 
-    // 2. Evaluate Donors
+    // 2. Evaluate Donors (matching compatible donor blood types with exact-match priority)
     const nearbyDonors = await DonorProfile.aggregate([
       {
         $geoNear: {
@@ -91,7 +108,7 @@ export class SOSEvaluationService {
       },
       {
         $match: {
-          bloodType: request.bloodType,
+          bloodType: { $in: compatibleTypes },
           emergencyOptIn: true
         }
       }
@@ -99,7 +116,10 @@ export class SOSEvaluationService {
 
     const rankedDonors = nearbyDonors.map(d => {
       const distance = d.distance || 1;
-      const score = ((d.donorLevel || 1) * 10) / distance;
+      const isExactMatch = d.bloodType === request.bloodType;
+      // Exact blood type matches get 1.0 weight multiplier, compatible types get 0.85 multiplier
+      const compatibilityMultiplier = isExactMatch ? 1.0 : 0.85;
+      const score = (((d.donorLevel || 1) * 10) / distance) * compatibilityMultiplier;
       return {
         donorId: d.userId || d._id,
         donorProfileId: d._id,

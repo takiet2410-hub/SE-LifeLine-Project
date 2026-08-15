@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AlertTriangle, Bell, Trash2, Clock, Hospital, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
@@ -8,9 +8,17 @@ import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
 import { EmptyState } from '../../../components/common/EmptyState';
 import { format } from 'date-fns';
+import { getArticleIdFromNotification, getArticleRouteForRole } from '../../../utils/notificationHelpers';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 
 export const NotificationListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+
+  const isHospitalPage = location.pathname.startsWith('/hospital') || user?.role === 'hospital' || user?.role === 'HospitalStaff';
+  const isAdminPage = location.pathname.startsWith('/admin') || user?.role === 'admin' || user?.role === 'Administrator';
+  const isBcPage = location.pathname.startsWith('/bc') || user?.role === 'staff' || user?.role === 'BloodCenterStaff' || (!isHospitalPage && !isAdminPage);
 
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +61,16 @@ export const NotificationListPage: React.FC = () => {
   useEffect(() => {
     fetchNotifications();
     fetchUnreadCount();
+
+    const handleUpdate = () => {
+      fetchNotifications();
+      fetchUnreadCount();
+    };
+
+    window.addEventListener('notifications-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('notifications-updated', handleUpdate);
+    };
   }, [fetchNotifications, fetchUnreadCount]);
 
   const handleConfirmDelete = async () => {
@@ -92,11 +110,45 @@ export const NotificationListPage: React.FC = () => {
     }
   };
 
-  const handleNotificationClick = (item: NotificationData) => {
-    if (item.readAt === null) {
-      handleMarkAsRead(item._id);
+  const extractSOSId = (item: NotificationData): string | null => {
+    if (item.payload?.sosRequestId) return String(item.payload.sosRequestId);
+    if (item.payload?.sourceRefId) return String(item.payload.sourceRefId);
+    if ((item as any).sourceRefId) return String((item as any).sourceRefId);
+    if (item.payload?.deepLink) {
+      const m = item.payload.deepLink.match(/sos-requests\/([a-f0-9]{24})/i);
+      if (m && m[1]) return m[1];
     }
-    navigate(`/bc/notifications/${item._id}`);
+    const bodyMatch = item.body?.match(/([a-f0-9]{24})/i);
+    if (bodyMatch && bodyMatch[1]) return bodyMatch[1];
+    return null;
+  };
+
+  const handleNotificationClick = async (item: NotificationData) => {
+    if (item.readAt === null) {
+      await handleMarkAsRead(item._id);
+    }
+    const articleId = getArticleIdFromNotification(item);
+    if (articleId) {
+      navigate(getArticleRouteForRole(articleId, location.pathname));
+      return;
+    }
+
+    if (item.type === 'SOS') {
+      const sosId = extractSOSId(item);
+      if (isBcPage) {
+        navigate(sosId ? `/bc/sos-requests/${sosId}` : `/bc/sos-requests`);
+        return;
+      }
+      if (isHospitalPage) {
+        navigate(sosId ? `/hospital/sos-requests/${sosId}` : `/hospital/sos-requests`);
+        return;
+      }
+    }
+
+    const isHospital = location.pathname.startsWith('/hospital');
+    const isAdmin = location.pathname.startsWith('/admin');
+    const basePath = isAdmin ? '/admin' : isHospital ? '/hospital' : '/bc';
+    navigate(`${basePath}/notifications/${item._id}`);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -285,16 +337,31 @@ export const NotificationListPage: React.FC = () => {
                     </div>
 
                     {/* Interactive Action for BC SOS */}
-                    {isSOS && (
+                    {isSOS && isBcPage && (
                       <div className="mt-4 flex gap-2 pl-[56px]">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/bc/inventory/stock-out?reason=Transfer`);
+                            const sosId = extractSOSId(item);
+                            navigate(sosId ? `/bc/sos-requests/${sosId}` : `/bc/sos-requests`);
                           }}
-                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors"
+                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer"
                         >
-                          Chuyển máu cho bệnh viện →
+                          Xử lý yêu cầu SOS →
+                        </button>
+                      </div>
+                    )}
+                    {isSOS && isHospitalPage && (
+                      <div className="mt-4 flex gap-2 pl-[56px]">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const sosId = extractSOSId(item);
+                            navigate(sosId ? `/hospital/sos-requests/${sosId}` : `/hospital/sos-requests`);
+                          }}
+                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer"
+                        >
+                          Xem yêu cầu SOS →
                         </button>
                       </div>
                     )}

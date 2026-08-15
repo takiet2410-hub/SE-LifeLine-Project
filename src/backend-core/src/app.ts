@@ -11,6 +11,7 @@ import { setupSwagger } from './config/swagger.config';
 import sosRequestRoutes from './modules/sos-request/routes/sos-request.routes';
 import notificationRoutes from './modules/notification';
 import { seedMockLocationData } from './modules/sos-request/jobs/seed-mock-data';
+import cookieParser from 'cookie-parser';
 
 // BullMQ Workers & Queues
 import { startScheduledPublisherJob } from './modules/content/jobs/scheduled-publisher.processor';
@@ -57,12 +58,15 @@ app.use((req, res, next) => {
   
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
-  } else if (env.NODE_ENV === 'development') {
-    res.header('Access-Control-Allow-Origin', '*'); // Fallback for dev
+  } else if (env.NODE_ENV === 'development' && origin) {
+    res.header('Access-Control-Allow-Origin', origin); // Must echo origin when using credentials
+  } else {
+    res.header('Access-Control-Allow-Origin', '*'); // Fallback when no origin or not dev
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
@@ -75,6 +79,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use(express.json());
+app.use(cookieParser(env.JWT_SECRET));
 
 // Setup Swagger
 setupSwagger(app);
@@ -85,10 +90,13 @@ app.get(['/', '/swagger', '/docs'], (req, res) => {
 });
 
 import hospitalRoutes from './modules/auth-account/hospital.routes';
+import chatbotRoutes from './modules/chatbot/chatbot.routes';
+import adminRoutes from './modules/admin/admin.routes';
 
 // Base routing structure
 app.use('/api/v1/users', authAccountRoutes);
 app.use('/api/v1/hospitals', hospitalRoutes);
+app.use('/api/v1/chatbot', chatbotRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1', registrationRoutes);
 app.use('/api/v1/campaigns', campaignRoutes);
@@ -97,6 +105,7 @@ app.use('/api/v1/bc/articles', articleRoutes);
 app.use('/api/v1/articles', publicArticleRoutes);
 app.use('/api/v1/hospital/sos-requests', sosRequestRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 app.use(errorHandler);
 

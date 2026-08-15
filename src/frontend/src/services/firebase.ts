@@ -45,7 +45,7 @@ export const requestNotificationPermission = async () => {
 export const onMessageListener = () =>
   new Promise((resolve) => {
     if (!messaging) return;
-    onMessage(messaging, (payload) => {
+    onMessage(messaging, (payload: any) => {
       resolve(payload);
     });
   });

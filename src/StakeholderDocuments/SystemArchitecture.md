@@ -33,7 +33,7 @@ Given the team size, the zero budget, and the moderate scale target (10k users /
 
 - **One Node.js "Core" application** — modular monolith, organized by Functional Group (bounded module per domain), covering all CRUD-heavy, transactional, and user-facing flows.
 - **One Python "AI/ML" service** — a separate deployable process exposing an internal API, covering the AI Chatbot (RAG) and the SOS Evaluation & Prioritization scoring algorithm.
-- **A shared MongoDB Atlas cluster** (with Atlas Vector Search enabled) as the single system of record for both services.
+- **A shared MongoDB Atlas cluster** as the single system of record for both services.
 
 This gives the team clear module boundaries for parallel sprint work (each FG owns a Node.js module + routes) while keeping deployment, environment configuration, and inter-service debugging to a minimum — one extra service, not thirteen.
 
@@ -68,7 +68,7 @@ flowchart TB
 
     subgraph Data["Data & Storage"]
         MONGO[(MongoDB Atlas<br/>Documents + 2dsphere geo index)]
-        VEC[(MongoDB Atlas Vector Search<br/>Knowledge Base Embeddings)]
+        VEC[(Sentence Transformer Embeddings<br/>Knowledge Base Vectors)]
         CDN[(Cloudinary<br/>Images: avatars, articles, badges)]
         QUEUE[(Job Queue / Event Bus<br/>e.g. BullMQ over Redis, free tier)]
     end
@@ -139,7 +139,7 @@ flowchart TB
 | :--- | :--- | :--- |
 | Framework | **FastAPI** | Async-first, strong typing (Pydantic), ideal for an isolated internal API consumed only by the Node.js core |
 | RAG orchestration | LangChain or a lightweight custom retriever + LLM API (OpenAI/Gemini/Anthropic free-tier or academic credits) | Powers CB-UC-01 multi-turn chatbot with fallback and personalized guidance |
-| Vector store | **MongoDB Atlas Vector Search** on a `knowledge_base` collection | Avoids standing up a second database (no budget); same cluster as the core data, simplifies ops |
+| Vector/Knowledge retrieval | Hybrid lexical-semantic retrieval using **TF-IDF Vectorizer + multilingual Sentence Transformer** | Avoids standing up a second database (no budget); MongoDB Atlas stores the authoritative knowledge documents and embeddings. |
 | SOS Matching Engine | Custom scoring service (Python) using inventory + donor geo data pulled from MongoDB | Implements the composite ranking described in Proposal §3.4.2 / vision §5.4.2 (inventory volume, proximity, dispatch capacity / donor proximity, recency, engagement tier) |
 | Inter-service auth | Internal service token (shared secret / mTLS if hosting allows) | The AI service is never exposed directly to the public internet — only reachable via the gateway/Node core |
 
@@ -148,7 +148,7 @@ flowchart TB
 | :--- | :--- | :--- |
 | Primary database | **MongoDB Atlas** (free M0 tier for dev, scale tier for prod if available via academic program) | Matches ProjectPlan §4.3/§4.4 explicit "MongoDB" assignment across all FGs; document model fits varied entities (screening forms, evaluation logs) well |
 | Geospatial queries | MongoDB `2dsphere` index on Campaign/DonationPoint and Donor location fields | Powers LL-UC-06 map discovery and SYS-UC-04 donor radius expansion |
-| Vector search | MongoDB Atlas Vector Search | RAG knowledge base retrieval, avoids a separate vector DB |
+| Vector search | TF-IDF + Sentence Transformer (stored in MongoDB) | RAG knowledge base retrieval, avoids a separate vector DB |
 | Media/object storage | **Cloudinary** | Free tier; used for avatars, article images, campaign banners, badge icons |
 | Cache / Queue broker | Redis (free tier, e.g., Upstash or Redis Cloud) | Backs BullMQ for SOS evaluation & notification jobs, and can cache hot reads (active campaign list, inventory summary) |
 | Backups | MongoDB Atlas automated daily backups | Required by `NFR-R-02` |

@@ -19,6 +19,8 @@ export const scheduledPublisherWorker = new Worker(
   },
   {
     connection: redisConnection,
+    drainDelay: 30, // Poll every 30s instead of 5s to save Upstash Redis commands
+    stalledInterval: 300000, // Check stalled jobs every 5 minutes
   }
 );
 

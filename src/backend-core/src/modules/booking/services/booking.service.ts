@@ -34,16 +34,20 @@ export class BookingService {
       const dateParts = String(filters.date).split('-').map(Number);
       if (dateParts.length === 3 && !dateParts.some(isNaN)) {
         const [year, month, day] = dateParts;
-        const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
-        const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+        const startOfDay = new Date(`${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T00:00:00+07:00`);
+        const endOfDay = new Date(`${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T23:59:59.999+07:00`);
 
         query.startDateTime = { $lte: endOfDay };
         query.endDateTime = { $gte: startOfDay };
       } else {
         const targetDate = new Date(filters.date);
         if (!isNaN(targetDate.getTime())) {
-          const startOfDay = new Date(targetDate.setUTCHours(0, 0, 0, 0));
-          const endOfDay = new Date(targetDate.setUTCHours(23, 59, 59, 999));
+          // Format the parsed date to local timezone string before bounding
+          const yyyy = targetDate.getFullYear();
+          const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+          const dd = String(targetDate.getDate()).padStart(2, '0');
+          const startOfDay = new Date(`${yyyy}-${mm}-${dd}T00:00:00+07:00`);
+          const endOfDay = new Date(`${yyyy}-${mm}-${dd}T23:59:59.999+07:00`);
           query.startDateTime = { $lte: endOfDay };
           query.endDateTime = { $gte: startOfDay };
         }

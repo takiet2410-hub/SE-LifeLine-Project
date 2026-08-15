@@ -54,14 +54,21 @@ export class CampaignService {
 
     // Filter by date range
     if (query.startDate || query.endDate) {
-      filterQuery.startDateTime = {};
       if (query.startDate) {
-        filterQuery.startDateTime.$gte = new Date(query.startDate);
+        const dateParts = String(query.startDate).split('-').map(Number);
+        if (dateParts.length === 3 && !dateParts.some(isNaN)) {
+          const [year, month, day] = dateParts;
+          const startOfDay = new Date(`${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T00:00:00+07:00`);
+          filterQuery.endDateTime = { ...filterQuery.endDateTime, $gte: startOfDay };
+        }
       }
       if (query.endDate) {
-        const nextDay = new Date(query.endDate);
-        nextDay.setDate(nextDay.getDate() + 1);
-        filterQuery.startDateTime.$lte = nextDay;
+        const dateParts = String(query.endDate).split('-').map(Number);
+        if (dateParts.length === 3 && !dateParts.some(isNaN)) {
+          const [year, month, day] = dateParts;
+          const endOfDay = new Date(`${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T23:59:59.999+07:00`);
+          filterQuery.startDateTime = { ...filterQuery.startDateTime, $lte: endOfDay };
+        }
       }
     }
 

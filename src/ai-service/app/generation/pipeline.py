@@ -10,7 +10,7 @@ except ImportError:
     from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from app.services.faiss_builder import search_knowledge_base
+from app.services.faiss_builder import search_knowledge_base, search_campaigns
 from app.services.semantic_cache import get_cached_response, save_to_cache
 from app.generation.prompts import SYSTEM_PROMPT
 
@@ -23,7 +23,7 @@ def get_llm(model_name: str = None):
     
     kwargs = {
         "model": target_model,
-        "max_output_tokens": 1024,
+        "max_output_tokens": 4096,
         "google_api_key": api_key,
         "max_retries": 0,
     }
@@ -122,7 +122,7 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
             yield "data: [DONE]\n\n"
             return
 
-    tools = [search_knowledge_base] if not is_greeting else []
+    tools = [search_knowledge_base, search_campaigns] if not is_greeting else []
     
     # Format system prompt
     formatted_sys = SYSTEM_PROMPT.format(

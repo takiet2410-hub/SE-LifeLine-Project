@@ -47,6 +47,8 @@ export interface CampaignData {
 export interface RegistrationData {
   _id: string;
   campaignId: string;
+  campaignName?: string;
+  campaignVenue?: string;
   donorId: string;
   donorName: string;
   donorBloodType: string;

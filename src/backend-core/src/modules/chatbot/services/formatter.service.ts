@@ -2,33 +2,70 @@ import { Types } from 'mongoose';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { Campaign } from '../../campaign/models/campaign.model';
 import { Appointment } from '../../booking/models/appointment.model';
+import { BookingService } from '../../booking/services/booking.service';
+
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
 
 export class FormatterService {
   /**
    * Prepares a strict whitelist of donor context & campaign suggestions to send to AI Service.
    * Excludes sensitive personal fields (phone, CCCD, home address, etc.)
    */
-  public static async prepareDonorContext(donorId: string | null) {
-    // 1. Fetch available active and upcoming campaigns for both guests and authenticated donors
+  public static async prepareDonorContext(
+    donorId: string | null,
+    coords?: { lat?: number; lng?: number }
+  ) {
+    // 1. Fetch available active and upcoming campaigns using the same service as Schedule Page UI
     let formattedCampaigns: any[] = [];
     try {
-      const campaigns = await Campaign.find({
-        status: { $in: ['Active', 'Upcoming'] }
-      })
-        .sort({ startDateTime: 1 })
-        .limit(5)
-        .lean();
+      const validLocations = await BookingService.searchLocations({
+        lat: coords?.lat,
+        lng: coords?.lng
+      });
 
-      formattedCampaigns = campaigns.map(c => ({
-        id: c._id.toString(),
+      let sortedLocations = validLocations;
+      if (coords?.lat !== undefined && coords?.lng !== undefined && !isNaN(coords.lat) && !isNaN(coords.lng)) {
+        sortedLocations = [...validLocations].map((c: any) => {
+          let dist = null;
+          if (c.location?.coordinates && Array.isArray(c.location.coordinates) && c.location.coordinates.length === 2) {
+            dist = calculateDistanceKm(
+              coords.lat!,
+              coords.lng!,
+              c.location.coordinates[1],
+              c.location.coordinates[0]
+            );
+          }
+          return { ...c, distanceKm: dist };
+        }).sort((a, b) => {
+          if (a.distanceKm === null) return 1;
+          if (b.distanceKm === null) return -1;
+          return a.distanceKm - b.distanceKm;
+        });
+      }
+
+      // Pick top 3 nearest and most relevant campaigns
+      formattedCampaigns = sortedLocations.slice(0, 3).map((c: any) => ({
+        id: c._id ? c._id.toString() : c.id,
         name: c.name,
-        venue: c.venue,
-        fullAddress: c.fullAddress,
+        venue: c.venue || c.name,
+        fullAddress: c.fullAddress || c.venue || c.name,
         startDate: c.startDateTime ? new Date(c.startDateTime).toISOString().split('T')[0] : '',
         endDate: c.endDateTime ? new Date(c.endDateTime).toISOString().split('T')[0] : '',
         targetBloodGroups: c.targetBloodGroups || [],
         remainingSlots: Math.max(0, (c.capacity || 0) - (c.registeredCount || 0)),
-        status: c.status
+        distanceKm: c.distanceKm !== undefined ? c.distanceKm : null,
+        status: c.status,
+        scheduleUrl: 'http://localhost:5173/my-appointments/schedule/step-1'
       }));
     } catch (err) {
       console.error('[FormatterService] Failed to fetch campaigns for donor context:', err);

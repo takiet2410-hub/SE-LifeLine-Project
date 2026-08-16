@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthHeader } from '../components/AuthHeader';
 import { AuthFooter } from '../components/AuthFooter';
 import { BrandIdentity } from '../components/BrandIdentity';
@@ -10,6 +10,10 @@ export const ForgotPasswordPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const initialEmail = location.state?.email || '';
+  const initialIdDocumentNumber = location.state?.idDocumentNumber || '';
 
   const handleForgotPassword = async (data: { idDocumentNumber: string; email: string }) => {
     setIsLoading(true);
@@ -42,6 +46,8 @@ export const ForgotPasswordPage: React.FC = () => {
             onSubmit={handleForgotPassword}
             isLoading={isLoading}
             errorMessage={errorMessage}
+            initialEmail={initialEmail}
+            initialIdDocumentNumber={initialIdDocumentNumber}
           />
         </div>
       </main>

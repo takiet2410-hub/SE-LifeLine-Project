@@ -78,6 +78,38 @@ export class BookingService {
       };
     }).filter(c => c.status === 'Active' || c.status === 'Upcoming');
 
+    // Exclude campaigns whose working hours on today have already ended (and have no future dates)
+    const currentHours = String(now.getHours()).padStart(2, '0');
+    const currentMinutes = String(now.getMinutes()).padStart(2, '0');
+    const currentTimeStr = `${currentHours}:${currentMinutes}`;
+    const todayYMD = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    campaigns = campaigns.filter(c => {
+      const end = new Date(c.endDateTime);
+      // If the entire campaign ended before now
+      if (end < now) return false;
+
+      // If campaign ends today, check if timeslots / working hours today have all passed
+      const endYMD = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
+      if (endYMD === todayYMD) {
+        // If timeslots exist, check the latest endTime
+        const slots = (c.dailyTimeslots && c.dailyTimeslots.length > 0)
+          ? c.dailyTimeslots.filter((s: any) => s.dateStr === todayYMD)
+          : (c.timeslots || []);
+          
+        if (slots.length > 0) {
+          const latestEndTime = slots.reduce((latest: string, slot: any) => {
+            const slotEnd = slot.endTime || '00:00';
+            return slotEnd > latest ? slotEnd : latest;
+          }, '00:00');
+          if (latestEndTime && latestEndTime !== '00:00' && currentTimeStr >= latestEndTime) {
+            return false; // working hours ended today!
+          }
+        }
+      }
+      return true;
+    });
+
     // Filter by blood type (supporting multi-select and matching spots accepting all blood types)
     if (filters.bloodType) {
       const selectedTypes = (typeof filters.bloodType === 'string' ? filters.bloodType.split(',') : [filters.bloodType])

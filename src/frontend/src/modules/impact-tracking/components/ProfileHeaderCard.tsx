@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 import { uploadToCloudinary } from '../../../services/cloudinaryService';
 import { updateUserProfile } from '../../auth-account/api/authApi';
+import { KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 
 // BE /users/profile response shape (donationImpact section)
@@ -154,6 +156,20 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({ profileDat
     }
   };
 
+  const navigate = useNavigate();
+
+  const handleResetPassword = () => {
+    const userEmail = profileData?.contactInfo?.email || user?.email || '';
+    const userIdDoc = profileData?.personalInfo?.idDocumentNumber || (user as any)?.idDocumentNumber || (profileData?.profileInfo as any)?.idDocumentNumber || '';
+
+    navigate('/forgot-password', {
+      state: {
+        email: userEmail,
+        idDocumentNumber: userIdDoc
+      }
+    });
+  };
+
   return (
     <div className="flex p-8 flex-col items-start rounded-xl border border-[#F1F3F5] bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden relative">
       <div className="absolute -right-[79px] -top-[79px] rounded-full bg-[rgba(147,0,11,0.05)] w-64 h-64"></div>
@@ -247,10 +263,20 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({ profileDat
           </div>
 
           {/* Actions */}
-          <div className="flex pt-5 items-start gap-3 w-full">
+          <div className="flex pt-5 items-center gap-3 w-full flex-wrap">
             <button
+              type="button"
+              onClick={handleResetPassword}
+              className="flex py-3 px-5 items-center gap-2 rounded-lg border border-[#DEE2E6] bg-white text-[#495057] font-inter text-sm font-semibold shadow-xs transition-all hover:bg-gray-50 hover:text-[#93000B] hover:border-[#93000B]/40 cursor-pointer active:scale-98"
+              title="Đặt lại mật khẩu tài khoản"
+            >
+              <KeyRound className="w-4 h-4 text-[#93000B]" />
+              <span>Reset Password</span>
+            </button>
+            <button
+              type="button"
               onClick={logout}
-              className="flex py-3 px-6 items-center gap-2 rounded-lg bg-[#93000B] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10)] transition-colors hover:bg-[#7a0009]"
+              className="flex py-3 px-6 items-center gap-2 rounded-lg bg-[#93000B] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10)] transition-all hover:bg-[#7a0009] cursor-pointer active:scale-98"
             >
               <span className="text-[#FFF] font-inter text-base leading-6">Sign Out</span>
             </button>

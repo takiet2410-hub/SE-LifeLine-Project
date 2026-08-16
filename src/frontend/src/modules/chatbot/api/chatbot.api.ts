@@ -3,6 +3,8 @@ import { apiClient } from '../../../shared/api/apiClient';
 export interface ChatMessagePayload {
   message: string;
   clientRequestId: string;
+  lat?: number;
+  lng?: number;
 }
 
 export const chatbotApi = {

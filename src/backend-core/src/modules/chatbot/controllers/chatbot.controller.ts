@@ -17,7 +17,7 @@ export class ChatbotController {
         });
       }
 
-      const { message, clientRequestId } = req.body;
+      const { message, clientRequestId, lat, lng } = req.body;
       const { anonymousSessionIdHash, donorId } = req.chatbotSession!;
 
       if (!message || !clientRequestId) {
@@ -28,53 +28,58 @@ export class ChatbotController {
       let history: any[] = [];
       let donorContext = null;
 
-      // Only use DB and Context if user is authenticated (donorId exists)
-      if (donorId) {
-        const conversation = await ConversationService.getOrCreateActiveConversation(
-          anonymousSessionIdHash,
-          donorId
-        );
-        conversationIdStr = conversation._id.toString();
+      // Always prepare context (campaigns, eligibility) with user GPS for both authenticated donors and guests
+      donorContext = await FormatterService.prepareDonorContext(donorId || null, {
+        lat: lat !== undefined ? Number(lat) : undefined,
+        lng: lng !== undefined ? Number(lng) : undefined
+      });
 
-        // Check Idempotency
-        const existingAiMsg = await ChatMessage.findOne({ 
-          conversationId: conversation._id, 
-          clientRequestId: clientRequestId + '-ai' 
+      const conversation = await ConversationService.getOrCreateActiveConversation(
+        anonymousSessionIdHash,
+        donorId || null
+      );
+      conversationIdStr = conversation._id.toString();
+
+      // Check Idempotency
+      const existingAiMsg = await ChatMessage.findOne({ 
+        conversationId: conversation._id, 
+        clientRequestId: clientRequestId + '-ai' 
+      });
+      if (existingAiMsg) {
+        return res.status(200).json({ 
+          status: 'success', 
+          data: {
+            message: existingAiMsg,
+            conversationId: conversation._id
+          }
         });
-        if (existingAiMsg) {
-          return res.status(200).json({ 
-            status: 'success', 
-            data: {
-              message: existingAiMsg,
-              conversationId: conversation._id
-            }
-          });
-        }
+      }
 
-        // Save User Message
-        let userMsg = await ChatMessage.findOne({
+      // Fetch PREVIOUS history BEFORE adding current user message
+      const historyRaw = await ChatMessage.find({ 
+        conversationId: conversation._id,
+        clientRequestId: { $ne: clientRequestId + '-user' }
+      })
+        .sort({ sentAt: 1 })
+        .limit(20);
+        
+      history = historyRaw.map(msg => ({
+        role: msg.sender === 'User' ? 'user' : 'model',
+        parts: [{ text: msg.contentText }]
+      }));
+
+      // Save User Message
+      let userMsg = await ChatMessage.findOne({
+        conversationId: conversation._id,
+        clientRequestId: clientRequestId + '-user'
+      });
+      if (!userMsg) {
+        await ChatMessage.create({
           conversationId: conversation._id,
-          clientRequestId: clientRequestId + '-user'
+          clientRequestId: clientRequestId + '-user',
+          sender: 'User',
+          contentText: message
         });
-        if (!userMsg) {
-          await ChatMessage.create({
-            conversationId: conversation._id,
-            clientRequestId: clientRequestId + '-user',
-            sender: 'User',
-            contentText: message
-          });
-        }
-
-        // Fetch context and history
-        donorContext = await FormatterService.prepareDonorContext(donorId);
-        const historyRaw = await ChatMessage.find({ conversationId: conversation._id })
-          .sort({ sentAt: 1 })
-          .limit(20);
-          
-        history = historyRaw.map(msg => ({
-          role: msg.sender === 'User' ? 'user' : 'model',
-          parts: [{ text: msg.contentText }]
-        }));
       }
 
       // Send to AI Service (Streaming)
@@ -100,17 +105,15 @@ export class ChatbotController {
         }
       }
 
-      // Save AI Response to DB ONLY if authenticated
-      if (donorId) {
-        await ChatMessage.create({
-          conversationId: conversationIdStr,
-          clientRequestId: clientRequestId + '-ai',
-          sender: 'AI',
-          contentText: finalContent,
-          citations: [],
-          confidenceScore: 1.0
-        });
-      }
+      // Save AI Response to DB for the conversation
+      await ChatMessage.create({
+        conversationId: conversation._id,
+        clientRequestId: clientRequestId + '-ai',
+        sender: 'AI',
+        contentText: finalContent,
+        citations: [],
+        confidenceScore: 1.0
+      });
 
       res.end();
       return;

@@ -67,25 +67,23 @@ export class RegistrationService {
 
     // Filter by appointment/digital record status if provided
     if (query.status && query.status !== 'All') {
-      const matchingDigitalRecords = await DigitalDonorRecord.find({ donationStatus: query.status as any }).select('appointmentId');
+      const statusRegex = new RegExp(`^${query.status}$`, 'i');
+      const matchingDigitalRecords = await DigitalDonorRecord.find({ donationStatus: { $regex: statusRegex } }).select('appointmentId');
       const digitalAppIds = matchingDigitalRecords.map(d => d.appointmentId);
+
+      const statusOrClause = [
+        { status: { $regex: statusRegex } },
+        { _id: { $in: digitalAppIds } }
+      ];
 
       if (filter.$or) {
         filter.$and = [
           { $or: filter.$or },
-          {
-            $or: [
-              { status: query.status },
-              { _id: { $in: digitalAppIds } }
-            ]
-          }
+          { $or: statusOrClause }
         ];
         delete filter.$or;
       } else {
-        filter.$or = [
-          { status: query.status },
-          { _id: { $in: digitalAppIds } }
-        ];
+        filter.$or = statusOrClause;
       }
     }
 
@@ -231,28 +229,31 @@ export class RegistrationService {
           eligibilityFlag: (screeningForm as any).eligibilityFlag || 'RequiresReview'
         } : null;
 
-        const fullName = donorProfile?.fullName || 'N/A';
-        const idDocumentNumber = donorProfile?.idDocumentNumber || donorUser?.idDocumentNumber || 'N/A';
-        const phoneNumber = donorProfile?.phoneNumber || donorUser?.phone || 'N/A';
-        const bloodType = donorProfile?.bloodType || 'Unknown';
+        const fullName = donorProfile?.fullName || (donorUser as any)?.fullName || 'Người hiến máu';
+        const idDocumentNumber = donorProfile?.idDocumentNumber || donorUser?.idDocumentNumber || 'Chưa cập nhật';
+        const phoneNumber = donorProfile?.phoneNumber || donorUser?.phone || (donorUser as any)?.phoneNumber || 'Chưa cập nhật SĐT';
+        const bloodType = donorProfile?.bloodType || (donorUser as any)?.bloodType || 'Unknown';
+        const donorDob = donorProfile?.dateOfBirth || (donorUser as any)?.dateOfBirth || '';
 
         return {
+          _id: app._id.toString(),
           registrationId: app._id.toString(),
           campaignId: app.campaignId ? app.campaignId.toString() : campaignIdStr,
           campaignName: campaignDoc?.name || 'Chiến dịch Hiến máu',
+          campaignVenue: campaignDoc?.venue || (campaignDoc as any)?.fullAddress || (campaignDoc as any)?.location || '',
           donorId: app.donorId ? app.donorId.toString() : '',
           donorName: fullName,
           donorPhone: phoneNumber,
           donorIdCard: idDocumentNumber,
           donorBloodType: bloodType,
-          donorDob: donorProfile?.dateOfBirth || '',
+          donorDob,
           donor: {
             donorId: app.donorId ? app.donorId.toString() : '',
             fullName,
             idDocumentNumber,
             phoneNumber,
             bloodType,
-            dateOfBirth: donorProfile?.dateOfBirth,
+            dateOfBirth: donorDob,
             email: donorProfile?.email || donorUser?.email || ''
           },
           appointmentDate: app.appointmentDate,

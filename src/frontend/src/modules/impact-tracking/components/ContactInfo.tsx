@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import vnProvinces from '../../../data/vietnam_provinces.json';
-import { Home, MapPin, Lock } from 'lucide-react';
+import { Home, MapPin, Lock, KeyRound, ShieldCheck } from 'lucide-react';
 
 interface ContactInfoProps {
   isEditing?: boolean;
@@ -297,6 +298,8 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
     );
   }
 
+  const navigate = useNavigate();
+
   return (
     <div className="flex p-6 flex-col items-start gap-4 rounded-xl border border-[#F1F3F5] bg-[#F8F9FA] w-full">
       <div className="flex justify-between items-center w-full">
@@ -333,6 +336,30 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
 
         <span className="text-[#6C757D]">Email:</span>
         <span className="text-[#271816] font-medium">{user?.email || '-'}</span>
+
+        <span className="text-[#6C757D] flex items-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#6C757D]" />
+          Mật khẩu tài khoản:
+        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-[#271816] font-medium tracking-widest text-xs">••••••••</span>
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/forgot-password', {
+                state: {
+                  email: user?.email || '',
+                  idDocumentNumber: user?.idDocumentNumber || ''
+                }
+              });
+            }}
+            className="text-xs font-semibold text-[#93000B] hover:underline cursor-pointer flex items-center gap-1 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-md transition-colors active:scale-95"
+            title="Đặt lại mật khẩu"
+          >
+            <KeyRound className="w-3 h-3" />
+            <span>Đặt lại mật khẩu</span>
+          </button>
+        </div>
       </div>
     </div>
   );

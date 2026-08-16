@@ -2,7 +2,7 @@
 
 Version: 1.0
 
-This package contains 21 curated knowledge documents for the current LifeLine RAG MVP.
+This package contains 25 curated knowledge documents for the current LifeLine RAG system.
 
 ## Source policy
 - Primary local medical source: Viện Huyết học – Truyền máu Trung ương (NIHBT).
@@ -384,19 +384,53 @@ Nội dung:
 
 ---
 
-## KB-GEN-003 — Các nhóm máu
+## KB-GEN-003 — Các nhóm máu và Quy tắc tương thích hiến máu
 **Category:** `General`
 
-Mục đích: Cung cấp kiến thức cơ bản về nhóm máu và tránh nhầm lẫn giữa ABO/Rh với quy tắc truyền máu.
+Mục đích: Cung cấp kiến thức cơ bản về nhóm máu ABO/Rh và quy tắc tương thích truyền máu (ai hiến được cho ai, ai nhận được từ ai).
 
 Nội dung:
-- Hệ ABO gồm các nhóm A, B, AB và O.
-- Hệ Rh thường được biểu diễn bằng dấu + hoặc -, tạo ra các kiểu như A+, A-, B+, B-, AB+, AB-, O+, O-.
-- Nhóm máu của donor là dữ liệu có thể được lưu trong hồ sơ LifeLine và có thể được sử dụng để tìm campaign hoặc hỗ trợ các tình huống cần nhóm máu phù hợp.
-- Quy tắc tương thích truyền máu phụ thuộc vào loại chế phẩm (hồng cầu, huyết tương, tiểu cầu) và các yếu tố miễn dịch; không được dùng một bảng "ai cho ai" chung cho mọi loại chế phẩm.
-- Nếu donor hỏi khả năng hiến cho một người cụ thể, chatbot không nên kết luận nếu không biết loại chế phẩm và quy trình của cơ sở truyền máu.
-- Nếu donor không biết nhóm máu, hệ thống không nên tự đoán từ cha mẹ, triệu chứng hoặc tính cách. Nhóm máu cần được xác định bằng xét nghiệm/nguồn hồ sơ đáng tin cậy.
-- Nếu campaign có targetBloodGroups, thông tin campaign từ MongoDB có ưu tiên cao hơn kiến thức tĩnh.
+- Hệ nhóm máu ABO gồm 4 nhóm chính: A, B, AB, và O.
+- Hệ Rh gồm 2 kiểu: Rh+ (dương tính, có kháng nguyên D) và Rh- (âm tính, không có kháng nguyên D).
+- Khi kết hợp, tạo thành 8 nhóm máu phổ biến: O+, O-, A+, A-, B+, B-, AB+, AB-.
+
+**Quy tắc tương thích khi hiến máu toàn phần & khối hồng cầu (Who can donate to whom):**
+1. **Nhóm máu O+ (O dương)**:
+   - **Có thể hiến máu cho:** **O+, A+, B+, AB+** (tất cả các nhóm máu mang Rh dương).
+   - **Có thể nhận máu từ:** O+ và O-.
+   - Nhóm máu O+ rất phổ biến và có vai trò cực kỳ quan trọng trong cấp cứu và điều trị.
+
+2. **Nhóm máu O- (O âm)**:
+   - **Có thể hiến máu cho:** **Tất cả các nhóm máu (O+, O-, A+, A-, B+, B-, AB+, AB-)** — Đây là nhóm máu hiến hồng cầu phổ thông (Universal Donor).
+   - **Có thể nhận máu từ:** Duy nhất nhóm máu O-.
+
+3. **Nhóm máu A+ (A dương)**:
+   - **Có thể hiến máu cho:** **A+ và AB+**.
+   - **Có thể nhận máu từ:** A+, A-, O+, O-.
+
+4. **Nhóm máu A- (A âm)**:
+   - **Có thể hiến máu cho:** **A+, A-, AB+, AB-**.
+   - **Có thể nhận máu từ:** A- và O-.
+
+5. **Nhóm máu B+ (B dương)**:
+   - **Có thể hiến máu cho:** **B+ và AB+**.
+   - **Có thể nhận máu từ:** B+, B-, O+, O-.
+
+6. **Nhóm máu B- (B âm)**:
+   - **Có thể hiến máu cho:** **B+, B-, AB+, AB-**.
+   - **Có thể nhận máu từ:** B- và O-.
+
+7. **Nhóm máu AB+ (AB dương)**:
+   - **Có thể hiến máu cho:** Duy nhất **AB+**.
+   - **Có thể nhận máu từ:** **Tất cả các nhóm máu (Universal Recipient)**.
+
+8. **Nhóm máu AB- (AB âm)**:
+   - **Có thể hiến máu cho:** **AB+ và AB-**.
+   - **Có thể nhận máu từ:** AB-, A-, B-, O-.
+
+**Lưu ý:**
+- Chatbot cần ghi nhớ thông tin nhóm máu mà người dùng đã cung cấp ở các lượt hội thoại trước (Turn Context) để trả lời ngay mà không cần hỏi lại.
+- Luôn trả lời đầy đủ danh sách các nhóm máu nhận tương ứng theo quy tắc y khoa chuẩn xác.
 
 ---
 
@@ -440,3 +474,115 @@ Nội dung:
 - Nếu donor hỏi về kết quả xét nghiệm của chính mình, phải lấy dữ liệu chính thức từ hệ thống nếu có; không suy đoán từ việc donor đã được nhận máu.
 
 ---
+
+## KB-PROC-001 — Quy trình 6 bước hiến máu thông minh trên LifeLine
+**Category:** `Process`
+
+Mục đích: Hướng dẫn chi tiết cho người hiến máu về toàn bộ 6 bước từ khi mở ứng dụng LifeLine đến khi nhận kết quả xét nghiệm và vinh danh giọt máu cứu người.
+
+Nội dung 6 bước:
+1. **Bước 1: Tìm Điểm Hiến Máu & Chọn Lịch Hẹn Linh Hoạt**
+   - Người hiến tra cứu các Trung tâm hiến máu cố định và Chiến dịch hiến máu lưu động trên Bản đồ GPS tương tác của LifeLine.
+   - Tự do lựa chọn ngày hẹn và khung giờ tiếp nhận (Timeslot 30 phút) phù hợp với lịch trình cá nhân để không phải xếp hàng chờ đợi.
+   - Xem thông tin các nhóm máu đang cần khẩn cấp (A+, B+, O+, AB+, Rh-) để ưu tiên hiến máu đúng lúc bệnh nhân cần.
+
+2. **Bước 2: Điền Phiếu Khảo Sát Sàng Lọc Online (Pre-Screening)**
+   - Trả lời bảng câu hỏi y tế sơ bộ ngay trên ứng dụng trước khi đến điểm hiến.
+   - Hệ thống tự động kiểm tra quy chuẩn y tế: khoảng cách giãn cách tối thiểu 84 ngày giữa 2 lần hiến máu toàn phần, độ tuổi (18 - 60 tuổi), cân nặng (nữ ≥ 42kg, nam ≥ 45kg) và tiền sử bệnh lý / thuốc đang dùng.
+   - Tiết kiệm hơn 80% thời gian làm thủ tục giấy tờ tại bàn tiếp đón.
+
+3. **Bước 3: Nhận Thẻ E-Ticket & Check-in QR Siêu Tốc**
+   - Sau khi Trung Tâm Hiến Máu phê duyệt đơn đăng ký, hệ thống tự động cấp Thẻ điện tử E-Ticket kèm mã QR cá nhân hóa qua email và ứng dụng.
+   - Khi đến điểm hiến máu, chỉ cần đưa mã QR E-Ticket cho nhân viên y tế quét check-in trong vòng 10 giây mà không cần mang theo giấy tờ kê khai rườm rà.
+
+4. **Bước 4: Khám Sàng Lọc Lâm Sàng & Lấy Máu An Toàn 100%**
+   - Bác sĩ chuyên khoa đo huyết áp, mạch, cân nặng, test nhanh nhóm máu và kiểm tra nồng độ huyết sắc tố (Hb ≥ 120 g/l).
+   - Quá trình lấy máu diễn ra trong môi trường vô trùng tuyệt đối, sử dụng kim tiêm và túi lấy máu tiệt trùng dùng 1 lần đạt chuẩn Bộ Y Tế.
+   - Thời gian lấy máu thực tế chỉ mất 8 - 10 phút, người hiến có thể tùy chọn thể tích hiến 250ml, 350ml hoặc 450ml theo chỉ định bác sĩ.
+
+5. **Bước 5: Nghỉ Dưỡng Hồi Phục & Nhận Quà Tri Ân**
+   - Nghỉ ngơi 15 phút tại khu vực hồi sức thoáng mát, được phục vụ sữa tươi, trà đường ấm, bánh ngọt để bổ sung đường và dịch thể.
+   - Nhận Giấy chứng nhận hiến máu tình nguyện, quà tặng lưu niệm và hỗ trợ chi phí đi lại theo quy định của Bộ Y Tế.
+
+6. **Bước 6: Tích Lũy Điểm Thưởng XP & Theo Dõi Hành Trình Giọt Máu**
+   - Mẫu máu được xét nghiệm sàng lọc an toàn 5 bệnh truyền nhiễm (HIV, HBV, HCV, Giang mai, Sốt rét) và xác định nhóm máu chính xác.
+   - Tự động cập nhật Hồ Sơ Hiến Máu Số trọn đời trên LifeLine.
+   - Cộng điểm thưởng XP (350ml = 100 XP, 450ml = 150 XP), nâng hạng cấp bậc Donor (Đồng, Bạc, Vàng, Bạch Kim, Kim Cương) và nhận thông báo khi giọt máu của bạn được chuyển đến bệnh viện cứu sống bệnh nhân.
+
+---
+
+## KB-PROC-002 — Cẩm nang chuẩn bị sức khỏe 3 giai đoạn (Trước, Trong và Sau khi hiến máu)
+**Category:** `Preparation`
+
+Mục đích: Cung cấp hướng dẫn y khoa chi tiết và thực tế giúp donor có trải nghiệm hiến máu khỏe khoắn, không mệt mỏi hay chóng mặt.
+
+Nội dung:
+1. **Giai đoạn 1: Trước ngày hiến máu (24h - 48h trước)**
+   - Giấc ngủ: Ngủ sâu và đủ giấc từ 6 - 8 tiếng vào đêm hôm trước. Không thức khuya để giữ huyết áp và nhịp tim ổn định.
+   - Chế độ ăn uống: Ăn bữa nhẹ (bánh mì, ngũ cốc, cháo, xôi, hoa quả...) trước khi hiến 2 - 3 tiếng. Tuyệt đối KHÔNG nhịn đói và KHÔNG ăn đồ nhiều dầu mỡ (thức ăn nhiều dầu mỡ làm huyết tương bị đục mỡ, không thể sử dụng để truyền cho người bệnh).
+   - Nước uống: Uống đủ 500ml - 1 lít nước lọc hoặc nước trái cây trước khi đến điểm hiến.
+   - Kiêng cữ: Tuyệt đối không uống rượu, bia, đồ uống có cồn trong vòng 24 giờ trước khi hiến máu.
+
+2. **Giai đoạn 2: Trong khi đang hiến máu**
+   - Tâm lý: Thả lỏng toàn thân trên ghế hiến máu, giữ tinh thần thoải mái, hít thở đều và sâu.
+   - Động tác: Nắm và bóp nhẹ quả bóng cao su theo nhịp hướng dẫn của điều dưỡng để dòng máu chảy đều vào túi lấy máu.
+   - Giao tiếp: Nếu cảm thấy có bất kỳ dấu hiệu lạ như chóng mặt, hoa mắt, vã mồ hôi, buồn nôn, cần thông báo ngay cho nhân viên y tế bên cạnh để được hỗ trợ kịp thời.
+
+3. **Giai đoạn 3: Sau khi hiến máu (24h - 48h sau)**
+   - Nghỉ ngơi tại chỗ: Nghỉ tối thiểu 15 phút tại khu vực hồi sức, uống trà đường hoặc sữa ấm và ăn nhẹ. Chỉ đứng dậy rời đi khi cảm thấy hoàn toàn khỏe khoắn.
+   - Chăm sóc vết chọc kim: Giữ miếng băng dán sạch sẽ và khô ráo trong ít nhất 4 - 6 tiếng để tránh chảy máu lại hoặc nhiễm trùng. Nếu có vết bầm tím dưới da, chườm lạnh trong 24 giờ đầu, sau đó chườm ấm từ ngày thứ hai.
+   - Bổ sung dinh dưỡng: Uống nhiều nước (2 - 3 lít nước trong ngày), ăn các thực phẩm giàu chất sắt và đạm (thịt bò, trứng, gan, các loại đậu đỗ, rau bina, mộc nhĩ).
+   - Tránh vận động mạnh: Tuyệt đối không nâng vật nặng bằng tay vừa hiến máu, không chơi thể thao cường độ cao (đá bóng, tập tạ, bơi lội, chạy marathon) và không lái xe đường dài trong vòng 24 giờ.
+
+---
+
+## KB-FEAT-001 — Hướng dẫn sử dụng các tính năng dành cho Donor trên ứng dụng LifeLine
+**Category:** `Features`
+
+Mục đích: Giúp Chatbot AI giải đáp và hướng dẫn người dùng sử dụng đầy đủ các chức năng trên hệ thống LifeLine.
+
+Nội dung:
+- **Đăng ký tài khoản & Xác thực số CCCD (Citizen ID Verification)**:
+  - Đăng ký tài khoản người hiến bằng số Căn cước công dân (12 chữ số) và thông tin cá nhân.
+  - Hệ thống liên kết hồ sơ y tế định danh chính xác, bảo mật theo chuẩn y tế quốc gia.
+- **Đặt lịch hiến máu (Booking & Scheduling)**:
+  - Chọn địa điểm tiếp nhận trên Bản đồ tương tác (`/schedule/location`), chọn khung giờ trống phù hợp.
+  - Điền phiếu khảo sát sàng lọc y tế trực tuyến (`/schedule/screening`).
+  - Xác nhận và nhận mã vé điện tử E-Ticket (`/schedule/success`).
+- **Quản lý Lịch hẹn của tôi (My Appointments)**:
+  - Xem chi tiết lịch hẹn đã đặt, thời gian và địa điểm tiếp nhận.
+  - Xem và tải thẻ E-Ticket kèm mã QR định danh.
+  - Hủy lịch hẹn hoặc đổi lịch khi có việc bận đột xuất trước thời hạn quy định.
+- **Hồ sơ hiến máu cá nhân (My Profile & Blood Record)**:
+  - Tra cứu nhóm máu chính thức (Hệ ABO và Rh).
+  - Xem nhật ký tổng số lần hiến máu, tổng thể tích máu đã đóng góp.
+  - Đồng hồ đếm ngược ngày đủ điều kiện hiến lần tiếp theo (Next eligible donation date).
+- **Hệ thống Điểm thưởng & Cấp bậc (Gamification & Rewards)**:
+  - Mỗi lần hiến máu thành công được tích luỹ điểm XP: Hiến 250ml = 75 XP, 350ml = 100 XP, 450ml = 150 XP.
+  - Cấp bậc vinh danh: Người Hiến Đồng, Bạc, Vàng, Bạch Kim, Kim Cương.
+  - Huy hiệu thành tựu: Giọt Máu Đầu Tiên, Cứu Người Mùa Dịch, Trái Tim Vàng, Hiến Máu Khẩn Cấp.
+- **Hộp thư thông báo & Cảnh báo khẩn cấp SOS**:
+  - Nhận thông báo nhắc lịch hẹn trước ngày hiến.
+  - Nhận thông báo khi máu được cấp phát tới bệnh viện điều trị.
+  - Nhận lời kêu gọi hiến máu khẩn cấp khi ngân hàng máu thiếu hụt nhóm máu của bạn trong khu vực.
+
+---
+
+## KB-FEAT-002 — Quyền lợi y tế và xã hội của người hiến máu tình nguyện
+**Category:** `Benefits`
+
+Mục đích: Cung cấp thông tin chính xác về các quyền lợi theo quy định pháp luật và Bộ Y Tế dành cho người hiến máu tình nguyện.
+
+Nội dung:
+- **Khám và tư vấn sức khỏe miễn phí**: Được bác sĩ kiểm tra huyết áp, nhịp tim, tầm soát thiếu máu và tư vấn sức khỏe miễn phí tại bàn khám.
+- **Xét nghiệm an toàn truyền máu miễn phí**: Được làm xét nghiệm định nhóm máu (ABO, Rh) và xét nghiệm 5 bệnh truyền nhiễm nguy hiểm (HIV, HBV, HCV, Giang mai, Sốt rét). Kết quả xét nghiệm được bảo mật tuyệt đối.
+- **Giấy chứng nhận hiến máu tình nguyện & Quyền lợi bồi hoàn máu**:
+  - Người hiến máu được cấp Giấy chứng nhận hiến máu tình nguyện của Ban chỉ đạo vận động hiến máu nhân đạo.
+  - Trong trường hợp không may cần truyền máu trong tương lai tại bất kỳ bệnh viện công lập nào trên toàn quốc, người hiến máu sẽ được **bồi hoàn miễn phí lượng máu tương đương** tổng số máu mà mình đã từng hiến tặng.
+- **Chế độ bồi dưỡng theo quy định của Bộ Y Tế**:
+  - Được phục vụ suất ăn nhẹ, nước uống giải khát tại chỗ.
+  - Nhận hỗ trợ chi phí đi lại bằng tiền mặt hoặc quà tặng hiện vật có giá trị tương đương theo Thông tư hiện hành của Bộ Y Tế.
+  - Nhận các phần quà lưu niệm chăm sóc sức khỏe ý nghĩa.
+
+---
+

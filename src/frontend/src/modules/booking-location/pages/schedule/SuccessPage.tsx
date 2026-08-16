@@ -19,8 +19,8 @@ export const SuccessPage: React.FC = () => {
       <h1 className="text-[28px] font-bold text-[#271816] tracking-tight mb-2">
         Đặt lịch thành công!
       </h1>
-      <p className="text-[15px] text-[#6c757d] mb-8 max-w-[400px]">
-        Lịch hẹn của bạn đã được xác nhận. Cảm ơn bạn đã tham gia hiến máu cứu người.
+      <p className="text-[15px] text-[#6c757d] mb-8 max-w-[460px]">
+        Lịch hẹn của bạn đang chờ Trung Tâm Hiến Máu xác nhận. Cảm ơn bạn đã tham gia hiến máu cứu người.
       </p>
 
       <div className="bg-[#f8f9fa] border border-[#f1f3f5] rounded-xl p-6 w-full mb-8">

@@ -164,22 +164,11 @@ export const apiService = {
         }
         return { data: rawData as CampaignData[] };
       }
+      return { data: [] };
     } catch (err) {
-      console.warn('[apiService] Backend getCampaigns failed, falling back to local dataset:', err);
+      console.warn('[apiService] Backend getCampaigns failed:', err);
+      return { data: [] };
     }
-
-    await delay();
-    let result = [...campaigns];
-    if (params?.search) {
-      const q = params.search.toLowerCase();
-      result = result.filter(
-        (c) => c.name.toLowerCase().includes(q) || c.venue.toLowerCase().includes(q)
-      );
-    }
-    if (params?.status && params.status !== 'All') {
-      result = result.filter((c) => c.status === params.status);
-    }
-    return { data: result };
   },
 
   async getCampaignById(id: string) {
@@ -246,7 +235,15 @@ export const apiService = {
   async getRegistrations(campaignId: string, search?: string, status?: string) {
     try {
       const endpoint = `/campaigns/${campaignId || 'all'}/registrations`;
-      const res = await apiClient.get(endpoint);
+      const queryParams: any = { limit: 100, page: 1 };
+      if (status && status !== 'All') {
+        queryParams.status = status;
+      }
+      if (search && search.trim()) {
+        queryParams.search = search.trim();
+      }
+
+      const res = await apiClient.get(endpoint, { params: queryParams });
       const rawList = Array.isArray(res.data) ? res.data : (res.data?.items || res.data?.data || null);
       if (rawList && Array.isArray(rawList)) {
         let result = rawList.map((item: any) => {
@@ -273,7 +270,10 @@ export const apiService = {
 
           return {
             _id: item._id || item.id || item.registrationId,
+            registrationId: item.registrationId || item._id || item.id,
             campaignId: item.campaignId?._id || item.campaignId || campaignId,
+            campaignName: item.campaignName || item.campaignId?.name || item.campaign?.name || 'Chiến dịch Hiến máu',
+            campaignVenue: item.campaignVenue || item.venue || item.campaignId?.venue || item.campaign?.venue || '',
             donorId: donorObj._id || donorObj.donorId || item.donorId || '',
             donorName,
             donorBloodType,
@@ -297,16 +297,19 @@ export const apiService = {
               r.status !== 'no-show'
           );
         } else {
-          result = result.filter((r: any) => r.status === status);
+          result = result.filter((r: any) => String(r.status).toLowerCase() === status.toLowerCase());
         }
 
         if (search) {
           const q = search.toLowerCase();
           result = result.filter(
             (r: any) =>
-              r._id.toLowerCase().includes(q) ||
-              r.donorName.toLowerCase().includes(q) ||
-              r.donorIdCard.includes(q)
+              (r._id && String(r._id).toLowerCase().includes(q)) ||
+              (r.donorName && String(r.donorName).toLowerCase().includes(q)) ||
+              (r.donorIdCard && String(r.donorIdCard).includes(q)) ||
+              (r.donorPhone && String(r.donorPhone).includes(q)) ||
+              (r.campaignName && String(r.campaignName).toLowerCase().includes(q)) ||
+              (r.campaignVenue && String(r.campaignVenue).toLowerCase().includes(q))
           );
         }
         return result as RegistrationData[];

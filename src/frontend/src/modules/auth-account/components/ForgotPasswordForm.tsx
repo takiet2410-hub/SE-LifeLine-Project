@@ -5,15 +5,19 @@ interface ForgotPasswordFormProps {
   onSubmit: (data: { idDocumentNumber: string; email: string }) => Promise<void>;
   isLoading: boolean;
   errorMessage: string | null;
+  initialEmail?: string;
+  initialIdDocumentNumber?: string;
 }
 
 export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
   onSubmit,
   isLoading,
   errorMessage,
+  initialEmail = '',
+  initialIdDocumentNumber = '',
 }) => {
-  const [idDocumentNumber, setIdDocumentNumber] = useState('');
-  const [email, setEmail] = useState('');
+  const [idDocumentNumber, setIdDocumentNumber] = useState(initialIdDocumentNumber);
+  const [email, setEmail] = useState(initialEmail);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {

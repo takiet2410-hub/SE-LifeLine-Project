@@ -21,18 +21,18 @@ function isPasswordMissingDigitOrLetter(password: string) {
 
 export function RegisterCitizenIdPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [email, setEmail] = useState('example@lifeline.org');
-  const [phoneNumber, setPhoneNumber] = useState('0901234567');
-  const [password, setPassword] = useState('LifeLine@2026!');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [statusTone, setStatusTone] = useState<'default' | 'success' | 'error'>('default');
 
   const [extractedIdentity, setExtractedIdentity] = useState({
-    fullName: 'NGUYEN VAN AN',
-    dateOfBirth: '01/01/1990',
-    idNumber: '001090XXXXXX',
+    fullName: '',
+    dateOfBirth: '',
+    idNumber: '',
     permanentAddress: '',
   });
   const [differentLivingAddress, setDifferentLivingAddress] = useState(false);
@@ -51,7 +51,7 @@ export function RegisterCitizenIdPage() {
 
   const passwordTooShort = isPasswordTooShort(password);
   const passwordMissingRequirements = isPasswordMissingDigitOrLetter(password);
-  const passwordError = passwordTooShort || passwordMissingRequirements;
+  const passwordError = password.length > 0 && (passwordTooShort || passwordMissingRequirements);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -106,6 +106,18 @@ export function RegisterCitizenIdPage() {
     if (!selectedFile || !qrPayload) {
       setStatusTone('error');
       setStatusMessage('Please upload a valid CCCD QR image first.');
+      return;
+    }
+
+    if (!email.trim() || !phoneNumber.trim() || !password.trim()) {
+      setStatusTone('error');
+      setStatusMessage('Please fill in all required fields (Email, Phone number, Password).');
+      return;
+    }
+
+    if (isPasswordTooShort(password) || isPasswordMissingDigitOrLetter(password)) {
+      setStatusTone('error');
+      setStatusMessage('Please enter a valid password meeting all security requirements.');
       return;
     }
 
@@ -273,7 +285,8 @@ export function RegisterCitizenIdPage() {
                       <input
                         value={extractedIdentity.fullName}
                         readOnly
-                        className="w-full border-0 bg-transparent p-0 text-base font-medium text-[#343A40] outline-none"
+                        placeholder="NGUYỄN VĂN A"
+                        className="w-full border-0 bg-transparent p-0 text-base font-medium text-[#343A40] placeholder:text-[#9CA3AF] outline-none"
                       />
                       <svg
                         width="12"
@@ -300,7 +313,8 @@ export function RegisterCitizenIdPage() {
                         <input
                           value={extractedIdentity.dateOfBirth}
                           readOnly
-                          className="w-full border-0 bg-transparent p-0 text-base font-medium text-[#343A40] outline-none"
+                          placeholder="01/01/1990"
+                          className="w-full border-0 bg-transparent p-0 text-base font-medium text-[#343A40] placeholder:text-[#9CA3AF] outline-none"
                         />
                         <svg
                           width="12"
@@ -326,7 +340,8 @@ export function RegisterCitizenIdPage() {
                         <input
                           value={extractedIdentity.idNumber}
                           readOnly
-                          className="w-full border-0 bg-transparent p-0 text-base font-medium text-[#343A40] outline-none"
+                          placeholder="001090XXXXXX"
+                          className="w-full border-0 bg-transparent p-0 text-base font-medium text-[#343A40] placeholder:text-[#9CA3AF] outline-none"
                         />
                         <svg
                           width="12"
@@ -352,9 +367,10 @@ export function RegisterCitizenIdPage() {
                     </div>
                     <div className="relative flex min-h-11 w-full items-start overflow-hidden rounded-lg border border-[#DEE2E6] bg-[#F1F3F5] px-4 py-[11px]">
                       <input
-                        value={extractedIdentity.permanentAddress || 'Trích xuất từ mã QR CCCD'}
+                        value={extractedIdentity.permanentAddress}
                         readOnly
-                        className="w-full border-0 bg-transparent p-0 text-xs sm:text-sm font-medium text-[#343A40] outline-none"
+                        placeholder="Trích xuất từ mã QR CCCD"
+                        className="w-full border-0 bg-transparent p-0 text-xs sm:text-sm font-medium text-[#343A40] placeholder:text-[#9CA3AF] outline-none"
                       />
                     </div>
                   </div>
@@ -475,7 +491,7 @@ export function RegisterCitizenIdPage() {
                       <input
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
-                        className="w-full border-0 bg-transparent p-0 text-base text-[#6B7280] outline-none"
+                        className="w-full border-0 bg-transparent p-0 text-base text-[#271816] placeholder:text-[#9CA3AF] outline-none"
                         type="email"
                         autoComplete="email"
                         placeholder="example@lifeline.org"
@@ -494,10 +510,10 @@ export function RegisterCitizenIdPage() {
                       <input
                         value={phoneNumber}
                         onChange={(event) => setPhoneNumber(event.target.value)}
-                        className="w-full border-0 bg-transparent p-0 text-base text-[#6B7280] outline-none"
+                        className="w-full border-0 bg-transparent p-0 text-base text-[#271816] placeholder:text-[#9CA3AF] outline-none"
                         type="tel"
                         autoComplete="tel"
-                        placeholder="900 000 000"
+                        placeholder="0901234567"
                       />
                     </div>
                   </div>
@@ -506,14 +522,14 @@ export function RegisterCitizenIdPage() {
                     <div className="flex flex-col pb-px">
                       <p className="text-xs font-medium leading-[16.8px] text-[#343A40]">Password</p>
                     </div>
-                    <div className="relative flex h-11 w-full items-start overflow-hidden rounded-lg border border-[#BA1A1A] bg-white px-4 py-[11px] shadow-[0_0_0_2px_rgba(186,26,26,0.10)]">
+                    <div className={`relative flex h-11 w-full items-start overflow-hidden rounded-lg border ${passwordError ? 'border-[#BA1A1A] shadow-[0_0_0_2px_rgba(186,26,26,0.10)]' : 'border-[#DEE2E6]'} bg-white px-4 py-[11px]`}>
                       <input
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
-                        className="w-full border-0 bg-transparent p-0 text-base text-[#271816] outline-none"
+                        className="w-full border-0 bg-transparent p-0 text-base text-[#271816] placeholder:text-[#9CA3AF] outline-none"
                         type={showPassword ? 'text' : 'password'}
                         autoComplete="new-password"
-                        placeholder="Enter password"
+                        placeholder="LifeLine@2026! (tối thiểu 8 ký tự)"
                       />
                       <svg
                         onClick={() => setShowPassword(!showPassword)}
@@ -526,13 +542,15 @@ export function RegisterCitizenIdPage() {
                       >
                         <path
                           d="M15.1 10.5L13.65 9.05C13.8 8.26667 13.575 7.53333 12.975 6.85C12.375 6.16667 11.6 5.9 10.65 6.05L9.2 4.6C9.48333 4.46667 9.77083 4.36667 10.0625 4.3C10.3542 4.23333 10.6667 4.2 11 4.2C12.25 4.2 13.3125 4.6375 14.1875 5.5125C15.0625 6.3875 15.5 7.45 15.5 8.7C15.5 9.03333 15.4667 9.34583 15.4 9.6375C15.3333 9.92917 15.2333 10.2167 15.1 10.5ZM18.3 13.65L16.85 12.25C17.4833 11.7667 18.0458 11.2375 18.5375 10.6625C19.0292 10.0875 19.45 9.43333 19.8 8.7C18.9667 7.01667 17.7708 5.67917 16.2125 4.6875C14.6542 3.69583 12.9167 3.2 11 3.2C10.5167 3.2 10.0417 3.23333 9.575 3.3C9.10833 3.36667 8.65 3.46667 8.2 3.6L6.65 2.05C7.33333 1.76667 8.03333 1.55417 8.75 1.4125C9.46667 1.27083 10.2167 1.2 11 1.2C13.5167 1.2 15.7583 1.89583 17.725 3.2875C19.6917 4.67917 21.1167 6.48333 22 8.7C21.6167 9.68333 21.1125 10.5958 20.4875 11.4375C19.8625 12.2792 19.1333 13.0167 18.3 13.65ZM18.8 19.8L14.6 15.65C14.0167 15.8333 13.4292 15.9708 12.8375 16.0625C12.2458 16.1542 11.6333 16.2 11 16.2C8.48333 16.2 6.24167 15.5042 4.275 14.1125C2.30833 12.7208 0.883333 10.9167 0 8.7C0.35 7.81667 0.791667 6.99583 1.325 6.2375C1.85833 5.47917 2.46667 4.8 3.15 4.2L0.4 1.4L1.8 0L20.2 18.4L18.8 19.8ZM4.55 5.6C4.06667 6.03333 3.625 6.50833 3.225 7.025C2.825 7.54167 2.48333 8.1 2.2 8.7C3.03333 10.3833 4.22917 11.7208 5.7875 12.7125C7.34583 13.7042 9.08333 14.2 11 14.2C11.3333 14.2 11.6583 14.1792 11.975 14.1375C12.2917 14.0958 12.6167 14.05 12.95 14L12.05 13.05C11.8667 13.1 11.6917 13.1375 11.525 13.1625C11.3583 13.1875 11.1833 13.2 11 13.2C9.75 13.2 8.6875 12.7625 7.8125 11.8875C6.9375 11.0125 6.5 9.95 6.5 8.7C6.5 8.51667 6.5125 8.34167 6.5375 8.175C6.5625 8.00833 6.6 7.83333 6.65 7.65L4.55 5.6Z"
-                          fill="#BA1A1A"
+                          fill={passwordError ? '#BA1A1A' : '#A3A3A3'}
                         />
                       </svg>
                     </div>
-                    <div className="flex items-center gap-1 pt-1">
-                      <p className="text-[11.5px] font-medium leading-[16px] text-[#BA1A1A]">{passwordError ? 'Password must be ≥8 chars, include uppercase, lowercase, number, and special char (@$!%*?&).' : ''}</p>
-                    </div>
+                    {passwordError && (
+                      <div className="flex items-center gap-1 pt-1">
+                        <p className="text-[11.5px] font-medium leading-[16px] text-[#BA1A1A]">Password must be ≥8 chars, include uppercase, lowercase, number, and special char (@$!%*?&).</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

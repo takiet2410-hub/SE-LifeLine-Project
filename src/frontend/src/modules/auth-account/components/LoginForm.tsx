@@ -295,45 +295,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* ID Document Number Input */}
         <div className="space-y-1.5 text-left">
-          <div className="flex items-center justify-between">
-            <label
-              htmlFor="idDocumentNumber"
-              className="block text-[13px] font-semibold text-[#271816]"
-            >
-              Số CCCD (12 chữ số)
-            </label>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleSelectTestPreset('donor_q1')}
-                className="text-[11px] font-bold text-[#93000b] hover:underline flex items-center gap-1 cursor-pointer"
-                title="Tải nhanh tài khoản Mẫu Donor"
-              >
-                <Zap className="w-3 h-3 text-[#93000b]" />
-                <span>Donor Q.1</span>
-              </button>
-              <span className="text-[#a3a3a3] text-[10px]">•</span>
-              <button
-                type="button"
-                onClick={() => handleSelectTestPreset('hospital_cho_ray')}
-                className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer"
-                title="Tải nhanh tài khoản Mẫu Hospital"
-              >
-                <Zap className="w-3 h-3 text-emerald-700" />
-                <span>BV Chợ Rẫy</span>
-              </button>
-              <span className="text-[#a3a3a3] text-[10px]">•</span>
-              <button
-                type="button"
-                onClick={() => handleSelectTestPreset('blood_center')}
-                className="text-[11px] font-bold text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
-                title="Tải nhanh tài khoản Mẫu Staff"
-              >
-                <Zap className="w-3 h-3 text-blue-700" />
-                <span>TT Máu</span>
-              </button>
-            </div>
-          </div>
+          <label
+            htmlFor="idDocumentNumber"
+            className="block text-[13px] font-semibold text-[#271816]"
+          >
+            Số CCCD (12 chữ số)
+          </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#a3a3a3]">
               <Mail className="w-4 h-4" />

@@ -214,12 +214,15 @@ export class AuthAccountService {
       { expiresIn: '30m' }
     );
 
+    const profile = await DonorProfile.findOne({ userId: user._id }).lean();
+
     return {
       accessToken,
       user: {
         id: user._id,
         email: user.email,
         idDocumentNumber: user.idDocumentNumber,
+        fullName: profile?.fullName || '',
         role: activeRole,
         roles: userRoles
       }

@@ -60,8 +60,8 @@ export class ChatbotController {
         conversationId: conversation._id,
         clientRequestId: { $ne: clientRequestId + '-user' }
       })
-        .sort({ sentAt: 1 })
-        .limit(20);
+        .sort({ sentAt: 1, _id: 1 })
+        .limit(30);
         
       history = historyRaw.map(msg => ({
         role: msg.sender === 'User' ? 'user' : 'model',

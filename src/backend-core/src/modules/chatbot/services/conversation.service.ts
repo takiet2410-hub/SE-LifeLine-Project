@@ -37,29 +37,7 @@ export class ConversationService {
         }
       }
 
-      // 2. If no active user conversation, check if there's an active anonymous conversation on this browser to adopt
-      const activeAnonConversation = await ChatConversation.findOne({
-        anonymousSessionIdHash,
-        donorId: null,
-        status: 'Active'
-      });
-
-      if (activeAnonConversation) {
-        const timeSinceLastActivity = now.getTime() - activeAnonConversation.lastActivityAt.getTime();
-        if (timeSinceLastActivity <= TIMEOUT_MS) {
-          // Adopt the anonymous conversation for this logged-in user
-          activeAnonConversation.donorId = userObjectId;
-          activeAnonConversation.anonymousSessionIdHash = undefined; // clear hash to avoid index conflicts
-          activeAnonConversation.lastActivityAt = now;
-          await activeAnonConversation.save();
-          return activeAnonConversation;
-        } else {
-          activeAnonConversation.status = 'TimedOut';
-          await activeAnonConversation.save();
-        }
-      }
-
-      // 3. Otherwise create a brand new active conversation for the user
+      // 2. Strictly create a fresh active conversation for this user (NO merging/adopting anonymous session)
       activeConversation = await ChatConversation.create({
         donorId: userObjectId,
         startedAt: now,
@@ -69,7 +47,7 @@ export class ConversationService {
 
       return activeConversation;
     } else {
-      // Anonymous user flow
+      // Anonymous user flow strictly isolated
       let activeConversation = await ChatConversation.findOne({
         anonymousSessionIdHash,
         donorId: null,
@@ -117,6 +95,7 @@ export class ConversationService {
       query.donorId = new Types.ObjectId(donorId);
     } else {
       query.anonymousSessionIdHash = anonymousSessionIdHash;
+      query.donorId = null;
     }
 
     // Process timeouts before returning history

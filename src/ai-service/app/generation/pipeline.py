@@ -70,12 +70,16 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
     donor_context = request_data.get("donorContext", {})
     history_raw = request_data.get("history", [])
     
-    # 1. Filter out error messages and system messages, then truncate to save context
-    valid_history = [
-        msg for msg in history_raw 
-        if not ("Rất tiếc" in msg["parts"][0]["text"] or "Quota Exceeded" in msg["parts"][0]["text"])
-    ]
-    history_truncated = valid_history[-8:] if len(valid_history) > 8 else valid_history
+    # 1. Filter out error messages and system messages, then truncate to save context (keep up to 20 messages / 10 turns)
+    valid_history = []
+    for msg in history_raw:
+        if isinstance(msg, dict) and "parts" in msg and msg["parts"]:
+            first_part = msg["parts"][0]
+            part_text = first_part.get("text", "") if isinstance(first_part, dict) else str(first_part)
+            if part_text and not ("Rất tiếc" in part_text or "Quota Exceeded" in part_text or "⚠️" in part_text):
+                valid_history.append(msg)
+
+    history_truncated = valid_history[-20:] if len(valid_history) > 20 else valid_history
     
     # 2. Fast Intent Routing for everyday chat
     if donor_context:
@@ -84,18 +88,19 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
         print(f" -> bloodType: {donor_context.get('bloodType')}")
         print(f" -> Active Campaigns: {len(donor_context.get('nearbyCampaigns', []))}")
         print(f" -> Donation History: {len(donor_context.get('donationHistory', []))} records")
+        print(f" -> History Turns: {len(history_truncated)}")
     else:
-        print(f"\n[DEBUG CONTEXT] Anonymous Guest (No Donor Context injected)")
+        print(f"\n[DEBUG CONTEXT] Anonymous Guest (History Turns: {len(history_truncated)})")
 
     is_greeting = False
     lower_query = query.lower().strip()
     greeting_keywords = ["hi", "hello", "xin chào", "chào", "alo", "ê", "có ai không", "tạm biệt", "bye", "cảm ơn", "thanks", "khoẻ không", "khỏe không"]
     
-    # Only match if the query is exactly a greeting, or starts with a greeting word + space
-    if lower_query in greeting_keywords or any(lower_query.startswith(k + " ") for k in ["hi", "hello", "chào", "xin chào"]):
+    # Only match if the query is strictly a greeting, and only if there's no ongoing medical/detail multi-turn context
+    if lower_query in greeting_keywords or (len(history_truncated) == 0 and any(lower_query.startswith(k + " ") for k in ["hi", "hello", "chào", "xin chào"])):
         is_greeting = True
-    else:
-        # LLM Router check
+    elif len(history_truncated) == 0:
+        # LLM Router check (only for initial turn to avoid misclassifying multi-turn contextual follow-ups)
         try:
             primary_model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
             fallback_model = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
@@ -112,9 +117,15 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
 
     donor_is_auth = donor_context.get("isAuthenticated", False) if donor_context else False
     
-    # 3. Check Semantic Cache (Only for generic guest queries to ensure privacy)
+    # 3. Check Semantic Cache (Only for generic knowledge FAQ queries, never for personal statements or multi-turn)
+    personal_indicators = [
+        "tôi", "mình", "em", "anh", "tên", "tuổi", "nhóm máu", "của tôi", "nặng", "kg", 
+        "uống", "thuốc", "bệnh", "đau", "triệu chứng", "ở gần", "quận", "huyện", "my", "i am", "i'm"
+    ]
+    is_personal_query = any(k in lower_query for k in personal_indicators)
+    
     cached_response = None
-    if not is_greeting and not donor_is_auth:
+    if not is_greeting and not donor_is_auth and len(history_truncated) == 0 and not is_personal_query:
         cached_response = get_cached_response(query)
         if cached_response:
             data = json.dumps({"text": cached_response}, ensure_ascii=False)
@@ -139,10 +150,12 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
     # Convert history
     chat_history = []
     for msg in history_truncated:
+        first_part = msg["parts"][0]
+        text_content = first_part.get("text", "") if isinstance(first_part, dict) else str(first_part)
         if msg.get("role") == "user":
-            chat_history.append(HumanMessage(content=msg["parts"][0]["text"]))
+            chat_history.append(HumanMessage(content=text_content))
         else:
-            chat_history.append(AIMessage(content=msg["parts"][0]["text"]))
+            chat_history.append(AIMessage(content=text_content))
             
     # Try primary model first, fallback to lite model if 429 Quota Exceeded occurs
     primary_model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
@@ -205,8 +218,8 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
                     yield f"data: {data}\n\n"
                     stream_success = True
                 
-                # Save successful generic agent responses to Semantic Cache
-                if stream_success and not donor_is_auth and full_agent_response:
+                # Save successful generic agent responses to Semantic Cache (only for non-personal standalone FAQ queries)
+                if stream_success and not donor_is_auth and full_agent_response and len(history_truncated) == 0 and not is_personal_query:
                     save_to_cache(query, full_agent_response)
             
             if stream_success:

@@ -11,6 +11,9 @@ jest.mock('../services/ai-service.client');
 jest.mock('../services/conversation.service');
 jest.mock('../services/formatter.service');
 jest.mock('../models/chat-message.model');
+jest.mock('../../admin/services/admin-toggle.service', () => ({
+  isFeatureEnabled: jest.fn().mockResolvedValue(true)
+}));
 
 const app = express();
 app.use(express.json());

@@ -1,28 +1,35 @@
 import { FormatterService } from '../services/formatter.service';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { Campaign } from '../../campaign/models/campaign.model';
+import { Appointment } from '../../booking/models/appointment.model';
+import { BookingService } from '../../booking/services/booking.service';
 
 describe('FormatterService - Chatbot Donor Context & Privacy', () => {
-  it('should format guest donor context correctly without authentication', async () => {
-    jest.spyOn(Campaign, 'find').mockReturnValue({
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(BookingService, 'searchLocations').mockResolvedValue([
+      {
+        _id: '507f1f77bcf86cd799439011',
+        name: 'Chiến dịch Giọt Hồng Hè 2026',
+        venue: 'Bệnh viện Chợ Rẫy',
+        fullAddress: '201B Nguyễn Chí Thanh, P.12, Q.5, TP.HCM',
+        startDateTime: new Date('2026-08-15'),
+        endDateTime: new Date('2026-08-20'),
+        targetBloodGroups: ['O+', 'A+'],
+        capacity: 100,
+        registeredCount: 20,
+        status: 'Active',
+      } as any
+    ]);
+    jest.spyOn(Appointment, 'find').mockReturnValue({
+      populate: jest.fn().mockReturnThis(),
       sort: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
-      lean: jest.fn().mockResolvedValue([
-        {
-          _id: '507f1f77bcf86cd799439011',
-          name: 'Chiến dịch Giọt Hồng Hè 2026',
-          venue: 'Bệnh viện Chợ Rẫy',
-          fullAddress: '201B Nguyễn Chí Thanh, P.12, Q.5, TP.HCM',
-          startDateTime: new Date('2026-08-15'),
-          endDateTime: new Date('2026-08-20'),
-          targetBloodGroups: ['O+', 'A+'],
-          capacity: 100,
-          registeredCount: 20,
-          status: 'Active',
-        },
-      ]),
+      lean: jest.fn().mockResolvedValue([]),
     } as any);
+  });
 
+  it('should format guest donor context correctly without authentication', async () => {
     const context = await FormatterService.prepareDonorContext(null);
 
     expect(context.isAuthenticated).toBe(false);
@@ -43,12 +50,6 @@ describe('FormatterService - Chatbot Donor Context & Privacy', () => {
       identityNumber: '123456789012',
       homeAddress: '123 Main St',
     };
-
-    jest.spyOn(Campaign, 'find').mockReturnValue({
-      sort: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      lean: jest.fn().mockResolvedValue([]),
-    } as any);
 
     jest.spyOn(DonorProfile, 'findOne').mockResolvedValue(mockDonor as any);
 

@@ -78,7 +78,8 @@ export class FormatterService {
       };
     }
 
-    const donor = await DonorProfile.findOne({ userId: donorId });
+    const userObjId = Types.ObjectId.isValid(donorId) ? new Types.ObjectId(donorId) : donorId;
+    const donor = await DonorProfile.findOne({ userId: userObjId });
     if (!donor) {
       return {
         isAuthenticated: false,
@@ -107,7 +108,7 @@ export class FormatterService {
     // Fetch appointment history
     let donationHistory: any[] = [];
     try {
-      const appointments = await Appointment.find({ donorId })
+      const appointments = await Appointment.find({ donorId: userObjId })
         .populate('campaignId', 'name venue fullAddress')
         .sort({ appointmentDate: -1 })
         .limit(10)
@@ -125,11 +126,15 @@ export class FormatterService {
       console.error('[FormatterService] Failed to fetch appointment history:', err);
     }
 
+    const isUnknownBlood = !donor.bloodType || donor.bloodType === 'Unknown';
+
     return {
       isAuthenticated: true,
-      bloodType: donor.bloodType || 'Chưa cập nhật',
-      donorLevel: donor.donorLevel || 'Thành viên',
+      fullName: donor.fullName || 'Người hiến máu',
+      bloodType: isUnknownBlood ? 'Chưa cập nhật' : donor.bloodType,
+      donorLevel: donor.donorLevel ? `Cấp độ ${donor.donorLevel}` : 'Cấp độ 1',
       totalDonations: donor.totalDonations || 0,
+      xp: donor.xp || 0,
       lastDonationDate: donor.lastDonationDate ? donor.lastDonationDate.toISOString().split('T')[0] : null,
       nextEligibleDate: nextEligibleDate ? nextEligibleDate.split('T')[0] : null,
       isEligibleNow: isEligibleNow,

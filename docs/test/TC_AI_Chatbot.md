@@ -24,6 +24,12 @@
 | 8 | CB-UC-01 | `TC_CB01_008` | Chặn truy vấn số lượng máu lưu trữ từ người dùng thường (Inventory Access) | `ChatbotWidget.tsx` | `chatbot.service.test.ts` (`Inventory Restriction`) | High |
 | 9 | CB-UC-01 | `TC_CB01_009` | Hệ thống tự động chuyển sang flash-lite khi API LLM báo lỗi 429 | `ChatbotWidget.tsx` | `chatbot.service.test.ts` (`Fallback 429`) | Medium |
 | 10 | CB-UC-01 | `TC_CB01_010` | Đảm bảo thời gian phản hồi cho các loại truy vấn (NFR-001, NFR-002, NFR-003) | `ChatbotWidget.tsx` | `chatbot.integration.test.ts` (`Performance Check`) | Medium |
+| 11 | CB-UC-01 | `TC_CB01_011` | Ghi nhớ & Nhận diện Nhóm Máu người dùng tự khai báo (Multi-turn Blood Type Memory) | `ChatbotWidget.tsx` | `chatbot.service.test.ts` (`Multi-turn Memory`) | Critical |
+| 12 | CB-UC-01 | `TC_CB01_012` | Suy luận tương thích nhóm máu từ hội thoại trước (Multi-turn Blood Compatibility) | `ChatbotWidget.tsx` | `chatbot.service.test.ts` (`Multi-turn Compatibility`) | High |
+| 13 | CB-UC-01 | `TC_CB01_013` | Gợi ý điểm hiến máu / chiến dịch khớp với nhóm máu đã khai báo (Multi-turn Campaign Search) | `ChatbotWidget.tsx` | `chatbot.integration.test.ts` (`Multi-turn Campaign`) | High |
+| 14 | CB-UC-01 | `TC_CB01_014` | Ghi nhớ điều kiện sức khỏe (cân nặng/tuổi) qua nhiều lượt hỏi (Multi-turn Health Screening) | `ChatbotWidget.tsx` | `chatbot.service.test.ts` (`Multi-turn Health`) | High |
+| 15 | CB-UC-01 | `TC_CB01_015` | Ghi nhớ ngày hiến gần nhất tự khai báo & Quy chuẩn 84 ngày (Multi-turn Donation Interval) | `ChatbotWidget.tsx` | `chatbot.service.test.ts` (`Multi-turn Interval`) | High |
+| 16 | CB-UC-01 | `TC_CB01_016` | Kiểm tra chuỗi hội thoại ngữ cảnh dài liên tục 8 lượt (Deep Multi-Turn Synthesis) | `ChatbotWidget.tsx` | `chatbot.integration.test.ts` (`8-turn Continuous Chain`) | Critical |
 
 ---
 
@@ -226,6 +232,116 @@
     expect(response.usedModel).toBe('flash-lite');
   });
   ```
+
+---
+
+#### `TC_CB01_011`: Ghi nhớ & Nhận diện Nhóm Máu người dùng tự khai báo (Multi-turn Blood Type Memory)
+- **Loại test:** Functional / Multi-turn Dialogue
+- **Độ ưu tiên:** Critical
+- **Yêu cầu:** CB-FR-004, CB-FR-005, Multi-turn Memory
+
+##### 🌐 1. Thao tác & Kiểm thử Giao diện Người dùng (Frontend UI Test):
+- **Component / Màn hình:** `ChatbotWidget.tsx` (có thể test ở chế độ Khách hoặc Đã đăng nhập).
+- **Các bước thực hiện:**
+  1. Mở Chatbot Widget.
+  2. **Lượt 1:** Nhập `"Tôi nhóm máu A+"` và nhấn Gửi.
+  3. Đợi AI phản hồi xong.
+  4. **Lượt 2:** Nhập `"Nhóm máu của tôi là gì?"` và nhấn Gửi.
+- **Kết quả mong đợi trên UI:**
+  - AI ghi nhớ thông tin từ lượt 1 và phản hồi rõ ràng: *"Theo thông tin bạn vừa chia sẻ, nhóm máu của bạn là **A+**."*
+  - Tuyệt đối KHÔNG trả lời là *"Chưa cập nhật"*, *"Unknown"*, hay *"Bạn chưa đăng nhập nên không biết"*.
+
+---
+
+#### `TC_CB01_012`: Suy luận tương thích nhóm máu từ hội thoại trước (Multi-turn Blood Compatibility)
+- **Loại test:** Functional / Medical Logic
+- **Độ ưu tiên:** High
+- **Yêu cầu:** CB-FR-003, Multi-turn Memory
+
+##### 🌐 1. Thao tác & Kiểm thử Giao diện Người dùng (Frontend UI Test):
+- **Component / Màn hình:** `ChatbotWidget.tsx`.
+- **Các bước thực hiện:**
+  1. Mở Chatbot Widget.
+  2. **Lượt 1:** Nhập `"Chào bạn, mình nhóm máu O-"` và nhấn Gửi.
+  3. **Lượt 2:** Nhập `"Tôi có thể hiến máu cho những ai?"` và nhấn Gửi.
+- **Kết quả mong đợi trên UI:**
+  - AI tự động xác định nhóm máu người dùng là **O-** từ lịch sử trò chuyện.
+  - Phản hồi giải thích chính xác: **O-** là nhóm máu hiến phổ thông (universal donor), có thể hiến hồng cầu/toàn phần cho tất cả các nhóm máu (**O+, O-, A+, A-, B+, B-, AB+, AB-**).
+  - Định dạng hiển thị sạch sẽ (**O-**, **A+**, không chứa ký tự lỗi `$O^-$`).
+
+---
+
+#### `TC_CB01_013`: Gợi ý điểm hiến máu / chiến dịch khớp với nhóm máu đã khai báo (Multi-turn Campaign Search)
+- **Loại test:** Functional / Campaign Integration
+- **Độ ưu tiên:** High
+- **Yêu cầu:** CB-FR-003, CB-FR-004
+
+##### 🌐 1. Thao tác & Kiểm thử Giao diện Người dùng (Frontend UI Test):
+- **Component / Màn hình:** `ChatbotWidget.tsx`.
+- **Các bước thực hiện:**
+  1. Mở Chatbot Widget.
+  2. **Lượt 1:** Nhập `"Mình có nhóm máu B+"` và nhấn Gửi.
+  3. **Lượt 2:** Nhập `"Tìm cho tôi điểm hiến máu gần nhất tiếp nhận nhóm máu này"` và nhấn Gửi.
+- **Kết quả mong đợi trên UI:**
+  - AI ghi nhớ nhóm máu **B+** của người dùng.
+  - Gọi công cụ tìm kiếm chiến dịch tiếp nhận máu **B+**.
+  - Hiển thị danh sách điểm hiến máu dưới dạng thẻ tương tác `[CAMPAIGN_CARD:...]` hoặc kèm nút CTA đặt lịch `[SCHEDULE_PAGE_CTA]`.
+
+---
+
+#### `TC_CB01_014`: Ghi nhớ điều kiện sức khỏe (cân nặng/tuổi) qua nhiều lượt hỏi (Multi-turn Health Screening)
+- **Loại test:** Functional / Health Logic
+- **Độ ưu tiên:** High
+- **Yêu cầu:** CB-FR-003, CB-FR-006
+
+##### 🌐 1. Thao tác & Kiểm thử Giao diện Người dùng (Frontend UI Test):
+- **Component / Màn hình:** `ChatbotWidget.tsx`.
+- **Các bước thực hiện:**
+  1. Mở Chatbot Widget.
+  2. **Lượt 1:** Nhập `"Tôi 22 tuổi, nặng 42kg"` và nhấn Gửi.
+  3. **Lượt 2:** Nhập `"Tôi có đủ điều kiện để hiến máu không?"` và nhấn Gửi.
+- **Kết quả mong đợi trên UI:**
+  - AI nhớ thông tin tuổi (22) và cân nặng (42kg) từ lượt 1.
+  - Phản hồi: Thông báo **Chưa đủ điều kiện** vì cân nặng dưới 45kg (theo quy định hiến máu tại Việt Nam cần tối thiểu 42-45kg tùy loại hình, phổ thông là >= 45kg).
+
+---
+
+#### `TC_CB01_015`: Ghi nhớ ngày hiến gần nhất tự khai báo & Quy chuẩn 84 ngày (Multi-turn Donation Interval)
+- **Loại test:** Functional / Business Rule
+- **Độ ưu tiên:** High
+- **Yêu cầu:** BR-003, Multi-turn Memory
+
+##### 🌐 1. Thao tác & Kiểm thử Giao diện Người dùng (Frontend UI Test):
+- **Component / Màn hình:** `ChatbotWidget.tsx`.
+- **Các bước thực hiện:**
+  1. Mở Chatbot Widget.
+  2. **Lượt 1:** Nhập `"Lần gần nhất tôi đi hiến máu là ngày 10/08/2026"` và nhấn Gửi.
+  3. **Lượt 2:** Nhập `"Hôm nay tôi có đi hiến máu tiếp được không?"` và nhấn Gửi.
+- **Kết quả mong đợi trên UI:**
+  - AI phân tích khoảng cách ngày giữa 10/08/2026 và hiện tại (chưa đủ 84 ngày).
+  - Phản hồi: Nhắc nhở người dùng cần nghỉ ngơi và chờ đủ tối thiểu 84 ngày đối với hiến máu toàn phần trước khi đăng ký lần tiếp theo.
+
+#### `TC_CB01_016`: Kiểm tra chuỗi hội thoại ngữ cảnh dài liên tục 8 lượt (Deep Multi-Turn Context Retention & Synthesis)
+- **Loại test:** Functional / Multi-Turn Continuous Dialogue & Cross-Turn Reasoning
+- **Độ ưu tiên:** Critical
+- **Yêu cầu:** CB-FR-004, CB-FR-005, Multi-Turn Synthesis
+
+##### 🌐 1. Thao tác & Kiểm thử Giao diện Người dùng (Frontend UI Test):
+- **Component / Màn hình:** `ChatbotWidget.tsx`.
+- **Chuỗi 8 lượt chat liên tục:**
+  1. **Lượt 1:** `Xin chào, tôi tên là Minh, 25 tuổi.`
+  2. **Lượt 2:** `Tôi nặng 58kg và nhóm máu B+.`
+  3. **Lượt 3:** `Hôm qua tôi có uống 1 viên Panadol vì đau đầu nhẹ, hôm nay đã khỏe hẳn.`
+  4. **Lượt 4:** `Tôi đang ở gần khu vực Quận 5, TP.HCM.`
+  5. **Lượt 5:** `Với những thông tin tôi vừa chia sẻ từ đầu đến giờ, tôi có đủ điều kiện đi hiến máu hôm nay không?`
+  6. **Lượt 6:** `Điểm hiến máu gần khu vực của tôi có những nơi nào?`
+  7. **Lượt 7:** `Người có nhóm máu như tôi có thể hiến máu cho những ai?`
+  8. **Lượt 8:** `Hãy tóm tắt lại toàn bộ thông tin của tôi và các tư vấn bạn đã đưa ra trong cuộc trò chuyện này.`
+- **Kết quả mong đợi trên UI:**
+  - **Ở Lượt 5:** AI tổng hợp toàn bộ các dữ kiện đã cung cấp từ Lượt 1 - Lượt 4 (Minh, 25 tuổi, 58kg $\ge$ 45kg, B+, đã uống Panadol hôm qua và hết đau đầu) để tư vấn điều kiện sức khỏe.
+  - **Ở Lượt 6:** AI liên kết khu vực đã cung cấp ở Lượt 4 (Quận 5, TP.HCM) để tìm và gợi ý điểm hiến máu gần nhất (ví dụ: Bệnh viện Truyền máu Huyết học, BV Chợ Rẫy).
+  - **Ở Lượt 7:** AI nhớ nhóm máu **B+** từ Lượt 2 và trả lời chính xác khả năng hiến cho nhóm **B+** và **AB+**.
+  - **Ở Lượt 8:** AI tóm tắt đầy đủ, mạch lạc toàn bộ thông tin cá nhân (Tên, Tuổi, Cân nặng, Nhóm máu, Khu vực) và các tư vấn đã cung cấp từ đầu đến cuối cuộc hội thoại mà không bị sót dữ liệu nào.
 
 ---
 

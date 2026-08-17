@@ -10,7 +10,7 @@ export const ResetSuccessPage: React.FC = () => {
       <AuthHeader />
 
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 md:py-16">
-        <div className="w-full max-w-[440px] bg-white border border-[#f1f3f5] rounded-xl p-10 shadow-sm transition-all hover:shadow-md flex flex-col items-center text-center">
+        <div className="w-full max-w-[440px] bg-white border border-[#f1f3f5] rounded-xl p-6 sm:p-10 shadow-sm transition-all hover:shadow-md flex flex-col items-center text-center">
           <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-6">
             <CheckCircle2 className="w-8 h-8 text-[#16a34a]" />
           </div>

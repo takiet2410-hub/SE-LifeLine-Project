@@ -4,7 +4,7 @@ import { sosApi, type SOSRequest } from '../services/sosApi';
 import { SOSStatusBadge } from '../components/SOSStatusBadge';
 import { SOSTimeline } from '../components/SOSTimeline';
 import { HospitalMapModal } from '../components/HospitalMapModal';
-import { ArrowLeft, User, Calendar, Hospital, Activity, AlertCircle, MapPin, Phone, CheckCircle, Package, UserCheck, Truck, Clock, Sparkles } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Hospital, Activity, AlertCircle, MapPin, Phone, CheckCircle, Package, UserCheck, Truck, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { FulfillSOSModal } from '../components/FulfillSOSModal';

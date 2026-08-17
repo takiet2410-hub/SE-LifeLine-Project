@@ -14,7 +14,7 @@ import { seedMockLocationData } from './modules/sos-request/jobs/seed-mock-data'
 import cookieParser from 'cookie-parser';
 
 // BullMQ Workers & Queues
-import { startScheduledPublisherJob } from './modules/content/jobs/scheduled-publisher.processor';
+import './modules/content/jobs/scheduled-publisher.processor';
 import './modules/notification/jobs/notification.processor';
 import './modules/sos-request/jobs/sos-evaluation.processor';
 
@@ -30,9 +30,6 @@ initFirebase();
 
 const app = express();
 
-// Start background scheduled article publisher (repeatable job)
-startScheduledPublisherJob();
-
 // Setup BullBoard Dashboard for local dev
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
@@ -46,9 +43,11 @@ createBullBoard({
 });
 app.use('/admin/queues', serverAdapter.getRouter());
 
-// Seed mock data only in development
-if (process.env.NODE_ENV !== 'production') {
-  seedMockLocationData();
+// Demo seed is opt-in so normal development startup never mutates shared data.
+if (process.env.NODE_ENV !== 'production' && process.env.SEED_DEMO_DATA === 'true') {
+  seedMockLocationData().catch((error) => {
+    console.error('[Seed] Demo data failed:', error);
+  });
 }
 
 // Enable CORS for frontend clients

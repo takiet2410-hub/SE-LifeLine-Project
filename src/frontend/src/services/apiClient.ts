@@ -1,8 +1,20 @@
 import { apiClient } from '../shared/api/apiClient';
 import { notifyNotificationsChanged } from '../utils/notificationEvents';
+import type {
+  ArticleData,
+  BloodBagData,
+  CampaignData,
+  NotificationData,
+  NotificationPreference,
+  RegistrationData,
+} from './mockData';
 
+let unreadCountCache: { token: string | null; value: number; expiresAt: number } | null = null;
+let unreadCountRequest: { token: string | null; promise: Promise<number> } | null = null;
 
-const delay = (ms = 200) => new Promise((resolve) => setTimeout(resolve, ms));
+const invalidateUnreadCountCache = () => {
+  unreadCountCache = null;
+};
 
 export const apiService = {
 
@@ -26,6 +38,7 @@ export const apiService = {
           total: pagination?.total || rawData.length,
         };
       }
+      return { data: [] as NotificationData[], totalPages: 1, total: 0 };
     } catch (err) {
       console.error(err);
       throw err;
@@ -41,12 +54,14 @@ export const apiService = {
       console.error(err);
       throw err;
     }
+    throw new Error('Notification not found');
   },
 
   async markNotificationAsRead(id: string) {
     try {
       const res = await apiClient.patch(`/notifications/${id}/read`);
       const rawData = res.data?.data || res.data;
+      invalidateUnreadCountCache();
       notifyNotificationsChanged();
       if (rawData) return rawData as NotificationData;
     } catch (err) {
@@ -70,6 +85,7 @@ export const apiService = {
       // If no ids passed, mark all unread as read
       const body = ids.length > 0 ? { ids } : { markAllAsRead: true };
       const res = await apiClient.patch('/notifications/read-all', body);
+      invalidateUnreadCountCache();
       notifyNotificationsChanged();
       return res.data;
     } catch (err) {
@@ -81,6 +97,7 @@ export const apiService = {
   async removeNotification(id: string) {
     try {
       await apiClient.delete(`/notifications/${id}`);
+      invalidateUnreadCountCache();
       notifyNotificationsChanged();
     } catch (err) {
       console.error(err);
@@ -89,13 +106,30 @@ export const apiService = {
   },
 
   async getUnreadCount() {
-    try {
-      const res = await apiClient.get('/notifications/unread-count');
-      return res.data?.count || 0;
-    } catch (err) {
-      console.error(err);
-      throw err;
+    const token = localStorage.getItem('accessToken');
+    if (unreadCountCache && unreadCountCache.token === token && unreadCountCache.expiresAt > Date.now()) {
+      return unreadCountCache.value;
     }
+    if (unreadCountRequest?.token === token) return unreadCountRequest.promise;
+
+    const request = apiClient.get('/notifications/unread-count')
+      .then(res => {
+        const value = res.data?.count || 0;
+        // Header, sidebar and dashboard may request the same count. Share one
+        // short-lived value; mutation APIs explicitly invalidate it immediately.
+        unreadCountCache = { token, value, expiresAt: Date.now() + 15000 };
+        return value;
+      })
+      .catch(err => {
+        console.error(err);
+        throw err;
+      })
+      .finally(() => {
+        if (unreadCountRequest?.promise === request) unreadCountRequest = null;
+      });
+    unreadCountRequest = { token, promise: request };
+
+    return request;
   },
 
   async updateLocation(location: { coordinates: [number, number] }) {
@@ -177,6 +211,7 @@ export const apiService = {
       if (res.data) {
         return res.data as CampaignData;
       }
+      throw new Error('Campaign response did not contain data');
     } catch (err) {
       console.error(err);
       throw err;
@@ -427,6 +462,7 @@ export const apiService = {
           screeningForm: screeningObj || updates.screeningForm,
         } as RegistrationData;
       }
+      throw new Error('Registration update response did not contain data');
     } catch (err) {
       console.error(err);
       throw err;
@@ -560,6 +596,7 @@ export const apiService = {
     try {
       const res = await apiClient.post('/bc/inventory/stock-out', { bagIds, reason, notes });
       if (res.status === 200) return true;
+      return false;
     } catch (err) {
       console.error(err);
       throw err;

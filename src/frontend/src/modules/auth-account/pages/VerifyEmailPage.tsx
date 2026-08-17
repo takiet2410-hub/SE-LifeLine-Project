@@ -63,7 +63,7 @@ export function VerifyEmailPage() {
         </div>
 
         <div className="flex w-full flex-col overflow-hidden rounded-xl border border-[#F1F3F5] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-          <div className="flex w-full flex-col items-start gap-6 p-8">
+          <div className="flex w-full flex-col items-start gap-6 p-5 sm:p-8">
             <div className="flex w-full flex-col items-center gap-2 text-center">
               <p className="text-[22px] font-semibold leading-[28.6px] text-[#271816]">Verify your email</p>
               <p className="text-sm leading-6 text-[#6C757D]">We are checking the activation link from your inbox.</p>

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Search, Filter, RefreshCw } from 'lucide-react';
+import { Plus, Search, Filter, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { articleApi } from '../services/articleApi';
 import { ContentStatsCards } from '../components/ContentStatsCards';
 import { ArticleCard } from '../components/ArticleCard';
 import { DeleteConfirmationModal } from '../components/DeleteConfirmationModal';
 import type { Article, ContentStatsSummary } from '../types/article.types';
+import { getApiErrorMessage } from '../../../shared/api/apiError';
 
 export const ArticleListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ export const ArticleListPage: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 10, totalPages: 1 });
 
   // Delete modal state
   const [selectedArticleToDelete, setSelectedArticleToDelete] = useState<Article | null>(null);
@@ -31,16 +34,19 @@ export const ArticleListPage: React.FC = () => {
     setError(null);
     try {
       const res = await articleApi.getArticles({
+        page,
+        limit: 10,
         category: categoryFilter,
         status: statusFilter,
         search: searchQuery
       });
       if (res.success) {
         setArticles(res.data);
+        setPagination(res.pagination);
         if (res.summary) setSummary(res.summary);
       }
-    } catch (e: any) {
-      setError('Failed to load articles');
+    } catch (e: unknown) {
+      setError(getApiErrorMessage(e, 'Không thể tải danh sách bài viết'));
     } finally {
       setLoading(false);
     }
@@ -48,7 +54,7 @@ export const ArticleListPage: React.FC = () => {
 
   useEffect(() => {
     fetchArticles();
-  }, [categoryFilter, statusFilter, searchQuery]);
+  }, [categoryFilter, statusFilter, searchQuery, page]);
 
   const handleDeleteConfirm = async () => {
     if (!selectedArticleToDelete) return;
@@ -56,24 +62,22 @@ export const ArticleListPage: React.FC = () => {
     try {
       const res = await articleApi.deleteArticle(selectedArticleToDelete._id);
       if (res.success) {
-        setArticles(prev => prev.filter(a => a._id !== selectedArticleToDelete._id));
-        if (summary) {
-          setSummary({
-            ...summary,
-            totalArticles: Math.max(0, summary.totalArticles - 1)
-          });
-        }
         setSelectedArticleToDelete(null);
+        if (articles.length === 1 && page > 1) {
+          setPage(page - 1);
+        } else {
+          await fetchArticles();
+        }
       }
-    } catch (e: any) {
-      alert(e.message || 'Failed to delete article');
+    } catch (e: unknown) {
+      alert(getApiErrorMessage(e, 'Không thể xóa bài viết'));
     } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -99,20 +103,26 @@ export const ArticleListPage: React.FC = () => {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search articles by title..."
             className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-red-500 focus:border-red-500"
           />
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
         </div>
 
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-1.5 text-xs text-gray-500 font-medium">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex min-w-0 flex-1 sm:flex-none items-center gap-1.5 text-xs text-gray-500 font-medium">
             <Filter className="w-4 h-4 text-gray-400" />
             <span>Category:</span>
             <select
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
+              onChange={(e) => {
+                setCategoryFilter(e.target.value);
+                setPage(1);
+              }}
               className="px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-red-500 focus:border-red-500 bg-white"
             >
               <option value="All">All Categories</option>
@@ -123,11 +133,14 @@ export const ArticleListPage: React.FC = () => {
             </select>
           </div>
 
-          <div className="flex items-center space-x-1.5 text-xs text-gray-500 font-medium">
+          <div className="flex min-w-0 flex-1 sm:flex-none items-center gap-1.5 text-xs text-gray-500 font-medium">
             <span>Status:</span>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
               className="px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-red-500 focus:border-red-500 bg-white"
             >
               <option value="All">All Statuses</option>
@@ -174,16 +187,52 @@ export const ArticleListPage: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {articles.map((art) => (
-            <ArticleCard
-              key={art._id}
-              article={art}
-              onSelect={(id) => navigate(`${basePath}/content/${id}`)}
-              onEdit={(id) => navigate(`${basePath}/content/${id}?edit=true`)}
-              onDelete={(article) => setSelectedArticleToDelete(article)}
-            />
-          ))}
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {articles.map((art) => (
+              <ArticleCard
+                key={art._id}
+                article={art}
+                onSelect={(id) => navigate(`${basePath}/content/${id}`)}
+                onEdit={(id) => navigate(`${basePath}/content/${id}?edit=true`)}
+                onDelete={(article) => setSelectedArticleToDelete(article)}
+              />
+            ))}
+          </div>
+
+          <nav
+            aria-label="Article pagination"
+            className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+          >
+            <p className="text-sm text-gray-600" aria-live="polite">
+              Showing <span className="font-semibold text-gray-900">{(pagination.page - 1) * pagination.limit + 1}</span>
+              {'–'}
+              <span className="font-semibold text-gray-900">{Math.min(pagination.page * pagination.limit, pagination.total)}</span>
+              {' of '}
+              <span className="font-semibold text-gray-900">{pagination.total}</span> articles
+            </p>
+            <div className="flex items-center justify-between gap-2 sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={pagination.page <= 1 || loading}
+                className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronLeft className="h-4 w-4" /> Previous
+              </button>
+              <span className="min-w-24 text-center text-sm font-semibold text-gray-800">
+                Page {pagination.page} / {pagination.totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.min(pagination.totalPages, current + 1))}
+                disabled={pagination.page >= pagination.totalPages || loading}
+                className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </nav>
         </div>
       )}
 

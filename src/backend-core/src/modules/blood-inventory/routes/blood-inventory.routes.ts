@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { BloodInventoryController } from '../controllers/blood-inventory.controller';
-import { authenticateJWT, authorizeRoles } from '../../../shared/auth.middleware';
+import { authenticateJWT, authorizePermissions, authorizeRoles } from '../../../shared/auth.middleware';
 
 const router = Router();
 
@@ -8,6 +8,7 @@ const staffAuth = [
   authenticateJWT,
   authorizeRoles('BloodCenterStaff', 'Administrator', 'HospitalStaff'),
 ];
+const inventoryRead = [...staffAuth, authorizePermissions('inventory:read')];
 
 /**
  * @openapi
@@ -52,7 +53,7 @@ const staffAuth = [
  *       200:
  *         description: Success
  */
-router.get('/', ...staffAuth, BloodInventoryController.getInventoryList);
+router.get('/', ...inventoryRead, BloodInventoryController.getInventoryList);
 
 /**
  * @openapi
@@ -63,7 +64,7 @@ router.get('/', ...staffAuth, BloodInventoryController.getInventoryList);
  *     security:
  *       - bearerAuth: []
  */
-router.get('/statistics', ...staffAuth, BloodInventoryController.getStatistics);
+router.get('/statistics', ...inventoryRead, BloodInventoryController.getStatistics);
 
 /**
  * @openapi
@@ -83,7 +84,7 @@ router.get('/statistics', ...staffAuth, BloodInventoryController.getStatistics);
  *       200:
  *         description: Success
  */
-router.get('/:bagId', ...staffAuth, BloodInventoryController.getBloodBagById);
+router.get('/:bagId', ...inventoryRead, BloodInventoryController.getBloodBagById);
 
 /**
  * @openapi
@@ -114,7 +115,7 @@ router.get('/:bagId', ...staffAuth, BloodInventoryController.getBloodBagById);
  *       200:
  *         description: Success
  */
-router.put('/:bagId/status', ...staffAuth, BloodInventoryController.updateBagStatus);
+router.put('/:bagId/status', ...staffAuth, authorizePermissions('inventory:stock_out'), BloodInventoryController.updateBagStatus);
 
 /**
  * @openapi
@@ -150,7 +151,7 @@ router.put('/:bagId/status', ...staffAuth, BloodInventoryController.updateBagSta
  *       201:
  *         description: Created
  */
-router.post('/stock-in', ...staffAuth, BloodInventoryController.stockInBatch);
+router.post('/stock-in', ...staffAuth, authorizePermissions('inventory:stock_in'), BloodInventoryController.stockInBatch);
 
 /**
  * @openapi
@@ -180,6 +181,6 @@ router.post('/stock-in', ...staffAuth, BloodInventoryController.stockInBatch);
  *       200:
  *         description: Success
  */
-router.post('/stock-out', ...staffAuth, BloodInventoryController.stockOutBatch);
+router.post('/stock-out', ...staffAuth, authorizePermissions('inventory:stock_out'), BloodInventoryController.stockOutBatch);
 
 export default router;

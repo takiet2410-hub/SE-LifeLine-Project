@@ -23,11 +23,26 @@ class EmailServiceImpl {
   }
 
   async verifyConnection(): Promise<boolean> {
-    // Since Brevo API uses HTTP requests, we just check if the API key is configured
-    if (env.BREVO_API_KEY && env.BREVO_API_KEY.length > 0) {
-      return true;
+    if (!env.BREVO_API_KEY) return false;
+
+    try {
+      const response = await fetch('https://api.brevo.com/v3/senders', {
+        headers: {
+          Accept: 'application/json',
+          'api-key': env.BREVO_API_KEY,
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!response.ok) return false;
+
+      const data = await response.json() as { senders?: Array<{ email?: string; active?: boolean }> };
+      return Boolean(data.senders?.some(sender =>
+        sender.email?.toLowerCase() === env.SENDER_EMAIL.toLowerCase() && sender.active !== false
+      ));
+    } catch (error) {
+      console.error('[EmailService] Brevo connection verification failed:', error);
+      return false;
     }
-    return false;
   }
 }
 

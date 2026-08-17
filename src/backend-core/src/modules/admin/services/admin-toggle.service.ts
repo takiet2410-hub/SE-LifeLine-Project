@@ -1,23 +1,46 @@
 import { FeatureToggle, IFeatureToggle } from '../models/feature-toggle.model';
 import { AdminAuditLog } from '../models/audit-log.model';
 
+const DEFAULT_FEATURE_STATES: Readonly<Record<string, boolean>> = {
+  ai_chatbot: true,
+  sos_emergency_alerts: true,
+  gamification_badges: true,
+  news_content_portal: true,
+};
+
+export type FeatureToggleKey = keyof typeof DEFAULT_FEATURE_STATES;
+
+export const getFeatureState = async (key: string): Promise<boolean> => {
+  const toggle = await FeatureToggle.findOne({ key }).lean();
+  return toggle ? toggle.isEnabled : (DEFAULT_FEATURE_STATES[key] ?? false);
+};
+
 export const isFeatureEnabled = async (key: string): Promise<boolean> => {
   try {
-    const toggle = await FeatureToggle.findOne({ key }).lean();
-    return toggle ? toggle.isEnabled : true;
-  } catch (err) {
-    return true;
+    return await getFeatureState(key);
+  } catch {
+    // Background jobs fail closed. HTTP middleware uses getFeatureState directly
+    // so it can distinguish a disabled feature from an unavailable toggle store.
+    return false;
   }
 };
 
 export class AdminToggleService {
-  async getFeatureToggles() {
-    let toggles = await FeatureToggle.find().lean();
+  async getPublicFeatureStates() {
+    const toggles = await FeatureToggle.find({ key: { $in: Object.keys(DEFAULT_FEATURE_STATES) } }).lean();
+    const storedStates = new Map(toggles.map((toggle) => [toggle.key, toggle.isEnabled]));
 
-    if (!toggles || toggles.length === 0) {
-      await this.seedDefaultToggles();
-      toggles = await FeatureToggle.find().lean();
-    }
+    return {
+      features: Object.entries(DEFAULT_FEATURE_STATES).reduce<Record<string, boolean>>((states, [key, defaultState]) => {
+        states[key] = storedStates.get(key) ?? defaultState;
+        return states;
+      }, {}),
+    };
+  }
+
+  async getFeatureToggles() {
+    await this.seedDefaultToggles();
+    const toggles = await FeatureToggle.find().lean();
 
     const items = toggles.map((t) => ({
       id: t._id.toString(),
@@ -40,6 +63,9 @@ export class AdminToggleService {
     isEnabled: boolean,
     ipAddress: string
   ) {
+    if (typeof isEnabled !== 'boolean') {
+      throw new Error('isEnabled must be a boolean.');
+    }
     const toggle = await FeatureToggle.findOne({ key });
     if (!toggle) {
       throw new Error(`Feature toggle '${key}' not found.`);
@@ -50,19 +76,25 @@ export class AdminToggleService {
     toggle.updatedBy = adminUser.name;
     await toggle.save();
 
-    await AdminAuditLog.create({
-      actorUserId: adminUser.id,
-      actorName: adminUser.name,
-      action: isEnabled ? 'Enable Feature Toggle' : 'Disable Feature Toggle',
-      actionCategory: 'Feature Toggle',
-      resourceType: 'FeatureToggle',
-      resourceId: key,
-      previousValue: { isEnabled: previousState },
-      newValue: { isEnabled },
-      details: `Feature ${toggle.name} toggled to ${isEnabled ? 'ENABLED' : 'DISABLED'}`,
-      ipAddress,
-      status: 'Success',
-    });
+    try {
+      await AdminAuditLog.create({
+        actorUserId: adminUser.id,
+        actorName: adminUser.name,
+        action: isEnabled ? 'Enable Feature Toggle' : 'Disable Feature Toggle',
+        actionCategory: 'Feature Toggle',
+        resourceType: 'FeatureToggle',
+        resourceId: key,
+        previousValue: { isEnabled: previousState },
+        newValue: { isEnabled },
+        details: `Feature ${toggle.name} toggled to ${isEnabled ? 'ENABLED' : 'DISABLED'}`,
+        ipAddress,
+        status: 'Success',
+      });
+    } catch (error) {
+      toggle.isEnabled = previousState;
+      await toggle.save();
+      throw error;
+    }
 
     return toggle;
   }
@@ -118,6 +150,12 @@ export class AdminToggleService {
       },
     ];
 
-    await FeatureToggle.insertMany(defaultToggles);
+    await FeatureToggle.bulkWrite(defaultToggles.map((toggle) => ({
+      updateOne: {
+        filter: { key: toggle.key },
+        update: { $setOnInsert: toggle },
+        upsert: true,
+      },
+    })));
   }
 }

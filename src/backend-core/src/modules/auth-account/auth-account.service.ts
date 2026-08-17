@@ -222,9 +222,11 @@ export class AuthAccountService {
         id: user._id,
         email: user.email,
         idDocumentNumber: user.idDocumentNumber,
-        fullName: profile?.fullName || '',
+        fullName: profile?.fullName || user.fullName || '',
         role: activeRole,
-        roles: userRoles
+        roles: userRoles,
+        hospitalId: user.hospitalId,
+        bloodCenterId: user.bloodCenterId,
       }
     };
   }
@@ -393,23 +395,36 @@ export class AuthAccountService {
 
   static async getProfile(userId: string) {
     // 1. Lấy thông tin cơ bản từ collection users và donor_profiles
-    const user = await User.findById(userId).lean();
+    const user = await User.findById(userId)
+      .populate('hospitalId', 'name address contactPhone')
+      .populate('bloodCenterId', 'name address contactPhone')
+      .lean() as any;
     if (!user) throw new Error('Không tìm thấy tài khoản người dùng');
 
     const profile = await DonorProfile.findOne({ userId }).lean();
     if (!profile) {
       if (user.role !== 'Donor') {
+        const staffName = user.fullName || `Cán bộ ${user.role}`;
         return {
+          id: user._id,
+          idDocumentNumber: user.idDocumentNumber,
+          fullName: staffName,
+          role: user.role,
+          roles: user.roles,
+          hospitalId: user.hospitalId?._id || user.hospitalId,
+          hospital: user.hospitalId && typeof user.hospitalId === 'object' ? user.hospitalId : undefined,
+          bloodCenterId: user.bloodCenterId?._id || user.bloodCenterId,
+          bloodCenter: user.bloodCenterId && typeof user.bloodCenterId === 'object' ? user.bloodCenterId : undefined,
           profileInfo: {
             avatarUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150',
-            fullName: `Cán bộ ${user.role}`,
+            fullName: staffName,
             memberSince: user.createdAt,
             currentAddress: 'Trung tâm Truyền máu Quốc gia',
             bloodType: 'Staff'
           },
           personalInfo: {
             idDocumentNumber: user.idDocumentNumber,
-            fullName: `Cán bộ ${user.role}`,
+            fullName: staffName,
             dateOfBirth: new Date('1990-01-01'),
             gender: 'Male',
             bloodType: 'N/A'
@@ -426,8 +441,7 @@ export class AuthAccountService {
             status: 'Active Staff',
             xp: 0,
             donorLevel: 1
-          },
-          role: user.role
+          }
         };
       }
       throw new Error('Không tìm thấy hồ sơ người hiến máu');

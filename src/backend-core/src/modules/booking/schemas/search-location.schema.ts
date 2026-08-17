@@ -7,6 +7,7 @@ export const SearchLocationSchema = z.object({
     radius: z.string().optional().transform(val => val ? parseFloat(val) : undefined),
     date: z.string().optional(),
     bloodType: z.string().optional(),
-    crowdingLevel: z.enum(['Low', 'Medium', 'High']).optional()
+    crowdingLevel: z.enum(['Low', 'Medium', 'High']).optional(),
+    includeFacilities: z.string().optional().transform(val => val === 'true')
   })
 });

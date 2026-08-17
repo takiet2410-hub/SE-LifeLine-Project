@@ -2,6 +2,18 @@ import { AdminAuditLog, IAdminAuditLog } from '../models/audit-log.model';
 import { User } from '../../auth-account/models/user.model';
 import mongoose from 'mongoose';
 import http from 'http';
+import { Campaign } from '../../campaign/models/campaign.model';
+import { isFirebaseInitialized } from '../../../config/firebase.config';
+import { notificationQueue, scheduledTasksQueue } from '../../../config/queue.config';
+import { redisConnection } from '../../../config/redis.config';
+import { EmailService } from '../../notification/services/email.service';
+import { verifyCloudinaryConnection } from '../../../utils/cloudinary.util';
+
+const csvCell = (value: unknown): string => {
+  let text = value == null ? '' : String(value);
+  if (/^[=+\-@]/.test(text)) text = `'${text}`;
+  return `"${text.replace(/"/g, '""')}"`;
+};
 
 export interface GetLogsQuery {
   page?: number;
@@ -30,7 +42,8 @@ export class AdminMonitoringService {
     }
 
     if (query.search) {
-      const searchRegex = new RegExp(query.search, 'i');
+      const escapedSearch = query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escapedSearch, 'i');
       filter.$or = [
         { actorName: searchRegex },
         { action: searchRegex },
@@ -77,46 +90,75 @@ export class AdminMonitoringService {
   }
 
   async exportLogsCsv(query: GetLogsQuery) {
-    const { items } = await this.getActivityLogs({ ...query, limit: 1000, page: 1 });
+    const firstPage = await this.getActivityLogs({ ...query, limit: 100, page: 1 });
+    const items = [...firstPage.items];
+    for (let page = 2; page <= firstPage.pagination.totalPages; page += 1) {
+      const result = await this.getActivityLogs({ ...query, limit: 100, page });
+      items.push(...result.items);
+    }
     const headers = ['Timestamp', 'Actor', 'Action', 'Category', 'Resource', 'IP Address', 'Status'];
     const rows = items.map((l) => [
-      `"${new Date(l.timestamp).toISOString()}"`,
-      `"${l.actorName}"`,
-      `"${l.action}"`,
-      `"${l.actionCategory}"`,
-      `"${l.resourceType}"`,
-      `"${l.ipAddress}"`,
-      `"${l.status}"`,
+      csvCell(new Date(l.timestamp).toISOString()),
+      csvCell(l.actorName),
+      csvCell(l.action),
+      csvCell(l.actionCategory),
+      csvCell(l.resourceType),
+      csvCell(l.ipAddress),
+      csvCell(l.status),
     ]);
 
-    return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    return ['\uFEFF' + headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
   }
 
   async getDashboardMetrics() {
-    const totalUsers = await User.countDocuments();
-    const activeUsers = await User.countDocuments({ accountStatus: 'Active' });
-    const totalLogs = await AdminAuditLog.countDocuments();
-    const failedLogs = await AdminAuditLog.countDocuments({ status: 'Failure' });
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const activeSessionCutoff = new Date(now.getTime() - 30 * 60 * 1000);
+    const trendStart = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+    const [totalUsers, activeUsers, activeSessions, totalLogs, failedLogs, newRegistrationsToday, userTrends, campaignTrends] =
+      await Promise.all([
+        User.countDocuments(),
+        User.countDocuments({ accountStatus: 'Active', isDeleted: { $ne: true } }),
+        User.countDocuments({ accountStatus: 'Active', lastLoginAt: { $gte: activeSessionCutoff } }),
+        AdminAuditLog.countDocuments(),
+        AdminAuditLog.countDocuments({ status: 'Failure' }),
+        User.countDocuments({ createdAt: { $gte: todayStart } }),
+        User.aggregate([
+          { $match: { createdAt: { $gte: trendStart } } },
+          { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
+        ]),
+        Campaign.aggregate([
+          { $match: { createdAt: { $gte: trendStart } } },
+          { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
+        ]),
+      ]);
 
     const errorRate = totalLogs > 0 ? ((failedLogs / totalLogs) * 100).toFixed(2) : '0.00';
 
+    const countByMonth = (rows: Array<{ _id: { year: number; month: number }; count: number }>) =>
+      new Map(rows.map((row) => [`${row._id.year}-${row._id.month}`, row.count]));
+    const usersByMonth = countByMonth(userTrends);
+    const campaignsByMonth = countByMonth(campaignTrends);
+    const usageTrends = Array.from({ length: 6 }, (_, index) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
+      const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      return {
+        month: date.toLocaleString('en-US', { month: 'short' }),
+        donors: usersByMonth.get(key) || 0,
+        campaigns: campaignsByMonth.get(key) || 0,
+      };
+    });
+
     return {
-      activeSessions: Math.max(1, Math.floor(activeUsers * 0.15)),
+      activeSessions,
       totalUsers,
       activeUsers,
-      systemUptime: '99.98%',
+      systemUptime: `${Math.floor(process.uptime())}s`,
       errorRate: `${errorRate}%`,
-      newRegistrationsToday: await User.countDocuments({
-        createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
-      }),
-      usageTrends: [
-        { month: 'Jan', donors: 120, campaigns: 8 },
-        { month: 'Feb', donors: 190, campaigns: 12 },
-        { month: 'Mar', donors: 280, campaigns: 15 },
-        { month: 'Apr', donors: 350, campaigns: 18 },
-        { month: 'May', donors: 420, campaigns: 22 },
-        { month: 'Jun', donors: 560, campaigns: 25 },
-      ],
+      newRegistrationsToday,
+      usageTrends,
     };
   }
 
@@ -143,12 +185,61 @@ export class AdminMonitoringService {
     // 2. Check AI Service Health
     const aiCheck = await this.pingHttpEndpoint('http://localhost:8000/health');
 
-    // 3. Check Notification Service Queue
-    const notifStatus: 'Operational' | 'Degraded' | 'Down' = 'Operational';
+    // External providers used by notifications and the news feed. A configured
+    // credential alone is not enough; verify the provider and active sender.
+    const externalStart = Date.now();
+    const [emailReady, mediaReady] = await Promise.all([
+      EmailService.verifyConnection(),
+      verifyCloudinaryConnection(),
+    ]);
+    const externalLatency = `${Date.now() - externalStart}ms`;
+    const emailStatus: 'Operational' | 'Degraded' = emailReady ? 'Operational' : 'Degraded';
+    const mediaStatus: 'Operational' | 'Degraded' = mediaReady ? 'Operational' : 'Degraded';
+
+    // 3. Check the actual queue state. Firebase alone does not prove dispatch health.
+    const firebaseReady = isFirebaseInitialized();
+    let redisStatus: 'Operational' | 'Degraded' | 'Down' = 'Operational';
+    let redisLatency = 'N/A';
+    let notificationDetails = 'Queue state unavailable';
+    let schedulerDetails = 'Scheduler state unavailable';
+    let schedulerStatus: 'Operational' | 'Degraded' | 'Down' = 'Operational';
+    let notifStatus: 'Operational' | 'Degraded' | 'Down' = 'Operational';
+
+    try {
+      const redisStart = Date.now();
+      await redisConnection.ping();
+      redisLatency = `${Date.now() - redisStart}ms`;
+      const [counts, repeatableJobs] = await Promise.all([
+        notificationQueue.getJobCounts('waiting', 'active', 'delayed', 'failed'),
+        scheduledTasksQueue.getJobSchedulers(),
+      ]);
+      notifStatus = counts.failed > 0 || !firebaseReady ? 'Degraded' : 'Operational';
+      notificationDetails = `${counts.waiting} chờ, ${counts.active} đang xử lý, ${counts.failed} thất bại; Firebase ${firebaseReady ? 'sẵn sàng' : 'chưa cấu hình'}`;
+      const publisherRegistered = repeatableJobs.some((job: any) => job.name === 'publish-articles');
+      schedulerStatus = publisherRegistered ? 'Operational' : 'Degraded';
+      schedulerDetails = publisherRegistered
+        ? 'Tác vụ tự động xuất bản bài viết đã được đăng ký'
+        : 'Thiếu tác vụ tự động xuất bản bài viết';
+    } catch (error: any) {
+      redisStatus = 'Down';
+      notifStatus = 'Down';
+      schedulerStatus = 'Down';
+      notificationDetails = `Không thể đọc hàng đợi: ${error?.message || 'Redis unavailable'}`;
+      schedulerDetails = 'Không thể xác minh lịch xuất bản vì Redis không khả dụng';
+    }
+    const serviceStatuses: Array<'Operational' | 'Degraded' | 'Down'> = [
+      dbStatus,
+      aiCheck.status,
+      redisStatus,
+      notifStatus,
+      schedulerStatus,
+      emailStatus,
+      mediaStatus,
+    ];
 
     return {
       timestamp: new Date().toISOString(),
-      overallStatus: dbStatus === 'Operational' && aiCheck.status === 'Operational' ? 'Healthy' : 'Issues Detected',
+      overallStatus: serviceStatuses.every((status) => status === 'Operational') ? 'Healthy' : 'Issues Detected',
       services: [
         {
           name: 'Primary MongoDB Cluster',
@@ -168,8 +259,29 @@ export class AdminMonitoringService {
           name: 'Notification Dispatch Engine',
           type: 'Message Queue',
           status: notifStatus,
-          latencyMs: '4ms',
-          details: 'Ready to process Push & SMS alerts',
+          latencyMs: redisLatency,
+          details: notificationDetails,
+        },
+        {
+          name: 'Brevo Email Delivery',
+          type: 'External API',
+          status: emailStatus,
+          latencyMs: externalLatency,
+          details: emailReady ? 'API và địa chỉ người gửi đã được xác minh' : 'Không thể xác minh API hoặc địa chỉ người gửi',
+        },
+        {
+          name: 'Cloudinary Media Storage',
+          type: 'External API',
+          status: mediaStatus,
+          latencyMs: externalLatency,
+          details: mediaReady ? 'Kết nối lưu trữ ảnh hoạt động' : 'Không thể xác minh kết nối lưu trữ ảnh',
+        },
+        {
+          name: 'Scheduled News Publisher',
+          type: 'Scheduled Job',
+          status: schedulerStatus,
+          latencyMs: redisLatency,
+          details: schedulerDetails,
         },
       ],
     };

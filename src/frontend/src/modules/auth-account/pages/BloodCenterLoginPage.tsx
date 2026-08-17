@@ -150,7 +150,7 @@ export const BloodCenterLoginPage: React.FC = () => {
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-rose-600/15 rounded-full blur-[128px] pointer-events-none" />
 
       {/* Left Branding & System Overview */}
-      <div className="md:w-1/2 lg:w-7/12 bg-gradient-to-br from-slate-950 via-slate-900/90 to-red-950/30 p-8 lg:p-16 flex flex-col justify-between relative z-10 border-b md:border-b-0 md:border-r border-slate-800/80 backdrop-blur-xl">
+      <div className="md:w-1/2 lg:w-7/12 bg-gradient-to-br from-slate-950 via-slate-900/90 to-red-950/30 p-5 sm:p-8 lg:p-16 flex flex-col justify-between relative z-10 border-b md:border-b-0 md:border-r border-slate-800/80 backdrop-blur-xl">
         {/* Top Branding Navigation */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3.5">
@@ -239,7 +239,7 @@ export const BloodCenterLoginPage: React.FC = () => {
       </div>
 
       {/* Right Login Form & Interactive Panel */}
-      <div className="md:w-1/2 lg:w-5/12 p-8 lg:p-14 flex flex-col justify-center items-center bg-slate-950/80 relative z-10">
+      <div className="md:w-1/2 lg:w-5/12 p-5 sm:p-8 lg:p-14 flex flex-col justify-center items-center bg-slate-950/80 relative z-10">
         <div className="w-full max-w-md space-y-7">
           <div>
             <h3 className="text-2xl font-bold text-white tracking-tight">Đăng Nhập Cán Bộ Y Tế</h3>

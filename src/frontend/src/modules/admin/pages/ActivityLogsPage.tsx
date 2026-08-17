@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { adminApi } from '../api/admin.api';
 import type { AuditLogItem } from '../types/admin.types';
-import { Search, Download, ShieldAlert, CheckCircle, FileText, Eye, X } from 'lucide-react';
+import { Search, Download, ShieldAlert, CheckCircle, FileText, Eye, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const ActivityLogsPage: React.FC = () => {
@@ -11,25 +11,30 @@ export const ActivityLogsPage: React.FC = () => {
   const [category, setCategory] = useState('All');
   const [status, setStatus] = useState('All');
   const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await adminApi.getActivityLogs({ search, category, status });
+      const data = await adminApi.getActivityLogs({ search, category, status, page, limit: 15 });
       setLogs(data.items);
-    } catch (err: any) {
+      setTotalPages(data.pagination.totalPages || 1);
+      setTotal(data.pagination.total || 0);
+    } catch {
       toast.error('Failed to fetch activity audit logs.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [category, page, search, status]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchLogs();
     }, 300);
     return () => clearTimeout(timer);
-  }, [search, category, status]);
+  }, [fetchLogs]);
 
   const handleExportCsv = async () => {
     try {
@@ -44,13 +49,13 @@ export const ActivityLogsPage: React.FC = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
       toast.success('Activity logs CSV downloaded successfully.');
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to export activity logs CSV.');
     }
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#271816]">Activity & Audit Logs</h1>
@@ -74,7 +79,7 @@ export const ActivityLogsPage: React.FC = () => {
             type="text"
             placeholder="Search actor, action or resource..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-9 pr-4 py-2 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-medium text-[#271816] focus:ring-2 focus:ring-[#93000b] outline-hidden"
           />
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
@@ -83,7 +88,7 @@ export const ActivityLogsPage: React.FC = () => {
         <div className="flex items-center gap-3 w-full md:w-auto">
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => { setCategory(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
             <option value="All" className="bg-white text-[#271816]">All Categories</option>
@@ -99,7 +104,7 @@ export const ActivityLogsPage: React.FC = () => {
 
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => { setStatus(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
             <option value="All" className="bg-white text-[#271816]">All Statuses</option>
@@ -117,7 +122,7 @@ export const ActivityLogsPage: React.FC = () => {
           <div className="p-12 text-center text-[#6c757d] text-sm font-medium">No activity logs found.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="w-full min-w-[820px] text-left text-sm border-collapse">
               <thead>
                 <tr className="bg-[#fff8f7] border-b border-[#f1f3f5] text-xs font-bold text-[#6c757d] uppercase tracking-wider">
                   <th className="py-3.5 px-4">Timestamp</th>
@@ -172,10 +177,37 @@ export const ActivityLogsPage: React.FC = () => {
         )}
       </div>
 
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-xs text-[#6c757d]">
+          <span>{total} audit entries</span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              className="p-2 border rounded-lg disabled:opacity-40"
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span>Page {page} / {totalPages}</span>
+            <button
+              type="button"
+              disabled={page >= totalPages}
+              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              className="p-2 border rounded-lg disabled:opacity-40"
+              aria-label="Next page"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Log Detail Modal */}
       {selectedLog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 border border-[#f1f3f5] shadow-2xl space-y-5">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-2xl w-full max-h-[92dvh] overflow-y-auto p-4 sm:p-6 border border-[#f1f3f5] shadow-2xl space-y-5">
             <div className="flex items-center justify-between border-b border-[#f1f3f5] pb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-red-50 text-[#93000b] rounded-xl border border-red-100">
@@ -237,7 +269,7 @@ export const ActivityLogsPage: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {selectedLog.previousValue && (
+                {selectedLog.previousValue !== undefined && selectedLog.previousValue !== null && (
                   <div>
                     <span className="font-bold text-[#271816] block mb-1">Dữ liệu trước (Previous State)</span>
                     <pre className="bg-[#271816] text-amber-300 p-3.5 rounded-xl font-mono text-[11px] leading-relaxed overflow-x-auto border border-slate-800 max-h-48">
@@ -246,7 +278,7 @@ export const ActivityLogsPage: React.FC = () => {
                   </div>
                 )}
 
-                {selectedLog.newValue && (
+                {selectedLog.newValue !== undefined && selectedLog.newValue !== null && (
                   <div>
                     <span className="font-bold text-[#271816] block mb-1">Dữ liệu sau (New State)</span>
                     <pre className="bg-[#271816] text-emerald-400 p-3.5 rounded-xl font-mono text-[11px] leading-relaxed overflow-x-auto border border-slate-800 max-h-48">

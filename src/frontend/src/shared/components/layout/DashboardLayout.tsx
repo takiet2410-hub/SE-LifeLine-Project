@@ -17,6 +17,7 @@ export const DashboardLayout: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Notification Dropdown State
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -24,6 +25,20 @@ export const DashboardLayout: React.FC = () => {
   const [loadingNotifs, setLoadingNotifs] = useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const userName = user?.fullName || 'User';
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setMobileMenuOpen(false), 0);
+    return () => window.clearTimeout(timer);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileMenuOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -128,19 +143,41 @@ export const DashboardLayout: React.FC = () => {
 
   return (
     <ScheduleProvider>
-      <div className="flex h-screen w-full bg-[#fff8f7] overflow-hidden selection:bg-[#93000b]/20">
+      <div className="flex h-dvh w-full bg-[#fff8f7] overflow-hidden selection:bg-[#93000b]/20">
       {/* Sidebar - Hidden on mobile, handled by media queries if needed later */}
       <div className="hidden md:flex">
         <SideNavBar />
       </div>
 
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <button
+            type="button"
+            aria-label="Đóng menu"
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="relative z-10 h-full w-[min(18rem,86vw)] shadow-2xl">
+            <SideNavBar />
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Header */}
-        <header className="h-[72px] bg-white border-b border-[#f1f3f5] px-6 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4">
-            <button className="md:hidden p-2 -ml-2 text-[#6c757d] hover:text-[#271816] rounded-lg">
+        <header className="h-16 sm:h-[72px] bg-white border-b border-[#f1f3f5] px-3 sm:px-4 lg:px-6 flex items-center justify-between shrink-0">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+            <button
+              type="button"
+              aria-label="Mở menu"
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-2 -ml-2 text-[#6c757d] hover:text-[#271816] rounded-lg"
+            >
               <Menu className="w-5 h-5" />
             </button>
+            <span className="sm:hidden truncate text-sm font-bold text-[#271816]">
+              {location.pathname.includes('/map') ? 'Bản đồ hiến máu' : location.pathname.includes('/profile') ? 'Hồ sơ của tôi' : 'LifeLine'}
+            </span>
             <div className="hidden sm:flex flex-col">
               <h1 className="text-[20px] font-bold text-[#271816] leading-tight">
                 {location.pathname.includes('/map')
@@ -179,11 +216,11 @@ export const DashboardLayout: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-4">
             {/* Language Switcher */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold text-[#5b403d] border border-[#f1f3f5] hover:bg-[#fff8f7] transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg text-[12px] sm:text-[13px] font-semibold text-[#5b403d] border border-[#f1f3f5] hover:bg-[#fff8f7] transition-colors cursor-pointer"
               title="Switch Language"
             >
               <Globe className="w-3.5 h-3.5 text-[#93000b]" />
@@ -201,7 +238,7 @@ export const DashboardLayout: React.FC = () => {
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
+                <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
                   <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <h3 className="font-bold text-gray-800 text-sm">Notifications</h3>
                     {unreadCount > 0 && (
@@ -276,7 +313,7 @@ export const DashboardLayout: React.FC = () => {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-[#fff8f7]">
+        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-[#fff8f7]">
           <Outlet />
         </main>
       </div>

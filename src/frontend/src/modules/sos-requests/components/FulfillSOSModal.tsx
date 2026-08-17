@@ -253,8 +253,8 @@ export const FulfillSOSModal: React.FC<FulfillSOSModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[92vh] border border-gray-100">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[94dvh] border border-gray-100">
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/80">
           <div className="flex items-center gap-3">
@@ -516,7 +516,7 @@ export const FulfillSOSModal: React.FC<FulfillSOSModalProps> = ({
 
           {/* Blood Bags Table */}
           <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs">
-            <div className="max-h-[340px] overflow-y-auto divide-y divide-gray-100">
+            <div className="max-h-[340px] overflow-auto divide-y divide-gray-100">
               {loading ? (
                 <div className="p-12 text-center text-gray-500 flex flex-col items-center justify-center gap-3">
                   <div className="w-7 h-7 border-3 border-brand-primary/20 border-t-brand-primary rounded-full animate-spin"></div>
@@ -533,7 +533,7 @@ export const FulfillSOSModal: React.FC<FulfillSOSModalProps> = ({
                   </p>
                 </div>
               ) : (
-                <table className="w-full text-left text-xs sm:text-sm">
+                <table className="w-full min-w-[720px] text-left text-xs sm:text-sm">
                   <thead className="bg-gray-50/90 text-gray-600 font-semibold sticky top-0 backdrop-blur-xs border-b border-gray-200">
                     <tr>
                       <th className="p-3 w-12 text-center">Chọn</th>

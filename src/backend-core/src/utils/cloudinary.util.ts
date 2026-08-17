@@ -25,4 +25,19 @@ export const uploadImageToCloudinary = async (fileBuffer: Buffer, folder: string
   });
 };
 
+export const verifyCloudinaryConnection = async (): Promise<boolean> => {
+  if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_API_SECRET) return false;
+
+  try {
+    await Promise.race([
+      cloudinary.api.ping(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Cloudinary health check timed out')), 5000)),
+    ]);
+    return true;
+  } catch (error) {
+    console.error('[Cloudinary] Connection verification failed:', error);
+    return false;
+  }
+};
+
 export default cloudinary;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { chatbotApi } from '../api/chatbot.api';
 import { useAuth } from '../../../shared/contexts/AuthContext';
-import { Send, Bot, User, X, Minimize2, Maximize2, MessageSquare, Calendar, MapPin, Droplet, ArrowRight, Sparkles, RefreshCw } from 'lucide-react';
+import { Send, Bot, User, X, Minimize2, Maximize2, MessageSquare, Calendar, MapPin, Droplet, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
 

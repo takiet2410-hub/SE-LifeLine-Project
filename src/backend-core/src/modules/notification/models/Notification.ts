@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export type NotificationType = 'Routine' | 'SOS' | 'Campaign' | 'System' | 'Appointment';
 export type NotificationChannel = 'Email' | 'WebPush' | 'InApp';
-export type DeliveryStatus = 'Pending' | 'Sent' | 'Failed' | 'Retried';
+export type DeliveryStatus = 'Pending' | 'Sending' | 'Sent' | 'Failed' | 'Retried';
 export type SourceRefType = 'Appointment' | 'Campaign' | 'SOSRequest' | 'Article' | 'System';
 
 export interface INotification extends Document {
@@ -15,6 +15,7 @@ export interface INotification extends Document {
   sourceRefId: mongoose.Types.ObjectId;
   sourceRefType: SourceRefType;
   deliveryStatus: DeliveryStatus;
+  retryCount: number;
   readAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -29,7 +30,8 @@ const NotificationSchema = new Schema<INotification>({
   payload: { type: Schema.Types.Mixed, default: {} },
   sourceRefId: { type: Schema.Types.ObjectId, required: true },
   sourceRefType: { type: String, enum: ['Appointment', 'Campaign', 'SOSRequest', 'Article', 'System'], required: true },
-  deliveryStatus: { type: String, enum: ['Pending', 'Sent', 'Failed', 'Retried'], default: 'Pending', index: true },
+  deliveryStatus: { type: String, enum: ['Pending', 'Sending', 'Sent', 'Failed', 'Retried'], default: 'Pending', index: true },
+  retryCount: { type: Number, default: 0, min: 0 },
   readAt: { type: Date, default: null, index: true }
 }, {
   timestamps: true,
@@ -38,5 +40,6 @@ const NotificationSchema = new Schema<INotification>({
 
 // Compound index for efficient queries (NOT unique - allows re-broadcast)
 NotificationSchema.index({ recipientUserId: 1, sourceRefId: 1, sourceRefType: 1 });
+NotificationSchema.index({ recipientUserId: 1, sourceRefId: 1, channel: 1, createdAt: -1 });
 
 export const Notification = mongoose.model<INotification>('Notification', NotificationSchema);

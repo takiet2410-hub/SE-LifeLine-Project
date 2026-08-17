@@ -112,10 +112,10 @@ export const CreateArticlePage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-3 sm:p-5 md:p-6 max-w-5xl mx-auto space-y-5 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex min-w-0 items-start sm:items-center space-x-2 sm:space-x-3">
           <button
             onClick={handleCancelClick}
             className="p-2 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
@@ -129,8 +129,8 @@ export const CreateArticlePage: React.FC = () => {
         </div>
 
         {/* Autosave status indicator */}
-        <div className="flex items-center space-x-3">
-          <span className="text-xs text-gray-500 flex items-center space-x-1.5">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <span className="w-full sm:w-auto text-xs text-gray-500 flex items-center space-x-1.5">
             <Clock className="w-3.5 h-3.5 text-gray-400" />
             <span>
               {isSaving

@@ -5,10 +5,15 @@ import { SOSStatusBadge } from '../components/SOSStatusBadge';
 import { Plus, Search, Filter, ArrowRight, Activity, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '../../../shared/api/apiError';
 
 export const SOSDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [bloodTypeFilter, setBloodTypeFilter] = useState('');
+  const [urgencyFilter, setUrgencyFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const authUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -31,7 +36,9 @@ export const SOSDashboardPage: React.FC = () => {
       const response = await sosApi.getSOSRequests({
         page: currentPage,
         limit: 10,
-        urgencyLevel: searchTerm || undefined,
+        search: debouncedSearchTerm || undefined,
+        bloodType: bloodTypeFilter || undefined,
+        urgencyLevel: urgencyFilter || undefined,
       });
       setRequests(response.data);
       setTotal(response.total);
@@ -51,15 +58,20 @@ export const SOSDashboardPage: React.FC = () => {
       });
     } catch (error) {
       console.error('Failed to fetch SOS requests:', error);
-      toast.error('Failed to load SOS requests');
+      toast.error(getApiErrorMessage(error, 'Không thể tải danh sách yêu cầu SOS'));
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => setDebouncedSearchTerm(searchTerm.trim()), 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  useEffect(() => {
     fetchRequests();
-  }, [currentPage, searchTerm]);
+  }, [currentPage, debouncedSearchTerm, bloodTypeFilter, urgencyFilter]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -69,14 +81,6 @@ export const SOSDashboardPage: React.FC = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
-  const filteredRequests = requests.filter(req => {
-    const idStr = req.id || (req as any)._id || '';
-    const hosp = req.hospital || (req as any).hospitalId;
-    return idStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (req.patientReference?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false) ||
-      (hosp?.name?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false);
-  });
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -146,17 +150,85 @@ export const SOSDashboardPage: React.FC = () => {
               <Search className="w-5 h-5 text-brand-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
               <input 
                 type="text" 
-                placeholder="Search ID, Patient, or Hospital..." 
+                placeholder="Search Request ID or Patient..." 
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-10 pr-4 py-2 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-sm w-full sm:w-64"
               />
             </div>
-            <button className="p-2 border border-brand-border-dark rounded-lg text-brand-text-secondary hover:bg-brand-bg-muted transition-colors">
+            <button
+              type="button"
+              onClick={() => setIsFilterOpen((open) => !open)}
+              aria-label="Filter SOS requests"
+              aria-expanded={isFilterOpen}
+              className={`relative p-2 border rounded-lg transition-colors ${
+                bloodTypeFilter || urgencyFilter
+                  ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                  : 'border-brand-border-dark text-brand-text-secondary hover:bg-brand-bg-muted'
+              }`}
+            >
               <Filter className="w-5 h-5" />
+              {(bloodTypeFilter || urgencyFilter) && (
+                <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-brand-primary ring-2 ring-white" />
+              )}
             </button>
           </div>
         </div>
+
+        {isFilterOpen && (
+          <div className="border-b border-brand-border bg-brand-bg-muted/40 px-5 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(180px,240px)_minmax(180px,240px)_auto] gap-4 items-end">
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold text-brand-text-secondary">Blood type</span>
+                <select
+                  aria-label="Filter by blood type"
+                  value={bloodTypeFilter}
+                  onChange={(event) => {
+                    setBloodTypeFilter(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="h-10 w-full rounded-lg border border-brand-border-dark bg-white px-3 text-sm text-brand-text-main outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                >
+                  <option value="">All blood types</option>
+                  {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold text-brand-text-secondary">Urgency</span>
+                <select
+                  aria-label="Filter by urgency"
+                  value={urgencyFilter}
+                  onChange={(event) => {
+                    setUrgencyFilter(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="h-10 w-full rounded-lg border border-brand-border-dark bg-white px-3 text-sm text-brand-text-main outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                >
+                  <option value="">All urgency levels</option>
+                  <option value="Critical">Critical</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                </select>
+              </label>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setBloodTypeFilter('');
+                  setUrgencyFilter('');
+                  setCurrentPage(1);
+                }}
+                disabled={!bloodTypeFilter && !urgencyFilter}
+                className="h-10 rounded-lg border border-brand-border-dark bg-white px-4 text-sm font-semibold text-brand-text-secondary hover:bg-brand-bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Clear filters
+              </button>
+            </div>
+          </div>
+        )}
         
         {isLoading && (
           <div className="p-8 text-center">
@@ -167,7 +239,7 @@ export const SOSDashboardPage: React.FC = () => {
 
         {!isLoading && (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap">
+            <table className="w-full min-w-[820px] text-left text-sm whitespace-nowrap">
               <thead className="bg-brand-bg-muted/50 text-brand-text-muted border-b border-brand-border">
                 <tr>
                   <th className="px-6 py-4 font-medium">Request ID</th>
@@ -180,8 +252,8 @@ export const SOSDashboardPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-border">
-                {filteredRequests.length > 0 ? (
-                  filteredRequests.map((req) => {
+                {requests.length > 0 ? (
+                  requests.map((req) => {
                     const reqId = req.id || (req as any)._id;
                     return (
                     <tr key={reqId} className="hover:bg-brand-bg-muted/30 transition-colors">

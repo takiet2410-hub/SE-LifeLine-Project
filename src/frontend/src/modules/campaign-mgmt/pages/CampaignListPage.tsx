@@ -9,18 +9,14 @@ import {
   Edit,
   Users,
   Activity,
-  Award,
   Sparkles,
   CheckCircle2,
   XCircle,
   Clock,
   AlertCircle,
-  FileText,
-  HelpCircle,
   CheckCheck,
   Building2,
   Phone,
-  ShieldCheck,
   RefreshCw,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -176,7 +172,7 @@ export const CampaignListPage: React.FC = () => {
     setActionLoadingId(id);
     try {
       const confirmRes = await confirmAppointmentByBloodCenterApi(id);
-      if (confirmRes.status === 'ERROR') {
+      if (!confirmRes.success) {
         // Fallback to updateRegistration
         await apiService.updateRegistration(id, { status: 'Confirmed' });
       }
@@ -229,7 +225,7 @@ export const CampaignListPage: React.FC = () => {
     for (const reg of filteredPendingRegistrations) {
       try {
         const confirmRes = await confirmAppointmentByBloodCenterApi(reg._id);
-        if (confirmRes.status === 'ERROR') {
+        if (!confirmRes.success) {
           await apiService.updateRegistration(reg._id, { status: 'Confirmed' });
         }
         successCount++;
@@ -313,7 +309,6 @@ export const CampaignListPage: React.FC = () => {
   const totalCount = stats.totalCount;
   const activeCount = stats.activeCount;
   const totalRegistered = stats.totalRegistered;
-  const totalCapacity = stats.totalCapacity;
   const pendingCount = pendingRegistrations.length;
 
   // Columns for Campaigns Table

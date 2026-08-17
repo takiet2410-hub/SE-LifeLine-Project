@@ -28,6 +28,11 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('resetToken');
       window.location.href = '/login';
     }
+    if (error.response?.data?.code === 'FEATURE_DISABLED' && error.response?.data?.feature) {
+      window.dispatchEvent(new CustomEvent('feature-flags-updated', {
+        detail: { key: error.response.data.feature, isEnabled: false },
+      }));
+    }
     return Promise.reject(error);
   }
 );

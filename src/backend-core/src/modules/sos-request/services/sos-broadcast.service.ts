@@ -6,13 +6,25 @@ import { Hospital } from '../../auth-account/models/hospital.model';
 import { BloodCenter } from '../../auth-account/models/blood-center.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import mongoose from 'mongoose';
+import { isFeatureEnabled } from '../../admin/services/admin-toggle.service';
 
 export class SOSBroadcastService {
   public static async broadcastAlert(sosRequestId: string) {
+    if (!(await isFeatureEnabled('sos_emergency_alerts'))) {
+      console.log(`[SOSBroadcastService] SOS feature disabled. Skipping broadcast for ${sosRequestId}.`);
+      return { skipped: true, reason: 'FEATURE_DISABLED', notifiedCenters: [], notifiedDonors: [] };
+    }
     console.log(`[SOSBroadcastService] Triggered broadcast for SOS Request ${sosRequestId}`);
     
     const request = await SOSRequest.findById(sosRequestId);
     if (!request) throw new Error('SOS Request not found');
+    if (!['Pending', 'EvaluationInProgress', 'NotificationsDispatched'].includes(request.status) || request.fulfillmentDeadline <= new Date()) {
+      if (request.fulfillmentDeadline <= new Date() && !['Fulfilled', 'Cancelled', 'Expired'].includes(request.status)) {
+        request.status = 'Expired';
+        await request.save();
+      }
+      return { skipped: true, reason: 'SOS_NOT_ACTIVE', notifiedCenters: [], notifiedDonors: [] };
+    }
 
     const evalLog = await SOSEvaluationLog.findOne({ sosRequestId }).sort({ evaluatedAt: -1 });
     if (!evalLog) throw new Error('No evaluation log found to broadcast');
@@ -80,7 +92,8 @@ export class SOSBroadcastService {
               title: `CẤP CỨU: Cần ${request.requiredQuantityMl}ml máu ${request.bloodType} gấp`,
               body: `${hospitalName} yêu cầu cung cấp gấp ${request.requiredQuantityMl}ml máu ${request.bloodType} cho bệnh nhân cấp cứu. Hạn chót: ${request.fulfillmentDeadline ? request.fulfillmentDeadline.toLocaleDateString() : 'Không rõ'}`,
               payload: payload,
-              channels: ['WebPush', 'InApp'] as any
+              channels: ['WebPush', 'InApp'] as any,
+              allowedRecipientRoles: ['BloodCenterStaff']
             });
             console.log(`[SOSBroadcastService] Broadcasted to ${newStaffIds.length} blood center staff (skipped ${alreadyNotifiedStaffIds.size} already notified)`);
           } catch (err) {
@@ -94,7 +107,14 @@ export class SOSBroadcastService {
 
     // ─── 2. Notify Ranked Donors (dedup already existed) ──────────────────────
     const notifiedDonors: any[] = [];
-    const donorIds = evalLog.rankedDonors.map(d => d.donorId);
+    const evaluatedDonorIds = evalLog.rankedDonors.map(d => d.donorId);
+    const activeDonorUsers = await User.find({
+      _id: { $in: evaluatedDonorIds },
+      role: 'Donor',
+      accountStatus: 'Active',
+      isDeleted: { $ne: true },
+    }).select('_id').lean();
+    const donorIds = activeDonorUsers.map((user: any) => user._id);
     
     // Find existing recipient IDs for this SOS request to avoid duplicates
     const existingNotifs = await Notification.find({
@@ -124,7 +144,9 @@ export class SOSBroadcastService {
           hospitalLocation: hospital?.location,
           deepLink: `/donor/sos-requests/${request._id.toString()}`,
           sourceRefId: request._id.toString(),
-          sourceRefType: 'SOSRequest'
+          sourceRefType: 'SOSRequest',
+          audienceRole: 'Donor',
+          notificationKind: 'SOS_DONOR_APPEAL'
         };
 
         await NotificationService.sendNotification({
@@ -133,7 +155,8 @@ export class SOSBroadcastService {
           title: `🚨 KHẨN CẤP: ${hospitalName} đang cần gấp nhóm máu ${request.bloodType}`,
           body: `Bệnh viện ${hospitalName} đang cần gấp ${request.requiredQuantityMl}ml máu nhóm ${request.bloodType}. Nhóm máu tương thích của bạn có thể cứu sống bệnh nhân ngay lúc này!`,
           payload: payload,
-          channels: ['WebPush', 'InApp', 'Email'] as any
+          channels: ['WebPush', 'InApp', 'Email'] as any,
+          allowedRecipientRoles: ['Donor']
         });
 
         // ── Fix Bug #2: actually push the notified donors into the array ──
@@ -147,8 +170,14 @@ export class SOSBroadcastService {
     }
 
     // ─── 3. Update SOS status & EvalLog stats ────────────────────────────────
-    request.status = 'NotificationsDispatched';
-    await request.save();
+    await SOSRequest.updateOne(
+      {
+        _id: request._id,
+        status: { $in: ['Pending', 'EvaluationInProgress', 'NotificationsDispatched'] },
+        fulfillmentDeadline: { $gt: new Date() },
+      },
+      { $set: { status: 'NotificationsDispatched' } }
+    );
 
     evalLog.notificationDeliveryStats = {
       bloodCentersNotified: notifiedCenters.length,

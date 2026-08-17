@@ -11,6 +11,8 @@ import { DigitalDonorRecord } from '../../registration/models/digital-donor-reco
 import { sendBookingConfirmationEmail, sendBookingRejectionEmail } from '../../../utils/email.util';
 import { Campaign } from '../../campaign/models/campaign.model';
 import { notificationEvents, emitAppointmentConfirmed } from '../../notification/services/notification.events';
+import { Hospital } from '../../auth-account/models/hospital.model';
+import { BloodCenter } from '../../auth-account/models/blood-center.model';
 
 export class BookingService {
   public static async searchLocations(filters: any) {
@@ -148,7 +150,77 @@ export class BookingService {
       });
     }
 
-    return campaigns;
+    if (!filters.includeFacilities) return campaigns;
+
+    const facilityLocationQuery = filters.lat !== undefined && filters.lng !== undefined
+      ? {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates: [filters.lng, filters.lat]
+            },
+            $maxDistance: (filters.radius || 15) * 1000
+          }
+        }
+      : { $exists: true };
+
+    const [hospitals, bloodCenters] = await Promise.all([
+      Hospital.find({
+        $and: [
+          { $or: [{ isVerified: true }, { isVerified: { $exists: false } }] },
+          { name: { $not: /(mock data|test)/i } },
+          { location: facilityLocationQuery }
+        ]
+      }).lean(),
+      BloodCenter.find({
+        $and: [
+          { name: { $not: /(mock data|test)/i } },
+          { location: facilityLocationQuery }
+        ]
+      }).lean()
+    ]);
+
+    const facilities = [
+      ...hospitals.map((hospital: any) => ({
+        _id: `hospital:${hospital._id}`,
+        facilityId: hospital._id,
+        entityType: 'Hospital',
+        isBookable: false,
+        name: hospital.name,
+        venue: hospital.name,
+        fullAddress: hospital.address,
+        location: hospital.location,
+        contactPhone: hospital.contactPhone,
+        operatingHours: 'Liên hệ cơ sở để biết giờ tiếp nhận',
+        status: 'Facility',
+        targetBloodGroups: [],
+        timeslots: []
+      })),
+      ...bloodCenters.map((center: any) => ({
+        _id: `blood-center:${center._id}`,
+        facilityId: center._id,
+        entityType: 'BloodCenter',
+        isBookable: false,
+        name: center.name,
+        venue: center.name,
+        fullAddress: center.address,
+        location: center.location,
+        contactPhone: center.contactPhone,
+        operatingHours: center.operatingHours,
+        status: 'Facility',
+        targetBloodGroups: [],
+        timeslots: []
+      }))
+    ];
+
+    return [
+      ...facilities,
+      ...campaigns.map((campaign: any) => ({
+        ...campaign,
+        entityType: 'Campaign',
+        isBookable: true
+      }))
+    ];
   }
   public static async createAppointment(donorId: string, data: any) {
     const { campaignId, appointmentDate, timeSlot, answers } = data;

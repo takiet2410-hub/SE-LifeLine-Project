@@ -28,8 +28,11 @@ export const NotificationDetailPage: React.FC = () => {
       apiService.getNotificationById(notifId).then((data) => {
         setNotification(data);
         if (data && !data.readAt) {
-          apiService.markNotificationAsRead(data._id);
+          void apiService.markNotificationAsRead(data._id);
         }
+      }).catch(() => {
+        setNotification(null);
+      }).finally(() => {
         setLoading(false);
       });
     }
@@ -51,7 +54,17 @@ export const NotificationDetailPage: React.FC = () => {
   }
 
   const isSOS = notification.type === 'SOS';
-  const sosInfo = notification.sosRequestInfo;
+  const sosInfo = notification.sosRequestInfo || notification.payload;
+  const sosStatus = String(sosInfo?.status || 'NotificationsDispatched');
+  const deadlineExpired = sosInfo?.fulfillmentDeadline
+    ? new Date(sosInfo.fulfillmentDeadline).getTime() <= Date.now()
+    : false;
+  const sosInactive = deadlineExpired || ['Expired', 'Cancelled', 'EvaluationFailed', 'Fulfilled'].includes(sosStatus);
+  const sosStatusLabel = sosStatus === 'Fulfilled'
+    ? 'Đã tiếp nhận đủ máu'
+    : sosInactive
+      ? 'Yêu cầu đã kết thúc'
+      : 'Đang tiếp nhận hỗ trợ';
   const articleId = getArticleIdFromNotification(notification);
 
   return (
@@ -94,14 +107,14 @@ export const NotificationDetailPage: React.FC = () => {
 
       {/* SOS Emergency Prominent Alert Banner (NFR-U-03) */}
       {isSOS && sosInfo && (
-        <div className="bg-red-600 text-white rounded-xl p-6 shadow-lg shadow-red-200 space-y-4 animate-in fade-in duration-300">
-          <div className="flex items-center justify-between border-b border-red-500 pb-3">
+        <div className={`${sosInactive ? 'bg-slate-700 shadow-slate-200' : 'bg-red-700 shadow-red-200'} text-white rounded-xl p-4 sm:p-6 shadow-lg space-y-4 animate-in fade-in duration-300`}>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/20 pb-3">
             <div className="flex items-center gap-2 text-lg font-extrabold uppercase tracking-wide">
               <ShieldAlert className="w-6 h-6 animate-pulse" />
-              <span>🚨 YÊU CẦU MÁU CẤP CỨU (SOS EMERGENCY)</span>
+              <span>{sosInactive ? 'YÊU CẦU MÁU CẤP CỨU' : '🚨 YÊU CẦU MÁU CẤP CỨU'}</span>
             </div>
             <span className="bg-white text-red-700 text-xs font-black px-3 py-1 rounded-full uppercase">
-              {sosInfo.urgencyLevel}
+              {sosStatusLabel}
             </span>
           </div>
 
@@ -130,7 +143,13 @@ export const NotificationDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {isBcPage && (
+          {sosInactive && (
+            <div className="rounded-lg border border-white/20 bg-white/10 p-3 text-sm">
+              Trạng thái được đồng bộ trực tiếp từ ca SOS. Các thao tác tiếp nhận mới đã bị khóa.
+            </div>
+          )}
+
+          {isBcPage && !sosInactive && (
             <div className="pt-2 flex justify-end gap-3">
               <button
                 onClick={() => navigate('/bc/inventory')}
@@ -149,7 +168,7 @@ export const NotificationDetailPage: React.FC = () => {
               </button>
             </div>
           )}
-          {isHospitalPage && (
+          {isHospitalPage && !sosInactive && (
             <div className="pt-2 flex justify-end gap-3">
               <button
                 onClick={() => {

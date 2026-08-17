@@ -5,6 +5,9 @@ import dns from 'node:dns';
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 import { initCampaignStatusJob } from './modules/campaign/jobs/campaign-status.job';
 import { NotificationWorker } from './modules/notification/jobs/notification.worker';
+import { startScheduledPublisherJob } from './modules/content/jobs/scheduled-publisher.processor';
+import { SOSEvaluationWorker } from './modules/sos-request/jobs/sos-evaluation.worker';
+import './modules/sos-request/jobs/sos-evaluation.processor';
 
 import { runDatabaseSelfHealing } from './shared/database-repair.util';
 
@@ -20,6 +23,7 @@ const startServer = async () => {
   try {
     await connectDB();
     await runDatabaseSelfHealing();
+    await startScheduledPublisherJob();
   } catch (dbErr) {
     console.error('[Server] DB Connection warning:', dbErr);
   }
@@ -32,6 +36,7 @@ const startServer = async () => {
 
   try {
     NotificationWorker.start();
+    SOSEvaluationWorker.start();
   } catch (workerErr) {
     console.warn('[Server] Notification worker warning:', workerErr);
   }

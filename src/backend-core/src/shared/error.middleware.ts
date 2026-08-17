@@ -20,6 +20,21 @@ export const errorHandler = (
     });
   }
 
+  const explicitStatus = Number((err as any).statusCode || (err as any).status);
+  if (Number.isInteger(explicitStatus) && explicitStatus >= 400 && explicitStatus < 500) {
+    const defaultCodes: Record<number, string> = {
+      400: 'BAD_REQUEST',
+      401: 'UNAUTHORIZED',
+      403: 'FORBIDDEN',
+      404: 'NOT_FOUND',
+      409: 'CONFLICT',
+    };
+    return res.status(explicitStatus).json({
+      code: (err as any).code || defaultCodes[explicitStatus] || 'CLIENT_ERROR',
+      message: err.message,
+    });
+  }
+
   let details = null;
   if (err && (err as any).errInfo) {
     details = (err as any).errInfo;

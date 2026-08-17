@@ -1,5 +1,7 @@
 import { User } from '../modules/auth-account/models/user.model';
 import { DonorProfile } from '../modules/auth-account/models/donor-profile.model';
+import { NotificationPreference } from '../modules/notification/models/NotificationPreference';
+import { SOSRequest } from '../modules/sos-request/models/sos-request.model';
 
 export async function runDatabaseSelfHealing(): Promise<void> {
   try {
@@ -87,7 +89,59 @@ export async function runDatabaseSelfHealing(): Promise<void> {
     if (geocodedCount > 0) {
       console.log(`[DB-SelfHealing] Geocoded and updated coordinates for ${geocodedCount} donor profiles based on their addresses.`);
     }
-    // 5. Repair BloodBags missing bloodCenterId or all marked Used
+
+    // 5. Keep exactly one notification preference per existing user, then enforce it at DB level.
+    const preferenceGroups = await NotificationPreference.aggregate([
+      { $sort: { updatedAt: -1 } },
+      { $group: { _id: '$userId', ids: { $push: '$_id' }, count: { $sum: 1 } } },
+      { $match: { count: { $gt: 1 } } },
+    ]);
+    for (const group of preferenceGroups) {
+      await NotificationPreference.deleteMany({ _id: { $in: group.ids.slice(1) } });
+    }
+    const validUserIds = await User.distinct('_id');
+    const orphanPreferences = await NotificationPreference.deleteMany({ userId: { $nin: validUserIds } });
+    const preferenceIndexes = await NotificationPreference.collection.indexes();
+    const userIndex = preferenceIndexes.find((index) => index.name === 'userId_1');
+    if (userIndex && !userIndex.unique) await NotificationPreference.collection.dropIndex('userId_1');
+    await NotificationPreference.collection.createIndex({ userId: 1 }, { unique: true, name: 'userId_1' });
+    if (preferenceGroups.length > 0 || orphanPreferences.deletedCount > 0) {
+      console.log(`[DB-SelfHealing] Notification preferences: merged ${preferenceGroups.length} duplicate group(s), removed ${orphanPreferences.deletedCount} orphan(s).`);
+    }
+
+    // 6. Expire overdue requests immediately and repair quantity semantics for active SOS records.
+    const now = new Date();
+    await SOSRequest.updateMany(
+      {
+        status: { $in: ['Pending', 'EvaluationInProgress', 'NotificationsDispatched'] },
+        fulfillmentDeadline: { $lte: now },
+      },
+      { $set: { status: 'Expired' } }
+    );
+    const activeSOSRequests = await SOSRequest.find({
+      status: { $in: ['Pending', 'EvaluationInProgress', 'NotificationsDispatched', 'InventoryDispatched'] },
+      fulfillmentDeadline: { $gt: now },
+    });
+    for (const request of activeSOSRequests) {
+      const directVolume = (request.directDonations || []).reduce((sum, donation) => sum + (donation.volumeMl || 0), 0);
+      const receivedShipmentVolume = (request.shipments || [])
+        .filter((shipment) => shipment.status === 'Received')
+        .reduce((sum, shipment) => sum + (shipment.volumeMl || 0), 0);
+      const collectedShipmentVolume = (request.shipments || [])
+        .filter((shipment) => shipment.status !== 'Cancelled')
+        .reduce((sum, shipment) => sum + (shipment.volumeMl || 0), 0);
+      const inTransitVolume = (request.shipments || [])
+        .filter((shipment) => shipment.status === 'InTransit')
+        .reduce((sum, shipment) => sum + (shipment.volumeMl || 0), 0);
+      request.pledgedQuantityMl = (request.acceptedDonorIds || []).length * 250;
+      request.collectedQuantityMl = directVolume + collectedShipmentVolume;
+      request.receivedQuantityMl = directVolume + receivedShipmentVolume;
+      request.inTransitQuantityMl = inTransitVolume;
+      if (request.receivedQuantityMl >= request.requiredQuantityMl) request.status = 'Fulfilled';
+      await request.save();
+    }
+
+    // 7. Repair BloodBags missing bloodCenterId or all marked Used
     const { BloodBag } = await import('../modules/blood-inventory/models/blood-bag.model');
     const { BloodCenter } = await import('../modules/auth-account/models/blood-center.model');
     const primaryCenter = await BloodCenter.findOne({});

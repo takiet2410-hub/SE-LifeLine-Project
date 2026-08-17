@@ -6,9 +6,94 @@ import { AdminAuditLog } from '../../admin/models/audit-log.model';
 import { getCompatibleDonorBloodTypes } from '../../../shared/blood-type.utils';
 import { Hospital } from '../../auth-account/models/hospital.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
+import { isFeatureEnabled } from '../../admin/services/admin-toggle.service';
 import mongoose from 'mongoose';
 
 export class SOSRequestService {
+  /** Send completion thanks only to Donors and contributing Blood Centers. */
+  private static async notifySOSCompletion(sosRequest: any): Promise<void> {
+    const sosRequestId = sosRequest._id.toString();
+    const donorIds = Array.from(new Set([
+      ...(sosRequest.acceptedDonorIds || []).map((id: any) => id?.toString()),
+      ...(sosRequest.directDonations || []).map((donation: any) => donation.donorId?.toString()),
+    ].filter(Boolean))) as string[];
+
+    if (donorIds.length > 0) {
+      try {
+        await NotificationService.sendNotification({
+          recipientIds: donorIds,
+          type: 'SOS',
+          title: '❤️ Ca SOS đã hoàn tất — cảm ơn bạn!',
+          body: `Ca cấp cứu SOS nhóm máu ${sosRequest.bloodType} đã nhận đủ ${sosRequest.receivedQuantityMl || sosRequest.requiredQuantityMl}ml máu. Cảm ơn bạn đã hiến máu hoặc sẵn sàng hỗ trợ người bệnh!`,
+          payload: {
+            sosRequestId,
+            status: 'Fulfilled',
+            receivedQuantityMl: sosRequest.receivedQuantityMl || 0,
+            requiredQuantityMl: sosRequest.requiredQuantityMl,
+            deepLink: `/sos-alerts/${sosRequestId}`,
+            audienceRole: 'Donor',
+            notificationKind: 'SOS_DONOR_COMPLETION_THANK_YOU',
+            sourceRefId: sosRequestId,
+            sourceRefType: 'SOSRequest',
+          },
+          channels: ['InApp', 'WebPush', 'Email'],
+          allowedRecipientRoles: ['Donor'],
+        });
+      } catch (error) {
+        console.warn('[SOSRequestService] Donor completion notification warning:', error);
+      }
+    }
+
+    const shipments = (sosRequest.shipments || []).filter((shipment: any) => shipment.status !== 'Cancelled');
+    const bloodCenterIds = Array.from(new Set(
+      shipments.map((shipment: any) => shipment.bloodCenterId?.toString()).filter(Boolean)
+    )) as string[];
+    const bloodCenterStaffIds = new Set<string>(
+      shipments.map((shipment: any) => shipment.dispatchedByStaffId?.toString()).filter(Boolean)
+    );
+
+    if (bloodCenterIds.length > 0) {
+      try {
+        const { User } = await import('../../auth-account/models/user.model');
+        const centerStaff = await User.find({
+          role: 'BloodCenterStaff',
+          bloodCenterId: { $in: bloodCenterIds },
+          accountStatus: 'Active',
+          isDeleted: { $ne: true },
+        }).select('_id').lean();
+        centerStaff.forEach((staff: any) => bloodCenterStaffIds.add(staff._id.toString()));
+      } catch (error) {
+        console.warn('[SOSRequestService] Could not expand Blood Center completion recipients:', error);
+      }
+    }
+
+    if (bloodCenterStaffIds.size > 0) {
+      try {
+        await NotificationService.sendNotification({
+          recipientIds: Array.from(bloodCenterStaffIds),
+          type: 'SOS',
+          title: '✅ Ca SOS đã hoàn tất — cảm ơn Trung tâm máu!',
+          body: `Bệnh viện đã nhận đủ ${sosRequest.receivedQuantityMl || sosRequest.requiredQuantityMl}/${sosRequest.requiredQuantityMl}ml máu ${sosRequest.bloodType}. Cảm ơn Trung tâm máu đã phối hợp vận chuyển và hỗ trợ người bệnh kịp thời!`,
+          payload: {
+            sosRequestId,
+            status: 'Fulfilled',
+            receivedQuantityMl: sosRequest.receivedQuantityMl || 0,
+            requiredQuantityMl: sosRequest.requiredQuantityMl,
+            deepLink: `/bc/sos-requests/${sosRequestId}`,
+            audienceRole: 'BloodCenterStaff',
+            notificationKind: 'SOS_BLOOD_CENTER_COMPLETION_THANK_YOU',
+            sourceRefId: sosRequestId,
+            sourceRefType: 'SOSRequest',
+          },
+          channels: ['InApp', 'WebPush', 'Email'],
+          allowedRecipientRoles: ['BloodCenterStaff'],
+        });
+      } catch (error) {
+        console.warn('[SOSRequestService] Blood Center completion notification warning:', error);
+      }
+    }
+  }
+
   public static async createSOSRequest(data: any, createdByStaffId: string, hospitalId: string) {
     if (!hospitalId || !mongoose.Types.ObjectId.isValid(hospitalId)) {
       throw new Error(`Mã bệnh viện (hospitalId: '${hospitalId}') không hợp lệ.`);
@@ -66,19 +151,32 @@ export class SOSRequestService {
       });
     } catch (err: any) {
       console.error(`[SOSRequestService] Auto-evaluation failed for ${request._id}:`, err);
-      throw new Error(`Auto-evaluation failed: ${err.message}`);
+      request.status = 'EvaluationFailed';
+      await request.save();
     }
 
     return request;
   }
 
   public static async getSOSRequests(filters: any) {
-    const { hospitalId, page = 1, limit = 10, status, urgencyLevel } = filters;
+    const { hospitalId, page = 1, limit = 10, status, urgencyLevel, bloodType, search } = filters;
     
     const query: any = {};
     if (hospitalId) query.hospitalId = hospitalId;
     if (status) query.status = status;
     if (urgencyLevel) query.urgencyLevel = urgencyLevel;
+    if (bloodType) query.bloodType = bloodType;
+
+    const normalizedSearch = typeof search === 'string' ? search.trim() : '';
+    if (normalizedSearch) {
+      const escapedSearch = normalizedSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escapedSearch, 'i');
+      const searchConditions: any[] = [
+        { patientReference: searchRegex },
+        { $expr: { $regexMatch: { input: { $toString: '$_id' }, regex: escapedSearch, options: 'i' } } },
+      ];
+      query.$or = searchConditions;
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
     
@@ -102,13 +200,17 @@ export class SOSRequestService {
     return request;
   }
 
-  public static async updateSOSRequestStatus(id: string, status: string) {
-    const request = await SOSRequest.findById(id);
+  public static async updateSOSRequestStatus(id: string, status: string, hospitalId?: string) {
+    const request = hospitalId ? await SOSRequest.findOne({ _id: id, hospitalId }) : await SOSRequest.findById(id);
     if (!request) throw new Error('SOS Request not found');
     
     const previousStatus = request.status;
     request.status = status as any;
     await request.save();
+
+    if (previousStatus !== 'Fulfilled' && status === 'Fulfilled') {
+      await this.notifySOSCompletion(request);
+    }
 
     try {
       await AdminAuditLog.create({
@@ -131,7 +233,20 @@ export class SOSRequestService {
   }
 
   public static async recordDonorResponse(sosRequestId: string, donorId: string, response: 'accepted' | 'declined') {
+    const responseTime = new Date();
     if (response === 'declined') {
+      const request = await SOSRequest.findById(sosRequestId).select('status fulfillmentDeadline').lean();
+      if (!request) {
+        const error = new Error('SOS Request not found');
+        (error as any).statusCode = 404;
+        throw error;
+      }
+      if (!['Pending', 'EvaluationInProgress', 'NotificationsDispatched'].includes(request.status) || request.fulfillmentDeadline <= responseTime) {
+        const error = new Error('Yêu cầu SOS này đã kết thúc hoặc hết hạn, không thể phản hồi thêm.');
+        (error as any).statusCode = 409;
+        (error as any).code = 'SOS_NOT_ACTIVE';
+        throw error;
+      }
       return { success: true, status: 'declined', message: 'Response recorded successfully' };
     }
 
@@ -182,15 +297,17 @@ export class SOSRequestService {
       }
     }
 
-    // Atomic update to handle concurrency and double counting
+    // A donor response is a pledge, not collected or received blood.
+    // Keep it separate so a request is only fulfilled after the hospital confirms receipt.
     const request = await SOSRequest.findOneAndUpdate(
       { 
         _id: sosRequestId, 
         status: { $in: ['Pending', 'EvaluationInProgress', 'NotificationsDispatched'] },
+        fulfillmentDeadline: { $gt: responseTime },
         acceptedDonorIds: { $ne: donorId }
       },
       { 
-        $inc: { collectedQuantityMl: 250 },
+        $inc: { pledgedQuantityMl: 250 },
         $addToSet: { acceptedDonorIds: donorId }
       },
       { returnDocument: 'after' }
@@ -208,26 +325,10 @@ export class SOSRequestService {
         return { success: true, status: 'already_responded', message: 'You have already responded to this request' };
       }
       
-      return { success: true, status: 'fulfilled_or_expired', message: 'SOS Request is no longer active' };
-    }
-
-    // 2. Gamification: Award +150 XP & "Hiệp Sĩ Cứu Người (SOS Hero)" Badge
-    if (donorProfile) {
-      donorProfile.xp = (donorProfile.xp || 0) + 150;
-      donorProfile.donorLevel = Math.max(1, Math.floor(donorProfile.xp / 500) + 1);
-
-      if (!donorProfile.achievements) donorProfile.achievements = [];
-      const hasHeroBadge = donorProfile.achievements.some(a => a.badgeType === 'SOS_HERO');
-      if (!hasHeroBadge) {
-        donorProfile.achievements.push({
-          badgeType: 'SOS_HERO',
-          title: 'Hiệp Sĩ Cứu Người (SOS Hero)',
-          description: 'Đã sẵn sàng tham gia hiến máu trong ca cấp cứu khẩn cấp',
-          icon: '🛡️',
-          awardedAt: new Date()
-        });
-      }
-      await donorProfile.save();
+      const error = new Error('Yêu cầu SOS này đã kết thúc hoặc hết hạn, không thể phản hồi thêm.');
+      (error as any).statusCode = 409;
+      (error as any).code = 'SOS_NOT_ACTIVE';
+      throw error;
     }
 
     try {
@@ -238,37 +339,33 @@ export class SOSRequestService {
         actionCategory: 'SOS Request',
         resourceType: 'SOSRequest',
         resourceId: sosRequestId,
-        newValue: { donorId, collectedQuantityMl: request.collectedQuantityMl, status: request.status },
-        details: `Donor accepted emergency blood request ${sosRequestId} (+150 XP awarded)`,
+        newValue: { donorId, pledgedQuantityMl: request.pledgedQuantityMl, status: request.status },
+        details: `Donor pledged to emergency blood request ${sosRequestId}; reward is deferred until the donation is received`,
         status: 'Success'
       });
     } catch (auditErr) {
       console.warn('[SOSRequestService] AuditLog warning:', auditErr);
     }
 
-    // If collected quantity reaches required quantity, mark as Fulfilled
-    if (request.collectedQuantityMl >= request.requiredQuantityMl) {
-      request.status = 'Fulfilled';
-      await request.save();
-    }
-
     return { 
       success: true, 
       status: 'accepted', 
-      message: 'Response recorded successfully',
-      rewards: { xpAdded: 150, currentXp: donorProfile?.xp, donorLevel: donorProfile?.donorLevel }
+      message: 'Đã ghi nhận cam kết hỗ trợ. Điểm thưởng chỉ được cộng sau khi bệnh viện tiếp nhận máu.',
+      pledgedQuantityMl: request.pledgedQuantityMl
     };
   }
-  public static async reopenSOSRequest(sosRequestId: string, cancelledDonorId: string) {
-    const request = await SOSRequest.findById(sosRequestId);
+  public static async reopenSOSRequest(sosRequestId: string, cancelledDonorId: string, hospitalId?: string) {
+    const request = hospitalId
+      ? await SOSRequest.findOne({ _id: sosRequestId, hospitalId })
+      : await SOSRequest.findById(sosRequestId);
     if (!request) throw new Error('SOS Request not found');
 
-    // Remove the donor and decrement quantity
+    // Remove the donor pledge. Never reduce collected/received blood for a cancelled pledge.
     const updatedRequest = await SOSRequest.findOneAndUpdate(
       { _id: sosRequestId, acceptedDonorIds: cancelledDonorId },
       {
         $pull: { acceptedDonorIds: cancelledDonorId },
-        $inc: { collectedQuantityMl: -250 }
+        $inc: { pledgedQuantityMl: -250 }
       },
       { returnDocument: 'after' }
     );
@@ -277,9 +374,12 @@ export class SOSRequestService {
       throw new Error('Donor was not found in the accepted list for this SOS request');
     }
 
-    // Check if we need to revert status
-    if (updatedRequest.collectedQuantityMl < updatedRequest.requiredQuantityMl) {
-      // It's no longer fulfilled. Set it back to EvaluationInProgress to re-trigger
+    if (updatedRequest.pledgedQuantityMl < 0) {
+      updatedRequest.pledgedQuantityMl = 0;
+    }
+
+    // Re-evaluate only active, unexpired requests.
+    if (updatedRequest.fulfillmentDeadline > new Date() && ['Pending', 'NotificationsDispatched', 'EvaluationInProgress'].includes(updatedRequest.status)) {
       updatedRequest.status = 'EvaluationInProgress';
       await updatedRequest.save();
 
@@ -301,7 +401,7 @@ export class SOSRequestService {
         resourceType: 'SOSRequest',
         resourceId: sosRequestId,
         previousValue: { status: request.status },
-        newValue: { status: updatedRequest.status, collectedQuantityMl: updatedRequest.collectedQuantityMl },
+        newValue: { status: updatedRequest.status, pledgedQuantityMl: updatedRequest.pledgedQuantityMl },
         details: `Reopened SOS request due to cancellation by donor ${cancelledDonorId}`,
         status: 'Success'
       });
@@ -312,7 +412,7 @@ export class SOSRequestService {
     return { 
       success: true, 
       message: 'SOS Request reopened successfully', 
-      collectedQuantityMl: updatedRequest.collectedQuantityMl,
+      pledgedQuantityMl: updatedRequest.pledgedQuantityMl,
       status: updatedRequest.status
     };
   }
@@ -433,6 +533,7 @@ export class SOSRequestService {
       });
 
       sosRequest.inTransitQuantityMl = (sosRequest.inTransitQuantityMl || 0) + totalVolumeMl;
+      sosRequest.collectedQuantityMl = (sosRequest.collectedQuantityMl || 0) + totalVolumeMl;
       sosRequest.status = 'InventoryDispatched';
       sosRequest.fulfilledByStaffId = new mongoose.Types.ObjectId(staffId) as any;
       
@@ -482,7 +583,8 @@ export class SOSRequestService {
             deepLink: `/hospital/sos-requests/${sosRequest._id.toString()}`
           },
           channels: ['WebPush', 'Email', 'InApp'] as any,
-          priority: 'high'
+          priority: 'high',
+          allowedRecipientRoles: ['HospitalStaff']
         });
       } catch (notifError) {
         console.error('[SOSRequestService] Failed to send fulfillment notification:', notifError);
@@ -515,6 +617,8 @@ export class SOSRequestService {
       (error as any).statusCode = 404;
       throw error;
     }
+    await this.assertHospitalOwnership(sosRequest, staffId);
+    const previousStatus = sosRequest.status;
 
     const shipment = sosRequest.shipments.find(s => s._id?.toString() === shipmentId || (s as any).id === shipmentId);
     if (!shipment) {
@@ -533,8 +637,7 @@ export class SOSRequestService {
     shipment.receivedByStaffId = new mongoose.Types.ObjectId(staffId) as any;
 
     sosRequest.inTransitQuantityMl = Math.max(0, (sosRequest.inTransitQuantityMl || 0) - shipment.volumeMl);
-    sosRequest.receivedQuantityMl = (sosRequest.receivedQuantityMl || sosRequest.collectedQuantityMl || 0) + shipment.volumeMl;
-    sosRequest.collectedQuantityMl = sosRequest.receivedQuantityMl;
+    sosRequest.receivedQuantityMl = (sosRequest.receivedQuantityMl || 0) + shipment.volumeMl;
 
     const isFullyFulfilled = sosRequest.receivedQuantityMl >= sosRequest.requiredQuantityMl;
     if (isFullyFulfilled) {
@@ -585,11 +688,16 @@ export class SOSRequestService {
             requiredQuantityMl: sosRequest.requiredQuantityMl,
             deepLink: `/bc/sos-requests/${sosRequestId}`
           },
-          channels: ['WebPush', 'InApp', 'Email'] as any
+          channels: ['WebPush', 'InApp', 'Email'] as any,
+          allowedRecipientRoles: ['BloodCenterStaff']
         });
       } catch (bcErr) {
         console.warn('[SOSRequestService] BC notification warning:', bcErr);
       }
+    }
+
+    if (previousStatus !== 'Fulfilled' && isFullyFulfilled) {
+      await this.notifySOSCompletion(sosRequest);
     }
 
     return { 
@@ -607,6 +715,8 @@ export class SOSRequestService {
       (error as any).statusCode = 404;
       throw error;
     }
+    await this.assertHospitalOwnership(sosRequest, staffId);
+    const previousStatus = sosRequest.status;
 
     // Confirm all pending in-transit shipments
     const now = new Date();
@@ -620,13 +730,16 @@ export class SOSRequestService {
       }
     }
 
-    sosRequest.receivedQuantityMl = (sosRequest.receivedQuantityMl || sosRequest.collectedQuantityMl || 0) + (sosRequest.inTransitQuantityMl || 0);
-    sosRequest.collectedQuantityMl = sosRequest.receivedQuantityMl;
+    sosRequest.receivedQuantityMl = (sosRequest.receivedQuantityMl || 0) + (sosRequest.inTransitQuantityMl || 0);
     sosRequest.inTransitQuantityMl = 0;
 
     const isFullyFulfilled = sosRequest.receivedQuantityMl >= sosRequest.requiredQuantityMl;
     sosRequest.status = isFullyFulfilled ? 'Fulfilled' : 'NotificationsDispatched';
     await sosRequest.save();
+
+    if (previousStatus !== 'Fulfilled' && isFullyFulfilled) {
+      await this.notifySOSCompletion(sosRequest);
+    }
 
     return { 
       success: true, 
@@ -652,9 +765,29 @@ export class SOSRequestService {
       (error as any).statusCode = 404;
       throw error;
     }
+    await this.assertHospitalOwnership(sosRequest, staffId);
+    const previousStatus = sosRequest.status;
 
     if (['Cancelled', 'Expired', 'Fulfilled'].includes(sosRequest.status)) {
       const error = new Error(`Không thể ghi nhận hiến máu cho ca SOS có trạng thái: ${sosRequest.status}`);
+      (error as any).statusCode = 400;
+      throw error;
+    }
+
+    if (sosRequest.fulfillmentDeadline <= new Date()) {
+      sosRequest.status = 'Expired';
+      await sosRequest.save();
+      const error = new Error('Yêu cầu SOS đã hết hạn. Không thể ghi nhận lượt hiến mới.');
+      (error as any).statusCode = 409;
+      (error as any).code = 'SOS_NOT_ACTIVE';
+      throw error;
+    }
+
+    const currentReceived = sosRequest.receivedQuantityMl || 0;
+    const currentInTransit = sosRequest.inTransitQuantityMl || 0;
+    const remainingNeeded = Math.max(0, sosRequest.requiredQuantityMl - currentReceived - currentInTransit);
+    if (payload.volumeMl > remainingNeeded) {
+      const error = new Error(`Thể tích ghi nhận vượt quá lượng còn thiếu (${remainingNeeded}ml, đã nhận ${currentReceived}ml và đang vận chuyển ${currentInTransit}ml).`);
       (error as any).statusCode = 400;
       throw error;
     }
@@ -686,23 +819,43 @@ export class SOSRequestService {
       }
     }
 
-    // 2. Award XP & Badges & Update last donation date for the Donor
+    const donationBloodType = payload.bloodType || donorProfile?.bloodType || sosRequest.bloodType;
+    const compatibleTypes = getCompatibleDonorBloodTypes(sosRequest.bloodType);
+    if (donationBloodType && !compatibleTypes.includes(donationBloodType)) {
+      const error = new Error(`Nhóm máu ${donationBloodType} không tương thích với người nhận nhóm ${sosRequest.bloodType}.`);
+      (error as any).statusCode = 400;
+      throw error;
+    }
+    const alreadyRecorded = (sosRequest.directDonations || []).some((donation) =>
+      (donorObjId && donation.donorId?.toString() === donorObjId.toString()) ||
+      (payload.fastTrackCode && donation.fastTrackCode?.toLowerCase() === payload.fastTrackCode.toLowerCase())
+    );
+    if (alreadyRecorded) {
+      const error = new Error('Lượt hiến máu này đã được ghi nhận trước đó.');
+      (error as any).statusCode = 409;
+      throw error;
+    }
+
+    // 2. Medical donation history is always updated; XP and badges respect the Admin toggle.
+    const gamificationEnabled = await isFeatureEnabled('gamification_badges');
     if (donorProfile) {
-      donorProfile.xp = (donorProfile.xp || 0) + 150;
-      donorProfile.donorLevel = Math.max(1, Math.floor(donorProfile.xp / 500) + 1);
       donorProfile.lastDonationDate = now;
       donorProfile.totalDonations = (donorProfile.totalDonations || 0) + 1;
 
-      if (!donorProfile.achievements) donorProfile.achievements = [];
-      const hasHeroBadge = donorProfile.achievements.some((a: any) => a.badgeType === 'SOS_HERO');
-      if (!hasHeroBadge) {
-        donorProfile.achievements.push({
-          badgeType: 'SOS_HERO',
-          title: 'Hiệp Sĩ Cứu Người (SOS Hero)',
-          description: 'Đã sẵn sàng tham gia hiến máu trong ca cấp cứu khẩn cấp',
-          icon: '🛡️',
-          awardedAt: now
-        });
+      if (gamificationEnabled) {
+        donorProfile.xp = (donorProfile.xp || 0) + 150;
+        donorProfile.donorLevel = Math.max(1, Math.floor(donorProfile.xp / 500) + 1);
+        if (!donorProfile.achievements) donorProfile.achievements = [];
+        const hasHeroBadge = donorProfile.achievements.some((a: any) => a.badgeType === 'SOS_HERO');
+        if (!hasHeroBadge) {
+          donorProfile.achievements.push({
+            badgeType: 'SOS_HERO',
+            title: 'Hiệp Sĩ Cứu Người (SOS Hero)',
+            description: 'Đã sẵn sàng tham gia hiến máu trong ca cấp cứu khẩn cấp',
+            icon: '🛡️',
+            awardedAt: now
+          });
+        }
       }
       await donorProfile.save();
     }
@@ -714,7 +867,7 @@ export class SOSRequestService {
       donorName: payload.donorName || donorProfile?.fullName || 'Người hiến máu trực tiếp',
       idDocumentNumber: payload.idDocumentNumber || donorProfile?.idDocumentNumber,
       donorPhone: payload.donorPhone || donorProfile?.phoneNumber,
-      bloodType: payload.bloodType || donorProfile?.bloodType || sosRequest.bloodType,
+      bloodType: donationBloodType,
       fastTrackCode: payload.fastTrackCode,
       volumeMl: payload.volumeMl,
       recordedAt: now,
@@ -726,9 +879,9 @@ export class SOSRequestService {
       sosRequest.acceptedDonorIds.push(donorObjId);
     }
 
-    // 4. Update collected / received quantities
-    sosRequest.receivedQuantityMl = (sosRequest.receivedQuantityMl || sosRequest.collectedQuantityMl || 0) + payload.volumeMl;
-    sosRequest.collectedQuantityMl = sosRequest.receivedQuantityMl;
+    // Direct donations are collected and received at the hospital in the same action.
+    sosRequest.collectedQuantityMl = (sosRequest.collectedQuantityMl || 0) + payload.volumeMl;
+    sosRequest.receivedQuantityMl = (sosRequest.receivedQuantityMl || 0) + payload.volumeMl;
 
     const isFullyFulfilled = sosRequest.receivedQuantityMl >= sosRequest.requiredQuantityMl;
     if (isFullyFulfilled) {
@@ -765,18 +918,29 @@ export class SOSRequestService {
           recipientIds: [donorObjId.toString()],
           type: 'SOS',
           title: '🎉 Tiếp nhận hiến máu cấp cứu thành công!',
-          body: `Bệnh viện đã tiếp nhận thành công ${payload.volumeMl}ml máu từ bạn cho ca cấp cứu SOS. Bạn nhận được +150 XP và huy hiệu Hiệp Sĩ Cứu Người!`,
+          body: gamificationEnabled
+            ? `Bệnh viện đã tiếp nhận thành công ${payload.volumeMl}ml máu từ bạn cho ca cấp cứu SOS. Bạn nhận được +150 XP và huy hiệu Hiệp Sĩ Cứu Người!`
+            : `Bệnh viện đã tiếp nhận thành công ${payload.volumeMl}ml máu từ bạn cho ca cấp cứu SOS. Cảm ơn bạn đã góp phần cứu người!`,
           payload: {
             sosRequestId,
             volumeMl: payload.volumeMl,
             status: sosRequest.status,
-            deepLink: `/donor/my-profile`
+            deepLink: `/donor/my-profile`,
+            audienceRole: 'Donor',
+            notificationKind: 'SOS_DONOR_THANK_YOU',
+            sourceRefId: sosRequestId,
+            sourceRefType: 'SOSRequest'
           },
-          channels: ['InApp', 'WebPush', 'Email'] as any
+          channels: ['InApp', 'WebPush', 'Email'] as any,
+          allowedRecipientRoles: ['Donor']
         });
       } catch (dErr) {
         console.warn('[SOSRequestService] Donor notification warning:', dErr);
       }
+    }
+
+    if (previousStatus !== 'Fulfilled' && isFullyFulfilled) {
+      await this.notifySOSCompletion(sosRequest);
     }
 
     return {
@@ -786,7 +950,14 @@ export class SOSRequestService {
     };
   }
 
-  public static async lookupDonorForSOS(sosRequestId: string, queryStr: string) {
+  public static async lookupDonorForSOS(sosRequestId: string, queryStr: string, staffId: string) {
+    const sosRequest = await SOSRequest.findById(sosRequestId);
+    if (!sosRequest) {
+      const error = new Error('SOS Request not found');
+      (error as any).statusCode = 404;
+      throw error;
+    }
+    await this.assertHospitalOwnership(sosRequest, staffId);
     if (!queryStr || !queryStr.trim()) {
       return { success: false, message: 'Query is required', data: [] };
     }
@@ -841,6 +1012,17 @@ export class SOSRequestService {
         fastTrackCode: `SOS-${(p.userId?.toString() || '').slice(-6).toUpperCase()}`
       }))
     };
+  }
+
+  private static async assertHospitalOwnership(sosRequest: any, staffId: string) {
+    const { User } = await import('../../auth-account/models/user.model');
+    const staff = await User.findById(staffId).select('role roles hospitalId').lean();
+    const roles = new Set([staff?.role, ...(Array.isArray(staff?.roles) ? staff.roles : [])]);
+    if (!staff || !roles.has('HospitalStaff') || !staff.hospitalId || staff.hospitalId.toString() !== sosRequest.hospitalId.toString()) {
+      const error = new Error('Bạn không có quyền thao tác yêu cầu SOS của bệnh viện khác.');
+      (error as any).statusCode = 403;
+      throw error;
+    }
   }
 }
 

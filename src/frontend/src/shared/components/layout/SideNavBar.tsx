@@ -30,7 +30,7 @@ export const SideNavBar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 h-screen bg-[#1a1a2e] text-white flex flex-col shrink-0">
+    <aside className="w-full md:w-64 h-dvh bg-[#1a1a2e] text-white flex flex-col shrink-0">
       {/* Logo Area */}
       <div className="h-[72px] flex items-center px-6 border-b border-white/10 shrink-0">
         <Link to="/dashboard" className="flex items-center gap-2 group">

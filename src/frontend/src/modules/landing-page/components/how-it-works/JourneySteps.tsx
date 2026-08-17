@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   MapPin,
   FileCheck2,
@@ -29,7 +28,6 @@ interface ProcessStep {
 }
 
 export const JourneySteps: React.FC = () => {
-  const { t } = useTranslation('landing');
   const [activePrepTab, setActivePrepTab] = useState<'before' | 'during' | 'after'>('before');
   const [selectedStepModal, setSelectedStepModal] = useState<ProcessStep | null>(null);
 

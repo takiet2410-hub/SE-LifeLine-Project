@@ -57,6 +57,27 @@ Authenticated user role MUST be `Administrator`. Non-admin requests return `403 
 - **Path**: `/api/admin/users/:userId`
 - **Response (200 OK)**: `{"message": "User soft deleted successfully"}`
 
+### 1.4 Restore User
+- **Method**: `POST`
+- **Path**: `/api/v1/admin/users/:userId/restore`
+- **Request Body**: `{"confirmationUsername": "user@example.com"}`
+- **Response (200 OK)**: The existing account is reactivated with its history unchanged.
+
+### 1.5 Privacy Purge and Release Identifiers
+- **Method**: `POST`
+- **Path**: `/api/v1/admin/users/:userId/purge-personal-data`
+- **Precondition**: The account is already suspended and is not an Administrator account.
+- **Request Body**:
+```json
+{
+  "confirmationUsername": "user@example.com",
+  "reason": "User requested deletion and a fresh registration.",
+  "adminPassword": "current administrator password"
+}
+```
+- **Response (200 OK)**: PII is anonymized in a MongoDB transaction, disposable personal records are removed, and the original email/CCCD are available for registration again. Historical appointment, donation, SOS, and audit references remain pseudonymous.
+- **Deployment requirement**: MongoDB must support multi-document transactions (MongoDB Atlas or a replica set, including a single-node replica set for local development).
+
 ---
 
 ## 2. Roles & Permissions (AD-UC-03)

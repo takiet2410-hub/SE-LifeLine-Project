@@ -178,15 +178,16 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
   const pageMeta = getPageMeta();
 
   return (
-    <header className="h-[72px] bg-white border-b border-[#f1f3f5] px-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
+    <header className="h-16 sm:h-[72px] bg-white border-b border-[#f1f3f5] px-3 sm:px-4 lg:px-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
       {/* Mobile Toggle & Page Header Titles */}
-      <div className="flex items-center gap-4">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-4">
         <button
           onClick={onToggleMobileMenu}
           className="md:hidden p-2 -ml-2 text-[#6c757d] hover:text-[#271816] rounded-lg cursor-pointer"
         >
           <Menu className="w-5 h-5" />
         </button>
+        <span className="sm:hidden truncate text-sm font-bold text-[#271816]">{pageMeta.title}</span>
         <div className="hidden sm:flex flex-col">
           <div className="flex items-center gap-2">
             <h1 className="text-[20px] font-bold text-[#271816] leading-tight">
@@ -210,11 +211,11 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
       </div>
 
       {/* Right Header Actions */}
-      <div className="flex items-center gap-3.5">
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-3.5">
         {/* Language Switcher */}
         <button
           onClick={toggleLanguage}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold text-[#5b403d] border border-[#f1f3f5] hover:bg-[#fff8f7] transition-colors cursor-pointer"
+          className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg text-[12px] sm:text-[13px] font-semibold text-[#5b403d] border border-[#f1f3f5] hover:bg-[#fff8f7] transition-colors cursor-pointer"
           title="Switch Language"
         >
           <Globe className="w-3.5 h-3.5 text-[#93000b]" />
@@ -237,7 +238,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
+            <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
               <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 className="font-bold text-gray-800 text-sm">Notifications</h3>
                 {unreadCount > 0 && (
@@ -305,7 +306,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
         </div>
 
         {/* User Profile Avatar */}
-        <div className="flex items-center gap-2.5 pl-3 border-l border-[#f1f3f5]">
+        <div className="flex items-center gap-2.5 pl-1.5 sm:pl-3 border-l border-[#f1f3f5]">
           <div className="w-9 h-9 rounded-full bg-[#1a1a2e] text-white font-bold text-[13px] flex items-center justify-center border border-[#dee2e6] shadow-xs">
             {initials}
           </div>

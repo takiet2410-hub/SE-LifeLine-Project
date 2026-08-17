@@ -225,7 +225,7 @@ export const MyAppointmentPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full relative p-6 md:p-8 max-w-[1400px] mx-auto w-full">
+    <div className="flex min-h-full flex-col relative p-3 sm:p-5 md:p-8 max-w-[1400px] mx-auto w-full">
       <AppointmentTabs activeTab={activeTab} onChangeTab={setActiveTab} />
 
       {/* Main Content: Master-Detail Layout or Full Schedule Empty State */}
@@ -286,9 +286,9 @@ export const MyAppointmentPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col md:flex-row gap-6 overflow-hidden">
+        <div className="flex-1 flex flex-col md:flex-row gap-4 md:gap-6 md:overflow-hidden">
           {/* Left Column: List View */}
-          <div className="w-full md:w-[380px] shrink-0 flex flex-col overflow-y-auto pr-2 gap-3 pb-6 md:pb-0">
+          <div className="w-full md:w-[380px] shrink-0 flex flex-col md:overflow-y-auto md:pr-2 gap-3 pb-6 md:pb-0">
             {isLoading ? (
               <div className="flex justify-center py-10">
                 <Loader2 className="w-8 h-8 text-[#93000b] animate-spin" />

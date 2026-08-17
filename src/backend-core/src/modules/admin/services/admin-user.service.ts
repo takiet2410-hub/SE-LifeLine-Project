@@ -1,10 +1,27 @@
 import { User, IUser } from '../../auth-account/models/user.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { BloodCenter } from '../../auth-account/models/blood-center.model';
+import { Hospital } from '../../auth-account/models/hospital.model';
 import { AdminAuditLog } from '../models/audit-log.model';
 import { geocodeAddress } from '../../../shared/geocoding.util';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
+import { randomUUID } from 'crypto';
+import { Badge } from '../../auth-account/models/badge.model';
+import { Notification } from '../../notification/models/Notification';
+import { NotificationPreference } from '../../notification/models/NotificationPreference';
+import { UserDevice } from '../../notification/models/UserDevice';
+import { ChatConversation } from '../../chatbot/models/chat-conversation.model';
+import { ChatMessage } from '../../chatbot/models/chat-message.model';
+
+const VALID_ROLES = ['Donor', 'BloodCenterStaff', 'HospitalStaff', 'Administrator'] as const;
+type UserRole = typeof VALID_ROLES[number];
+
+const csvCell = (value: unknown): string => {
+  let text = value == null ? '' : String(value);
+  if (/^[=+\-@]/.test(text)) text = `'${text}`;
+  return `"${text.replace(/"/g, '""')}"`;
+};
 
 export interface GetUsersQuery {
   page?: number;
@@ -26,6 +43,7 @@ export interface CreateUserData {
   role?: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
   roles?: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
   bloodCenterId?: string;
+  hospitalId?: string;
   permanentAddress?: string;
   currentAddress?: string;
   address?: string;
@@ -39,6 +57,7 @@ export interface UpdateUserData {
   roles?: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
   accountStatus?: 'PendingVerification' | 'Active' | 'Suspended';
   bloodCenterId?: string;
+  hospitalId?: string;
   permanentAddress?: string;
   currentAddress?: string;
   address?: string;
@@ -54,7 +73,12 @@ export function validateAndNormalizeRoles(data: { role?: string; roles?: string[
     ? [data.role]
     : ['Donor'];
 
-  const normalizedRoles = Array.from(new Set(inputRoles)) as ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
+  const invalidRole = inputRoles.find((role) => !VALID_ROLES.includes(role as UserRole));
+  if (invalidRole) {
+    throw new Error(`Unsupported role '${invalidRole}'.`);
+  }
+
+  const normalizedRoles = Array.from(new Set(['Donor', ...inputRoles])) as ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
   const managementRoles = normalizedRoles.filter((r) => r !== 'Donor');
 
   if (managementRoles.length > 1) {
@@ -100,7 +124,7 @@ export class AdminUserService {
 
       if (field === 'name') {
         andConditions.push({
-          $or: [{ email: searchRegex }, { _id: { $in: donorUserIds } }],
+          $or: [{ fullName: searchRegex }, { _id: { $in: donorUserIds } }],
         });
       } else if (field === 'email') {
         andConditions.push({ email: searchRegex });
@@ -117,6 +141,7 @@ export class AdminUserService {
         andConditions.push({
           $or: [
             { email: searchRegex },
+            { fullName: searchRegex },
             { idDocumentNumber: searchRegex },
             { phone: searchRegex },
             { _id: { $in: donorUserIds } },
@@ -147,24 +172,7 @@ export class AdminUserService {
     const donorProfiles = await DonorProfile.find({ userId: { $in: userIds } }).lean();
     const donorMap = new Map(donorProfiles.map((p) => [p.userId.toString(), p]));
 
-    const items = users.map((user) => {
-      const profile = donorMap.get(user._id.toString());
-      const userRoles = Array.from(new Set([user.role, ...(Array.isArray(user.roles) ? user.roles : [])].filter(Boolean)));
-      return {
-        id: user._id.toString(),
-        idDocumentNumber: user.idDocumentNumber,
-        email: user.email,
-        phone: user.phone || 'N/A',
-        fullName: profile?.fullName || user.email.split('@')[0],
-        permanentAddress: profile?.permanentAddress || '',
-        currentAddress: profile?.currentAddress?.fullAddress || (typeof profile?.currentAddress === 'string' ? profile?.currentAddress : '') || '',
-        role: user.role || userRoles[0] || 'Donor',
-        roles: userRoles.length > 0 ? userRoles : ['Donor'],
-        accountStatus: user.accountStatus,
-        createdAt: user.createdAt,
-        lastLoginAt: user.lastLoginAt,
-      };
-    });
+    const items = users.map((user) => this.formatUser(user, donorMap.get(user._id.toString())));
 
     const totalPages = Math.ceil(total / limit) || 1;
 
@@ -183,88 +191,113 @@ export class AdminUserService {
     };
   }
 
+  async getUserById(userId: string) {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error('Invalid user ID.');
+    }
+    const user = await User.findById(userId).lean();
+    if (!user) {
+      throw new Error('User account not found.');
+    }
+    const profile = await DonorProfile.findOne({ userId: user._id }).lean();
+    return this.formatUser(user, profile);
+  }
+
   async exportUsersCsv(query: GetUsersQuery) {
-    const { items } = await this.getUsers({ ...query, limit: 1000, page: 1 });
+    const firstPage = await this.getUsers({ ...query, limit: 100, page: 1 });
+    const items = [...firstPage.items];
+    for (let page = 2; page <= firstPage.pagination.totalPages; page += 1) {
+      const result = await this.getUsers({ ...query, limit: 100, page });
+      items.push(...result.items);
+    }
     const headers = ['ID Document', 'Full Name', 'Email', 'Phone', 'Role', 'Status', 'Registration Date'];
     const rows = items.map((u) => [
-      `"${u.idDocumentNumber}"`,
-      `"${u.fullName}"`,
-      `"${u.email}"`,
-      `"${u.phone}"`,
-      `"${u.role}"`,
-      `"${u.accountStatus}"`,
-      `"${new Date(u.createdAt).toISOString()}"`,
+      csvCell(u.idDocumentNumber),
+      csvCell(u.fullName),
+      csvCell(u.email),
+      csvCell(u.phone),
+      csvCell(u.role),
+      csvCell(u.accountStatus),
+      csvCell(new Date(u.createdAt).toISOString()),
     ]);
 
-    return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    return ['\uFEFF' + headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
   }
 
   async createUser(adminUser: { id: string; name: string }, data: CreateUserData, ipAddress: string) {
     const existing = await User.findOne({
-      $or: [{ email: data.email }, { idDocumentNumber: data.idDocumentNumber }],
+      $or: [{ email: data.email.toLowerCase() }, { idDocumentNumber: data.idDocumentNumber }],
     });
 
     if (existing) {
-      throw new Error('User with this email or ID Document Number already exists.');
+      throw new Error(
+        existing.isDeleted
+          ? 'A deactivated account already uses this email or ID Document Number. Reactivate that account instead.'
+          : 'User with this email or ID Document Number already exists.'
+      );
     }
 
     const { roles, primaryRole } = validateAndNormalizeRoles(data);
-
-    if (data.bloodCenterId) {
-      if (!mongoose.Types.ObjectId.isValid(data.bloodCenterId)) {
-        throw new Error(`Mã Blood Center (bloodCenterId: '${data.bloodCenterId}') không hợp lệ.`);
-      }
-      const center = await BloodCenter.findById(data.bloodCenterId);
-      if (!center) {
-        throw new Error(`Blood Center với ID '${data.bloodCenterId}' không tồn tại trong hệ thống.`);
-      }
+    if (roles.some((role) => role !== 'Donor')) {
+      throw new Error('Tài khoản mới phải bắt đầu với vai trò Donor. Hãy tạo Donor trước rồi xét cấp quyền công tác ở bước chỉnh sửa.');
     }
+    await this.validateStaffOrganization(roles, data.hospitalId, data.bloodCenterId);
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(data.password, salt);
 
     const newUser = await User.create({
       idDocumentNumber: data.idDocumentNumber,
-      email: data.email,
+      email: data.email.toLowerCase(),
+      fullName: data.fullName,
       phone: data.phone,
       passwordHash,
       roles,
       role: primaryRole,
       accountStatus: 'Active',
-      bloodCenterId: data.bloodCenterId,
+      bloodCenterId: roles.includes('BloodCenterStaff') ? data.bloodCenterId : undefined,
+      hospitalId: roles.includes('HospitalStaff') ? data.hospitalId : undefined,
+      permanentAddress: data.permanentAddress || data.address,
+      currentAddress: data.currentAddress || data.address,
     });
 
-    if (roles.includes('Donor')) {
-      const permanentAddr = data.permanentAddress || data.address || 'TP. Hồ Chí Minh';
-      const currentAddr = data.currentAddress || data.address || permanentAddr;
-      const coords = await geocodeAddress(currentAddr || permanentAddr);
+    try {
+      if (roles.includes('Donor')) {
+        const permanentAddr = data.permanentAddress || data.address || 'TP. Hồ Chí Minh';
+        const currentAddr = data.currentAddress || data.address || permanentAddr;
+        const coords = await geocodeAddress(currentAddr || permanentAddr);
 
-      await DonorProfile.create({
-        userId: newUser._id,
-        fullName: data.fullName,
-        idDocumentNumber: data.idDocumentNumber,
-        dateOfBirth: new Date('1995-01-01'),
-        gender: 'Other',
-        bloodType: 'O+',
-        phoneNumber: data.phone || '0900000000',
-        permanentAddress: permanentAddr,
-        currentAddress: currentAddr ? { fullAddress: currentAddr } : undefined,
-        location: coords ? { type: 'Point', coordinates: coords } : undefined,
-        emergencyOptIn: true,
+        await DonorProfile.create({
+          userId: newUser._id,
+          fullName: data.fullName,
+          idDocumentNumber: data.idDocumentNumber,
+          dateOfBirth: new Date('1995-01-01'),
+          gender: 'Other',
+          bloodType: 'O+',
+          phoneNumber: data.phone || '0900000000',
+          permanentAddress: permanentAddr,
+          currentAddress: currentAddr ? { fullAddress: currentAddr } : undefined,
+          location: coords ? { type: 'Point', coordinates: coords } : undefined,
+          emergencyOptIn: true,
+        });
+      }
+
+      await AdminAuditLog.create({
+        actorUserId: adminUser.id,
+        actorName: adminUser.name,
+        action: 'Create User',
+        actionCategory: 'User Management',
+        resourceType: 'User',
+        resourceId: newUser._id.toString(),
+        newValue: { email: data.email, role: primaryRole, roles, fullName: data.fullName },
+        ipAddress,
+        status: 'Success',
       });
+    } catch (error) {
+      await DonorProfile.deleteOne({ userId: newUser._id });
+      await User.deleteOne({ _id: newUser._id });
+      throw error;
     }
-
-    await AdminAuditLog.create({
-      actorUserId: adminUser.id,
-      actorName: adminUser.name,
-      action: 'Create User',
-      actionCategory: 'User Management',
-      resourceType: 'User',
-      resourceId: newUser._id.toString(),
-      newValue: { email: data.email, role: primaryRole, roles, fullName: data.fullName },
-      ipAddress,
-      status: 'Success',
-    });
 
     return newUser;
   }
@@ -274,6 +307,15 @@ export class AdminUserService {
     if (!user) {
       throw new Error('User account not found.');
     }
+    if (user.privacyPurgedAt) {
+      throw new Error('A privacy-purged account cannot be edited or restored. Create a new account instead.');
+    }
+    if (data.fullName !== undefined) {
+      throw new Error('Full Name là dữ liệu định danh theo CCCD và không thể thay đổi tại trang phân quyền.');
+    }
+    if (data.permanentAddress !== undefined) {
+      throw new Error('Địa chỉ thường trú là dữ liệu định danh theo CCCD và không thể thay đổi tại trang phân quyền.');
+    }
 
     const previousValue = {
       email: user.email,
@@ -282,24 +324,52 @@ export class AdminUserService {
       accountStatus: user.accountStatus,
     };
 
-    if (data.email) user.email = data.email;
-    if (data.phone) user.phone = data.phone;
+    const currentRoles = Array.from(new Set([user.role, ...(user.roles || [])].filter(Boolean))) as UserRole[];
+    const currentlyActiveAdmin = currentRoles.includes('Administrator') && user.accountStatus === 'Active' && !user.isDeleted;
+    const normalized = data.roles || data.role ? validateAndNormalizeRoles(data) : undefined;
+    const nextRoles = normalized?.roles || currentRoles;
+    const nextStatus = data.accountStatus || user.accountStatus;
+    const remainsActiveAdmin = nextRoles.includes('Administrator') && nextStatus === 'Active';
+    const nextHospitalId = data.hospitalId || user.hospitalId?.toString();
+    const nextBloodCenterId = data.bloodCenterId || user.bloodCenterId?.toString();
+
+    if (adminUser.id === userId && !remainsActiveAdmin) {
+      throw new Error('Administrators cannot remove their own Administrator role or suspend their own account.');
+    }
+    if (currentlyActiveAdmin && !remainsActiveAdmin) {
+      const activeAdminCount = await this.countActiveAdministrators();
+      if (activeAdminCount <= 1) {
+        throw new Error('The last active Administrator account cannot be demoted or suspended.');
+      }
+    }
+
+    await this.validateStaffOrganization(nextRoles, nextHospitalId, nextBloodCenterId);
+
+    if (data.email !== undefined && data.email.toLowerCase() !== user.email.toLowerCase()) {
+      const duplicate = await User.findOne({ email: data.email.toLowerCase(), _id: { $ne: user._id } });
+      if (duplicate) throw new Error('Another account already uses this email address.');
+      user.email = data.email.toLowerCase();
+    }
+    if (data.phone !== undefined) user.phone = data.phone || undefined;
     if (data.roles || data.role) {
-      const { roles, primaryRole } = validateAndNormalizeRoles(data);
-      user.roles = roles as any;
-      user.role = primaryRole as any;
+      user.roles = normalized!.roles as any;
+      user.role = normalized!.primaryRole as any;
     }
-    if (data.accountStatus) user.accountStatus = data.accountStatus;
-    if (data.bloodCenterId) {
-      if (!mongoose.Types.ObjectId.isValid(data.bloodCenterId)) {
-        throw new Error(`Mã Blood Center (bloodCenterId: '${data.bloodCenterId}') không hợp lệ.`);
+    if (data.accountStatus) {
+      user.accountStatus = data.accountStatus;
+      if (data.accountStatus === 'Active') {
+        user.isDeleted = false;
+        user.deletedAt = undefined;
+        user.deletedBy = undefined;
+        user.deletionReason = undefined;
+        user.sessionExpiresAt = undefined;
       }
-      const center = await BloodCenter.findById(data.bloodCenterId);
-      if (!center) {
-        throw new Error(`Blood Center với ID '${data.bloodCenterId}' không tồn tại trong hệ thống.`);
-      }
-      user.bloodCenterId = data.bloodCenterId as any;
     }
+    if (data.currentAddress !== undefined || data.address !== undefined) {
+      user.currentAddress = data.currentAddress || data.address;
+    }
+    user.hospitalId = nextRoles.includes('HospitalStaff') ? nextHospitalId as any : undefined;
+    user.bloodCenterId = nextRoles.includes('BloodCenterStaff') ? nextBloodCenterId as any : undefined;
 
     await user.save();
 
@@ -324,19 +394,16 @@ export class AdminUserService {
         });
       } else {
         const profileUpdates: any = {};
-        if (data.fullName) profileUpdates.fullName = data.fullName;
-        if (data.permanentAddress) profileUpdates.permanentAddress = data.permanentAddress;
         if (data.currentAddress || data.address) {
           const addrStr = data.currentAddress || data.address;
           profileUpdates.currentAddress = { fullAddress: addrStr };
         }
 
-        if (data.permanentAddress || data.currentAddress || data.address) {
+        if (data.currentAddress || data.address) {
           const targetAddress =
             data.currentAddress ||
             data.address ||
             (existingProfile?.currentAddress as any)?.fullAddress ||
-            data.permanentAddress ||
             existingProfile?.permanentAddress;
 
           if (targetAddress) {
@@ -361,7 +428,14 @@ export class AdminUserService {
       resourceType: 'User',
       resourceId: userId,
       previousValue,
-      newValue: { email: user.email, role: user.role, accountStatus: user.accountStatus },
+      newValue: {
+        email: user.email,
+        role: user.role,
+        roles: user.roles,
+        accountStatus: user.accountStatus,
+        hospitalId: user.hospitalId,
+        bloodCenterId: user.bloodCenterId,
+      },
       ipAddress,
       status: 'Success',
     });
@@ -385,79 +459,341 @@ export class AdminUserService {
       throw new Error('User account not found.');
     }
 
+    const userRoles = Array.from(new Set([user.role, ...(user.roles || [])].filter(Boolean)));
+    if (userRoles.includes('Administrator') && user.accountStatus === 'Active' && !user.isDeleted) {
+      const activeAdminCount = await this.countActiveAdministrators();
+      if (activeAdminCount <= 1) {
+        throw new Error('The last active Administrator account cannot be suspended.');
+      }
+    }
+
     // Verify confirmation phrase
     if (confirmationUsername.toLowerCase() !== user.email.toLowerCase()) {
       throw new Error('Confirmation username does not match account email.');
     }
 
-    const previousValue = { accountStatus: user.accountStatus, email: user.email };
+    const previousValue = { accountStatus: user.accountStatus, email: user.email, isDeleted: user.isDeleted };
+    const deletionSnapshot = {
+      accountStatus: user.accountStatus,
+      isDeleted: user.isDeleted,
+      deletedAt: user.deletedAt,
+      deletedBy: user.deletedBy,
+      deletionReason: user.deletionReason,
+      sessionExpiresAt: user.sessionExpiresAt,
+    };
 
-    // Soft-delete implementation: Suspend status + session expiration + PII anonymization
+    // Soft delete preserves historical relations while revoking access immediately.
     user.accountStatus = 'Suspended';
+    user.isDeleted = true;
+    user.deletedAt = new Date();
+    user.deletedBy = adminUser.id;
+    user.deletionReason = reason;
     user.sessionExpiresAt = new Date(); // Revoke sessions
     await user.save();
 
-    await AdminAuditLog.create({
-      actorUserId: adminUser.id,
-      actorName: adminUser.name,
-      action: 'Soft Delete User (Suspend & Anonymize)',
-      actionCategory: 'User Management',
-      resourceType: 'User',
-      resourceId: userId,
-      previousValue,
-      newValue: { accountStatus: 'Suspended', reason },
-      details: `Reason for deletion: ${reason}`,
-      ipAddress,
-      status: 'Success',
-    });
+    try {
+      await AdminAuditLog.create({
+        actorUserId: adminUser.id,
+        actorName: adminUser.name,
+        action: 'Soft Delete User (Suspend)',
+        actionCategory: 'User Management',
+        resourceType: 'User',
+        resourceId: userId,
+        previousValue,
+        newValue: { accountStatus: 'Suspended', isDeleted: true, reason },
+        details: `Reason for deletion: ${reason}`,
+        ipAddress,
+        status: 'Success',
+      });
+    } catch (error) {
+      user.accountStatus = deletionSnapshot.accountStatus;
+      user.isDeleted = deletionSnapshot.isDeleted;
+      user.deletedAt = deletionSnapshot.deletedAt;
+      user.deletedBy = deletionSnapshot.deletedBy;
+      user.deletionReason = deletionSnapshot.deletionReason;
+      user.sessionExpiresAt = deletionSnapshot.sessionExpiresAt;
+      await user.save();
+      throw error;
+    }
 
     return { message: 'User account successfully suspended/deactivated.' };
   }
 
-  async hardDeleteUser(
+  async restoreUser(
     adminUser: { id: string; name: string },
     userId: string,
     confirmationUsername: string,
     ipAddress: string
   ) {
-    if (adminUser.id === userId) {
-      throw new Error('Administrators cannot delete their own account.');
-    }
-
     const user = await User.findById(userId);
-    if (!user) {
-      throw new Error('User account not found.');
+    if (!user) throw new Error('User account not found.');
+    if (user.privacyPurgedAt) {
+      throw new Error('This account has already been privacy-purged and cannot be restored. Create a new account instead.');
     }
-
     if (confirmationUsername.toLowerCase() !== user.email.toLowerCase()) {
       throw new Error('Confirmation username does not match account email.');
     }
+    if (user.accountStatus !== 'Suspended' && !user.isDeleted) {
+      throw new Error('Only suspended or deactivated accounts can be restored.');
+    }
 
-    const previousValue = {
-      email: user.email,
-      fullName: (user as any).fullName || '',
-      idDocumentNumber: user.idDocumentNumber,
+    const snapshot = {
       accountStatus: user.accountStatus,
-      role: user.role,
+      isDeleted: user.isDeleted,
+      deletedAt: user.deletedAt,
+      deletedBy: user.deletedBy,
+      deletionReason: user.deletionReason,
+      sessionExpiresAt: user.sessionExpiresAt,
     };
+    user.accountStatus = 'Active';
+    user.isDeleted = false;
+    user.deletedAt = undefined;
+    user.deletedBy = undefined;
+    user.deletionReason = undefined;
+    user.sessionExpiresAt = undefined;
+    await user.save();
 
-    // Hard-delete implementation: Permanently delete document from MongoDB
-    await User.deleteOne({ _id: userId });
+    try {
+      await AdminAuditLog.create({
+        actorUserId: adminUser.id,
+        actorName: adminUser.name,
+        action: 'Restore User Account',
+        actionCategory: 'User Management',
+        resourceType: 'User',
+        resourceId: userId,
+        previousValue: { accountStatus: snapshot.accountStatus, isDeleted: snapshot.isDeleted },
+        newValue: { accountStatus: 'Active', isDeleted: false },
+        ipAddress,
+        status: 'Success',
+      });
+    } catch (error) {
+      user.accountStatus = snapshot.accountStatus;
+      user.isDeleted = snapshot.isDeleted;
+      user.deletedAt = snapshot.deletedAt;
+      user.deletedBy = snapshot.deletedBy;
+      user.deletionReason = snapshot.deletionReason;
+      user.sessionExpiresAt = snapshot.sessionExpiresAt;
+      await user.save();
+      throw error;
+    }
 
-    await AdminAuditLog.create({
-      actorUserId: adminUser.id,
-      actorName: adminUser.name,
-      action: 'Hard Delete User (Permanent Removal)',
-      actionCategory: 'User Management',
-      resourceType: 'User',
-      resourceId: userId,
-      previousValue,
-      newValue: { deleted: true },
-      details: `Permanently removed user account ${user.email} (${user.idDocumentNumber}) from database.`,
-      ipAddress,
-      status: 'Success',
+    return { message: 'User account restored successfully.' };
+  }
+
+  async purgePersonalData(
+    adminUser: { id: string; name: string },
+    userId: string,
+    reason: string,
+    confirmationUsername: string,
+    adminPassword: string,
+    ipAddress: string
+  ) {
+    if (adminUser.id === userId) {
+      throw new Error('Administrators cannot purge their own account.');
+    }
+
+    const actingAdmin = await User.findById(adminUser.id);
+    if (!actingAdmin || !(await bcrypt.compare(adminPassword, actingAdmin.passwordHash))) {
+      throw new Error('Administrator re-authentication failed.');
+    }
+
+    const replacementPasswordHash = await bcrypt.hash(randomUUID(), 10);
+    const tombstoneEmail = `deleted+${userId}@lifeline.invalid`;
+    const tombstoneDocument = `deleted-${userId}`;
+    const session = await mongoose.startSession();
+
+    try {
+      await session.withTransaction(async () => {
+        const user = await User.findById(userId).session(session);
+        if (!user) throw new Error('User account not found.');
+        if (user.privacyPurgedAt) throw new Error('Personal data has already been purged for this account.');
+        if (user.accountStatus !== 'Suspended' || !user.isDeleted) {
+          throw new Error('The account must be suspended before personal data can be purged.');
+        }
+        if (confirmationUsername.toLowerCase() !== user.email.toLowerCase()) {
+          throw new Error('Confirmation username does not match account email.');
+        }
+
+        const userRoles = Array.from(new Set([user.role, ...(user.roles || [])].filter(Boolean)));
+        if (userRoles.includes('Administrator')) {
+          throw new Error('Administrator accounts cannot be privacy-purged. Demote the account through the controlled role workflow first.');
+        }
+
+        const profile = await DonorProfile.findOne({ userId: user._id }).session(session);
+        if (profile) {
+          const conversationIds = await ChatConversation.distinct('_id', { donorId: profile._id }).session(session);
+          if (conversationIds.length > 0) {
+            await ChatMessage.deleteMany({ conversationId: { $in: conversationIds } }, { session });
+            await ChatConversation.deleteMany({ _id: { $in: conversationIds } }, { session });
+          }
+
+          await DonorProfile.updateOne(
+            { _id: profile._id },
+            {
+              $set: {
+                fullName: 'Deleted Donor',
+                dateOfBirth: new Date('1900-01-01T00:00:00.000Z'),
+                idDocumentNumber: tombstoneDocument,
+                phoneNumber: 'REDACTED',
+                permanentAddress: 'REDACTED',
+                bloodType: 'Unknown',
+                totalDonations: 0,
+                xp: 0,
+                donorLevel: 1,
+                emergencyOptIn: false,
+                avatarUrl: '',
+                achievements: [],
+              },
+              $unset: {
+                currentAddress: 1,
+                location: 1,
+                lastDonationDate: 1,
+                email: 1,
+                gender: 1,
+              },
+            },
+            { session }
+          );
+        }
+
+        await Promise.all([
+          UserDevice.deleteMany({ userId: user._id }, { session }),
+          Notification.deleteMany({ recipientUserId: user._id }, { session }),
+          NotificationPreference.deleteMany({ userId: user._id }, { session }),
+          Badge.deleteMany({ donorId: user._id }, { session }),
+        ]);
+
+        user.email = tombstoneEmail;
+        user.idDocumentNumber = tombstoneDocument;
+        user.fullName = 'Deleted User';
+        user.phone = undefined;
+        user.passwordHash = replacementPasswordHash;
+        user.roles = ['Donor'];
+        user.role = 'Donor';
+        user.bloodCenterId = undefined;
+        user.permanentAddress = undefined;
+        user.currentAddress = undefined;
+        user.verificationToken = undefined;
+        user.verificationTokenExpiry = undefined;
+        user.resetToken = undefined;
+        user.resetTokenExpiry = undefined;
+        user.failedLoginAttempts = 0;
+        user.lockUntil = undefined;
+        user.lastLoginAt = undefined;
+        user.sessionExpiresAt = new Date();
+        user.deletionReason = reason;
+        user.privacyPurgedAt = new Date();
+        user.privacyPurgedBy = adminUser.id;
+        await user.save({ session });
+
+        // Preserve the audit trail structure while removing PII captured by older entries.
+        await AdminAuditLog.updateMany(
+          { resourceType: 'User', resourceId: userId },
+          {
+            $set: {
+              previousValue: { redacted: true },
+              newValue: { redacted: true },
+              details: 'Personal data redacted by the privacy purge workflow.',
+            },
+          },
+          { session }
+        );
+        await AdminAuditLog.create([{
+          actorUserId: adminUser.id,
+          actorName: adminUser.name,
+          action: 'Privacy Purge User Data',
+          actionCategory: 'User Management',
+          resourceType: 'User',
+          resourceId: userId,
+          newValue: { privacyPurged: true, identifiersReleased: true },
+          details: `Privacy purge completed. Reason: ${reason}`,
+          ipAddress,
+          status: 'Success',
+        }], { session });
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('Transaction numbers are only allowed') || message.includes('replica set member or mongos')) {
+        throw new Error(
+          'Privacy purge requires MongoDB transaction support. Use MongoDB Atlas or configure the local MongoDB instance as a replica set.',
+          { cause: error }
+        );
+      }
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+
+    return {
+      message: 'Personal data purged. The previous email and ID Document Number can now be registered again.',
+    };
+  }
+
+  private formatUser(user: any, profile?: any) {
+    const userRoles = Array.from(
+      new Set(['Donor', user.role, ...(Array.isArray(user.roles) ? user.roles : [])].filter(Boolean))
+    ) as UserRole[];
+    return {
+      id: user._id.toString(),
+      idDocumentNumber: user.idDocumentNumber,
+      email: user.email,
+      phone: user.phone || 'N/A',
+      fullName: profile?.fullName || user.fullName || user.email.split('@')[0],
+      permanentAddress: profile?.permanentAddress || user.permanentAddress || '',
+      currentAddress:
+        profile?.currentAddress?.fullAddress ||
+        (typeof profile?.currentAddress === 'string' ? profile.currentAddress : '') ||
+        user.currentAddress ||
+        '',
+      hospitalId: user.hospitalId?.toString(),
+      bloodCenterId: user.bloodCenterId?.toString(),
+      role: user.role || userRoles[0] || 'Donor',
+      roles: userRoles.length > 0 ? userRoles : ['Donor'],
+      accountStatus: user.accountStatus,
+      isDeleted: Boolean(user.isDeleted),
+      privacyPurgedAt: user.privacyPurgedAt,
+      createdAt: user.createdAt,
+      lastLoginAt: user.lastLoginAt,
+    };
+  }
+
+  private countActiveAdministrators() {
+    return User.countDocuments({
+      accountStatus: 'Active',
+      isDeleted: { $ne: true },
+      $or: [{ role: 'Administrator' }, { roles: 'Administrator' }],
     });
+  }
 
-    return { message: 'User account permanently deleted from database.' };
+  private async validateStaffOrganization(
+    roles: UserRole[],
+    hospitalId?: string,
+    bloodCenterId?: string
+  ): Promise<void> {
+    if (roles.includes('HospitalStaff')) {
+      if (!hospitalId) {
+        throw new Error('Phải chọn bệnh viện công tác khi cấp quyền HospitalStaff.');
+      }
+      if (!mongoose.Types.ObjectId.isValid(hospitalId)) {
+        throw new Error(`Mã bệnh viện (hospitalId: '${hospitalId}') không hợp lệ.`);
+      }
+      const hospital = await Hospital.findById(hospitalId).select('_id').lean();
+      if (!hospital) {
+        throw new Error(`Bệnh viện với ID '${hospitalId}' không tồn tại trong hệ thống.`);
+      }
+    }
+
+    if (roles.includes('BloodCenterStaff')) {
+      if (!bloodCenterId) {
+        throw new Error('Phải chọn trung tâm máu công tác khi cấp quyền BloodCenterStaff.');
+      }
+      if (!mongoose.Types.ObjectId.isValid(bloodCenterId)) {
+        throw new Error(`Mã Blood Center (bloodCenterId: '${bloodCenterId}') không hợp lệ.`);
+      }
+      const center = await BloodCenter.findById(bloodCenterId).select('_id').lean();
+      if (!center) {
+        throw new Error(`Blood Center với ID '${bloodCenterId}' không tồn tại trong hệ thống.`);
+      }
+    }
   }
 }

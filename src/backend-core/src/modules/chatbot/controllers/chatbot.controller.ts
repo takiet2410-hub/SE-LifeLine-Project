@@ -3,20 +3,12 @@ import { ChatMessage } from '../models/chat-message.model';
 import { ConversationService } from '../services/conversation.service';
 import { FormatterService } from '../services/formatter.service';
 import { AIServiceClient, AIServiceError } from '../services/ai-service.client';
-import { isFeatureEnabled } from '../../admin/services/admin-toggle.service';
 import { Types } from 'mongoose';
 
 export class ChatbotController {
   
   public static async sendMessage(req: Request, res: Response) {
     try {
-      const isChatbotEnabled = await isFeatureEnabled('ai_chatbot');
-      if (!isChatbotEnabled) {
-        return res.status(403).json({
-          error: 'Tính năng AI Chatbot hiện đang được tạm dừng bởi Quản trị viên hệ thống.',
-        });
-      }
-
       const { message, clientRequestId, lat, lng } = req.body;
       const { anonymousSessionIdHash, donorId } = req.chatbotSession!;
 

@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { SOSRequest } from '../models/sos-request.model';
 import { SOSEvaluationService } from '../services/sos-evaluation.service';
+import { sosEvaluationQueue } from '../../../config/queue.config';
 
 /**
  * Background worker to:
@@ -42,18 +43,41 @@ export class SOSEvaluationWorker {
           // Note: InventoryDispatched is excluded — blood is on the way, stop re-broadcasting
           fulfillmentDeadline: { $gte: now }, // not expired
           createdAt: { $lt: fiveMinsAgo },    // created more than 5 min ago
-          $expr: { $lt: ['$collectedQuantityMl', '$requiredQuantityMl'] }
+          $expr: {
+            $lt: [
+              { $add: [
+                { $ifNull: ['$pledgedQuantityMl', 0] },
+                { $ifNull: ['$inTransitQuantityMl', 0] },
+                { $ifNull: ['$receivedQuantityMl', 0] }
+              ] },
+              '$requiredQuantityMl'
+            ]
+          }
         });
 
         if (stalledRequests.length > 0) {
-          console.log(`[SOSEvaluationWorker] Found ${stalledRequests.length} stalled SOS Request(s). Triggering re-evaluation to expand radius.`);
+          let queuedCount = 0;
 
           for (const req of stalledRequests) {
             try {
-              await SOSEvaluationService.evaluateAndPrioritize(req._id.toString(), true);
+              const requestId = req._id.toString();
+              const radiusState = await SOSEvaluationService.getRadiusExpansionState(requestId);
+              if (!radiusState.canExpand) continue;
+
+              await sosEvaluationQueue.add('re-evaluate', {
+                sosRequestId: requestId,
+                expandRadius: true,
+              }, {
+                jobId: `reval-${requestId}-${radiusState.lastRadiusKm}`,
+              });
+              queuedCount += 1;
             } catch (err) {
-              console.error(`[SOSEvaluationWorker] Error re-evaluating request ${req._id}:`, err);
+              console.error(`[SOSEvaluationWorker] Error queueing request ${req._id}:`, err);
             }
+          }
+
+          if (queuedCount > 0) {
+            console.log(`[SOSEvaluationWorker] Queued ${queuedCount} bounded radius expansion job(s).`);
           }
         }
       } catch (error) {

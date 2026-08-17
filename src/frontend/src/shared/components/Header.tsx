@@ -78,7 +78,7 @@ export const Header: React.FC = () => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden absolute w-full bg-white border-b border-gray-100 shadow-lg">
+        <div className="lg:hidden absolute w-full max-h-[calc(100dvh-5rem)] overflow-y-auto bg-white border-b border-gray-100 shadow-lg">
           <div className="px-4 pt-2 pb-6 space-y-1 flex flex-col">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.href;

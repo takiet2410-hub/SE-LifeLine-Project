@@ -38,6 +38,7 @@ As an Administrator, I want to manage platform user accounts so that user roles 
 2. **Given** an Admin submitting `UserFormPage`, **When** valid user details are provided, **Then** the user is created/updated in MongoDB and cached tokens invalidated if updated.
 3. **Given** an Admin clicking "Delete", **When** confirmed, **Then** `isDeleted` is set to `true`, revoking access immediately without hard-deleting historical transactions.
 4. **Given** an Admin clicking "Export CSV", **When** triggered, **Then** a `.csv` file containing the filtered user list is downloaded.
+5. **Given** a suspended user requests a fresh registration, **When** an Admin confirms a privacy purge, **Then** personal identifiers are anonymized transactionally, disposable personal data is removed, historical transactions retain a pseudonymous reference, and the original email/CCCD become reusable.
 
 ---
 
@@ -95,7 +96,7 @@ As an Administrator, I want to modify system configuration parameters and toggle
 - **FR-AD-001**: System MUST strictly enforce `authenticateJWT` and `authorizeRoles('Administrator')` on all `/api/admin/*` endpoints.
 - **FR-AD-002**: System MUST support paginated user listing with keyword search and role/status filtering.
 - **FR-AD-003**: System MUST provide streaming CSV export for user records and activity logs.
-- **FR-AD-004**: System MUST perform soft-deletes (`isDeleted: true`) on user deletion requests to preserve audit integrity.
+- **FR-AD-004**: System MUST perform soft-deletes (`isDeleted: true`) by default, support restoration, and provide a separate transactional privacy-purge workflow that releases identifiers without deleting historical transactions.
 - **FR-AD-005**: System MUST allow editing user attributes, assigned role, and hospital association.
 - **FR-AD-006**: System MUST persist role and permission mapping in database records.
 - **FR-AD-007**: System MUST record structured activity log entries (`ActivityLog`) for all administrative mutations.

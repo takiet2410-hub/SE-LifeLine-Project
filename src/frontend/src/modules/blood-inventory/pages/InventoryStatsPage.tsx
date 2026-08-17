@@ -272,7 +272,7 @@ export const InventoryStatsPage: React.FC = () => {
           <p className="text-[13px] font-medium text-slate-500 mt-0.5">Dữ liệu chi tiết thể tích và số lượng túi máu còn hạn sử dụng</p>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-[13px]">
+          <table className="w-full min-w-[760px] text-left text-[13px]">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
                 <th className="px-6 py-4">Nhóm Máu</th>

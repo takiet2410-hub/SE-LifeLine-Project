@@ -78,7 +78,8 @@ export class ArticleController {
   static async createArticle(req: Request, res: Response) {
     try {
       const parsed = CreateArticleSchema.parse({ body: req.body });
-      const actorUserId = (req as any).user?.userId || (req as any).user?.id || '65f1a2b3c4d5e6f7a8b9c000';
+      const actorUserId = (req as any).user?._id?.toString() || (req as any).user?.id?.toString();
+      if (!actorUserId) return res.status(401).json({ code: 'UNAUTHORIZED', message: 'User identity is required' });
 
       const article = await ArticleService.createArticle(parsed.body, actorUserId, req.ip);
 
@@ -96,7 +97,8 @@ export class ArticleController {
     try {
       const articleId = req.params.articleId as string;
       const parsed = UpdateArticleSchema.parse({ params: req.params, body: req.body });
-      const actorUserId = (req as any).user?.userId || (req as any).user?.id || '65f1a2b3c4d5e6f7a8b9c000';
+      const actorUserId = (req as any).user?._id?.toString() || (req as any).user?.id?.toString();
+      if (!actorUserId) return res.status(401).json({ code: 'UNAUTHORIZED', message: 'User identity is required' });
 
       const updated = await ArticleService.updateArticle(articleId, parsed.body, actorUserId, req.ip);
 
@@ -113,7 +115,8 @@ export class ArticleController {
   static async deleteArticle(req: Request, res: Response) {
     try {
       const articleId = req.params.articleId as string;
-      const actorUserId = (req as any).user?.userId || (req as any).user?.id || '65f1a2b3c4d5e6f7a8b9c000';
+      const actorUserId = (req as any).user?._id?.toString() || (req as any).user?.id?.toString();
+      if (!actorUserId) return res.status(401).json({ code: 'UNAUTHORIZED', message: 'User identity is required' });
 
       const deletedId = await ArticleService.deleteArticle(articleId, actorUserId, req.ip);
 

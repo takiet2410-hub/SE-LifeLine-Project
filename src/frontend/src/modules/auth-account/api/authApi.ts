@@ -23,6 +23,17 @@ const mapProfileResponseToAuthUser = (
       loginData.user?.fullName ||
       (isStaff ? `Cán bộ ${role}` : 'Người hiến máu'),
     role,
+    roles: loginData.user?.roles || profileData?.roles,
+    idDocumentNumber: loginData.user?.idDocumentNumber || profileData?.idDocumentNumber,
+    hospitalId:
+      loginData.user?.hospitalId ||
+      profileData?.hospitalId?._id ||
+      profileData?.hospitalId,
+    hospitalName: profileData?.hospital?.name,
+    bloodCenterId:
+      loginData.user?.bloodCenterId ||
+      profileData?.bloodCenterId?._id ||
+      profileData?.bloodCenterId,
   };
 };
 
@@ -52,6 +63,10 @@ export const loginUser = async (
         email: response.data.user?.email || credentials.idDocumentNumber,
         fullName: isStaff ? `Cán bộ ${userRole}` : 'Người hiến máu',
         role: userRole,
+        roles: response.data.user?.roles,
+        idDocumentNumber: response.data.user?.idDocumentNumber || credentials.idDocumentNumber,
+        hospitalId: response.data.user?.hospitalId,
+        bloodCenterId: response.data.user?.bloodCenterId,
       };
 
       try {

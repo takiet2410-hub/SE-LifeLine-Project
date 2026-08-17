@@ -6,6 +6,8 @@ import { ArticleCard } from '../components/ArticleCard';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
 import { EmptyState } from '../../../components/common/EmptyState';
 import type { Article, ArticleCategory } from '../types/article.types';
+import { toast } from 'sonner';
+import { getApiErrorMessage } from '../../../shared/api/apiError';
 
 
 export const NewsFeedPage: React.FC = () => {
@@ -34,6 +36,7 @@ export const NewsFeedPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to fetch articles:', err);
+      toast.error(getApiErrorMessage(err, 'Không thể tải tin tức'));
     } finally {
       setLoading(false);
     }

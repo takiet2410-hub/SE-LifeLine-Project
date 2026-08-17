@@ -25,12 +25,8 @@ export interface PaginatedResult<T> {
 }
 
 export class NotificationService {
-  private static async applyLegacyAudienceGuard(userId: string, query: Record<string, any>): Promise<void> {
-    if (!Types.ObjectId.isValid(userId)) return;
-
-    const { User } = await import('../../auth-account/models/user.model');
-    const user = await User.findById(userId).select('role').lean();
-    if (!user || user.role === 'Donor') return;
+  private static applyAudienceGuard(activeRole: string | undefined, query: Record<string, any>): void {
+    if (!activeRole || activeRole === 'Donor') return;
 
     // Older donor SOS alerts may have been written to management accounts
     // because every account carries the mandatory Donor base role.
@@ -109,14 +105,15 @@ export class NotificationService {
    */
   static async getUserNotifications(
     userId: string,
-    filters: NotificationFilters
+    filters: NotificationFilters,
+    activeRole?: string
   ): Promise<PaginatedResult<INotification>> {
     const { page, limit, type, status, channel, startDate, endDate } = filters;
     const skip = (page - 1) * limit;
 
     const userFilter = Types.ObjectId.isValid(userId) ? { $in: [userId, new Types.ObjectId(userId)] } : userId;
     const query: any = { recipientUserId: userFilter };
-    await this.applyLegacyAudienceGuard(userId, query);
+    this.applyAudienceGuard(activeRole, query);
 
     // Default UI channel filter to InApp to prevent showing duplicate WebPush + InApp entries
     if (channel && channel !== 'all') {
@@ -257,10 +254,10 @@ export class NotificationService {
   /**
    * Get unread count for badge
    */
-  static async getUnreadCount(userId: string): Promise<number> {
+  static async getUnreadCount(userId: string, activeRole?: string): Promise<number> {
     const userFilter = Types.ObjectId.isValid(userId) ? { $in: [userId, new Types.ObjectId(userId)] } : userId;
     const query: any = { recipientUserId: userFilter, readAt: null, channel: 'InApp' };
-    await this.applyLegacyAudienceGuard(userId, query);
+    this.applyAudienceGuard(activeRole, query);
     return Notification.countDocuments(query);
   }
 
@@ -351,13 +348,17 @@ export class NotificationService {
     let recipientIds = Array.from(new Set(data.recipientIds.map(String)));
 
     // Enforce the audience at the final delivery boundary as defense in depth.
-    // `roles` cannot be used here because Donor is a mandatory base role.
+    // Donor is a mandatory base role, so multi-role users are eligible when
+    // they use the Donor portal; management portals filter this audience out.
     if (data.allowedRecipientRoles?.length && recipientIds.length > 0) {
       const { User } = await import('../../auth-account/models/user.model');
       const validIds = recipientIds.filter((id) => Types.ObjectId.isValid(id)).map((id) => new Types.ObjectId(id));
+      const roleFilter: Record<string, any> = data.allowedRecipientRoles.includes('Donor')
+        ? { $or: [{ role: 'Donor' }, { roles: 'Donor' }] }
+        : { role: { $in: data.allowedRecipientRoles } };
       const eligibleUsers = await User.find({
         _id: { $in: validIds },
-        role: { $in: data.allowedRecipientRoles },
+        ...roleFilter,
         accountStatus: 'Active',
         isDeleted: { $ne: true },
       }).select('_id').lean();

@@ -110,7 +110,7 @@ export class SOSBroadcastService {
     const evaluatedDonorIds = evalLog.rankedDonors.map(d => d.donorId);
     const activeDonorUsers = await User.find({
       _id: { $in: evaluatedDonorIds },
-      role: 'Donor',
+      $or: [{ role: 'Donor' }, { roles: 'Donor' }],
       accountStatus: 'Active',
       isDeleted: { $ne: true },
     }).select('_id').lean();

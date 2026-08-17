@@ -18,6 +18,7 @@ export class NotificationController {
   public static async listNotifications(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?._id || (req as any).user?.id;
+      const activeRole = (req as any).user?.role;
       const query = req.query as any;
 
       const result = await NotificationService.getUserNotifications(userId, {
@@ -28,7 +29,7 @@ export class NotificationController {
         channel: query.channel,
         startDate: query.startDate,
         endDate: query.endDate,
-      });
+      }, activeRole);
 
       console.log(`[NotificationController] User ${userId} requested notifications. Found: ${result.data.length}, total: ${result.total}`);
 
@@ -181,7 +182,8 @@ export class NotificationController {
   public static async getUnreadCount(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?._id || (req as any).user?.id;
-      const count = await NotificationService.getUnreadCount(userId);
+      const activeRole = (req as any).user?.role;
+      const count = await NotificationService.getUnreadCount(userId, activeRole);
       console.log(`[NotificationController] User ${userId} requested unread count. Found: ${count}`);
       res.status(200).json({ success: true, count });
     } catch (error) {

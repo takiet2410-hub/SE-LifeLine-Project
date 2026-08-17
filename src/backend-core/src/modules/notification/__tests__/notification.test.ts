@@ -105,11 +105,14 @@ describe('Notification Module Unit Tests', () => {
   });
 
   describe('recipient audience control', () => {
-    it('does not send a donor SOS alert to a HospitalStaff account that also has the Donor base role', async () => {
+    it('allows a multi-role account to receive donor alerts for its Donor portal', async () => {
       (User.find as jest.Mock).mockReturnValue({
         select: jest.fn().mockReturnValue({
-          lean: jest.fn().mockResolvedValue([]),
+          lean: jest.fn().mockResolvedValue([{ _id: '507f1f77bcf86cd799439011' }]),
         }),
+      });
+      (NotificationPreference.findOne as jest.Mock).mockReturnValue({
+        sort: jest.fn().mockResolvedValue({ pushEnabled: false, emailEnabled: false, sosEnabled: true }),
       });
 
       const result = await NotificationService.sendNotification({
@@ -121,11 +124,10 @@ describe('Notification Module Unit Tests', () => {
       });
 
       expect(User.find).toHaveBeenCalledWith(expect.objectContaining({
-        role: { $in: ['Donor'] },
+        $or: [{ role: 'Donor' }, { roles: 'Donor' }],
         accountStatus: 'Active',
       }));
-      expect(Notification.create).not.toHaveBeenCalled();
-      expect(result).toEqual(expect.objectContaining({ success: true, sent: 0 }));
+      expect(result).toEqual(expect.objectContaining({ success: true }));
     });
   });
 

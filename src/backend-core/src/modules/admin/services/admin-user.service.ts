@@ -733,6 +733,20 @@ export class AdminUserService {
     const userRoles = Array.from(
       new Set(['Donor', user.role, ...(Array.isArray(user.roles) ? user.roles : [])].filter(Boolean))
     ) as UserRole[];
+    const hasSOSLocation = Boolean(
+      profile?.location?.type === 'Point' &&
+      Array.isArray(profile.location.coordinates) &&
+      profile.location.coordinates.length === 2 &&
+      profile.location.coordinates.every((coordinate: unknown) => typeof coordinate === 'number' && Number.isFinite(coordinate))
+    );
+    const sosEligibilityIssues = [
+      !profile || profile.bloodType === 'Unknown' ? 'BLOOD_TYPE_UNKNOWN' : null,
+      !hasSOSLocation ? 'LOCATION_MISSING' : null,
+      profile?.emergencyOptIn === false ? 'SOS_OPTED_OUT' : null,
+      user.accountStatus !== 'Active' ? 'ACCOUNT_NOT_ACTIVE' : null,
+      user.isDeleted ? 'ACCOUNT_DELETED' : null,
+    ].filter(Boolean);
+
     return {
       id: user._id.toString(),
       idDocumentNumber: user.idDocumentNumber,
@@ -754,6 +768,13 @@ export class AdminUserService {
       privacyPurgedAt: user.privacyPurgedAt,
       createdAt: user.createdAt,
       lastLoginAt: user.lastLoginAt,
+      sosEligibility: {
+        eligible: sosEligibilityIssues.length === 0,
+        bloodType: profile?.bloodType || 'Unknown',
+        emergencyOptIn: profile?.emergencyOptIn !== false,
+        hasLocation: hasSOSLocation,
+        issues: sosEligibilityIssues,
+      },
     };
   }
 

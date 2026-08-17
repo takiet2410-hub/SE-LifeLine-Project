@@ -65,7 +65,20 @@ export const authenticateJWT = async (req: AuthRequest, res: Response, next: Nex
         return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Tài khoản đã bị đình chỉ hoặc không hợp lệ' });
       }
 
-      req.user = user;
+      const assignedRoles = Array.from(
+        new Set([user.role, ...(Array.isArray(user.roles) ? user.roles : [])].filter(Boolean))
+      );
+      const activeRole = decoded.role || user.role;
+      if (!assignedRoles.includes(activeRole)) {
+        return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Vai trò đăng nhập không còn được cấp cho tài khoản' });
+      }
+
+      // Preserve the portal role selected at login for multi-role accounts.
+      req.user = {
+        ...user.toObject(),
+        role: activeRole,
+        roles: assignedRoles,
+      };
       next();
     } catch (err) {
       return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Token is invalid or expired' });
@@ -80,13 +93,7 @@ export const authorizeRoles = (...allowedRoles: string[]) => {
     if (!req.user) {
       return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Authentication required' });
     }
-    const userRoles = Array.from(
-      new Set([
-        req.user.role,
-        ...(Array.isArray(req.user.roles) ? req.user.roles : [])
-      ].filter(Boolean))
-    );
-    const hasRole = allowedRoles.some((role) => userRoles.includes(role));
+    const hasRole = allowedRoles.includes(req.user.role);
     if (!hasRole) {
       return res.status(403).json({
         code: 'FORBIDDEN',
@@ -103,9 +110,7 @@ export const authorizePermissions = (...requiredPermissions: string[]) => {
       return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Authentication required' });
     }
 
-    const userRoles = Array.from(
-      new Set([req.user.role, ...(Array.isArray(req.user.roles) ? req.user.roles : [])].filter(Boolean))
-    );
+    const userRoles = [req.user.role].filter(Boolean);
 
     try {
       const roles = await Role.find({ name: { $in: userRoles } }).lean();

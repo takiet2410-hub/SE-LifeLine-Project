@@ -143,7 +143,7 @@ export class SOSEvaluationService {
     const nearbyDonorUserIds = nearbyDonors.map((donor) => donor.userId).filter(Boolean);
     const activeDonorAccounts = await User.find({
       _id: { $in: nearbyDonorUserIds },
-      role: 'Donor',
+      $or: [{ role: 'Donor' }, { roles: 'Donor' }],
       accountStatus: 'Active',
       isDeleted: { $ne: true },
     }).select('_id').lean();

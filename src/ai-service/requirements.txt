@@ -4,6 +4,12 @@ pydantic
 pydantic-settings
 pymongo
 sentence-transformers
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+pymongo
+sentence-transformers
 langchain
 langchain-classic
 langchain-community
@@ -12,4 +18,3 @@ faiss-cpu
 python-jose
 python-dotenv
 scikit-learn
-gradio

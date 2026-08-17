@@ -22,11 +22,22 @@ process.on('unhandledRejection', (reason: any) => {
 const startServer = async () => {
   try {
     await connectDB();
-    await runDatabaseSelfHealing();
-    await startScheduledPublisherJob();
   } catch (dbErr) {
     console.error('[Server] DB Connection warning:', dbErr);
   }
+
+  app.listen(env.PORT, () => {
+    console.log(`🚀 Server listening on port ${env.PORT} in ${env.NODE_ENV} mode`);
+  });
+
+  // Background initialization tasks (non-blocking)
+  runDatabaseSelfHealing().catch(err => {
+    console.warn('[Server] DB Self-Healing warning:', err?.message || err);
+  });
+  
+  startScheduledPublisherJob().catch((err) => {
+    console.warn('[Server] Scheduled publisher job warning:', err?.message || err);
+  });
   
   try {
     initCampaignStatusJob();
@@ -40,10 +51,6 @@ const startServer = async () => {
   } catch (workerErr) {
     console.warn('[Server] Notification worker warning:', workerErr);
   }
-
-  app.listen(env.PORT, () => {
-    console.log(`🚀 Server listening on port ${env.PORT} in ${env.NODE_ENV} mode`);
-  });
 };
 
 startServer();

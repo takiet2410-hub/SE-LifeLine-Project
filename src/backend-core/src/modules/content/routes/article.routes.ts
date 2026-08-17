@@ -2,7 +2,10 @@ import { Router } from 'express';
 import multer from 'multer';
 import { ArticleController } from '../controllers/article.controller';
 import { ArticleUploadController } from '../controllers/upload.controller';
-import { authenticateJWT, authorizeRoles } from '../../../shared/auth.middleware';
+import { authenticateJWT, authorizePermissions, authorizeRoles } from '../../../shared/auth.middleware';
+import { requireFeatureEnabled } from '../../admin/feature-toggle.middleware';
+import { validateRequest } from '../../../shared/validate.middleware';
+import { GetArticleByIdSchema, QueryArticleListSchema } from '../schemas/article.schema';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -10,11 +13,13 @@ const upload = multer({
 });
 
 const router = Router();
+const newsFeature = requireFeatureEnabled('news_content_portal');
 
-const staffAuth = [
-  authenticateJWT,
-  authorizeRoles('BloodCenterStaff', 'Administrator', 'HospitalStaff'),
-];
+const staffRoles = authorizeRoles('BloodCenterStaff', 'Administrator', 'HospitalStaff');
+const publishPermissionWhenRequested = (req: any, res: any, next: any) => {
+  if (!['Published', 'Scheduled'].includes(req.body?.status)) return next();
+  return authorizePermissions('content:publish')(req, res, next);
+};
 
 /**
  * @openapi
@@ -23,7 +28,7 @@ const staffAuth = [
  *     summary: Danh sách bài viết tin tức & thông báo (Phân trang, lọc, tìm kiếm)
  *     tags: [Content Management]
  */
-router.get('/', ...staffAuth, ArticleController.getArticles);
+router.get('/', authenticateJWT, newsFeature, staffRoles, authorizePermissions('content:read'), validateRequest(QueryArticleListSchema), ArticleController.getArticles);
 
 /**
  * @openapi
@@ -32,7 +37,7 @@ router.get('/', ...staffAuth, ArticleController.getArticles);
  *     summary: Báo cáo thống kê Content Management Dashboard
  *     tags: [Content Management]
  */
-router.get('/stats/summary', ...staffAuth, ArticleController.getContentStats);
+router.get('/stats/summary', authenticateJWT, newsFeature, staffRoles, authorizePermissions('content:read'), ArticleController.getContentStats);
 
 /**
  * @openapi
@@ -43,7 +48,7 @@ router.get('/stats/summary', ...staffAuth, ArticleController.getContentStats);
  *     security:
  *       - bearerAuth: []
  */
-router.post('/upload-image', ...staffAuth, upload.single('image'), ArticleUploadController.uploadImage);
+router.post('/upload-image', authenticateJWT, newsFeature, staffRoles, authorizePermissions('content:create'), upload.single('image'), ArticleUploadController.uploadImage);
 
 /**
  * @openapi
@@ -54,7 +59,7 @@ router.post('/upload-image', ...staffAuth, upload.single('image'), ArticleUpload
  *     security:
  *       - bearerAuth: []
  */
-router.post('/', ...staffAuth, ArticleController.createArticle);
+router.post('/', authenticateJWT, newsFeature, staffRoles, authorizePermissions('content:create'), publishPermissionWhenRequested, ArticleController.createArticle);
 
 /**
  * @openapi
@@ -63,7 +68,7 @@ router.post('/', ...staffAuth, ArticleController.createArticle);
  *     summary: Xem chi tiết bài viết & thông số hiệu xuất
  *     tags: [Content Management]
  */
-router.get('/:articleId', ...staffAuth, ArticleController.getArticleById);
+router.get('/:articleId', authenticateJWT, newsFeature, staffRoles, authorizePermissions('content:read'), validateRequest(GetArticleByIdSchema), ArticleController.getArticleById);
 
 /**
  * @openapi
@@ -74,7 +79,7 @@ router.get('/:articleId', ...staffAuth, ArticleController.getArticleById);
  *     security:
  *       - bearerAuth: []
  */
-router.put('/:articleId', ...staffAuth, ArticleController.updateArticle);
+router.put('/:articleId', authenticateJWT, newsFeature, staffRoles, authorizePermissions('content:create'), publishPermissionWhenRequested, ArticleController.updateArticle);
 
 /**
  * @openapi
@@ -85,6 +90,6 @@ router.put('/:articleId', ...staffAuth, ArticleController.updateArticle);
  *     security:
  *       - bearerAuth: []
  */
-router.delete('/:articleId', ...staffAuth, ArticleController.deleteArticle);
+router.delete('/:articleId', authenticateJWT, newsFeature, staffRoles, authorizePermissions('content:create'), validateRequest(GetArticleByIdSchema), ArticleController.deleteArticle);
 
 export default router;

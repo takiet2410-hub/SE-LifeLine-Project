@@ -12,6 +12,7 @@ export const CreateSOSRequestPage: React.FC = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hospitals, setHospitals] = useState<HospitalInfo[]>([]);
+  const assignedHospital = hospitals.find(hospital => hospital._id === user?.hospitalId);
   
   const [formData, setFormData] = useState<CreateSOSRequestPayload>(() => ({
     hospitalId: '',
@@ -30,7 +31,9 @@ export const CreateSOSRequestPage: React.FC = () => {
       try {
         const data = await sosApi.getHospitals();
         setHospitals(data);
-        if (data.length === 1) {
+        if (user?.hospitalId) {
+          setFormData(prev => ({ ...prev, hospitalId: user.hospitalId! }));
+        } else if (data.length === 1) {
           setFormData(prev => ({ ...prev, hospitalId: data[0]._id }));
         }
       } catch (error) {
@@ -38,7 +41,7 @@ export const CreateSOSRequestPage: React.FC = () => {
       }
     };
     fetchHospitals();
-  }, []);
+  }, [user?.hospitalId]);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof CreateSOSRequestPayload, string>> = {};
@@ -140,23 +143,18 @@ export const CreateSOSRequestPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-brand-text-secondary mb-1">Medical Facility <span className="text-brand-error">*</span></label>
-                <select 
-                  required 
-                  value={formData.hospitalId}
-                  onChange={(e) => handleChange('hospitalId', e.target.value)}
-                  className="w-full px-4 py-2.5 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-brand-text-main"
-                >
-                  <option value="">Select hospital</option>
-                  {hospitals.map(h => (
-                    <option key={h._id} value={h._id}>{h.name}</option>
-                  ))}
-                </select>
+                <div className="w-full rounded-lg border border-brand-border-dark bg-brand-bg-muted/60 px-4 py-2.5 text-brand-text-main" aria-live="polite">
+                  <span className="font-medium">{assignedHospital?.name || user?.hospitalName || 'Đang tải bệnh viện được phân công...'}</span>
+                  {assignedHospital?.address && <span className="mt-0.5 block text-xs text-brand-text-muted">{assignedHospital.address}</span>}
+                </div>
+                <p className="mt-1 text-xs text-brand-text-muted">Bệnh viện được khóa theo tài khoản đăng nhập để tránh gửi nhầm yêu cầu y tế.</p>
                 {errors.hospitalId && <p className="mt-1 text-sm text-brand-error">{errors.hospitalId}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-brand-text-secondary mb-1">Staff Member</label>
                 <div className="w-full px-4 py-2.5 bg-brand-bg-muted/50 border border-brand-border-dark rounded-lg text-brand-text-main flex flex-col justify-center">
-                  <span className="font-medium">{(user as any)?.idDocumentNumber || 'Unknown Staff'}</span>
+                  <span className="font-medium">{user?.fullName || user?.idDocumentNumber || 'Hospital Staff'}</span>
+                  {user?.idDocumentNumber && <span className="text-xs text-brand-text-muted">CCCD: {user.idDocumentNumber}</span>}
                   <span className="text-xs text-brand-text-muted">{user?.email || 'N/A'}</span>
                 </div>
               </div>

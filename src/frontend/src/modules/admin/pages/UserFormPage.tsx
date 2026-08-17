@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { adminApi } from '../api/admin.api';
 import { ArrowLeft, Save, Shield, User, Building2, Hospital } from 'lucide-react';
 import { toast } from 'sonner';
+import type { StaffOrganizationOption } from '../types/admin.types';
 
 export const UserFormPage: React.FC = () => {
   const navigate = useNavigate();
@@ -17,65 +18,98 @@ export const UserFormPage: React.FC = () => {
   const [permanentAddress, setPermanentAddress] = useState('');
   const [currentAddress, setCurrentAddress] = useState('');
   const [roles, setRoles] = useState<('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[]>(['Donor']);
+  const [hospitalId, setHospitalId] = useState('');
+  const [bloodCenterId, setBloodCenterId] = useState('');
+  const [hospitals, setHospitals] = useState<StaffOrganizationOption[]>([]);
+  const [bloodCenters, setBloodCenters] = useState<StaffOrganizationOption[]>([]);
+  const [loadingOrganizations, setLoadingOrganizations] = useState(true);
   const [accountStatus, setAccountStatus] = useState<'PendingVerification' | 'Active' | 'Suspended'>('Active');
   const [submitting, setSubmitting] = useState(false);
+  const [loadingUser, setLoadingUser] = useState(isEdit);
 
   useEffect(() => {
     if (isEdit && userId) {
-      adminApi.getUsers({ search: userId }).then((res) => {
-        const u = res.items.find((item) => item.id === userId);
-        if (u) {
+      adminApi.getUserById(userId)
+        .then((u) => {
           setFullName(u.fullName);
           setEmail(u.email);
           setPhone(u.phone !== 'N/A' ? u.phone : '');
           setIdDocumentNumber(u.idDocumentNumber);
-          setRoles(u.roles && u.roles.length > 0 ? u.roles : u.role ? [u.role] : ['Donor']);
+          const persistedRoles = u.roles && u.roles.length > 0 ? u.roles : u.role ? [u.role] : [];
+          setRoles(Array.from(new Set(['Donor', ...persistedRoles])) as typeof roles);
           setAccountStatus(u.accountStatus);
-          if ((u as any).permanentAddress) setPermanentAddress((u as any).permanentAddress);
-          if ((u as any).currentAddress) {
-            const c = (u as any).currentAddress;
-            setCurrentAddress(typeof c === 'object' ? c.fullAddress || '' : c);
-          }
-        }
-      });
+          setPermanentAddress(u.permanentAddress || '');
+          setCurrentAddress(u.currentAddress || '');
+          setHospitalId(u.hospitalId || '');
+          setBloodCenterId(u.bloodCenterId || '');
+        })
+        .catch(() => {
+          toast.error('Không thể tải thông tin tài khoản.');
+          navigate('/admin/users');
+        })
+        .finally(() => setLoadingUser(false));
     }
-  }, [isEdit, userId]);
+  }, [isEdit, navigate, userId]);
+
+  useEffect(() => {
+    Promise.all([adminApi.getHospitals(), adminApi.getBloodCenters()])
+      .then(([hospitalItems, bloodCenterItems]) => {
+        setHospitals(hospitalItems);
+        setBloodCenters(bloodCenterItems);
+      })
+      .catch(() => toast.error('Không thể tải danh sách bệnh viện và trung tâm máu.'))
+      .finally(() => setLoadingOrganizations(false));
+  }, []);
 
   const handleToggleRole = (roleId: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator') => {
-    setRoles((prev) => {
-      const isCurrentlySelected = prev.includes(roleId);
-      if (isCurrentlySelected) {
-        if (prev.length === 1) {
-          toast.warning('Tài khoản phải có ít nhất một vai trò (role).');
-          return prev;
-        }
-        return prev.filter((r) => r !== roleId);
-      } else {
-        if (roleId === 'Donor') {
-          return [...prev, 'Donor'];
-        } else {
-          // If selecting a management role (BloodCenterStaff, HospitalStaff, Administrator),
-          // replace any existing management role with the newly selected one.
-          const hasDonor = prev.includes('Donor');
-          const oldManagementRole = prev.find((r) => r !== 'Donor');
-          if (oldManagementRole) {
-            toast.info(`Mỗi tài khoản chỉ giữ 1 vai trò quản lý. Đã đổi từ ${oldManagementRole} sang ${roleId}.`);
-          }
-          return hasDonor ? ['Donor', roleId] : [roleId];
-        }
+    if (roleId === 'Donor') {
+      toast.info('Donor là vai trò nền tảng bắt buộc và không thể bỏ chọn.');
+      return;
+    }
+
+    const isCurrentlySelected = roles.includes(roleId);
+    if (isCurrentlySelected) {
+      if (roles.length === 1) {
+        toast.warning('Tài khoản phải có ít nhất một vai trò (role).');
+        return;
       }
-    });
+      setRoles(roles.filter((role) => role !== roleId));
+      if (roleId === 'HospitalStaff') setHospitalId('');
+      if (roleId === 'BloodCenterStaff') setBloodCenterId('');
+      return;
+    }
+
+    const oldManagementRole = roles.find((role) => role !== 'Donor');
+    if (oldManagementRole) {
+      toast.info(`Mỗi tài khoản chỉ giữ 1 vai trò quản lý. Đã đổi từ ${oldManagementRole} sang ${roleId}.`);
+    }
+
+    if (roleId === 'HospitalStaff') setBloodCenterId('');
+    if (roleId === 'BloodCenterStaff') setHospitalId('');
+    if (roleId === 'Administrator') {
+      setHospitalId('');
+      setBloodCenterId('');
+    }
+    setRoles(['Donor', roleId]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (roles.length === 0) {
-      toast.error('Vui lòng chọn ít nhất một vai trò.');
+    if (!roles.includes('Donor')) {
+      toast.error('Mọi tài khoản phải giữ vai trò Donor nền tảng.');
       return;
     }
     const managementCount = roles.filter((r) => r !== 'Donor').length;
     if (managementCount > 1) {
       toast.error('Một tài khoản chỉ có thể giữ tối đa 1 vai trò quản lý (BloodCenterStaff, HospitalStaff, hoặc Administrator) kết hợp với Donor.');
+      return;
+    }
+    if (roles.includes('HospitalStaff') && !hospitalId) {
+      toast.error('Vui lòng chọn bệnh viện công tác trước khi cấp quyền Hospital Staff.');
+      return;
+    }
+    if (roles.includes('BloodCenterStaff') && !bloodCenterId) {
+      toast.error('Vui lòng chọn trung tâm máu công tác trước khi cấp quyền Blood Center Staff.');
       return;
     }
     try {
@@ -87,14 +121,14 @@ export const UserFormPage: React.FC = () => {
 
       if (isEdit && userId) {
         await adminApi.updateUser(userId, {
-          fullName,
           email,
           phone,
           role: primaryRole,
           roles,
           accountStatus,
-          permanentAddress,
           currentAddress,
+          ...(primaryRole === 'HospitalStaff' ? { hospitalId } : {}),
+          ...(primaryRole === 'BloodCenterStaff' ? { bloodCenterId } : {}),
         });
         toast.success('User account updated successfully.');
       } else {
@@ -108,19 +142,22 @@ export const UserFormPage: React.FC = () => {
           roles,
           permanentAddress,
           currentAddress,
+          ...(primaryRole === 'HospitalStaff' ? { hospitalId } : {}),
+          ...(primaryRole === 'BloodCenterStaff' ? { bloodCenterId } : {}),
         });
         toast.success('User account created successfully.');
       }
       navigate('/admin/users');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || 'Operation failed');
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(apiError.response?.data?.message || apiError.message || 'Operation failed');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-3 sm:p-5 md:p-6 max-w-4xl mx-auto space-y-5 sm:space-y-6">
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/admin/users')}
@@ -136,14 +173,20 @@ export const UserFormPage: React.FC = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-[#f1f3f5] shadow-xs space-y-6">
+      {loadingUser ? (
+        <div className="bg-white p-12 rounded-2xl border border-[#f1f3f5] text-center text-slate-500">
+          Đang tải thông tin tài khoản...
+        </div>
+      ) : <form onSubmit={handleSubmit} className="bg-white p-4 sm:p-6 rounded-2xl border border-[#f1f3f5] shadow-xs space-y-6">
         {/* Role Checkbox Cards */}
         <div>
           <label className="block text-sm font-bold text-[#271816] mb-1">
             Select Account Roles & Permissions (Có thể chọn nhiều role)
           </label>
           <p className="text-xs text-[#6c757d] mb-3">
-            Lưu ý: 1 tài khoản có thể có vai trò Donor + 1 vai trò Cán bộ/Quản trị (Blood Center Staff, Hospital Staff, hoặc Admin).
+            {isEdit
+              ? 'Donor là vai trò nền tảng bắt buộc. Admin chỉ có thể cấp thêm tối đa 1 vai trò công tác.'
+              : 'Tài khoản mới luôn bắt đầu là Donor. Hãy lưu tài khoản trước, sau đó mở Edit để xét cấp vai trò công tác.'}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
@@ -173,12 +216,17 @@ export const UserFormPage: React.FC = () => {
               },
             ].map((r) => {
               const IconComp = r.icon;
-              const isSelected = roles.includes(r.id as any);
+              const roleId = r.id as 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
+              const isSelected = roles.includes(roleId);
+              const isRoleDisabled = roleId === 'Donor' || !isEdit;
               return (
                 <div
                   key={r.id}
-                  onClick={() => handleToggleRole(r.id as any)}
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition flex items-start gap-3 relative ${
+                  onClick={() => !isRoleDisabled && handleToggleRole(roleId)}
+                  aria-disabled={isRoleDisabled}
+                  className={`p-4 rounded-xl border-2 transition flex items-start gap-3 relative ${
+                    isRoleDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
+                  } ${
                     isSelected
                       ? 'border-[#93000b] bg-red-50/50'
                       : 'border-[#f1f3f5] hover:border-slate-300'
@@ -193,11 +241,18 @@ export const UserFormPage: React.FC = () => {
                       <input
                         type="checkbox"
                         checked={isSelected}
+                        disabled={isRoleDisabled}
                         onChange={() => {}} // handled by parent div onClick
-                        className="w-4 h-4 accent-[#93000b] rounded cursor-pointer"
+                        className="w-4 h-4 accent-[#93000b] rounded disabled:cursor-not-allowed"
                       />
                     </div>
-                    <div className="text-xs text-[#5b403d] font-medium mt-1 leading-snug">{r.desc}</div>
+                    <div className="text-xs text-[#5b403d] font-medium mt-1 leading-snug">
+                      {roleId === 'Donor'
+                        ? 'Vai trò nền tảng bắt buộc — lưu hồ sơ và lịch sử hiến máu.'
+                        : !isEdit
+                        ? 'Chỉ có thể cấp sau khi tài khoản Donor đã được tạo.'
+                        : r.desc}
+                    </div>
                   </div>
                 </div>
               );
@@ -205,20 +260,77 @@ export const UserFormPage: React.FC = () => {
           </div>
         </div>
 
+        {(roles.includes('HospitalStaff') || roles.includes('BloodCenterStaff')) && (
+          <section className="rounded-xl border border-amber-200 bg-amber-50/60 p-4" aria-labelledby="staff-organization-heading">
+            <h2 id="staff-organization-heading" className="text-sm font-bold text-[#271816]">
+              Đơn vị công tác bắt buộc
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-[#6c4a45]">
+              Quyền nhân viên chỉ truy cập dữ liệu của đơn vị được chọn. Vai trò Donor và lịch sử hiến máu của tài khoản vẫn được giữ nguyên.
+            </p>
+
+            {roles.includes('HospitalStaff') ? (
+              <div className="mt-3">
+                <label htmlFor="hospital-assignment" className="mb-1 block text-xs font-bold text-[#271816]">
+                  Bệnh viện công tác *
+                </label>
+                <select
+                  id="hospital-assignment"
+                  required
+                  disabled={loadingOrganizations}
+                  value={hospitalId}
+                  onChange={(event) => setHospitalId(event.target.value)}
+                  className="w-full rounded-xl border border-amber-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-[#271816] outline-hidden focus:ring-2 focus:ring-[#93000b] disabled:opacity-60"
+                >
+                  <option value="">{loadingOrganizations ? 'Đang tải bệnh viện...' : '-- Chọn bệnh viện --'}</option>
+                  {hospitals.map((hospital) => (
+                    <option key={hospital._id} value={hospital._id}>
+                      {hospital.name}{hospital.address ? ` — ${hospital.address}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="mt-3">
+                <label htmlFor="blood-center-assignment" className="mb-1 block text-xs font-bold text-[#271816]">
+                  Trung tâm máu công tác *
+                </label>
+                <select
+                  id="blood-center-assignment"
+                  required
+                  disabled={loadingOrganizations}
+                  value={bloodCenterId}
+                  onChange={(event) => setBloodCenterId(event.target.value)}
+                  className="w-full rounded-xl border border-amber-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-[#271816] outline-hidden focus:ring-2 focus:ring-[#93000b] disabled:opacity-60"
+                >
+                  <option value="">{loadingOrganizations ? 'Đang tải trung tâm máu...' : '-- Chọn trung tâm máu --'}</option>
+                  {bloodCenters.map((center) => (
+                    <option key={center._id} value={center._id}>
+                      {center.name}{center.address ? ` — ${center.address}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </section>
+        )}
+
         {/* Input Fields */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-[#271816] mb-1">
-              Full Name {isEdit ? <span className="text-[#6c757d] font-normal">(Optional)</span> : '*'}
+              Full Name {isEdit ? <span className="text-[#6c757d] font-normal">(Fixed theo CCCD)</span> : '*'}
             </label>
             <input
               type="text"
               required={!isEdit}
+              disabled={isEdit}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="e.g. Nguyễn Văn A"
-              className="w-full px-3.5 py-2.5 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-semibold text-[#271816] placeholder:text-slate-400 focus:ring-2 focus:ring-[#93000b] outline-hidden"
+              className="w-full px-3.5 py-2.5 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-semibold text-[#271816] placeholder:text-slate-400 focus:ring-2 focus:ring-[#93000b] outline-hidden disabled:cursor-not-allowed disabled:opacity-60"
             />
+            {isEdit && <p className="mt-1 text-[11px] text-slate-500">Dữ liệu định danh được giữ theo hồ sơ CCCD và không thể sửa tại trang phân quyền.</p>}
           </div>
 
           <div>
@@ -314,7 +426,7 @@ export const UserFormPage: React.FC = () => {
               </label>
               <select
                 value={accountStatus}
-                onChange={(e) => setAccountStatus(e.target.value as any)}
+                onChange={(e) => setAccountStatus(e.target.value as 'PendingVerification' | 'Active' | 'Suspended')}
                 className="w-full px-3.5 py-2.5 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-semibold text-[#271816] focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
               >
                 <option value="Active" className="bg-white text-[#271816]">Active</option>
@@ -342,7 +454,7 @@ export const UserFormPage: React.FC = () => {
             {submitting ? 'Saving...' : 'Save Account'}
           </button>
         </div>
-      </form>
+      </form>}
     </div>
   );
 };

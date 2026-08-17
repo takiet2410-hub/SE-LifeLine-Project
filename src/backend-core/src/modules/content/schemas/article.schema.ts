@@ -32,6 +32,13 @@ export const CreateArticleSchema = z.object({
     coverImageUrl: z.string().url().or(z.string().length(0)).optional(),
     scheduledAt: z.string().or(z.date()).optional().nullable(),
     targetAudience: z.array(TargetAudienceSchema).optional().default(['Donors'])
+  }).superRefine((article, ctx) => {
+    if (article.status === 'Scheduled' && !article.scheduledAt) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scheduledAt'], message: 'Scheduled articles require a publish date' });
+    }
+    if (article.scheduledAt && new Date(article.scheduledAt).getTime() <= Date.now()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scheduledAt'], message: 'Publish date must be in the future' });
+    }
   })
 });
 
@@ -47,6 +54,13 @@ export const UpdateArticleSchema = z.object({
     coverImageUrl: z.string().optional().nullable(),
     scheduledAt: z.string().or(z.date()).optional().nullable(),
     targetAudience: z.array(TargetAudienceSchema).optional()
+  }).superRefine((article, ctx) => {
+    if (article.status === 'Scheduled' && !article.scheduledAt) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scheduledAt'], message: 'Scheduled articles require a publish date' });
+    }
+    if (article.scheduledAt && new Date(article.scheduledAt).getTime() <= Date.now()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scheduledAt'], message: 'Publish date must be in the future' });
+    }
   })
 });
 

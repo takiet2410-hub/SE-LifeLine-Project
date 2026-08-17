@@ -15,7 +15,7 @@ export const AdminDashboardPage: React.FC = () => {
       setLoading(true);
       const data = await adminApi.getDashboardMetrics();
       setMetrics(data);
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to load dashboard metrics');
     } finally {
       setLoading(false);
@@ -27,8 +27,8 @@ export const AdminDashboardPage: React.FC = () => {
       setRunningDiagnostics(true);
       const data = await adminApi.runDiagnostics();
       setDiagnostics(data);
-      toast.success('System diagnostics check completed!');
-    } catch (err: any) {
+      toast.success(data.overallStatus === 'Healthy' ? 'Hệ thống đang hoạt động bình thường.' : 'Đã phát hiện dịch vụ cần kiểm tra.');
+    } catch {
       toast.error('Failed to run diagnostics check');
     } finally {
       setRunningDiagnostics(false);
@@ -36,18 +36,21 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchMetrics();
-    handleRunDiagnostics();
+    const timer = window.setTimeout(() => {
+      void fetchMetrics();
+      void handleRunDiagnostics();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#271816]">Admin Control Center</h1>
+          <h1 className="text-2xl font-bold text-[#271816]">Trung tâm vận hành hệ thống</h1>
           <p className="text-sm font-medium text-[#6c757d]">
-            System Overview, Active Sessions & Diagnostics (AD-UC-04)
+            Số liệu thực tế, trạng thái dịch vụ và cảnh báo vận hành
           </p>
         </div>
         <button
@@ -56,7 +59,7 @@ export const AdminDashboardPage: React.FC = () => {
           className="flex items-center gap-2 px-4 py-2 bg-[#93000b] hover:bg-[#780009] text-white font-semibold rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-4 h-4 ${runningDiagnostics ? 'animate-spin' : ''}`} />
-          {runningDiagnostics ? 'Diagnosing...' : 'Run Diagnostics'}
+          {runningDiagnostics ? 'Đang kiểm tra...' : 'Kiểm tra hệ thống'}
         </button>
       </div>
 
@@ -73,7 +76,7 @@ export const AdminDashboardPage: React.FC = () => {
             <h2 className="text-2xl font-extrabold text-[#271816]">
               {loading ? '...' : metrics?.activeSessions}
             </h2>
-            <span className="text-xs text-emerald-600 font-semibold">+12% vs last hour</span>
+            <span className="text-xs text-[#5b403d] font-medium">Đăng nhập trong 30 phút gần nhất</span>
           </div>
         </div>
 
@@ -103,7 +106,7 @@ export const AdminDashboardPage: React.FC = () => {
             <h2 className="text-2xl font-extrabold text-[#271816]">
               {loading ? '...' : metrics?.systemUptime}
             </h2>
-            <span className="text-xs text-emerald-600 font-semibold">99.98% SLA target met</span>
+            <span className="text-xs text-[#5b403d] font-medium">Thời gian từ lần khởi động backend gần nhất</span>
           </div>
         </div>
 
@@ -118,20 +121,20 @@ export const AdminDashboardPage: React.FC = () => {
             <h2 className="text-2xl font-extrabold text-[#271816]">
               {loading ? '...' : metrics?.errorRate}
             </h2>
-            <span className="text-xs text-[#5b403d] font-medium">Within acceptable range</span>
+            <span className="text-xs text-[#5b403d] font-medium">Tỷ lệ audit log có trạng thái thất bại</span>
           </div>
         </div>
       </div>
 
       {/* System Health Indicators & Diagnostics Results */}
-      <div className="bg-white rounded-2xl border border-[#f1f3f5] p-6 shadow-xs">
+      <div className="bg-white rounded-2xl border border-[#f1f3f5] p-4 sm:p-6 shadow-xs">
         <div className="flex items-center justify-between border-b border-[#f1f3f5] pb-4 mb-4">
           <div className="flex items-center gap-3">
             <Server className="w-6 h-6 text-[#93000b]" />
             <div>
-              <h3 className="font-bold text-lg text-[#271816]">System Health & Live Services</h3>
+              <h3 className="font-bold text-lg text-[#271816]">Tình trạng dịch vụ trực tiếp</h3>
               <p className="text-xs font-medium text-[#6c757d]">
-                Real-time synthetic ping checks & latency monitors
+                Kiểm tra MongoDB, hàng đợi, lịch xuất bản và dịch vụ hỗ trợ
               </p>
             </div>
           </div>
@@ -143,12 +146,12 @@ export const AdminDashboardPage: React.FC = () => {
                   : 'bg-amber-50 text-amber-700 border-amber-200'
               }`}
             >
-              System State: {diagnostics.overallStatus}
+              {diagnostics.overallStatus === 'Healthy' ? 'Tất cả dịch vụ bình thường' : 'Có dịch vụ cần kiểm tra'}
             </span>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {diagnostics?.services.map((svc, idx) => (
             <div
               key={idx}

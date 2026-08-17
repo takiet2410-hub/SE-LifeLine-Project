@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sosApi, type SOSRequest, type SOSStatus, type SOSUrgency } from '../services/sosApi';
 import { SOSStatusBadge } from '../components/SOSStatusBadge';
-import { ArrowLeft, Download, Calendar, Filter, BarChart2, RefreshCw, ArrowDown, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, Download, Calendar, Filter, BarChart2, RefreshCw, ArrowDown, Minus, Plus, AlertCircle } from 'lucide-react';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 
 interface SOSReportFilters {
@@ -40,27 +40,39 @@ export const SOSReportsPage: React.FC = () => {
   });
   
   const [requests, setRequests] = useState<SOSRequest[]>([]);
+  const [reportRows, setReportRows] = useState<SOSRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState<ReportStats | null>(null);
   const [bloodTypeStats, setBloodTypeStats] = useState<BloodTypeStats[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchReports = async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
-      // Fetch all requests for the date range (without pagination for stats)
-      const allRequestsResponse = await sosApi.getSOSRequests({
+      // The API intentionally caps a page at 100 records. Fetch every page so
+      // report totals remain accurate without sending an invalid limit=1000.
+      const firstPage = await sosApi.getSOSRequests({
         page: 1,
-        limit: 1000, // Large limit to get all for reporting
+        limit: 100,
       });
+      const remainingPages = firstPage.totalPages > 1
+        ? await Promise.all(
+            Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+              sosApi.getSOSRequests({ page: index + 2, limit: 100 })
+            )
+          )
+        : [];
+      const allRequests = [firstPage, ...remainingPages].flatMap(page => page.data);
       
       // Filter by date range on frontend
-      const filtered = allRequestsResponse.data.filter(req => {
+      const filtered = allRequests.filter(req => {
         const reqDate = new Date(req.createdAt);
-        const fromDate = filters.dateRange.from;
-        const toDate = filters.dateRange.to;
+        const fromDate = new Date(filters.dateRange.from);
+        const toDate = new Date(filters.dateRange.to);
         toDate.setHours(23, 59, 59, 999);
         return reqDate >= fromDate && reqDate <= toDate;
       });
@@ -109,10 +121,18 @@ export const SOSReportsPage: React.FC = () => {
       const paginated = finalFiltered.slice(start, start + pageSize);
       
       setRequests(paginated);
+      setReportRows(finalFiltered);
       setTotalPages(totalPagesCount);
       setTotal(finalFiltered.length);
     } catch (error) {
       console.error('Failed to fetch reports:', error);
+      setLoadError('Không thể tải báo cáo SOS. Vui lòng thử lại hoặc liên hệ quản trị viên nếu lỗi tiếp diễn.');
+      setRequests([]);
+      setReportRows([]);
+      setStats(null);
+      setBloodTypeStats([]);
+      setTotal(0);
+      setTotalPages(0);
     } finally {
       setIsLoading(false);
     }
@@ -130,7 +150,7 @@ export const SOSReportsPage: React.FC = () => {
 
   const handleExportCSV = () => {
     const headers = ['Request ID', 'Blood Type', 'Quantity (ml)', 'Urgency', 'Status', 'Request Date', 'Patient Reference', 'Hospital', 'Fulfillment Deadline'];
-    const rows = requests.map(req => {
+    const rows = reportRows.map(req => {
       const reqId = req.id || (req as any)._id;
       const hospitalName = (req.hospital as any)?.name || (req.hospitalId as any)?.name || 'N/A';
       return [
@@ -145,8 +165,9 @@ export const SOSReportsPage: React.FC = () => {
         format(new Date(req.fulfillmentDeadline), 'yyyy-MM-dd HH:mm'),
       ];
     });
-    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const escapeCsv = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const csv = [headers, ...rows].map(row => row.map(escapeCsv).join(',')).join('\n');
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -175,7 +196,7 @@ export const SOSReportsPage: React.FC = () => {
         </div>
         <button 
           onClick={handleExportCSV}
-          disabled={isLoading || requests.length === 0}
+          disabled={isLoading || reportRows.length === 0}
           className="bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm disabled:opacity-50"
         >
           <Download className="w-5 h-5" />
@@ -349,6 +370,19 @@ export const SOSReportsPage: React.FC = () => {
             </span>
           </div>
         </div>
+
+        {loadError && !isLoading && (
+          <div role="alert" className="m-5 flex items-start gap-3 rounded-lg border border-brand-error/30 bg-brand-error/5 p-4 text-brand-error">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="font-semibold">Không tải được dữ liệu báo cáo</p>
+              <p className="mt-1 text-sm">{loadError}</p>
+              <button type="button" onClick={fetchReports} className="mt-3 rounded-lg border border-brand-error/30 bg-white px-3 py-1.5 text-sm font-medium hover:bg-brand-error/10">
+                Thử lại
+              </button>
+            </div>
+          </div>
+        )}
         
         {isLoading && (
           <div className="p-8 text-center">
@@ -357,9 +391,9 @@ export const SOSReportsPage: React.FC = () => {
           </div>
         )}
 
-        {!isLoading && (
+        {!isLoading && !loadError && (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap">
+            <table className="w-full min-w-[820px] text-left text-sm whitespace-nowrap">
               <thead className="bg-brand-bg-muted/50 text-brand-text-muted border-b border-brand-border">
                 <tr>
                   <th className="px-6 py-4 font-medium">Request ID</th>

@@ -1,6 +1,6 @@
 import { Worker, Job } from 'bullmq';
 import { redisConnection } from '../../../config/redis.config';
-import { QUEUES, sosEvaluationQueue } from '../../../config/queue.config';
+import { QUEUES } from '../../../config/queue.config';
 import { SOSEvaluationService } from '../services/sos-evaluation.service';
 import { SOSRequest } from '../models/sos-request.model';
 
@@ -34,19 +34,6 @@ export const sosEvaluationWorker = new Worker<SOSEvaluationJobData>(
 
       // Perform evaluation and broadcast
       await SOSEvaluationService.evaluateAndPrioritize(sosRequestId, expandRadius);
-      
-      // If it's still not fulfilled, schedule a re-evaluation to expand radius in 5 minutes
-      const updatedRequest = await SOSRequest.findById(sosRequestId);
-      if (updatedRequest && (updatedRequest.collectedQuantityMl || 0) < updatedRequest.requiredQuantityMl) {
-        console.log(`[SOSEvaluationWorker] SOS Request ${sosRequestId} still not fulfilled. Scheduling radius expansion in 5 minutes.`);
-        await sosEvaluationQueue.add('re-evaluate', {
-          sosRequestId,
-          expandRadius: true
-        }, {
-          delay: 5 * 60 * 1000, // 5 minutes
-          jobId: `reval-${sosRequestId}-${Date.now()}` // Unique ID
-        });
-      }
       
       console.log(`[SOSEvaluationWorker] Successfully processed job ${job.id}`);
     } catch (error) {

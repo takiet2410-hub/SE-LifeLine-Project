@@ -31,14 +31,13 @@ scheduledPublisherWorker.on('failed', (job, err) => {
 // Setup the repeatable job
 export const startScheduledPublisherJob = async () => {
   console.log('[ScheduledPublisherWorker] Initializing repeatable job for article publishing (every minute)');
-  await scheduledTasksQueue.add(
-    'publish-articles',
-    {},
+  await scheduledTasksQueue.upsertJobScheduler(
+    'publish-articles-cron',
+    { pattern: '* * * * *' },
     {
-      repeat: {
-        pattern: '* * * * *', // Every minute
-      },
-      jobId: 'publish-articles-cron', // Prevent duplicates
-    } as any
+      name: 'publish-articles',
+      data: {},
+      opts: { removeOnComplete: true, removeOnFail: 100 },
+    }
   );
 };

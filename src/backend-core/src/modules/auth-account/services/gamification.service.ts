@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import { DonorProfile } from '../models/donor-profile.model';
 import { Badge } from '../models/badge.model';
 import { Appointment, AppointmentStatus } from '../../booking/models/appointment.model';
+import { isFeatureEnabled } from '../../admin/services/admin-toggle.service';
 
 export function calculateDonorLevel(xp: number): number {
   if (xp >= 2000) return 5;
@@ -20,6 +21,7 @@ export class GamificationService {
     appointmentDate?: Date,
     session?: any
   ) {
+    if (!(await isFeatureEnabled('gamification_badges'))) return;
     const opts = session ? { session } : {};
     const donorId = typeof donorUserId === 'string' ? new Types.ObjectId(donorUserId) : donorUserId;
 
@@ -140,6 +142,7 @@ export class GamificationService {
     donorUserId: string | Types.ObjectId,
     session?: any
   ) {
+    if (!(await isFeatureEnabled('gamification_badges'))) return;
     const opts = session ? { session } : {};
     const donorId = typeof donorUserId === 'string' ? new Types.ObjectId(donorUserId) : donorUserId;
 

@@ -1,4 +1,4 @@
-import { Role, IRole } from '../models/role.model';
+import { CURRENT_ROLE_PERMISSIONS_VERSION, Role } from '../models/role.model';
 import { AdminAuditLog } from '../models/audit-log.model';
 import { User } from '../../auth-account/models/user.model';
 
@@ -20,6 +20,9 @@ export const SYSTEM_PERMISSIONS = [
   'content:read',
   'content:create',
   'content:publish',
+  // Notification Administration
+  'notifications:send',
+  'notifications:templates',
   // User & System Administration
   'users:read',
   'users:write',
@@ -32,13 +35,9 @@ export const SYSTEM_PERMISSIONS = [
 
 export class AdminRoleService {
   async getRoles() {
-    let roles = await Role.find().lean();
-
-    if (!roles || roles.length === 0) {
-      // Seed default system roles if database is empty
-      await this.seedDefaultRoles();
-      roles = await Role.find().lean();
-    }
+    // Repair individual missing system roles without overwriting customized permissions.
+    await this.seedDefaultRoles();
+    const roles = await Role.find().lean();
 
     // Count users for each role
     const items = await Promise.all(
@@ -70,27 +69,51 @@ export class AdminRoleService {
     permissions: string[],
     ipAddress: string
   ) {
+    if (!Array.isArray(permissions)) {
+      throw new Error('Permissions must be an array.');
+    }
+    const normalizedPermissions = Array.from(new Set(permissions));
+    const invalidPermissions = normalizedPermissions.filter((permission) => !SYSTEM_PERMISSIONS.includes(permission));
+    if (invalidPermissions.length > 0) {
+      throw new Error(`Unsupported permissions: ${invalidPermissions.join(', ')}.`);
+    }
+
     const role = await Role.findById(roleId);
     if (!role) {
       throw new Error('Role not found.');
     }
+    if (role.name === 'Administrator') {
+      const missingAdminPermissions = SYSTEM_PERMISSIONS.filter((permission) => !normalizedPermissions.includes(permission));
+      if (missingAdminPermissions.length > 0) {
+        throw new Error(`Administrator is system-protected and must retain all permissions. Missing: ${missingAdminPermissions.join(', ')}.`);
+      }
+    }
 
     const previousPermissions = [...role.permissions];
-    role.permissions = permissions;
+    const previousPermissionsVersion = role.permissionsVersion;
+    role.permissions = normalizedPermissions;
+    role.permissionsVersion = CURRENT_ROLE_PERMISSIONS_VERSION;
     await role.save();
 
-    await AdminAuditLog.create({
-      actorUserId: adminUser.id,
-      actorName: adminUser.name,
-      action: 'Update Role Permissions',
-      actionCategory: 'Role Management',
-      resourceType: 'Role',
-      resourceId: roleId,
-      previousValue: { permissions: previousPermissions },
-      newValue: { permissions },
-      ipAddress,
-      status: 'Success',
-    });
+    try {
+      await AdminAuditLog.create({
+        actorUserId: adminUser.id,
+        actorName: adminUser.name,
+        action: 'Update Role Permissions',
+        actionCategory: 'Role Management',
+        resourceType: 'Role',
+        resourceId: roleId,
+        previousValue: { permissions: previousPermissions },
+        newValue: { permissions: normalizedPermissions },
+        ipAddress,
+        status: 'Success',
+      });
+    } catch (error) {
+      role.permissions = previousPermissions;
+      role.permissionsVersion = previousPermissionsVersion;
+      await role.save();
+      throw error;
+    }
 
     return role;
   }
@@ -102,6 +125,7 @@ export class AdminRoleService {
         description: 'Full administrative access to manage users, roles, system configs, and monitoring logs.',
         isSystemProtected: true,
         permissions: SYSTEM_PERMISSIONS,
+        permissionsVersion: CURRENT_ROLE_PERMISSIONS_VERSION,
       },
       {
         name: 'BloodCenterStaff',
@@ -114,24 +138,41 @@ export class AdminRoleService {
           'inventory:read',
           'inventory:stock_in',
           'inventory:stock_out',
+          'sos:read',
           'content:read',
           'content:create',
         ],
+        permissionsVersion: CURRENT_ROLE_PERMISSIONS_VERSION,
       },
       {
         name: 'HospitalStaff',
         description: 'Create and monitor SOS emergency blood requests for hospital emergency departments.',
         isSystemProtected: true,
-        permissions: ['sos:read', 'sos:create', 'sos:cancel', 'inventory:read'],
+        permissions: [
+          'sos:read',
+          'sos:create',
+          'sos:cancel',
+          'inventory:read',
+          'content:read',
+          'content:create',
+        ],
+        permissionsVersion: CURRENT_ROLE_PERMISSIONS_VERSION,
       },
       {
         name: 'Donor',
         description: 'Standard donor account for browsing campaigns, scheduling appointments, and receiving SOS alerts.',
         isSystemProtected: true,
         permissions: ['campaign:read', 'content:read'],
+        permissionsVersion: CURRENT_ROLE_PERMISSIONS_VERSION,
       },
     ];
 
-    await Role.insertMany(defaultRoles);
+    await Role.bulkWrite(defaultRoles.map((role) => ({
+      updateOne: {
+        filter: { name: role.name },
+        update: { $setOnInsert: role },
+        upsert: true,
+      },
+    })));
   }
 }

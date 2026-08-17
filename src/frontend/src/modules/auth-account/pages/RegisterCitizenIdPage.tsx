@@ -157,7 +157,7 @@ export function RegisterCitizenIdPage() {
     <div className="min-h-screen flex flex-col bg-[#fff8f7] selection:bg-[#93000b]/20 text-[#271816]">
       <AuthHeader />
 
-      <main className="flex-1 relative flex flex-col items-center justify-center px-4 py-12 md:py-16">
+      <main className="flex-1 relative flex flex-col items-center justify-center px-3 sm:px-4 py-8 sm:py-12 md:py-16">
         <div className="pointer-events-none absolute right-0 top-0 w-fit opacity-20 z-0">
           <svg
             width="400"
@@ -165,7 +165,7 @@ export function RegisterCitizenIdPage() {
             viewBox="0 0 400 400"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="h-[400px] w-[400px] overflow-hidden"
+            className="hidden sm:block h-[400px] w-[400px] overflow-hidden"
           >
             <path
               d="M160 120C160 186.23 213.77 240 280 240C346.23 240 400 186.23 400 120C400 53.7702 346.23 0 280 0C213.77 0 160 53.7702 160 120Z"
@@ -187,7 +187,7 @@ export function RegisterCitizenIdPage() {
           </svg>
         </div>
 
-        <div className="flex w-full max-w-[512px] flex-col items-start gap-8 z-10">
+        <div className="flex w-full max-w-[512px] flex-col items-start gap-5 sm:gap-8 z-10">
         <div className="flex w-full flex-col items-center gap-1">
           <div className="relative flex h-16 w-16 items-center justify-center rounded-xl bg-[#93000B] py-3">
             <div className="absolute h-[54px] w-16 rounded-xl bg-transparent shadow-[0_10px_15px_-3px_rgba(0,0,0,0.10),0_4px_6px_-4px_rgba(0,0,0,0.10)]" />
@@ -205,12 +205,12 @@ export function RegisterCitizenIdPage() {
           onSubmit={handleSubmit}
           className="flex w-full flex-col overflow-hidden rounded-xl border border-[#F1F3F5] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
         >
-          <div className="flex w-full flex-col items-start gap-8 p-8">
+          <div className="flex w-full flex-col items-start gap-6 sm:gap-8 p-4 sm:p-8">
             <div className="flex w-full flex-col items-center">
               <p className="text-[22px] font-semibold leading-[28.6px] text-[#271816]">Create Your Account</p>
             </div>
 
-            <div className="flex w-full flex-col items-end gap-8">
+            <div className="flex w-full flex-col items-end gap-6 sm:gap-8">
               <div className="flex w-full flex-col gap-4">
                 <div className="flex w-full items-center gap-3">
                   <button
@@ -224,7 +224,7 @@ export function RegisterCitizenIdPage() {
                   </div>
                 </div>
 
-                <div className="relative flex w-full flex-col items-center gap-1 rounded-lg border-2 border-dashed border-[#CED4DA] bg-[#F8F9FA] p-10">
+                <div className="relative flex w-full flex-col items-center gap-1 rounded-lg border-2 border-dashed border-[#CED4DA] bg-[#F8F9FA] p-5 sm:p-10 text-center">
                   <svg
                     width="40"
                     height="40"
@@ -244,13 +244,16 @@ export function RegisterCitizenIdPage() {
                   </div>
                   <div className="flex flex-col items-center">
                     <p className="text-sm leading-5 text-[#6C757D]">Scan the QR code on your national ID card</p>
+                    <p className="mt-1 max-w-full truncate text-xs font-medium text-[#93000B]">
+                      {selectedFile?.name ?? 'Chạm để chọn ảnh CCCD'}
+                    </p>
                   </div>
 
-                  <label className="absolute left-0.5 top-0.5 flex h-[180px] w-[442px] items-center gap-1 overflow-hidden pb-[158px]">
-                    <span className="flex w-fit justify-center overflow-hidden border-2 border-black bg-[#EFEFEF] px-1.5 py-px text-base leading-6 text-black">
+                  <label className="absolute inset-0 cursor-pointer rounded-lg">
+                    <span className="sr-only">
                       Choose File
                     </span>
-                    <span className="text-base leading-6 text-[#271816]">{selectedFile?.name ?? 'No file chosen'}</span>
+                    <span className="sr-only">{selectedFile?.name ?? 'No file chosen'}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -261,7 +264,7 @@ export function RegisterCitizenIdPage() {
                 </div>
               </div>
 
-              <div className="h-6 w-[435px] border-l-2 border-l-[#DEE2E6]" />
+              <div className="h-6 w-full border-l-2 border-l-[#DEE2E6]" />
 
               <div className="flex w-full flex-col gap-[15px]">
                 <div className="flex w-full items-center gap-3">
@@ -304,8 +307,8 @@ export function RegisterCitizenIdPage() {
                     </div>
                   </div>
 
-                  <div className="flex h-[65px] w-full items-start justify-center gap-4">
-                    <div className="flex w-[215px] flex-col gap-1">
+                  <div className="flex w-full flex-col sm:flex-row items-start justify-center gap-4">
+                    <div className="flex w-full sm:w-1/2 flex-col gap-1">
                       <div className="flex flex-col pb-px">
                         <p className="text-xs font-medium leading-[16.8px] text-[#6C757D]">Date of Birth</p>
                       </div>
@@ -332,7 +335,7 @@ export function RegisterCitizenIdPage() {
                       </div>
                     </div>
 
-                    <div className="flex w-[215px] flex-col gap-1">
+                    <div className="flex w-full sm:w-1/2 flex-col gap-1">
                       <div className="flex flex-col pb-px">
                         <p className="text-xs font-medium leading-[16.8px] text-[#6C757D]">ID Number</p>
                       </div>
@@ -467,7 +470,7 @@ export function RegisterCitizenIdPage() {
                 </div>
               </div>
 
-              <div className="h-6 w-[435px] border-l-2 border-l-[#DEE2E6]" />
+              <div className="h-6 w-full border-l-2 border-l-[#DEE2E6]" />
 
               <div className="flex w-full flex-col gap-[15px]">
                 <div className="flex w-full items-center gap-3">
@@ -561,7 +564,7 @@ export function RegisterCitizenIdPage() {
                   disabled={isSubmitting}
                   className={`relative flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#93000B] text-sm font-semibold leading-[14px] text-white ${actionButtonShadow}`}
                 >
-                  <div className="absolute h-12 w-[446px] rounded-lg bg-transparent shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10),0_2px_4px_-2px_rgba(0,0,0,0.10)]" />
+                  <div className="absolute inset-0 rounded-lg bg-transparent shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10),0_2px_4px_-2px_rgba(0,0,0,0.10)]" />
                   <span className="relative">{isSubmitting ? 'Registering...' : 'Register'}</span>
                   <svg
                     width="16"
@@ -586,7 +589,7 @@ export function RegisterCitizenIdPage() {
                   </p>
                 ) : null}
 
-                <div className="flex w-full items-center justify-center gap-2 pb-0.5 pt-[3px]">
+                <div className="flex w-full flex-wrap items-center justify-center gap-2 pb-0.5 pt-[3px] text-center">
                   <p className="text-sm leading-5 text-[#6C757D]">Already have an account?</p>
                   <Link to="/auth/login" className="text-sm font-semibold leading-5 text-[#93000B] hover:text-[#7a0009] transition-colors">
                     Login now
@@ -596,7 +599,7 @@ export function RegisterCitizenIdPage() {
             </div>
           </div>
 
-          <div className="flex w-full items-center justify-center gap-6 border-t border-t-[#F1F3F5] bg-[#F8F9FA] px-8 py-4">
+          <div className="flex w-full flex-wrap items-center justify-center gap-3 sm:gap-6 border-t border-t-[#F1F3F5] bg-[#F8F9FA] px-4 sm:px-8 py-4">
             <div className="flex w-fit items-center gap-1.5 bg-white opacity-60">
               <svg width="12" height="15" viewBox="0 0 12 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[15px] w-3">
                 <path

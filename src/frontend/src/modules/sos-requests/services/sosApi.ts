@@ -42,6 +42,7 @@ export interface SOSRequest {
   createdByStaffId: string;
   bloodType: string;
   requiredQuantityMl: number;
+  pledgedQuantityMl?: number;
   collectedQuantityMl?: number;
   receivedQuantityMl?: number;
   inTransitQuantityMl?: number;
@@ -103,6 +104,8 @@ export interface SOSQueryParams {
   limit?: number;
   status?: string;
   urgencyLevel?: string;
+  bloodType?: string;
+  search?: string;
 }
 
 export interface SOSEvaluationLog {
@@ -144,6 +147,8 @@ export const sosApi = {
     if (params?.limit) queryParams.append('limit', String(params.limit));
     if (params?.status) queryParams.append('status', params.status);
     if (params?.urgencyLevel) queryParams.append('urgencyLevel', params.urgencyLevel);
+    if (params?.bloodType) queryParams.append('bloodType', params.bloodType);
+    if (params?.search) queryParams.append('search', params.search);
 
     const response = await apiClient.get(`/hospital/sos-requests?${queryParams.toString()}`);
     return response.data;

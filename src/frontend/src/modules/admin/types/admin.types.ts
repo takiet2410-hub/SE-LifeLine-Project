@@ -4,11 +4,50 @@ export interface UserItem {
   email: string;
   fullName: string;
   phone: string;
+  permanentAddress?: string;
+  currentAddress?: string;
+  hospitalId?: string;
+  bloodCenterId?: string;
   role: 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator';
   roles?: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
   accountStatus: 'PendingVerification' | 'Active' | 'Suspended';
   createdAt: string;
   lastLoginAt?: string;
+  isDeleted?: boolean;
+  privacyPurgedAt?: string;
+}
+
+export interface CreateAdminUserInput {
+  idDocumentNumber: string;
+  email: string;
+  fullName: string;
+  phone?: string;
+  password: string;
+  role: UserItem['role'];
+  roles: NonNullable<UserItem['roles']>;
+  permanentAddress?: string;
+  currentAddress?: string;
+  hospitalId?: string;
+  bloodCenterId?: string;
+}
+
+export interface UpdateAdminUserInput {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  role?: UserItem['role'];
+  roles?: NonNullable<UserItem['roles']>;
+  accountStatus?: UserItem['accountStatus'];
+  permanentAddress?: string;
+  currentAddress?: string;
+  hospitalId?: string;
+  bloodCenterId?: string;
+}
+
+export interface StaffOrganizationOption {
+  _id: string;
+  name: string;
+  address?: string;
 }
 
 export interface UserListResponse {
@@ -44,8 +83,8 @@ export interface AuditLogItem {
   resourceId: string;
   ipAddress: string;
   status: 'Success' | 'Failure';
-  previousValue?: any;
-  newValue?: any;
+  previousValue?: unknown;
+  newValue?: unknown;
   details?: string;
 }
 
@@ -53,7 +92,7 @@ export interface ConfigItem {
   id: string;
   key: string;
   label: string;
-  value: any;
+  value: unknown;
   description?: string;
   unit?: string;
 }

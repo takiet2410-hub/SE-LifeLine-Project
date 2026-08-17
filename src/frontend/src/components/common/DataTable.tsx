@@ -42,8 +42,8 @@ export function DataTable<T>({
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm text-slate-700">
+      <div className="overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Bảng dữ liệu có thể cuộn ngang">
+        <table className="w-full min-w-max text-left text-sm text-slate-700">
           <thead className="bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
             <tr>
               {columns.map((col, idx) => (
@@ -83,7 +83,7 @@ export function DataTable<T>({
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="px-4 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+        <div className="px-3 sm:px-4 py-3 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-slate-500 font-medium">
             Trang <span className="font-semibold text-slate-800">{currentPage}</span> / {totalPages}
           </p>

@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { type SOSUrgency } from '../../sos-requests/services/sosApi';
 import { apiService } from '../../../services/apiClient';
 import { HospitalMapModal } from '../../sos-requests/components/HospitalMapModal';
+import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 
 interface SOSAlert {
   id: string;
@@ -28,21 +29,31 @@ interface SOSAlert {
   hospitalPhone?: string;
 }
 
+type ResponseStatus = 'idle' | 'accepted' | 'declined' | 'ineligible' | 'fulfilled' | 'expired';
+
+const getTerminalResponseStatus = (alert: SOSAlert): ResponseStatus | null => {
+  if (alert.status === 'Fulfilled') return 'fulfilled';
+  if (['Expired', 'Cancelled', 'EvaluationFailed'].includes(alert.status)) return 'expired';
+  const deadline = Date.parse(alert.fulfillmentDeadline);
+  return Number.isFinite(deadline) && deadline <= Date.now() ? 'expired' : null;
+};
+
 export const SOSAlertsPage: React.FC = () => {
   const navigate = useNavigate();
   const [alerts, setAlerts] = useState<SOSAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAlert, setSelectedAlert] = useState<SOSAlert | null>(null);
   const [showDetail, setShowDetail] = useState(false);
-  const [responseStatus, setResponseStatus] = useState<'idle' | 'accepted' | 'declined' | 'ineligible' | 'fulfilled'>('idle');
+  const [responseStatus, setResponseStatus] = useState<ResponseStatus>('idle');
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [pendingResponse, setPendingResponse] = useState<{ alert: SOSAlert; response: 'accepted' | 'declined' } | null>(null);
 
   const fetchAlerts = async () => {
     setIsLoading(true);
     try {
       // Fetch SOS notifications for the donor
       const result = await apiService.getNotifications({ type: 'SOS' });
-      const notifications = result.data;
+      const notifications = result?.data ?? [];
       
       const sosAlerts: SOSAlert[] = (notifications || [])
         .filter((notif: any) => {
@@ -67,7 +78,7 @@ export const SOSAlertsPage: React.FC = () => {
             sosRequestId: notif.sourceRefId || notif.referenceId || payload.id || notif._id,
             bloodType: payload.bloodType || 'Unknown',
             urgencyLevel: payload.urgencyLevel || 'High',
-            status: 'NotificationsDispatched',
+            status: payload.status || notif.status || 'NotificationsDispatched',
             hospitalName: payload.hospitalName || 'Bệnh viện đối tác LifeLine',
             hospitalAddress: payload.hospitalAddress || 'Address not available',
             patientReference: payload.patientReference || 'N/A',
@@ -152,9 +163,9 @@ export const SOSAlertsPage: React.FC = () => {
       }
     }
 
-    // 2. Open detail modal (shows instructions, maps & phone if accepted)
+    // 2. Terminal alerts remain available as history, but must not show active instructions.
     setSelectedAlert(alert);
-    setResponseStatus(alert.donorResponse || 'accepted');
+    setResponseStatus(getTerminalResponseStatus(alert) || alert.donorResponse || 'idle');
     setShowDetail(true);
   };
 
@@ -192,8 +203,8 @@ export const SOSAlertsPage: React.FC = () => {
               </div>
               <h3 className="text-2xl font-bold text-green-700">Cảm Ơn Bạn Đã Sẵn Sàng Cứu Người!</h3>
               <p className="text-gray-600 mt-2">Phản hồi sẵn sàng hiến máu cấp cứu của bạn đã được ghi nhận.</p>
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-xs font-semibold text-amber-800 mt-2">
-                <span>🌟 +150 XP & Huy hiệu "Hiệp Sĩ Cứu Người"</span>
+              <div className="inline-flex max-w-md items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs font-semibold text-blue-900 mt-3">
+                <span>Đây là cam kết sẵn sàng hỗ trợ, chưa phải xác nhận đã hiến máu. Điểm và huy hiệu chỉ được cộng sau khi bệnh viện tiếp nhận máu.</span>
               </div>
             </div>
             
@@ -287,6 +298,37 @@ export const SOSAlertsPage: React.FC = () => {
           </div>
         );
 
+      case 'expired':
+        return (
+          <div className="text-center py-8 space-y-4">
+            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center">
+              <Clock className="w-8 h-8 text-gray-500" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-gray-700">Yêu cầu SOS đã hết hạn</h3>
+              <p className="text-gray-500 mt-2">
+                {selectedAlert.donorResponse === 'accepted'
+                  ? 'Bạn đã từng xác nhận sẵn sàng hiến máu cho yêu cầu này.'
+                  : selectedAlert.donorResponse === 'declined'
+                    ? 'Bạn đã phản hồi không thể tham gia yêu cầu này.'
+                    : 'Yêu cầu này đã kết thúc trước khi bạn phản hồi.'}
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                Hạn chót: {format(new Date(selectedAlert.fulfillmentDeadline), 'HH:mm - dd/MM/yyyy')}
+              </p>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
+              Mã ưu tiên và hướng dẫn đến bệnh viện không còn hiệu lực.
+            </div>
+            <button
+              onClick={() => { setShowDetail(false); setResponseStatus('idle'); }}
+              className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+            >
+              Quay lại danh sách
+            </button>
+          </div>
+        );
+
       case 'ineligible':
         return (
           <div className="text-center py-8">
@@ -343,17 +385,18 @@ export const SOSAlertsPage: React.FC = () => {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 rounded-full">
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">SOS Emergency Alerts</h1>
-              <p className="text-sm text-gray-500">Critical blood donation requests from hospitals</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">SOS Emergency Alerts</h1>
+              <p className="hidden sm:block text-sm text-gray-500">Critical blood donation requests from hospitals</p>
             </div>
           </div>
           {unreadCount > 0 && (
@@ -367,8 +410,8 @@ export const SOSAlertsPage: React.FC = () => {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
         {showDetail && selectedAlert && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+            <div className="bg-white rounded-t-2xl sm:rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-xl w-full max-w-lg max-h-[92dvh] overflow-y-auto animate-in fade-in zoom-in duration-200">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">Response Detail</h2>
                 <button 
@@ -436,20 +479,21 @@ export const SOSAlertsPage: React.FC = () => {
               {alerts.map((alert) => {
                 const isRead = alert.readAt !== null;
                 const hasResponded = alert.donorResponse !== null;
-                const isExpired = new Date(alert.fulfillmentDeadline) < new Date();
+                const terminalStatus = getTerminalResponseStatus(alert);
+                const isInactive = terminalStatus !== null;
 
                 return (
                   <div
                     key={alert.id}
-                    className={`rounded-2xl p-5 border transition-all cursor-pointer ${
+                    className={`rounded-2xl p-4 sm:p-5 border transition-all cursor-pointer ${
                       !isRead
                         ? 'bg-red-50 border-red-200 border-l-4 border-l-red-600 shadow-sm'
                         : 'bg-white border-gray-200 hover:bg-gray-50'
                     }`}
                     onClick={() => handleCardClick(alert)}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-4 flex-1">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-start justify-between gap-4">
+                      <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 flex-1 min-w-0">
                         {/* Urgency Badge */}
                         <div className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 ${getUrgencyColor(alert.urgencyLevel)}`}>
                           {getUrgencyIcon(alert.urgencyLevel)}
@@ -471,7 +515,7 @@ export const SOSAlertsPage: React.FC = () => {
                             Patient: {alert.patientReference}. Required: {alert.requiredQuantityMl} ml.
                           </p>
 
-                          <div className="flex items-center gap-4 text-xs text-gray-500 pt-1">
+                          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-xs text-gray-500 pt-1">
                             <span className="flex items-center gap-1">
                               <MapPin className="w-3.5 h-3.5" />
                               {alert.hospitalAddress}
@@ -489,8 +533,14 @@ export const SOSAlertsPage: React.FC = () => {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex flex-col items-end gap-2 shrink-0">
-                        {hasResponded ? (
+                      <div className="flex flex-row sm:flex-col flex-wrap items-stretch sm:items-end gap-2 shrink-0">
+                        {isInactive ? (
+                          <span className="px-3 py-1.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-full">
+                            {terminalStatus === 'fulfilled'
+                              ? 'Đã hoàn tất'
+                              : hasResponded ? 'Đã phản hồi · Đã kết thúc' : 'Đã kết thúc'}
+                          </span>
+                        ) : hasResponded ? (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -504,28 +554,24 @@ export const SOSAlertsPage: React.FC = () => {
                             <span>✓ {alert.donorResponse === 'accepted' ? 'Xem hướng dẫn' : 'Đã phản hồi'}</span>
                             <ChevronRight className="w-3.5 h-3.5" />
                           </button>
-                        ) : isExpired ? (
-                          <span className="px-3 py-1.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-full">
-                            Expired
-                          </span>
                         ) : (
                           <>
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleAccept(alert); }}
+                              onClick={(e) => { e.stopPropagation(); setPendingResponse({ alert, response: 'accepted' }); }}
                               className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors shadow-xs flex items-center gap-1.5"
                             >
                               <Heart className="w-3.5 h-3.5" />
                               I Can Help
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleDecline(alert); }}
+                              onClick={(e) => { e.stopPropagation(); setPendingResponse({ alert, response: 'declined' }); }}
                               className="px-3 py-1.5 border border-gray-300 hover:bg-gray-50 text-gray-600 text-xs font-medium rounded-lg transition-colors"
                             >
                               Not Now
                             </button>
                           </>
                         )}
-                        {!isRead && !hasResponded && !isExpired && (
+                        {!isRead && !hasResponded && !isInactive && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDismiss(alert); }}
                             className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -544,6 +590,25 @@ export const SOSAlertsPage: React.FC = () => {
         </div>
       </div>
     </div>
+    <ConfirmDialog
+      isOpen={Boolean(pendingResponse)}
+      title={pendingResponse?.response === 'accepted' ? 'Xác nhận sẵn sàng hiến máu' : 'Xác nhận chưa thể tham gia'}
+      message={pendingResponse?.response === 'accepted'
+        ? `Bạn xác nhận có thể đến ${pendingResponse.alert.hospitalName} để hỗ trợ ca SOS này? Hệ thống sẽ ghi nhận cam kết của bạn.`
+        : 'Bạn xác nhận hiện tại chưa thể tham gia ca SOS này? Bạn vẫn có thể xem các cảnh báo khác.'}
+      confirmLabel={pendingResponse?.response === 'accepted' ? 'Tôi xác nhận có thể hỗ trợ' : 'Xác nhận chưa thể tham gia'}
+      cancelLabel="Quay lại"
+      variant={pendingResponse?.response === 'accepted' ? 'primary' : 'warning'}
+      onCancel={() => setPendingResponse(null)}
+      onConfirm={() => {
+        const pending = pendingResponse;
+        setPendingResponse(null);
+        if (!pending) return;
+        if (pending.response === 'accepted') void handleAccept(pending.alert);
+        else void handleDecline(pending.alert);
+      }}
+    />
+    </>
   );
 };
 

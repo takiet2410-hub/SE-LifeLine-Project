@@ -89,7 +89,7 @@ export const OTPInputGroup: React.FC<OTPInputGroupProps> = ({
   const isNotReceived = status === 'not-received';
 
   return (
-    <div className="w-full max-w-[440px] bg-white border border-[#f1f3f5] rounded-xl p-8 shadow-sm transition-all">
+    <div className="w-full max-w-[440px] bg-white border border-[#f1f3f5] rounded-xl p-5 sm:p-8 shadow-sm transition-all">
       <div className="mb-6 text-left">
         <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
           Enter Verification Code

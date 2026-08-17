@@ -3,6 +3,7 @@ import { adminApi } from '../api/admin.api';
 import type { ConfigCategoryGroup, ConfigItem } from '../types/admin.types';
 import { Sliders, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '../../../shared/api/apiError';
 
 export const SystemConfigPage: React.FC = () => {
   const [categories, setCategories] = useState<ConfigCategoryGroup[]>([]);
@@ -14,37 +15,46 @@ export const SystemConfigPage: React.FC = () => {
       setLoading(true);
       const data = await adminApi.getConfigs();
       setCategories(data.categories);
-    } catch (err: any) {
-      toast.error('Failed to load system configuration values.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Không thể tải cấu hình hệ thống.'));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchConfigs();
+    const timer = window.setTimeout(() => void fetchConfigs(), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
-  const handleConfigChange = (catIdx: number, itemIdx: number, val: any) => {
-    const nextCategories = [...categories];
-    nextCategories[catIdx].items[itemIdx].value = val;
-    setCategories(nextCategories);
+  const handleConfigChange = (catIdx: number, itemIdx: number, value: number | boolean) => {
+    setCategories((current) => current.map((category, currentCatIdx) =>
+      currentCatIdx !== catIdx
+        ? category
+        : {
+            ...category,
+            items: category.items.map((item, currentItemIdx) =>
+              currentItemIdx === itemIdx ? { ...item, value } : item
+            ),
+          }
+    ));
   };
 
   const handleSaveConfig = async (item: ConfigItem) => {
     try {
       setSavingKey(item.key);
       await adminApi.updateConfig(item.key, item.value);
-      toast.success(`Saved configuration: ${item.label}`);
-    } catch (err: any) {
-      toast.error(`Failed to update ${item.label}`);
+      toast.success(`Đã lưu cấu hình: ${item.label}`);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, `Không thể cập nhật ${item.label}.`));
+      await fetchConfigs();
     } finally {
       setSavingKey(null);
     }
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-[#271816]">System Configuration</h1>
         <p className="text-sm font-medium text-[#6c757d]">
@@ -59,7 +69,7 @@ export const SystemConfigPage: React.FC = () => {
           {categories.map((group, catIdx) => (
             <div
               key={group.category}
-              className="bg-white p-6 rounded-2xl border border-[#f1f3f5] shadow-xs space-y-5"
+              className="bg-white p-4 sm:p-6 rounded-2xl border border-[#f1f3f5] shadow-xs space-y-5"
             >
               <div className="flex items-center gap-2 border-b border-[#f1f3f5] pb-3">
                 <Sliders className="w-5 h-5 text-[#93000b]" />
@@ -111,7 +121,7 @@ export const SystemConfigPage: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <input
                               type="number"
-                              value={item.value}
+                              value={typeof item.value === 'number' ? item.value : ''}
                               onChange={(e) => handleConfigChange(catIdx, itemIdx, Number(e.target.value))}
                               onBlur={() => handleSaveConfig(item)}
                               className="w-24 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-bold text-[#271816] text-center focus:ring-2 focus:ring-[#93000b] outline-hidden"

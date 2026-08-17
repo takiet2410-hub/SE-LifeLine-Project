@@ -4,8 +4,10 @@ import { chatbotSessionMiddleware } from './middlewares/session.middleware';
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env.config';
 import { User } from '../auth-account/models/user.model';
+import { requireFeatureEnabled } from '../admin/feature-toggle.middleware';
 
 const router = Router();
+const chatbotFeature = requireFeatureEnabled('ai_chatbot');
 
 // Middleware to optionally authenticate user if token is provided
 const optionalAuthenticateJWT = async (req: Request, res: Response, next: NextFunction) => {
@@ -100,7 +102,7 @@ const optionalAuthenticateJWT = async (req: Request, res: Response, next: NextFu
  *                   type: string
  *                   example: "AI service is temporarily unavailable. Please try again shortly."
  */
-router.post('/message', optionalAuthenticateJWT, chatbotSessionMiddleware, ChatbotController.sendMessage);
+router.post('/message', optionalAuthenticateJWT, chatbotFeature, chatbotSessionMiddleware, ChatbotController.sendMessage);
 
 /**
  * @openapi
@@ -170,6 +172,6 @@ router.post('/message', optionalAuthenticateJWT, chatbotSessionMiddleware, Chatb
  *                   type: string
  *                   example: "Internal server error retrieving history"
  */
-router.get('/history', optionalAuthenticateJWT, chatbotSessionMiddleware, ChatbotController.getHistory);
+router.get('/history', optionalAuthenticateJWT, chatbotFeature, chatbotSessionMiddleware, ChatbotController.getHistory);
 
 export default router;

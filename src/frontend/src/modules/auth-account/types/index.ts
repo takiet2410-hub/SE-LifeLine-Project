@@ -11,7 +11,12 @@ export interface AuthUser {
   email: string;
   fullName: string;
   role: 'donor' | 'staff' | 'hospital' | 'admin' | string;
+  roles?: Array<'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator' | string>;
   avatarUrl?: string;
+  idDocumentNumber?: string;
+  hospitalId?: string;
+  hospitalName?: string;
+  bloodCenterId?: string;
 }
 
 export interface AuthResponse {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, Search, Heart, Sparkles, CheckCircle2, ShieldCheck, AlertCircle, X, Phone, CreditCard, User, FileText } from 'lucide-react';
+import { UserCheck, Search, Sparkles, CheckCircle2, X, Phone, CreditCard, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { sosApi, type SOSRequest } from '../services/sosApi';
 
@@ -144,12 +144,11 @@ export const RecordDirectDonationModal: React.FC<RecordDirectDonationModalProps>
     (request.shipments || []).filter((s: any) => s.status === 'Received').reduce((acc: number, s: any) => acc + (s.volumeMl || 0), 0) +
     (request.directDonations || []).reduce((acc: number, d: any) => acc + (d.volumeMl || 0), 0)
   );
-  const currentInTransit = request.inTransitQuantityMl || 0;
-  const remainingNeeded = Math.max(0, request.requiredQuantityMl - currentReceived);
+  const remainingNeeded = Math.max(0, request.requiredQuantityMl - currentReceived - (request.inTransitQuantityMl || 0));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh] border border-gray-100">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[94dvh] border border-gray-100">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-linear-to-r from-red-50/80 to-amber-50/80">
           <div className="flex items-center gap-3">
@@ -174,7 +173,7 @@ export const RecordDirectDonationModal: React.FC<RecordDirectDonationModalProps>
         </div>
 
         {/* Form Body */}
-        <div className="p-6 overflow-y-auto space-y-5">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5">
           {/* Target & Status Summary */}
           <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between text-xs">
             <div>
@@ -381,7 +380,7 @@ export const RecordDirectDonationModal: React.FC<RecordDirectDonationModalProps>
               <label className="block text-[11px] font-semibold text-gray-600 mb-1.5">
                 Thể tích máu tiếp nhận (ml) *
               </label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[250, 350, 450].map((v) => (
                   <button
                     key={v}
@@ -431,12 +430,12 @@ export const RecordDirectDonationModal: React.FC<RecordDirectDonationModalProps>
         </div>
 
         {/* Footer */}
-        <div className="p-4 sm:px-6 sm:py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between gap-3">
+        <div className="p-4 sm:px-6 sm:py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="text-xs text-gray-600">
             Cộng thêm: <strong className="text-red-700 font-bold">+{volumeMl} ml</strong> vào ca SOS
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={onClose}

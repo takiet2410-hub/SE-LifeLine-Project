@@ -17,14 +17,14 @@ export const AppointmentTabs: React.FC<AppointmentTabsProps> = ({ activeTab, onC
   ];
 
   return (
-    <div className="flex items-center gap-6 border-b border-[#dee2e6] mb-6">
+    <div className="flex items-center gap-5 overflow-x-auto overscroll-x-contain border-b border-[#dee2e6] mb-4 sm:mb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
           <button
             key={tab.id}
             onClick={() => onChangeTab(tab.id)}
-            className={`relative pb-3 text-[14px] font-medium transition-colors ${
+            className={`relative shrink-0 whitespace-nowrap pb-3 text-[14px] font-medium transition-colors ${
               isActive ? 'text-[#93000b]' : 'text-[#6c757d] hover:text-[#271816]'
             }`}
           >

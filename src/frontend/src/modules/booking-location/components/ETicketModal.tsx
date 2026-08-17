@@ -47,8 +47,8 @@ export const ETicketModal: React.FC<ETicketModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white w-full max-w-[480px] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 border border-[#dee2e6] relative my-8">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto">
+      <div className="bg-white w-full max-w-[480px] max-h-[94dvh] overflow-y-auto rounded-t-2xl sm:rounded-2xl shadow-2xl animate-in zoom-in-95 border border-[#dee2e6] relative sm:my-8">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -58,13 +58,13 @@ export const ETicketModal: React.FC<ETicketModalProps> = ({
         </button>
 
         {/* Success Header Banner */}
-        <div className="bg-[#16A34A]/10 border-b border-[#16A34A]/20 py-3 px-6 flex items-center justify-center gap-2">
+        <div className="bg-[#16A34A]/10 border-b border-[#16A34A]/20 py-3 pl-4 pr-14 sm:px-6 flex items-center justify-center gap-2 text-center">
           <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />
           <span className="text-[#16A34A] text-[14px] font-bold">Booking Confirmed! E-Ticket Ready</span>
         </div>
 
         {/* E-Ticket Card Header */}
-        <div className="bg-[#fff0ee] px-6 py-5 text-center border-b border-[#e4beb9]">
+        <div className="bg-[#fff0ee] px-4 sm:px-6 py-4 sm:py-5 text-center border-b border-[#e4beb9]">
           <h2 className="text-[20px] font-extrabold text-[#152a43] uppercase tracking-wide">
             Your E-Ticket
           </h2>
@@ -74,7 +74,7 @@ export const ETicketModal: React.FC<ETicketModalProps> = ({
         </div>
 
         {/* Ticket Details Body */}
-        <div className="p-6 space-y-5 text-center bg-white">
+        <div className="p-4 sm:p-6 space-y-5 text-center bg-white">
           <div className="space-y-1">
             <h3 className="text-[18px] font-bold text-[#93000b]">
               {appointment.location.name}
@@ -102,7 +102,7 @@ export const ETicketModal: React.FC<ETicketModalProps> = ({
             </div>
             <div className="text-right">
               <p className="text-[11px] font-bold text-[#6c757d] uppercase tracking-wider">TICKET CODE</p>
-              <p className="text-[14px] font-mono font-bold text-[#271816]">{ticketCode}</p>
+              <p className="text-[12px] sm:text-[14px] font-mono font-bold text-[#271816] break-all">{ticketCode}</p>
             </div>
           </div>
 

@@ -22,7 +22,7 @@ export const RoleManagementPage: React.FC = () => {
         setSelectedRole(data.roles[0]);
         setSelectedPermissions(data.roles[0].permissions);
       }
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to load roles and permissions matrix');
     } finally {
       setLoading(false);
@@ -30,7 +30,10 @@ export const RoleManagementPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchRoles();
+    const timer = window.setTimeout(() => void fetchRoles(), 0);
+    return () => window.clearTimeout(timer);
+    // Initial load only; subsequent refreshes are triggered after successful saves.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSelectRole = (role: RoleItem) => {
@@ -53,7 +56,7 @@ export const RoleManagementPage: React.FC = () => {
       await adminApi.updateRolePermissions(selectedRole.id, selectedPermissions);
       toast.success(`Updated permission matrix for ${selectedRole.name}`);
       fetchRoles();
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to update role permissions');
     } finally {
       setSaving(false);
@@ -65,12 +68,14 @@ export const RoleManagementPage: React.FC = () => {
     { name: 'Blood Inventory', prefix: 'inventory:' },
     { name: 'SOS Emergency System', prefix: 'sos:' },
     { name: 'Content & Articles', prefix: 'content:' },
+    { name: 'Notification Administration', prefix: 'notifications:' },
     { name: 'System & Security', prefix: 'system:' },
     { name: 'User Management', prefix: 'users:' },
+    { name: 'Role Management', prefix: 'roles:' },
   ];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-[#271816]">Role & Permission Matrix</h1>
         <p className="text-sm font-medium text-[#6c757d]">Configure role-based access control policies (AD-UC-03)</p>
@@ -112,12 +117,12 @@ export const RoleManagementPage: React.FC = () => {
         </div>
 
         {/* Right Side: Detailed Permission Matrix */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-[#f1f3f5] shadow-xs space-y-6">
+        <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-2xl border border-[#f1f3f5] shadow-xs space-y-6 min-w-0">
           {selectedRole ? (
             <>
-              <div className="flex items-center justify-between border-b border-[#f1f3f5] pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f1f3f5] pb-4">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-lg font-bold text-[#271816]">
                       Permissions for: {selectedRole.name}
                     </h2>
@@ -132,7 +137,7 @@ export const RoleManagementPage: React.FC = () => {
                 <button
                   onClick={handleSavePermissions}
                   disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#93000b] hover:bg-[#780009] text-white font-semibold text-sm rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer"
+                  className="flex w-full sm:w-auto shrink-0 items-center justify-center gap-2 px-4 py-2 bg-[#93000b] hover:bg-[#780009] text-white font-semibold text-sm rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
                   {saving ? 'Saving...' : 'Save Matrix'}
@@ -152,10 +157,13 @@ export const RoleManagementPage: React.FC = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {perms.map((p) => {
                           const isChecked = selectedPermissions.includes(p);
+                          const isLockoutProtected = selectedRole.name === 'Administrator';
                           return (
                             <label
                               key={p}
-                              className={`flex items-center justify-between p-2.5 rounded-lg border text-xs font-semibold cursor-pointer transition ${
+                              className={`flex items-center justify-between p-2.5 rounded-lg border text-xs font-semibold transition ${
+                                isLockoutProtected ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
+                              } ${
                                 isChecked
                                   ? 'bg-white border-red-300 text-[#271816] shadow-xs'
                                   : 'bg-transparent border-slate-200 text-[#6c757d]'
@@ -165,8 +173,9 @@ export const RoleManagementPage: React.FC = () => {
                               <input
                                 type="checkbox"
                                 checked={isChecked}
+                                disabled={isLockoutProtected}
                                 onChange={() => handleTogglePermission(p)}
-                                className="w-4 h-4 accent-[#93000b] rounded cursor-pointer"
+                                className="w-4 h-4 accent-[#93000b] rounded cursor-pointer disabled:cursor-not-allowed"
                               />
                             </label>
                           );

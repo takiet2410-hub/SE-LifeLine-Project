@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { ArticleController } from '../controllers/article.controller';
+import { requireFeatureEnabled } from '../../admin/feature-toggle.middleware';
+import { validateRequest } from '../../../shared/validate.middleware';
+import { GetArticleByIdSchema, QueryArticleListSchema } from '../schemas/article.schema';
 
 const router = Router();
+const newsFeature = requireFeatureEnabled('news_content_portal');
 
 /**
  * @openapi
@@ -27,7 +31,7 @@ const router = Router();
  *         schema:
  *           type: string
  */
-router.get('/', ArticleController.getPublicArticles);
+router.get('/', newsFeature, validateRequest(QueryArticleListSchema), ArticleController.getPublicArticles);
 
 /**
  * @openapi
@@ -42,6 +46,6 @@ router.get('/', ArticleController.getPublicArticles);
  *         schema:
  *           type: string
  */
-router.get('/:articleId', ArticleController.getPublicArticleById);
+router.get('/:articleId', newsFeature, validateRequest(GetArticleByIdSchema), ArticleController.getPublicArticleById);
 
 export default router;

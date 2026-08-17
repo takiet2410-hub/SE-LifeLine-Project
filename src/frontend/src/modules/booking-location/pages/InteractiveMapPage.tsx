@@ -47,7 +47,7 @@ export const InteractiveMapPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [radius, setRadius] = useState<number>(15);
   const [selectedBloodTypes, setSelectedBloodTypes] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string>(scheduleData?.date || todayStr);
+  const [selectedDate, setSelectedDate] = useState<string>(scheduleData?.date || '');
   const [crowdingLevels, setCrowdingLevels] = useState<{ [key: string]: boolean }>({
     Low: true,
     Moderate: true,
@@ -72,7 +72,7 @@ export const InteractiveMapPage: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [mapError, setMapError] = useState(false);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [locationType, setLocationType] = useState<'all' | 'campaign' | 'hospital' | 'blood-center'>('all');
 
   // Geolocation state
   const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
@@ -121,7 +121,7 @@ export const InteractiveMapPage: React.FC = () => {
   const fetchMapLocations = async () => {
     setLoading(true);
     try {
-      const filters: any = { radius };
+      const filters: any = { radius, includeFacilities: true };
       if (userCoords) {
         filters.lat = userCoords[0];
         filters.lng = userCoords[1];
@@ -158,7 +158,8 @@ export const InteractiveMapPage: React.FC = () => {
           const regCount = raw?.registeredCount || 0;
           const cap = raw?.capacity || 100;
           const ratio = regCount / cap;
-          const crowdingLevel = ratio < 0.5 ? 'Low' : ratio < 0.8 ? 'Moderate' : 'High';
+          const isBookable = raw?.isBookable !== false && raw?.entityType !== 'Hospital' && raw?.entityType !== 'BloodCenter';
+          const crowdingLevel = isBookable ? (ratio < 0.5 ? 'Low' : ratio < 0.8 ? 'Moderate' : 'High') : 'Facility';
 
           const campaignName = raw?.name || item.name || 'Chiến dịch Hiến máu';
           const campaignCode = (raw as any)?.campaignCode || '';
@@ -168,8 +169,8 @@ export const InteractiveMapPage: React.FC = () => {
           const now = new Date();
           const start = raw?.startDateTime ? new Date(raw.startDateTime) : null;
           const end = raw?.endDateTime ? new Date(raw.endDateTime) : null;
-          let computedStatusStr = 'Active Now';
-          if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          let computedStatusStr = isBookable ? 'Active Now' : raw?.entityType === 'Hospital' ? 'Bệnh viện' : 'Trung tâm máu';
+          if (isBookable && start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
             if (now >= start && now <= end) {
               computedStatusStr = 'Active Now';
             } else if (now < start) {
@@ -192,8 +193,13 @@ export const InteractiveMapPage: React.FC = () => {
             rating: (4.8 + (idx % 3) * 0.1).toFixed(1),
             crowdingLevel,
             status: computedStatusStr,
-            bloodTypes: (raw?.targetBloodGroups && raw.targetBloodGroups.length > 0) ? raw.targetBloodGroups : ['Tất cả các nhóm máu'],
-            operatingHours: raw?.startDateTime
+            entityType: raw?.entityType || 'Campaign',
+            isBookable,
+            contactPhone: raw?.contactPhone,
+            bloodTypes: isBookable && raw?.targetBloodGroups?.length ? raw.targetBloodGroups : [],
+            operatingHours: !isBookable
+              ? raw?.operatingHours || 'Liên hệ cơ sở để biết giờ tiếp nhận'
+              : raw?.startDateTime
               ? `${new Date(raw.startDateTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${new Date(raw.endDateTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
               : '08:00 - 16:00',
             timeslots: raw?.timeslots?.length
@@ -268,11 +274,6 @@ export const InteractiveMapPage: React.FC = () => {
 
   // Filter & Sort location list locally: strictly ONLY positions within scan radius
   useEffect(() => {
-    if (!selectedDate) {
-      setFilteredLocations([]);
-      return;
-    }
-
     let result = [...locations];
 
     if (searchQuery.trim()) {
@@ -282,11 +283,19 @@ export const InteractiveMapPage: React.FC = () => {
       );
     }
 
+    result = result.filter((loc: any) => {
+      if (locationType === 'campaign') return loc.isBookable;
+      if (locationType === 'hospital') return loc.entityType === 'Hospital';
+      if (locationType === 'blood-center') return loc.entityType === 'BloodCenter';
+      return true;
+    });
+
     if (selectedBloodTypes.length > 0) {
       const isExplicitAllTypes = selectedBloodTypes.includes('ALL');
       const normalizedSelected = selectedBloodTypes.map((t: string) => t.toUpperCase().trim());
       
       result = result.filter((loc: any) => {
+        if (!loc.isBookable) return true;
         const campaignTypes: string[] = (loc.bloodTypes || []).map((bt: string) => String(bt).toUpperCase().trim());
         
         const acceptsAll =
@@ -314,7 +323,7 @@ export const InteractiveMapPage: React.FC = () => {
     }
 
     // Filter by crowding level
-    result = result.filter((loc) => crowdingLevels[loc.crowdingLevel] !== false);
+    result = result.filter((loc) => !loc.isBookable || crowdingLevels[loc.crowdingLevel] !== false);
 
     // STRICT RADIAL FILTER: keep ONLY positions whose distance from center <= radius (in km)
     result = result.filter((loc) => getDistanceNum(loc.lat, loc.lng) <= radius);
@@ -323,7 +332,7 @@ export const InteractiveMapPage: React.FC = () => {
     result.sort((a, b) => getDistanceNum(a.lat, a.lng) - getDistanceNum(b.lat, b.lng));
 
     setFilteredLocations(result);
-  }, [searchQuery, locations, selectedBloodTypes, crowdingLevels, userCoords, radius]);
+  }, [searchQuery, locations, locationType, selectedBloodTypes, crowdingLevels, userCoords, radius]);
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -370,8 +379,15 @@ export const InteractiveMapPage: React.FC = () => {
 
   const handleStartBooking = (loc: any, slotTime?: string) => {
     if (!loc) return;
-    const todayStr = new Date().toISOString().split('T')[0];
-    const dateToUse = selectedDate || todayStr;
+    if (!loc.isBookable) {
+      toast.info('Đây là cơ sở y tế tham khảo. Hãy chọn một chiến dịch có lịch hiến để đặt hẹn.');
+      return;
+    }
+    const campaignStart = loc?._raw?.startDateTime ? new Date(loc._raw.startDateTime) : null;
+    const campaignStartDate = campaignStart && !isNaN(campaignStart.getTime())
+      ? `${campaignStart.getFullYear()}-${String(campaignStart.getMonth() + 1).padStart(2, '0')}-${String(campaignStart.getDate()).padStart(2, '0')}`
+      : todayStr;
+    const dateToUse = selectedDate || campaignStartDate;
 
     let timeSlotToUse = slotTime;
     if (!timeSlotToUse && loc?.timeslots && loc.timeslots.length > 0) {
@@ -474,6 +490,7 @@ export const InteractiveMapPage: React.FC = () => {
         Low: '#16A34A',
         Moderate: '#F59E0B',
         High: '#EF4444',
+        Facility: '#2563EB',
       };
       const markerColor = colorMap[loc.crowdingLevel] || '#93000b';
       const distanceKm = getDistanceNum(loc.lat, loc.lng);
@@ -531,18 +548,24 @@ export const InteractiveMapPage: React.FC = () => {
           <p style="font-size: 12px; color: #6c757d; margin: 0 0 8px 0; line-height: 1.3;">${loc.address}</p>
           <div style="display:flex; gap: 6px; align-items:center; margin-bottom: 10px; flex-wrap: wrap;">
             <span style="font-size: 11px; font-weight: 700; color: ${markerColor}; background: #fff8f7; padding: 2px 8px; border-radius: 12px; border: 1px solid ${markerColor}40;">
-              ${loc.crowdingLevel === 'Low' ? '🟢 Thưa thớt' : loc.crowdingLevel === 'Moderate' ? '🟡 Vừa phải' : '🔴 Cần gấp'}
+              ${!loc.isBookable ? (loc.entityType === 'Hospital' ? '🏥 Bệnh viện' : '🩸 Trung tâm máu') : loc.crowdingLevel === 'Low' ? '🟢 Thưa thớt' : loc.crowdingLevel === 'Moderate' ? '🟡 Vừa phải' : '🔴 Cần gấp'}
             </span>
             <span style="font-size: 11px; font-weight: 600; color: #2563EB; background: #eff6ff; padding: 2px 8px; border-radius: 12px;">
               Cách ${distanceKm} km
             </span>
           </div>
-          <button
-            onclick="window.dispatchEvent(new CustomEvent('select-donation-location', { detail: '${loc.id}' }))"
-            style="width: 100%; padding: 8px 0; background: #93000b; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s;"
-          >
-            Đặt lịch hiến máu ngay
-          </button>
+          ${loc.isBookable ? `
+            <button
+              onclick="window.dispatchEvent(new CustomEvent('select-donation-location', { detail: '${loc.id}' }))"
+              style="width: 100%; padding: 8px 0; background: #93000b; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s;"
+            >
+              Đặt lịch hiến máu ngay
+            </button>
+          ` : `
+            <div style="padding: 8px; background: #eff6ff; color: #1d4ed8; border-radius: 8px; font-size: 12px; font-weight: 600; text-align: center;">
+              Cơ sở y tế tham khảo · Chọn chiến dịch để đặt lịch
+            </div>
+          `}
         </div>
       `;
 
@@ -619,31 +642,32 @@ export const InteractiveMapPage: React.FC = () => {
     setSelectedDate('');
     setCrowdingLevels({ Low: true, Moderate: true, High: true });
     setSearchQuery('');
+    setLocationType('all');
     toast.info('Đã đặt lại bộ lọc');
   };
 
   // Handlers for search & filters reset
 
   return (
-    <div className="flex flex-col h-[calc(100vh-72px)] bg-[#fff8f7] relative overflow-hidden">
+    <div className="flex min-h-[calc(100dvh-64px)] md:h-[calc(100dvh-72px)] flex-col bg-[#fff8f7] relative overflow-y-auto md:overflow-hidden">
       {/* Top Search & Action Bar */}
-      <header className="h-16 bg-white border-b border-[#f1f3f5] px-6 flex items-center justify-between shrink-0 z-30 shadow-sm">
-        <div className="flex items-center gap-3">
+      <header className="min-h-16 bg-white border-b border-[#f1f3f5] px-3 sm:px-4 lg:px-6 py-3 flex flex-wrap lg:flex-nowrap items-center gap-3 justify-between shrink-0 z-30 shadow-sm">
+        <div className="flex min-w-0 items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#fff8f7] flex items-center justify-center text-[#93000b] border border-[#f9dcd8]">
             <Compass className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-[18px] font-bold text-[#271816] leading-none whitespace-nowrap">
+            <h1 className="truncate text-[16px] sm:text-[18px] font-bold text-[#271816] leading-none">
               Bản Đồ Điểm Hiến Máu
             </h1>
-            <p className="text-[12px] text-[#6c757d] mt-0.5 whitespace-nowrap">
+            <p className="hidden sm:block text-[12px] text-[#6c757d] mt-0.5 whitespace-nowrap">
               Tìm kiếm chiến dịch và điểm hiến máu gần bạn nhất
             </p>
           </div>
         </div>
 
         {/* Center Search Input (af_01 Manual Search) */}
-        <div className="relative w-full max-w-md mx-4">
+        <div className="relative order-3 lg:order-none w-full lg:max-w-md lg:mx-4">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a3a3a3]" />
           <input
             type="text"
@@ -653,7 +677,7 @@ export const InteractiveMapPage: React.FC = () => {
             className="w-full h-10 pl-10 pr-4 bg-[#f8f9fa] border border-[#dee2e6] rounded-full text-[13px] font-medium text-[#271816] focus:bg-white focus:border-[#93000b] focus:ring-1 focus:ring-[#93000b] outline-none transition-all"
           />
           {!userCoords && (
-            <span className="absolute -bottom-5 left-4 text-[10px] font-semibold text-[#93000b]">
+            <span className="hidden xl:block absolute -bottom-5 left-4 text-[10px] font-semibold text-[#93000b]">
               * Quyền vị trí tắt: Vui lòng nhập địa chỉ ở bộ lọc hoặc bật GPS để tìm điểm gần nhất
             </span>
           )}
@@ -668,7 +692,7 @@ export const InteractiveMapPage: React.FC = () => {
         </div>
 
         {/* Right Action Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex max-w-full items-center gap-2 overflow-x-auto overscroll-x-contain pb-0.5">
           {/* GPS Toggle Control */}
           <div className="flex items-center gap-1 bg-[#f8f9fa] border border-[#dee2e6] rounded-xl p-1 shrink-0">
             <button
@@ -684,18 +708,18 @@ export const InteractiveMapPage: React.FC = () => {
                 isManualLocation ? (
                   <>
                     <MapPin className="w-3.5 h-3.5 fill-white" />
-                    <span>VỊ TRÍ: THỦ CÔNG</span>
+                    <span className="hidden sm:inline">VỊ TRÍ: THỦ CÔNG</span>
                   </>
                 ) : (
                   <>
                     <Navigation className="w-3.5 h-3.5 animate-pulse fill-white" />
-                    <span>GPS: BẬT</span>
+                    <span className="hidden sm:inline">GPS: BẬT</span>
                   </>
                 )
               ) : (
                 <>
                   <MapPinOff className="w-3.5 h-3.5 text-[#6c757d]" />
-                  <span>GPS: TẮT</span>
+                  <span className="hidden sm:inline">GPS: TẮT</span>
                 </>
               )}
             </button>
@@ -715,36 +739,40 @@ export const InteractiveMapPage: React.FC = () => {
             )}
           </div>
 
-          {/* Map vs List View Toggle */}
-          <div className="bg-[#f8f9fa] border border-[#dee2e6] rounded-xl p-1 flex items-center shrink-0">
-            <button
-              onClick={() => setViewMode('map')}
-              className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all whitespace-nowrap ${
-                viewMode === 'map'
-                  ? 'bg-[#93000b] text-white shadow-sm'
-                  : 'text-[#6c757d] hover:text-[#271816]'
-              }`}
-            >
-              Bản đồ
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all whitespace-nowrap ${
-                viewMode === 'list'
-                  ? 'bg-[#93000b] text-white shadow-sm'
-                  : 'text-[#6c757d] hover:text-[#271816]'
-              }`}
-            >
-              Danh sách
-            </button>
+          {/* Location type filter. The nearby list is always visible beside/below the map. */}
+          <div
+            role="group"
+            aria-label="Lọc loại địa điểm"
+            className="max-w-full overflow-x-auto bg-[#f8f9fa] border border-[#dee2e6] rounded-xl p-1 flex items-center shrink-0"
+          >
+            {([
+              ['all', 'Tất cả'],
+              ['campaign', 'Chiến dịch'],
+              ['hospital', 'Bệnh viện'],
+              ['blood-center', 'Trung tâm máu'],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setLocationType(value)}
+                aria-pressed={locationType === value}
+                className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all whitespace-nowrap ${
+                  locationType === value
+                    ? 'bg-[#93000b] text-white shadow-sm'
+                    : 'text-[#6c757d] hover:text-[#271816] hover:bg-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       </header>
 
       {/* Main Map Container & Overlays */}
-      <div className="flex-1 relative flex overflow-hidden">
+      <div className="flex-1 relative flex flex-col md:flex-row overflow-visible md:overflow-hidden">
         {/* Left Floating Filter Panel */}
-        <div className="absolute top-4 left-4 w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl z-20 border border-[#f1f3f5] p-5 max-h-[calc(100vh-160px)] overflow-y-auto hidden md:block">
+        <div className="relative order-first w-full bg-white/95 backdrop-blur-md z-20 border-b md:border border-[#f1f3f5] p-4 md:p-5 md:absolute md:top-4 md:left-4 md:w-80 md:rounded-2xl md:shadow-xl md:max-h-[calc(100dvh-160px)] overflow-y-auto">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#f1f3f5]">
             <div className="flex items-center gap-2 text-[#271816]">
               <Filter className="w-4 h-4 text-[#93000b]" />
@@ -901,9 +929,9 @@ export const InteractiveMapPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Center Map View OR Fallback List View */}
-        <div className="flex-1 h-full relative bg-[#f1f3f5]">
-          {viewMode === 'map' && !mapError ? (
+        {/* Center Map View */}
+        <div className="flex-1 min-h-[45dvh] md:min-h-0 md:h-full relative bg-[#f1f3f5]">
+          {!mapError ? (
             <div ref={mapContainerRef} className="w-full h-full z-0" />
           ) : (
             /* Map Service Offline State (browse_interactive_map_standardized_2) */
@@ -914,29 +942,20 @@ export const InteractiveMapPage: React.FC = () => {
               <h2 className="text-[20px] font-bold text-[#271816] mb-2">
                 Dịch vụ bản đồ không khả dụng
               </h2>
-              <p className="text-[14px] text-[#6c757d] max-w-md mb-6">
-                Hệ thống đang hiển thị danh sách các điểm hiến máu bên dưới. Bạn vẫn có thể chọn địa điểm và đặt lịch bình thường.
+              <p className="text-[14px] text-[#6c757d] max-w-md">
+                Danh sách địa điểm vẫn khả dụng ở cột bên phải hoặc phía dưới trên điện thoại. Bạn vẫn có thể chọn chiến dịch và đặt lịch bình thường.
               </p>
-              <button
-                onClick={() => {
-                  setMapError(false);
-                  setViewMode('list');
-                }}
-                className="px-6 py-2.5 bg-[#93000b] text-white rounded-xl text-[14px] font-semibold shadow-sm hover:bg-[#7a0009]"
-              >
-                Xem danh sách điểm hiến máu
-              </button>
             </div>
           )}
         </div>
 
         {/* Right Sidebar: Nearby Campaigns & Locations */}
-        <aside className="w-full md:w-96 bg-white border-l border-[#f1f3f5] flex flex-col h-full z-20 shrink-0 shadow-lg">
+        <aside className="w-full md:w-96 bg-white border-t md:border-t-0 md:border-l border-[#f1f3f5] flex flex-col max-h-[65dvh] md:max-h-none md:h-full z-20 shrink-0 shadow-lg">
           <div className="p-4 border-b border-[#f1f3f5] bg-[#fff8f7] flex items-center justify-between">
             <div>
               <h3 className="text-[16px] font-bold text-[#271816]">Địa điểm gần bạn</h3>
               <p className="text-[12px] text-[#6c757d]">
-                Tìm thấy {filteredLocations.length} địa điểm hiến máu
+                {filteredLocations.filter((item) => !item.isBookable).length} cơ sở · {filteredLocations.filter((item) => item.isBookable).length} chiến dịch
               </p>
             </div>
             {loading && <Loader2 className="w-4 h-4 animate-spin text-[#93000b]" />}
@@ -950,21 +969,17 @@ export const InteractiveMapPage: React.FC = () => {
                   <AlertCircle className="w-7 h-7" />
                 </div>
                 <h4 className="text-[15px] font-bold text-[#271816] mb-1">
-                  {!selectedDate ? 'Chưa chọn ngày hiến máu' : 'Không tìm thấy điểm hiến máu'}
+                  Không tìm thấy cơ sở hoặc chiến dịch
                 </h4>
                 <p className="text-[13px] text-[#6c757d] max-w-xs mb-4">
-                  {!selectedDate 
-                    ? 'Vui lòng chọn ngày dự định hiến máu để xem các chiến dịch đang hoạt động.' 
-                    : 'Không có chiến dịch nào phù hợp với bộ lọc hiện tại. Hãy thử mở rộng bán kính hoặc chọn lại nhóm máu.'}
+                  Hãy thử mở rộng bán kính hoặc xóa bớt các bộ lọc tìm kiếm.
                 </p>
-                {selectedDate && (
-                  <button
-                    onClick={handleResetFilters}
-                    className="px-4 py-2 border border-[#dee2e6] rounded-xl text-[13px] font-semibold text-[#271816] hover:bg-[#f8f9fa]"
-                  >
-                    Xóa bộ lọc
-                  </button>
-                )}
+                <button
+                  onClick={handleResetFilters}
+                  className="px-4 py-2 border border-[#dee2e6] rounded-xl text-[13px] font-semibold text-[#271816] hover:bg-[#f8f9fa]"
+                >
+                  Xóa bộ lọc
+                </button>
               </div>
             ) : (
               filteredLocations.map((loc) => {
@@ -989,7 +1004,9 @@ export const InteractiveMapPage: React.FC = () => {
                     <div className="flex justify-between items-start mb-2">
                       <span
                         className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${
-                          loc.status === 'Urgent'
+                          !loc.isBookable
+                            ? 'bg-blue-100 text-blue-700'
+                            : loc.status === 'Urgent'
                             ? 'bg-red-100 text-red-700'
                             : loc.status === 'Active Now'
                               ? 'bg-emerald-100 text-emerald-700'
@@ -1015,7 +1032,9 @@ export const InteractiveMapPage: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <span
                           className={`w-2.5 h-2.5 rounded-full ${
-                            loc.crowdingLevel === 'Low'
+                            !loc.isBookable
+                              ? 'bg-blue-500'
+                              : loc.crowdingLevel === 'Low'
                               ? 'bg-emerald-500'
                               : loc.crowdingLevel === 'Moderate'
                                 ? 'bg-amber-500'
@@ -1023,7 +1042,9 @@ export const InteractiveMapPage: React.FC = () => {
                           }`}
                         />
                         <span className="text-[11px] font-medium text-[#5b403d]">
-                          {loc.crowdingLevel === 'Low'
+                          {!loc.isBookable
+                            ? 'Cơ sở y tế'
+                            : loc.crowdingLevel === 'Low'
                             ? 'Vắng vẻ'
                             : loc.crowdingLevel === 'Moderate'
                               ? 'Mức đông vừa'
@@ -1031,16 +1052,20 @@ export const InteractiveMapPage: React.FC = () => {
                         </span>
                       </div>
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartBooking(loc);
-                        }}
-                        className="px-3 py-1.5 bg-[#93000b] text-white rounded-lg text-[12px] font-bold hover:bg-[#7a0009] transition-all flex items-center gap-1"
-                      >
-                        Đặt lịch
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
+                      {loc.isBookable ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartBooking(loc);
+                          }}
+                          className="px-3 py-1.5 bg-[#93000b] text-white rounded-lg text-[12px] font-bold hover:bg-[#7a0009] transition-all flex items-center gap-1"
+                        >
+                          Đặt lịch
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <span className="text-[11px] font-semibold text-blue-700">Marker nền</span>
+                      )}
                     </div>
                   </div>
                 );
@@ -1064,7 +1089,7 @@ export const InteractiveMapPage: React.FC = () => {
 
               <div className="flex items-center gap-2 mb-2">
                 <span className="px-2.5 py-0.5 bg-[#93000b] text-white text-[10px] font-bold rounded-full uppercase">
-                  Điểm ưu tiên
+                  {selectedLocation.isBookable ? 'Chiến dịch có thể đặt lịch' : selectedLocation.status}
                 </span>
                 <div className="flex items-center gap-1 text-amber-500 text-[12px] font-bold">
                   <Star className="w-3.5 h-3.5 fill-amber-500" />
@@ -1099,19 +1124,21 @@ export const InteractiveMapPage: React.FC = () => {
                   <div className="flex items-center gap-2 text-[13px] font-semibold text-[#271816]">
                     <span
                       className={`w-2.5 h-2.5 rounded-full ${
-                        selectedLocation.crowdingLevel === 'Low'
+                        !selectedLocation.isBookable
+                          ? 'bg-blue-500'
+                          : selectedLocation.crowdingLevel === 'Low'
                           ? 'bg-emerald-500'
                           : selectedLocation.crowdingLevel === 'Moderate'
                             ? 'bg-amber-500'
                             : 'bg-red-500'
                       }`}
                     />
-                    <span>{selectedLocation.crowdingLevel} crowding</span>
+                    <span>{selectedLocation.isBookable ? `${selectedLocation.crowdingLevel} crowding` : 'Thông tin cơ sở'}</span>
                   </div>
                 </div>
               </div>
 
-              <div>
+              {selectedLocation.isBookable ? <div>
                 <span className="text-[12px] font-bold text-[#6c757d] uppercase block mb-2">
                   Nhóm máu đang ưu tiên thu nhận
                 </span>
@@ -1125,9 +1152,15 @@ export const InteractiveMapPage: React.FC = () => {
                     </span>
                   ))}
                 </div>
-              </div>
+              </div> : (
+                <div className="p-4 rounded-xl border border-blue-200 bg-blue-50 text-[13px] text-blue-900">
+                  <p className="font-semibold mb-1">Đây là marker cơ sở y tế từ dữ liệu hệ thống.</p>
+                  <p>Marker này luôn hiển thị để bạn định hướng. Muốn đặt lịch, hãy chọn một chiến dịch hiến máu đang hoạt động.</p>
+                  {selectedLocation.contactPhone && <p className="mt-2 font-medium">Điện thoại: {selectedLocation.contactPhone}</p>}
+                </div>
+              )}
 
-              <div>
+              {selectedLocation.isBookable && <div>
                 <span className="text-[12px] font-bold text-[#6c757d] uppercase block mb-2">
                   Khung giờ hiến khả dụng
                 </span>
@@ -1177,7 +1210,7 @@ export const InteractiveMapPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              </div>}
             </div>
 
             <div className="p-4 border-t border-[#f1f3f5] bg-[#f8f9fa] flex items-center justify-end gap-3">
@@ -1187,14 +1220,16 @@ export const InteractiveMapPage: React.FC = () => {
               >
                 Đóng
               </button>
-              <button
-                onClick={() => handleStartBooking(selectedLocation)}
-                disabled={areAllSlotsPassedOnDate(selectedDate || todayStr, selectedLocation.timeslots)}
-                className="px-6 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white rounded-xl text-[14px] font-bold shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                Đặt lịch hiến máu ngay
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              {selectedLocation.isBookable && (
+                <button
+                  onClick={() => handleStartBooking(selectedLocation)}
+                  disabled={areAllSlotsPassedOnDate(selectedDate || todayStr, selectedLocation.timeslots)}
+                  className="px-6 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white rounded-xl text-[14px] font-bold shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  Đặt lịch hiến máu ngay
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         </div>

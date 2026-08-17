@@ -57,7 +57,7 @@ export interface RegistrationData {
   donorPhone: string;
   appointmentDate: string;
   timeSlot?: string;
-  status: 'Pending' | 'Confirmed' | 'Registered' | 'CheckedIn' | 'Eligible' | 'Examining' | 'Completed' | 'Ineligible' | 'Cancelled' | 'NoShow' | 'cancelled' | 'no-show';
+  status: 'Pending' | 'Confirmed' | 'Registered' | 'CheckedIn' | 'Eligible' | 'Examining' | 'Completed' | 'Ineligible' | 'Rejected' | 'Cancelled' | 'NoShow' | 'cancelled' | 'no-show';
   examiningResult?: 'Passed' | 'Issue' | 'Pending';
   testResult?: 'Pass' | 'Rejected' | string;
   bloodPressure?: string;
@@ -108,7 +108,8 @@ export interface NotificationData {
   payload: Record<string, any>;
   sourceRefId: string;
   sourceRefType: 'Appointment' | 'Campaign' | 'SOSRequest' | 'Article' | 'System';
-  deliveryStatus: 'Pending' | 'Sent' | 'Failed' | 'Retried';
+  deliveryStatus: 'Pending' | 'Sending' | 'Sent' | 'Failed' | 'Retried';
+  retryCount?: number;
   readAt: string | null;
   createdAt: string;
   // Backward compatibility for existing FE code
@@ -120,6 +121,11 @@ export interface NotificationData {
     hospitalName: string;
     fulfillmentDeadline: string;
     patientReference: string;
+    status?: string;
+    pledgedQuantityMl?: number;
+    collectedQuantityMl?: number;
+    inTransitQuantityMl?: number;
+    receivedQuantityMl?: number;
   };
 }
 

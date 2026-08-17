@@ -100,7 +100,7 @@ export const TEST_ACCOUNT_PRESETS = [
     id: 'hospital_cho_ray',
     label: '🏥 Bệnh viện Chợ Rẫy (Cấp Cứu)',
     email: 'hospital@lifeline.vn',
-    idDocumentNumber: '079088000457',
+    idDocumentNumber: '079088000456',
     password: 'Password123!',
     role: 'HospitalStaff',
     description: 'Khoa Cấp Cứu BV Chợ Rẫy, Q.5',
@@ -165,7 +165,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     setSelectedPresetId(presetId);
     const preset = TEST_ACCOUNT_PRESETS.find((p) => p.id === presetId);
     if (preset) {
-      setIdDocumentNumber(preset.email || preset.idDocumentNumber);
+      setIdDocumentNumber(preset.idDocumentNumber);
       setPassword(preset.password);
       setSelectedRole(preset.role);
       setValidationError(null);
@@ -199,10 +199,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const currentRoleConfig = ROLE_OPTIONS.find((r) => r.id === selectedRole) || ROLE_OPTIONS[0];
 
   return (
-    <div className="w-full max-w-[480px] bg-white border border-[#f1f3f5] rounded-2xl p-7 md:p-8 shadow-sm transition-all hover:shadow-md">
+    <div className="w-full max-w-[480px] bg-white border border-[#f1f3f5] rounded-2xl p-4 sm:p-7 md:p-8 shadow-sm transition-all hover:shadow-md">
       {/* Form Header */}
       <div className="mb-5 text-left">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
             Đăng Nhập Hệ Thống
           </h2>

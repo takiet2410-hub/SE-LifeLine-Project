@@ -3,10 +3,12 @@ import { adminApi } from '../api/admin.api';
 import type { FeatureToggleItem } from '../types/admin.types';
 import { ToggleLeft, AlertTriangle, X, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '../../../shared/api/apiError';
 
 export const FeatureTogglesPage: React.FC = () => {
   const [toggles, setToggles] = useState<FeatureToggleItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingKey, setUpdatingKey] = useState<string | null>(null);
   const [pendingToggle, setPendingToggle] = useState<{ item: FeatureToggleItem; targetState: boolean } | null>(null);
 
   const fetchToggles = async () => {
@@ -14,18 +16,20 @@ export const FeatureTogglesPage: React.FC = () => {
       setLoading(true);
       const data = await adminApi.getToggles();
       setToggles(data.toggles);
-    } catch (err: any) {
-      toast.error('Failed to fetch feature toggles.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Không thể tải trạng thái các tính năng.'));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchToggles();
+    const timer = window.setTimeout(() => void fetchToggles(), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleToggleClick = (item: FeatureToggleItem) => {
+    if (updatingKey) return;
     const targetState = !item.isEnabled;
     // If disabling a feature with active affected services/dependencies, show warning modal
     if (!targetState && item.affectedServices.length > 0) {
@@ -37,17 +41,21 @@ export const FeatureTogglesPage: React.FC = () => {
 
   const executeToggleUpdate = async (key: string, isEnabled: boolean) => {
     try {
+      setUpdatingKey(key);
       await adminApi.updateToggle(key, isEnabled);
-      toast.success(`Feature toggle state updated.`);
+      window.dispatchEvent(new CustomEvent('feature-flags-updated', { detail: { key, isEnabled } }));
+      toast.success('Đã cập nhật trạng thái tính năng.');
       setPendingToggle(null);
-      fetchToggles();
-    } catch (err: any) {
-      toast.error('Failed to update feature toggle.');
+      await fetchToggles();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Không thể cập nhật trạng thái tính năng.'));
+    } finally {
+      setUpdatingKey(null);
     }
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-[#271816]">Feature Toggles</h1>
         <p className="text-sm font-medium text-[#6c757d]">
@@ -62,23 +70,25 @@ export const FeatureTogglesPage: React.FC = () => {
           {toggles.map((item) => (
             <div
               key={item.key}
-              className={`p-6 rounded-2xl border transition shadow-xs flex flex-col justify-between ${
+              className={`p-4 sm:p-6 rounded-2xl border transition shadow-xs flex flex-col justify-between ${
                 item.isEnabled
                   ? 'bg-white border-[#f1f3f5] shadow-xs'
                   : 'bg-slate-50/80 border-[#f1f3f5] opacity-85'
               }`}
             >
               <div>
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-2.5">
                     <ToggleLeft className={`w-6 h-6 ${item.isEnabled ? 'text-[#93000b]' : 'text-slate-400'}`} />
                     <h3 className="font-bold text-[#271816] text-base">{item.name}</h3>
                   </div>
                   <button
                     onClick={() => handleToggleClick(item)}
+                    disabled={updatingKey !== null}
+                    aria-label={`${item.isEnabled ? 'Tắt' : 'Bật'} ${item.name}`}
                     className={`w-14 h-7 rounded-full transition relative p-0.5 cursor-pointer ${
                       item.isEnabled ? 'bg-[#93000b]' : 'bg-slate-300'
-                    }`}
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     <span
                       className={`w-6 h-6 bg-white rounded-full block shadow-md transition transform ${
@@ -118,7 +128,7 @@ export const FeatureTogglesPage: React.FC = () => {
       {/* Warning Modal for Disabling Feature with Affected Services (AF-02) */}
       {pendingToggle && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-6 h-6 text-amber-500" />
@@ -157,6 +167,7 @@ export const FeatureTogglesPage: React.FC = () => {
               </button>
               <button
                 onClick={() => executeToggleUpdate(pendingToggle.item.key, false)}
+                disabled={updatingKey !== null}
                 className="px-4 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md"
               >
                 Proceed & Disable

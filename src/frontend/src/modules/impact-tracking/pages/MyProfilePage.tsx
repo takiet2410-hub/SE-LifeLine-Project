@@ -11,12 +11,18 @@ import { CallToAction } from '../components/CallToAction';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 import { getProfile } from '../../auth-account/api/authApi';
 import { toast } from 'sonner';
+import { useFeatureFlags } from '../../../shared/contexts/FeatureFlagsContext';
 
 export const MyProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Profile Info');
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const { user } = useAuth();
+  const { isEnabled } = useFeatureFlags();
+  const gamificationEnabled = isEnabled('gamification_badges');
+  const visibleActiveTab = !gamificationEnabled && (activeTab === 'Achievements' || activeTab === 'Donor Level')
+    ? 'Profile Info'
+    : activeTab;
 
   // GAP-06 FIX: Gọi đúng endpoint /api/v1/users/profile (GET, cần JWT)
   // và sử dụng data trả về thay vì bỏ qua
@@ -74,7 +80,7 @@ export const MyProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-start gap-8 w-full p-8 min-h-[calc(100vh-72px)] bg-[#fff8f7]">
+    <div className="flex flex-col items-start gap-5 sm:gap-8 w-full p-3 sm:p-5 lg:p-8 min-h-[calc(100dvh-72px)] bg-[#fff8f7]">
       {/* Header Block — nhận real data từ API */}
       <ProfileHeaderCard 
         profileData={profileData} 
@@ -89,13 +95,23 @@ export const MyProfilePage: React.FC = () => {
       />
       
       {/* Tabs */}
-      <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      <ProfileTabs
+        activeTab={visibleActiveTab}
+        setActiveTab={setActiveTab}
+        gamificationEnabled={gamificationEnabled}
+      />
+
+      {!gamificationEnabled && (
+        <div className="w-full rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+          Thành tích, huy hiệu và cấp độ người hiến đang được quản trị viên tạm tắt. Thông tin hồ sơ và lịch sử hiến máu vẫn sử dụng bình thường.
+        </div>
+      )}
 
       {/* Main Content & Sidebar Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 w-full relative items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] gap-5 lg:gap-8 w-full min-w-0 relative items-start">
         {/* Left Column - Main Content */}
-        <div className="flex flex-col gap-8 w-full">
-          {activeTab === 'Profile Info' && (
+        <div className="flex min-w-0 flex-col gap-5 lg:gap-8 w-full">
+          {visibleActiveTab === 'Profile Info' && (
             <ProfileInfoTab 
               onSaveProfile={handleSaveProfile}
               user={
@@ -110,15 +126,15 @@ export const MyProfilePage: React.FC = () => {
             } />
           )}
           
-          {(activeTab === 'Profile Info' || activeTab === 'Donation Timeline') && (
+          {(visibleActiveTab === 'Profile Info' || visibleActiveTab === 'Donation Timeline') && (
             <DonationTimeline userId={user?.id} profileData={profileData} />
           )}
 
-          {(activeTab === 'Profile Info' || activeTab === 'Achievements') && (
+          {gamificationEnabled && (visibleActiveTab === 'Profile Info' || visibleActiveTab === 'Achievements') && (
             <XPActivityLog userId={user?.id} profileData={profileData} />
           )}
           
-          {activeTab === 'Donor Level' && (
+          {gamificationEnabled && visibleActiveTab === 'Donor Level' && (
             <div className="p-6 bg-white rounded-xl border border-[#f1f3f5] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]">
               <h2 className="text-lg font-semibold text-[#271816]">Donor Level Details Coming Soon</h2>
             </div>
@@ -127,8 +143,8 @@ export const MyProfilePage: React.FC = () => {
 
         {/* Right Column - Widgets */}
         <div className="flex flex-col gap-6 w-full lg:sticky lg:top-8">
-          <CurrentProgress profileData={profileData} />
-          <AchievementsWidget profileData={profileData} />
+          {gamificationEnabled && <CurrentProgress profileData={profileData} />}
+          {gamificationEnabled && <AchievementsWidget profileData={profileData} />}
           <CallToAction status={profileData?.donationImpact?.status} />
         </div>
       </div>

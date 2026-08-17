@@ -622,7 +622,7 @@ export const RegistrationDetailPage: React.FC = () => {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-[13px]">
+                    <table className="w-full min-w-[700px] text-left text-[13px]">
                       <thead>
                         <tr className="bg-slate-50 border-b border-[#f1f3f5] text-[#6c757d] font-bold uppercase tracking-wider">
                           <th className="px-4 py-3">Ngày hiến</th>
@@ -1063,7 +1063,7 @@ export const RegistrationDetailPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[12px]">
+                  <table className="w-full min-w-[700px] text-left text-[12px]">
                     <thead>
                       <tr className="bg-slate-50 border-b border-[#f1f3f5] text-[#6c757d] font-bold uppercase tracking-wider">
                         <th className="px-4 py-2.5">Ngày hiến</th>

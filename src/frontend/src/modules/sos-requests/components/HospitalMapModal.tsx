@@ -123,9 +123,9 @@ export const HospitalMapModal: React.FC<HospitalMapModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 animate-in fade-in duration-200">
       <div 
-        className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-4xl max-h-[94dvh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50">
@@ -141,9 +141,9 @@ export const HospitalMapModal: React.FC<HospitalMapModalProps> = ({
           </button>
         </div>
         
-        <div className="flex-1 p-4 bg-gray-50 relative min-h-[500px]">
+        <div className="flex-1 p-2 sm:p-4 bg-gray-50 relative min-h-[50dvh] sm:min-h-[500px]">
           {mapError ? (
-            <div className="w-full h-full min-h-[500px] flex flex-col items-center justify-center p-8 text-center bg-[#fff8f7] rounded-xl border border-red-100">
+            <div className="w-full h-full min-h-[50dvh] sm:min-h-[500px] flex flex-col items-center justify-center p-4 sm:p-8 text-center bg-[#fff8f7] rounded-xl border border-red-100">
               <div className="w-16 h-16 rounded-full bg-[#ffe9e6] flex items-center justify-center mb-4 text-[#93000b]">
                 <MapPinOff className="w-8 h-8" />
               </div>
@@ -157,7 +157,7 @@ export const HospitalMapModal: React.FC<HospitalMapModalProps> = ({
           )}
         </div>
 
-        <div className="p-4 border-t border-gray-100 flex justify-end gap-3 bg-white">
+        <div className="p-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 bg-white">
           <button 
             onClick={onClose}
             className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"

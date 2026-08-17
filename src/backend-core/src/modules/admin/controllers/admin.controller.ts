@@ -13,6 +13,19 @@ const configService = new AdminConfigService();
 const toggleService = new AdminToggleService();
 
 export class AdminController {
+  static async getFeatureStatus(_req: AuthRequest, res: Response) {
+    try {
+      const data = await toggleService.getPublicFeatureStates();
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(200).json(data);
+    } catch {
+      return res.status(503).json({
+        code: 'FEATURE_CHECK_UNAVAILABLE',
+        message: 'Không thể tải trạng thái tính năng lúc này.',
+      });
+    }
+  }
+
   // --- AD-UC-01 & AD-UC-02: User Management ---
   static async getUsers(req: AuthRequest, res: Response) {
     try {
@@ -20,6 +33,16 @@ export class AdminController {
       return res.status(200).json(data);
     } catch (err: any) {
       return res.status(500).json({ code: 'SERVER_ERROR', message: err.message });
+    }
+  }
+
+  static async getUserById(req: AuthRequest, res: Response) {
+    try {
+      const user = await userService.getUserById(req.params.userId as string);
+      return res.status(200).json({ user });
+    } catch (err: any) {
+      const status = err.message === 'User account not found.' ? 404 : 400;
+      return res.status(status).json({ code: status === 404 ? 'NOT_FOUND' : 'BAD_REQUEST', message: err.message });
     }
   }
 
@@ -84,19 +107,38 @@ export class AdminController {
     }
   }
 
-  static async hardDeleteUser(req: AuthRequest, res: Response) {
+  static async restoreUser(req: AuthRequest, res: Response) {
     try {
       const adminUser = {
         id: req.user?._id?.toString() || 'admin_id',
         name: req.user?.email || 'Administrator',
       };
-      const { confirmationUsername } = req.body;
       const ipAddress = req.ip || req.socket.remoteAddress || '127.0.0.1';
-
-      const result = await userService.hardDeleteUser(
+      const result = await userService.restoreUser(
         adminUser,
         req.params.userId as string,
-        confirmationUsername,
+        req.body.confirmationUsername,
+        ipAddress
+      );
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(400).json({ code: 'BAD_REQUEST', message: err.message });
+    }
+  }
+
+  static async purgePersonalData(req: AuthRequest, res: Response) {
+    try {
+      const adminUser = {
+        id: req.user?._id?.toString() || 'admin_id',
+        name: req.user?.email || 'Administrator',
+      };
+      const ipAddress = req.ip || req.socket.remoteAddress || '127.0.0.1';
+      const result = await userService.purgePersonalData(
+        adminUser,
+        req.params.userId as string,
+        req.body.reason,
+        req.body.confirmationUsername,
+        req.body.adminPassword,
         ipAddress
       );
       return res.status(200).json(result);

@@ -7,6 +7,8 @@
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "build": "tsc",
+    "seed:demo": "tsx src/seed-accounts.ts",
+    "seed:demo:dry-run": "tsx src/seed-accounts.ts --dry-run",
     "seed:prod": "tsx src/scripts/seed-prod-data.ts",
     "test": "jest src/modules/booking/__tests__ --verbose",
     "test:booking:export": "cmd /c \"jest src/modules/booking/__tests__ --verbose > ../../docs/test/jest_booking_results.log 2>&1\""
@@ -34,6 +36,7 @@
     "nodemailer": "^9.0.3",
     "pino": "^10.3.1",
     "qrcode": "^1.5.4",
+    "sanitize-html": "^2.13.1",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
     "zod": "^4.4.3"
@@ -48,6 +51,7 @@
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^8.0.1",
     "@types/qrcode": "^1.5.6",
+    "@types/sanitize-html": "^2.16.1",
     "@types/supertest": "^7.2.1",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",

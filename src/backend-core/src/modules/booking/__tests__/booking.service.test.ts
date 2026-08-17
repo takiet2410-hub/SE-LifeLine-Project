@@ -175,6 +175,25 @@ describe('BookingService Unit Tests (Full TC Coverage)', () => {
       const res = await BookingService.searchLocations({ lat: 0.0, lng: 0.0, radius: 1 });
       expect(res).toEqual([]);
     });
+
+    it('keeps hospitals and blood centers visible when the selected date has no campaigns', async () => {
+      (mongoose.models.Campaign.find as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue([])
+      });
+      (mongoose.models.Hospital.find as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue([{ _id: 'h1', name: 'Bệnh viện Chợ Rẫy', address: 'Quận 5', location: { type: 'Point', coordinates: [106.66, 10.75] }, contactPhone: '1900' }])
+      });
+      (mongoose.models.BloodCenter.find as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue([{ _id: 'b1', name: 'Trung tâm máu', address: 'Quận 5', location: { type: 'Point', coordinates: [106.67, 10.76] }, contactPhone: '1901', operatingHours: '07:00 - 17:00' }])
+      });
+
+      const res = await BookingService.searchLocations({ date: '2026-08-17', includeFacilities: true });
+
+      expect(res).toEqual(expect.arrayContaining([
+        expect.objectContaining({ entityType: 'Hospital', isBookable: false }),
+        expect.objectContaining({ entityType: 'BloodCenter', isBookable: false })
+      ]));
+    });
   });
 
   describe('createAppointment (TC_UC07_001 - TC_UC07_014)', () => {

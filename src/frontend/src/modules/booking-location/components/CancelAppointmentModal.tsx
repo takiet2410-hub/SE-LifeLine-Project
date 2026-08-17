@@ -19,7 +19,7 @@ export const CancelAppointmentModal: React.FC<CancelAppointmentModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-[#1a1a2e]/60 backdrop-blur-sm transition-opacity"
@@ -27,7 +27,7 @@ export const CancelAppointmentModal: React.FC<CancelAppointmentModalProps> = ({
       />
 
       {/* Modal Content */}
-      <div className="relative bg-white w-full max-w-[400px] rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="relative bg-white w-full max-w-[400px] max-h-[92dvh] overflow-y-auto rounded-t-2xl sm:rounded-2xl shadow-xl animate-in zoom-in-95 duration-200">
         <button
           onClick={onClose}
           disabled={isProcessing}
@@ -36,7 +36,7 @@ export const CancelAppointmentModal: React.FC<CancelAppointmentModalProps> = ({
           <X className="w-5 h-5" />
         </button>
 
-        <div className="p-6 md:p-8 flex flex-col items-center text-center">
+        <div className="p-5 sm:p-6 md:p-8 flex flex-col items-center text-center">
           <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mb-5">
             <AlertTriangle className="w-7 h-7 text-amber-500" />
           </div>

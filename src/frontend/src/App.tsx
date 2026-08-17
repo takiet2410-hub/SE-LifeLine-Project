@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { ChatbotWidget } from './modules/chatbot/components/ChatbotWidget';
 
@@ -85,13 +86,20 @@ import { SystemConfigPage } from './modules/admin/pages/SystemConfigPage';
 import { FeatureTogglesPage } from './modules/admin/pages/FeatureTogglesPage';
 
 import { ScrollToTop } from './shared/components/ScrollToTop';
+import { FeatureGate } from './shared/components/FeatureGate';
+import { useFeatureFlags } from './shared/contexts/FeatureFlagsContext';
 
 function App() {
+  const { isEnabled } = useFeatureFlags();
+  const gate = (feature: 'sos_emergency_alerts' | 'news_content_portal', element: ReactNode) => (
+    <FeatureGate feature={feature}>{element}</FeatureGate>
+  );
+
   return (
     <>
       <ScrollToTop />
       <Toaster position="top-right" />
-      <ChatbotWidget />
+      {isEnabled('ai_chatbot') && <ChatbotWidget />}
       <Routes>
       {/* 1. Public Landing Pages */}
       <Route path="/" element={<LandingPage />} />
@@ -132,9 +140,9 @@ function App() {
           <Route path="/my-appointments" element={<MyAppointmentPage />} />
           <Route path="/profile" element={<MyProfilePage />} />
           <Route path="/notifications" element={<DonorNotificationPage />} />
-          <Route path="/sos-alerts" element={<SOSAlertsPage />} />
-          <Route path="/news" element={<NewsFeedPage />} />
-          <Route path="/news/:articleId" element={<PublicArticleDetailPage />} />
+          <Route path="/sos-alerts" element={gate('sos_emergency_alerts', <SOSAlertsPage />)} />
+          <Route path="/news" element={gate('news_content_portal', <NewsFeedPage />)} />
+          <Route path="/news/:articleId" element={gate('news_content_portal', <PublicArticleDetailPage />)} />
           {/* Booking Schedule Flow */}
           <Route path="/my-appointments/schedule" element={<ScheduleLayout />}>
             <Route index element={<Navigate to="step-1" replace />} />
@@ -158,9 +166,9 @@ function App() {
           <Route path="/bc/campaigns/:campaignId/registrations/:registrationId" element={<RegistrationDetailPage />} />
           <Route path="/bc/campaigns/:campaignId/qr-scan" element={<QRScanPage />} />
 
-          <Route path="/bc/content" element={<ArticleListPage />} />
-          <Route path="/bc/content/create" element={<CreateArticlePage />} />
-          <Route path="/bc/content/:articleId" element={<ArticleDetailPage />} />
+          <Route path="/bc/content" element={gate('news_content_portal', <ArticleListPage />)} />
+          <Route path="/bc/content/create" element={gate('news_content_portal', <CreateArticlePage />)} />
+          <Route path="/bc/content/:articleId" element={gate('news_content_portal', <ArticleDetailPage />)} />
 
           <Route path="/bc/notifications" element={<NotificationListPage />} />
           <Route path="/bc/notifications/:notifId" element={<NotificationDetailPage />} />
@@ -171,22 +179,22 @@ function App() {
           <Route path="/bc/inventory/stats" element={<InventoryStatsPage />} />
           <Route path="/bc/inventory/:bagId" element={<BloodBagDetailPage />} />
 
-          <Route path="/bc/sos-requests" element={<SOSDashboardPage />} />
-          <Route path="/bc/sos-requests/:id" element={<SOSRequestDetailPage />} />
+          <Route path="/bc/sos-requests" element={gate('sos_emergency_alerts', <SOSDashboardPage />)} />
+          <Route path="/bc/sos-requests/:id" element={gate('sos_emergency_alerts', <SOSRequestDetailPage />)} />
 
           {/* Hospital Routes */}
           <Route path="/hospital" element={<Navigate to="/hospital/sos-requests" replace />} />
-          <Route path="/hospital/sos-requests" element={<SOSDashboardPage />} />
-          <Route path="/hospital/sos-requests/create" element={<CreateSOSRequestPage />} />
-          <Route path="/hospital/sos-requests/:id" element={<SOSRequestDetailPage />} />
-          <Route path="/hospital/sos-reports" element={<SOSReportsPage />} />
+          <Route path="/hospital/sos-requests" element={gate('sos_emergency_alerts', <SOSDashboardPage />)} />
+          <Route path="/hospital/sos-requests/create" element={gate('sos_emergency_alerts', <CreateSOSRequestPage />)} />
+          <Route path="/hospital/sos-requests/:id" element={gate('sos_emergency_alerts', <SOSRequestDetailPage />)} />
+          <Route path="/hospital/sos-reports" element={gate('sos_emergency_alerts', <SOSReportsPage />)} />
 
           {/* Donor SOS detail — accessible from SOS email notifications */}
-          <Route path="/donor/sos-requests/:id" element={<DonorSOSDetailPage />} />
+          <Route path="/donor/sos-requests/:id" element={gate('sos_emergency_alerts', <DonorSOSDetailPage />)} />
 
-          <Route path="/hospital/content" element={<ArticleListPage />} />
-          <Route path="/hospital/content/create" element={<CreateArticlePage />} />
-          <Route path="/hospital/content/:articleId" element={<ArticleDetailPage />} />
+          <Route path="/hospital/content" element={gate('news_content_portal', <ArticleListPage />)} />
+          <Route path="/hospital/content/create" element={gate('news_content_portal', <CreateArticlePage />)} />
+          <Route path="/hospital/content/:articleId" element={gate('news_content_portal', <ArticleDetailPage />)} />
 
           <Route path="/hospital/notifications" element={<NotificationListPage />} />
           <Route path="/hospital/notifications/:notifId" element={<NotificationDetailPage />} />
@@ -203,9 +211,9 @@ function App() {
           <Route path="/admin/toggles" element={<FeatureTogglesPage />} />
 
           {/* Admin Content & Notifications */}
-          <Route path="/admin/content" element={<ArticleListPage />} />
-          <Route path="/admin/content/create" element={<CreateArticlePage />} />
-          <Route path="/admin/content/:articleId" element={<ArticleDetailPage />} />
+          <Route path="/admin/content" element={gate('news_content_portal', <ArticleListPage />)} />
+          <Route path="/admin/content/create" element={gate('news_content_portal', <CreateArticlePage />)} />
+          <Route path="/admin/content/:articleId" element={gate('news_content_portal', <ArticleDetailPage />)} />
           <Route path="/admin/notifications" element={<NotificationListPage />} />
           <Route path="/admin/notifications/:notifId" element={<NotificationDetailPage />} />
         </Route>

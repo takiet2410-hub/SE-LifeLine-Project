@@ -23,6 +23,10 @@ export interface BackendCampaign {
     capacity: number;
     registeredCount: number;
   }>;
+  entityType?: 'Campaign' | 'Hospital' | 'BloodCenter';
+  isBookable?: boolean;
+  contactPhone?: string;
+  operatingHours?: string;
 }
 
 // Backend ETicket (when populated)
@@ -229,6 +233,10 @@ export const mapBackendCampaignToLocation = (campaign: BackendCampaign) => {
     timeslots,
     status: campaign.status,
     targetBloodGroups: campaign.targetBloodGroups,
+    entityType: campaign.entityType || 'Campaign',
+    isBookable: campaign.isBookable !== false,
+    contactPhone: campaign.contactPhone,
+    operatingHours: campaign.operatingHours,
     _raw: campaign,
   };
 };
@@ -299,6 +307,7 @@ export const searchLocations = async (filters?: {
   date?: string;
   bloodType?: string | string[];
   crowdingLevel?: 'Low' | 'Medium' | 'High';
+  includeFacilities?: boolean;
 }): Promise<ApiResponse<any[]>> => {
   try {
     const params = new URLSearchParams();
@@ -311,6 +320,8 @@ export const searchLocations = async (filters?: {
       if (btVal) params.append('bloodType', btVal);
     }
     if (filters?.crowdingLevel) params.append('crowdingLevel', filters.crowdingLevel);
+    if (filters?.includeFacilities) params.append('includeFacilities', 'true');
+    params.append('_ts', String(Date.now()));
 
     const response = await apiClient.get(`/bookings/locations?${params.toString()}`);
     const campaigns: BackendCampaign[] = response.data;

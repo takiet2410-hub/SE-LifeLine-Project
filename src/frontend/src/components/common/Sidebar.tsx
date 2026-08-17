@@ -113,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnrea
       ];
 
   return (
-    <aside className="w-64 h-screen bg-[#1a1a2e] text-white flex flex-col shrink-0 selection:bg-[#93000b]/30">
+    <aside className="w-full md:w-64 h-dvh bg-[#1a1a2e] text-white flex flex-col shrink-0 selection:bg-[#93000b]/30">
       {/* Brand Header Logo */}
       <div className="h-[72px] flex items-center px-6 border-b border-white/10 shrink-0 justify-between">
         <Link to={isAdmin ? "/admin/dashboard" : isHospital ? "/hospital/sos-requests" : "/bc/campaigns"} className="flex items-center gap-2.5 group">

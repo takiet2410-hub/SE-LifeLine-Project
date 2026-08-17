@@ -7,7 +7,10 @@ export const CreateSOSRequestSchema = z.object({
     urgencyLevel: z.enum(['Critical', 'High', 'Medium']),
     patientReference: z.string().optional(),
     hospitalId: z.string().min(1, 'Hospital is required'),
-    fulfillmentDeadline: z.string().datetime({ message: 'Must be a valid ISO datetime' })
+    fulfillmentDeadline: z.string().datetime({ message: 'Must be a valid ISO datetime' }).refine(
+      (value) => new Date(value).getTime() > Date.now(),
+      'Fulfillment deadline must be in the future'
+    )
   })
 });
 
@@ -19,10 +22,12 @@ export const UpdateSOSStatusSchema = z.object({
 
 export const SOSQuerySchema = z.object({
   query: z.object({
-    page: z.string().optional(),
-    limit: z.string().optional(),
-    status: z.string().optional(),
-    urgencyLevel: z.string().optional()
+    page: z.string().regex(/^\d+$/).optional(),
+    limit: z.string().regex(/^\d+$/).refine((value) => Number(value) <= 100, 'Limit must not exceed 100').optional(),
+    status: z.enum(['Pending', 'EvaluationInProgress', 'NotificationsDispatched', 'InventoryDispatched', 'Fulfilled', 'Expired', 'Cancelled', 'EvaluationFailed']).optional(),
+    urgencyLevel: z.enum(['Critical', 'High', 'Medium']).optional(),
+    bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']).optional(),
+    search: z.string().trim().max(100).optional()
   })
 });
 

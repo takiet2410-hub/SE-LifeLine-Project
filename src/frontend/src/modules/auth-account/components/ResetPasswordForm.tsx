@@ -38,7 +38,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
   const displayError = validationError || errorMessage;
 
   return (
-    <div className="w-full max-w-[440px] bg-white border border-[#f1f3f5] rounded-xl p-8 shadow-sm transition-all hover:shadow-md">
+    <div className="w-full max-w-[440px] bg-white border border-[#f1f3f5] rounded-xl p-5 sm:p-8 shadow-sm transition-all hover:shadow-md">
       <div className="mb-6 text-left">
         <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
           Create New Password

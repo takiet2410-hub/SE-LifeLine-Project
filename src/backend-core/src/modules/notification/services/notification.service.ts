@@ -4,6 +4,7 @@ import { NotificationPreference } from '../models/NotificationPreference';
 import { NotificationTemplate } from '../models/NotificationTemplate';
 import { EmailService } from './email.service';
 import { PushService } from './push.service';
+import { isFeatureEnabled } from '../../admin/services/admin-toggle.service';
 
 export interface NotificationFilters {
   page: number;
@@ -24,6 +25,85 @@ export interface PaginatedResult<T> {
 }
 
 export class NotificationService {
+  private static async applyLegacyAudienceGuard(userId: string, query: Record<string, any>): Promise<void> {
+    if (!Types.ObjectId.isValid(userId)) return;
+
+    const { User } = await import('../../auth-account/models/user.model');
+    const user = await User.findById(userId).select('role').lean();
+    if (!user || user.role === 'Donor') return;
+
+    // Older donor SOS alerts may have been written to management accounts
+    // because every account carries the mandatory Donor base role.
+    query.$nor = [
+      { 'payload.audienceRole': 'Donor' },
+      { 'payload.deepLink': /^\/donor(?:\/|$)/ },
+    ];
+  }
+
+  private static escapeHtml(value: unknown): string {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  private static isWithinQuietHours(start: string | null, end: string | null, timezone: string): boolean {
+    if (!start || !end || start === end) return false;
+    try {
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: timezone || 'Asia/Ho_Chi_Minh',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).formatToParts(new Date());
+      const hour = Number(parts.find((part) => part.type === 'hour')?.value || 0);
+      const minute = Number(parts.find((part) => part.type === 'minute')?.value || 0);
+      const toMinutes = (value: string) => {
+        const [h, m] = value.split(':').map(Number);
+        return h * 60 + m;
+      };
+      const now = hour * 60 + minute;
+      const startMinutes = toMinutes(start);
+      const endMinutes = toMinutes(end);
+      return startMinutes < endMinutes
+        ? now >= startMinutes && now < endMinutes
+        : now >= startMinutes || now < endMinutes;
+    } catch {
+      return false;
+    }
+  }
+
+  private static async attachLiveSOSState<T extends Record<string, any>>(notifications: T[]): Promise<T[]> {
+    const sosIds = notifications
+      .filter((item) => item.type === 'SOS' && item.sourceRefType === 'SOSRequest' && Types.ObjectId.isValid(item.sourceRefId))
+      .map((item) => item.sourceRefId);
+    if (sosIds.length === 0) return notifications;
+
+    const { SOSRequest } = await import('../../sos-request/models/sos-request.model');
+    const requests = await SOSRequest.find({ _id: { $in: sosIds } })
+      .select('status fulfillmentDeadline pledgedQuantityMl collectedQuantityMl inTransitQuantityMl receivedQuantityMl requiredQuantityMl')
+      .lean();
+    const byId = new Map(requests.map((request: any) => [request._id.toString(), request]));
+
+    return notifications.map((item) => {
+      const request = byId.get(item.sourceRefId?.toString());
+      if (!request) return item;
+      const payload = {
+        ...(item.payload || {}),
+        status: request.status,
+        fulfillmentDeadline: request.fulfillmentDeadline,
+        pledgedQuantityMl: request.pledgedQuantityMl || 0,
+        collectedQuantityMl: request.collectedQuantityMl || 0,
+        inTransitQuantityMl: request.inTransitQuantityMl || 0,
+        receivedQuantityMl: request.receivedQuantityMl || 0,
+        requiredQuantityMl: request.requiredQuantityMl,
+      };
+      return { ...item, payload, sosRequestInfo: payload };
+    });
+  }
+
   /**
    * Get user notifications with pagination and filters
    */
@@ -36,6 +116,7 @@ export class NotificationService {
 
     const userFilter = Types.ObjectId.isValid(userId) ? { $in: [userId, new Types.ObjectId(userId)] } : userId;
     const query: any = { recipientUserId: userFilter };
+    await this.applyLegacyAudienceGuard(userId, query);
 
     // Default UI channel filter to InApp to prevent showing duplicate WebPush + InApp entries
     if (channel && channel !== 'all') {
@@ -63,8 +144,9 @@ export class NotificationService {
       Notification.countDocuments(query),
     ]);
 
+    const hydratedNotifications = await this.attachLiveSOSState(notifications as any[]);
     return {
-      data: notifications,
+      data: hydratedNotifications as any,
       total,
       page,
       limit,
@@ -78,7 +160,10 @@ export class NotificationService {
   static async getNotificationById(id: string, userId: string): Promise<INotification | null> {
     const userFilter = Types.ObjectId.isValid(userId) ? { $in: [userId, new Types.ObjectId(userId)] } : userId;
     const idFilter = Types.ObjectId.isValid(id) ? { $in: [id, new Types.ObjectId(id)] } : id;
-    return Notification.findOne({ _id: idFilter, recipientUserId: userFilter }).lean();
+    const notification = await Notification.findOne({ _id: idFilter, recipientUserId: userFilter }).lean();
+    if (!notification) return null;
+    const [hydrated] = await this.attachLiveSOSState([notification as any]);
+    return hydrated as any;
   }
 
   /**
@@ -130,15 +215,25 @@ export class NotificationService {
   /**
    * Queue notification for background processing using BullMQ
    */
-  static async queueDelivery(notificationId: string, channels: import('../models/Notification').NotificationChannel[]): Promise<void> {
+  static async queueDelivery(
+    notificationId: string,
+    channels: import('../models/Notification').NotificationChannel[],
+    isRetry = false
+  ): Promise<void> {
     try {
       const { notificationQueue } = await import('../../../config/queue.config');
+      if (isRetry) {
+        for (const channel of channels) {
+          const legacyJob = await notificationQueue.getJob(`${notificationId}-${channel}`);
+          if (legacyJob && await legacyJob.isFailed()) await legacyJob.remove();
+        }
+      }
       
       const jobs = channels.map(channel => ({
         name: `deliver-${channel}`,
         data: { notificationId, channel },
         opts: {
-          jobId: `${notificationId}-${channel}`, // Prevent duplicate delivery
+          jobId: isRetry ? `${notificationId}-${channel}-retry-${Date.now()}` : `${notificationId}-${channel}`,
         }
       }));
 
@@ -164,14 +259,16 @@ export class NotificationService {
    */
   static async getUnreadCount(userId: string): Promise<number> {
     const userFilter = Types.ObjectId.isValid(userId) ? { $in: [userId, new Types.ObjectId(userId)] } : userId;
-    return Notification.countDocuments({ recipientUserId: userFilter, readAt: null, channel: 'InApp' });
+    const query: any = { recipientUserId: userFilter, readAt: null, channel: 'InApp' };
+    await this.applyLegacyAudienceGuard(userId, query);
+    return Notification.countDocuments(query);
   }
 
   /**
    * Get or create user preferences
    */
   static async getOrCreatePreferences(userId: string) {
-    let prefs = await NotificationPreference.findOne({ userId });
+    let prefs = await NotificationPreference.findOne({ userId }).sort({ updatedAt: -1 });
     if (!prefs) {
       try {
         prefs = await NotificationPreference.create({ userId });
@@ -197,11 +294,18 @@ export class NotificationService {
    * Update user preferences
    */
   static async updatePreferences(userId: string, updates: any) {
-    return NotificationPreference.findOneAndUpdate(
-      { userId },
-      { $set: updates },
-      { returnDocument: 'after', upsert: true, runValidators: true }
-    );
+    const latest = await NotificationPreference.findOne({ userId }).sort({ updatedAt: -1 });
+    if (!latest) {
+      return NotificationPreference.findOneAndUpdate(
+        { userId },
+        { $set: updates },
+        { returnDocument: 'after', upsert: true, runValidators: true }
+      );
+    }
+    latest.set(updates);
+    await latest.save();
+    await NotificationPreference.deleteMany({ userId, _id: { $ne: latest._id } });
+    return latest;
   }
 
   /**
@@ -236,15 +340,42 @@ export class NotificationService {
     channels?: ('Email' | 'WebPush' | 'InApp')[];
     templateId?: string;
     priority?: 'low' | 'normal' | 'high';
+    allowedRecipientRoles?: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
   }) {
+    if (data.type === 'SOS' && !(await isFeatureEnabled('sos_emergency_alerts'))) {
+      return { success: false, sent: 0, results: [], skippedReason: 'FEATURE_DISABLED' };
+    }
+
     const channels = data.channels || ['WebPush'];
     const results = [];
+    let recipientIds = Array.from(new Set(data.recipientIds.map(String)));
 
-    for (const recipientId of data.recipientIds) {
+    // Enforce the audience at the final delivery boundary as defense in depth.
+    // `roles` cannot be used here because Donor is a mandatory base role.
+    if (data.allowedRecipientRoles?.length && recipientIds.length > 0) {
+      const { User } = await import('../../auth-account/models/user.model');
+      const validIds = recipientIds.filter((id) => Types.ObjectId.isValid(id)).map((id) => new Types.ObjectId(id));
+      const eligibleUsers = await User.find({
+        _id: { $in: validIds },
+        role: { $in: data.allowedRecipientRoles },
+        accountStatus: 'Active',
+        isDeleted: { $ne: true },
+      }).select('_id').lean();
+      const eligibleIds = new Set(eligibleUsers.map((user: any) => user._id.toString()));
+      recipientIds = recipientIds.filter((id) => eligibleIds.has(id));
+    }
+
+    for (const recipientId of recipientIds) {
       // Check preferences for push/email channels
       const prefs = await this.getOrCreatePreferences(recipientId);
       if (!prefs) continue; // Should never happen, but satisfies TypeScript
+      const quietHoursActive = data.type !== 'SOS' && this.isWithinQuietHours(
+        prefs.quietHoursStart,
+        prefs.quietHoursEnd,
+        prefs.timezone
+      );
       const allowedChannels = channels.filter(c => {
+        if (quietHoursActive && c !== 'InApp') return false;
         if (c === 'WebPush') {
           if (data.type === 'SOS') return prefs.sosEnabled && prefs.pushEnabled;
           if (data.type === 'Campaign') return prefs.campaignEnabled && prefs.pushEnabled;
@@ -264,6 +395,25 @@ export class NotificationService {
 
       // Create notification record for each channel
       for (const channel of allowedChannels) {
+        const sourceRefId = data.payload?.sourceRefId || new Types.ObjectId();
+        const sourceRefType = data.payload?.sourceRefType || 'System';
+        const duplicateCutoff = new Date(Date.now() - 5 * 60 * 1000);
+        const recentDuplicate = data.payload?.sourceRefId
+          ? await Notification.findOne({
+              recipientUserId: new Types.ObjectId(recipientId),
+              channel,
+              sourceRefId,
+              sourceRefType,
+              title: data.title,
+              body: data.body,
+              createdAt: { $gte: duplicateCutoff },
+            }).lean()
+          : null;
+        if (recentDuplicate) {
+          results.push({ recipientUserId: recipientId, notificationId: recentDuplicate._id, channel, deduplicated: true });
+          continue;
+        }
+
         const notification = await Notification.create({
           recipientUserId: new Types.ObjectId(recipientId),
           type: data.type,
@@ -271,8 +421,8 @@ export class NotificationService {
           title: data.title,
           body: data.body,
           payload: data.payload || {},
-          sourceRefId: data.payload?.sourceRefId || new Types.ObjectId(),
-          sourceRefType: data.payload?.sourceRefType || 'System',
+          sourceRefId,
+          sourceRefType,
           deliveryStatus: 'Pending',
         });
 
@@ -360,14 +510,12 @@ export class NotificationService {
       const user = await User.findById(notification.recipientUserId).select('email').lean();
       if (!user?.email) return false;
 
-      await EmailService.send({
+      return await EmailService.send({
         to: user.email,
         subject: notification.title,
         html: this.renderEmailTemplate(notification),
         text: notification.body,
       });
-
-      return true;
     } catch (error) {
       console.error('Email send failed:', error);
       return false;
@@ -389,14 +537,12 @@ export class NotificationService {
       }
       if (!allowed) return false;
 
-      await PushService.send({
+      return await PushService.send({
         userId: notification.recipientUserId.toString(),
         title: notification.title,
         body: notification.body,
         data: notification.payload,
       });
-
-      return true;
     } catch (error) {
       console.error('Push send failed:', error);
       return false;
@@ -407,6 +553,10 @@ export class NotificationService {
    * Render email template
    */
   static renderEmailTemplate(notification: any): string {
+    const title = this.escapeHtml(notification.title);
+    const body = this.escapeHtml(notification.body).replace(/\n/g, '<br>');
+    const rawDeepLink = String(notification.payload?.deepLink || '');
+    const deepLink = /^(https?:\/\/|\/)/i.test(rawDeepLink) ? this.escapeHtml(rawDeepLink) : '';
     return `
       <!DOCTYPE html>
       <html>
@@ -416,11 +566,11 @@ export class NotificationService {
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: #f8f9fa; border-radius: 12px; padding: 24px;">
-          <h1 style="color: #93000b; margin-bottom: 16px;">${notification.title}</h1>
-          <p style="font-size: 16px; color: #555;">${notification.body}</p>
-          ${notification.payload?.deepLink ? `
+          <h1 style="color: #93000b; margin-bottom: 16px;">${title}</h1>
+          <p style="font-size: 16px; color: #555;">${body}</p>
+          ${deepLink ? `
             <div style="margin-top: 24px; text-align: center;">
-              <a href="${notification.payload.deepLink}" style="display: inline-block; background: #93000b; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Xem chi tiết</a>
+              <a href="${deepLink}" style="display: inline-block; background: #93000b; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Xem chi tiết</a>
             </div>
           ` : ''}
           <hr style="margin: 24px 0; border: none; border-top: 1px solid #eee;">
@@ -435,13 +585,15 @@ export class NotificationService {
    */
   static async retryFailedDeliveries() {
     const failedNotifications = await Notification.find({
-      deliveryStatus: 'Failed'
+      deliveryStatus: 'Failed',
+      retryCount: { $lt: 3 },
     }).limit(100);
 
     for (const notification of failedNotifications) {
-      notification.deliveryStatus = 'Retried';
+      notification.deliveryStatus = 'Pending';
+      notification.retryCount = (notification.retryCount || 0) + 1;
       await notification.save();
-      await this.queueDelivery(notification._id.toString(), [notification.channel as any]);
+      await this.queueDelivery(notification._id.toString(), [notification.channel as any], true);
     }
   }
 }

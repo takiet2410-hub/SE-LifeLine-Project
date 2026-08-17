@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import { Toaster } from 'sonner';
 
 interface AppLayoutProps {
   children?: React.ReactNode;
@@ -10,12 +9,24 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  React.useEffect(() => {
+    const timer = window.setTimeout(() => setMobileMenuOpen(false), 0);
+    return () => window.clearTimeout(timer);
+  }, [location.pathname]);
+
+  React.useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileMenuOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen]);
 
   return (
-    <div className="flex h-screen w-full bg-[#fff8f7] overflow-hidden selection:bg-[#93000b]/20">
-      {/* Toast Notification Provider */}
-      <Toaster position="top-right" richColors />
-
+    <div className="flex h-dvh w-full bg-[#fff8f7] overflow-hidden selection:bg-[#93000b]/20">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex">
         <Sidebar />
@@ -28,7 +39,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             className="fixed inset-0 bg-black/60 backdrop-blur-xs"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="relative z-10 w-64 max-w-xs h-full">
+          <div className="relative z-10 w-[min(18rem,86vw)] h-full shadow-2xl">
             <Sidebar />
           </div>
         </div>
@@ -37,7 +48,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <Header onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 max-w-7xl w-full mx-auto bg-[#fff8f7]">
+        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 max-w-7xl w-full mx-auto bg-[#fff8f7]">
           {children || <Outlet />}
         </main>
       </div>

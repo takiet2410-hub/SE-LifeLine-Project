@@ -23,8 +23,8 @@ export const EligibilityOverlay: React.FC<EligibilityOverlayProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
-      <div className="bg-white w-full max-w-[480px] rounded-2xl shadow-2xl p-8 flex flex-col items-center text-center gap-6 mx-4 animate-in zoom-in-95 border border-[#dee2e6]">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-[2px] p-0 sm:p-4">
+      <div className="bg-white w-full max-w-[480px] max-h-[92dvh] overflow-y-auto rounded-t-2xl sm:rounded-2xl shadow-2xl p-5 sm:p-8 flex flex-col items-center text-center gap-5 sm:gap-6 animate-in zoom-in-95 border border-[#dee2e6]">
         {/* Red Cancel Icon */}
         <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-[#93000b]">
           <XCircle className="w-10 h-10" />
@@ -100,8 +100,8 @@ export const DuplicateBookingOverlay: React.FC<DuplicateBookingOverlayProps> = (
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
-      <div className="bg-white w-full max-w-[480px] rounded-2xl shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 border border-[#dee2e6]">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-[2px] p-0 sm:p-4">
+      <div className="bg-white w-full max-w-[480px] max-h-[92dvh] overflow-y-auto rounded-t-2xl sm:rounded-2xl shadow-2xl p-5 sm:p-8 flex flex-col items-center text-center animate-in zoom-in-95 border border-[#dee2e6]">
         {/* Warning Icon */}
         <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 mb-5">
           <AlertTriangle className="w-10 h-10" />
@@ -167,8 +167,8 @@ export const SlotTakenOverlay: React.FC<SlotTakenOverlayProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
-      <div className="bg-white w-full max-w-[440px] rounded-2xl shadow-2xl p-7 flex flex-col items-center text-center animate-in zoom-in-95 border border-[#dee2e6]">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-[2px] p-0 sm:p-4">
+      <div className="bg-white w-full max-w-[440px] max-h-[92dvh] overflow-y-auto rounded-t-2xl sm:rounded-2xl shadow-2xl p-5 sm:p-7 flex flex-col items-center text-center animate-in zoom-in-95 border border-[#dee2e6]">
         <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-[#93000b] mb-4">
           <AlertCircle className="w-9 h-9" />
         </div>

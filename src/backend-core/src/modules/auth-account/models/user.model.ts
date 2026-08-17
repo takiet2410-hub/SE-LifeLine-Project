@@ -4,6 +4,7 @@ import { Schema, model, Document, Types } from 'mongoose';
 export interface IUser extends Document {
   idDocumentNumber: string;
   email: string;
+  fullName?: string;
   phone?: string;
   passwordHash: string;
   roles: ('Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator')[];
@@ -23,8 +24,19 @@ export interface IUser extends Document {
   // BloodCenterStaff only
   bloodCenterId?: Types.ObjectId;
 
+  // HospitalStaff only
+  hospitalId?: Types.ObjectId;
+
   lastLoginAt?: Date;
   sessionExpiresAt?: Date;
+  permanentAddress?: string;
+  currentAddress?: string;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
+  deletionReason?: string;
+  privacyPurgedAt?: Date;
+  privacyPurgedBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,6 +44,7 @@ export interface IUser extends Document {
 const userSchema = new Schema<IUser>({
   idDocumentNumber: { type: String, required: true, unique: true, index: true },
   email: { type: String, required: true, unique: true, index: true },
+  fullName: { type: String, trim: true },
   phone: { type: String },
   passwordHash: { type: String, required: true },
   roles: {
@@ -64,9 +77,18 @@ const userSchema = new Schema<IUser>({
   resetTokenExpiry: { type: Date },
 
   bloodCenterId: { type: Schema.Types.ObjectId, ref: 'BloodCenter', index: true },
+  hospitalId: { type: Schema.Types.ObjectId, ref: 'Hospital', index: true },
   
   lastLoginAt: { type: Date },
-  sessionExpiresAt: { type: Date }
+  sessionExpiresAt: { type: Date },
+  permanentAddress: { type: String },
+  currentAddress: { type: String },
+  isDeleted: { type: Boolean, default: false, index: true },
+  deletedAt: { type: Date },
+  deletedBy: { type: String },
+  deletionReason: { type: String },
+  privacyPurgedAt: { type: Date },
+  privacyPurgedBy: { type: String }
 }, {
   timestamps: true // Tự động quản lý createdAt và updatedAt
 });
@@ -75,7 +97,7 @@ const userSchema = new Schema<IUser>({
 userSchema.pre('validate', function() {
   if (Array.isArray(this.roles) && this.roles.length > 0) {
     // Normalize unique roles
-    this.roles = Array.from(new Set(this.roles)) as any;
+    this.roles = Array.from(new Set(['Donor', ...this.roles])) as any;
     if (!this.role || !this.roles.includes(this.role)) {
       if (this.roles.includes('Administrator')) this.role = 'Administrator';
       else if (this.roles.includes('BloodCenterStaff')) this.role = 'BloodCenterStaff';
@@ -83,7 +105,7 @@ userSchema.pre('validate', function() {
       else this.role = this.roles[0] || 'Donor';
     }
   } else if (this.role) {
-    this.roles = [this.role];
+    this.roles = this.role === 'Donor' ? ['Donor'] : ['Donor', this.role];
   } else {
     this.roles = ['Donor'];
     this.role = 'Donor';

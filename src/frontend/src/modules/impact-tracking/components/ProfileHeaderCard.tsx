@@ -171,9 +171,9 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({ profileDat
   };
 
   return (
-    <div className="flex p-8 flex-col items-start rounded-xl border border-[#F1F3F5] bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden relative">
+    <div className="flex p-4 sm:p-6 lg:p-8 flex-col items-start rounded-xl border border-[#F1F3F5] bg-[#FFF] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden relative">
       <div className="absolute -right-[79px] -top-[79px] rounded-full bg-[rgba(147,0,11,0.05)] w-64 h-64"></div>
-      <div className="flex items-start gap-8 w-full">
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-5 md:gap-8 w-full min-w-0">
         {/* Avatar */}
         <div className="flex flex-col items-start w-fit relative">
           <div className="rounded-2xl border-4 border-[#FFF] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.10),0_4px_6px_-4px_rgba(0,0,0,0.10)] w-32 h-32 overflow-hidden bg-gray-200 relative">
@@ -215,14 +215,14 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({ profileDat
           </div>
         </div>
 
-        <div className="flex pt-[7px] flex-col items-start gap-1 w-full">
+        <div className="flex min-w-0 pt-[7px] flex-col items-center md:items-start gap-1 w-full">
           {/* Name */}
           <div className="flex flex-col items-start w-full">
-            <p className="text-[#271816] font-inter text-4xl font-bold leading-[43.2px]">{fullName}</p>
+            <p className="break-words text-center md:text-left text-[#271816] font-inter text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight">{fullName}</p>
           </div>
 
           {/* Meta badges */}
-          <div className="flex items-center gap-4 w-full flex-wrap">
+          <div className="flex items-center justify-center md:justify-start gap-2 sm:gap-4 w-full flex-wrap">
             <div className="flex pt-[3px] pr-3 pb-1 pl-3 items-center gap-1 rounded-full bg-[#FEE2E2] w-fit">
               <span className="text-[#93000B] font-inter text-xs font-medium leading-[16.8px]">Verified Donor</span>
             </div>
@@ -239,20 +239,20 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({ profileDat
           </div>
 
           {/* Stats grid */}
-          <div className="flex pt-7 justify-center items-start gap-4 w-full">
+          <div className="grid grid-cols-2 xl:grid-cols-4 pt-5 sm:pt-7 gap-3 sm:gap-4 w-full">
             <div className="flex p-4 flex-col items-start rounded-xl bg-[#F8F9FA] w-full">
               <p className="text-[#6C757D] font-inter text-xs font-bold leading-[16.8px] tracking-[0.05em]">TOTAL DONATIONS</p>
-              <p className="text-[#271816] font-inter text-[28px] font-bold leading-[36.4px]">
+              <p className="text-[#271816] font-inter text-xl sm:text-[28px] font-bold leading-tight">
                 {totalDonations} <span className="text-xs font-medium">units</span>
               </p>
             </div>
             <div className="flex p-4 flex-col items-start rounded-xl bg-[#F8F9FA] w-full">
               <p className="text-[#6C757D] font-inter text-xs font-bold leading-[16.8px] tracking-[0.05em]">LIVES IMPACTED</p>
-              <p className="text-[#271816] font-inter text-[28px] font-bold leading-[36.4px]">{livesImpacted}</p>
+              <p className="text-[#271816] font-inter text-xl sm:text-[28px] font-bold leading-tight">{livesImpacted}</p>
             </div>
             <div className="flex p-4 flex-col items-start rounded-xl bg-[#F8F9FA] w-full">
               <p className="text-[#6C757D] font-inter text-xs font-bold leading-[16.8px] tracking-[0.05em]">CURRENT STREAK</p>
-              <p className="text-[#271816] font-inter text-[28px] font-bold leading-[36.4px]">
+              <p className="text-[#271816] font-inter text-xl sm:text-[28px] font-bold leading-tight">
                 {currentStreak} <span className="text-xs font-medium">mos</span>
               </p>
             </div>
@@ -263,11 +263,11 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({ profileDat
           </div>
 
           {/* Actions */}
-          <div className="flex pt-5 items-center gap-3 w-full flex-wrap">
+          <div className="flex flex-col sm:flex-row pt-5 items-stretch sm:items-center gap-3 w-full flex-wrap">
             <button
               type="button"
               onClick={handleResetPassword}
-              className="flex py-3 px-5 items-center gap-2 rounded-lg border border-[#DEE2E6] bg-white text-[#495057] font-inter text-sm font-semibold shadow-xs transition-all hover:bg-gray-50 hover:text-[#93000B] hover:border-[#93000B]/40 cursor-pointer active:scale-98"
+              className="flex justify-center py-3 px-5 items-center gap-2 rounded-lg border border-[#DEE2E6] bg-white text-[#495057] font-inter text-sm font-semibold shadow-xs transition-all hover:bg-gray-50 hover:text-[#93000B] hover:border-[#93000B]/40 cursor-pointer active:scale-98"
               title="Đặt lại mật khẩu tài khoản"
             >
               <KeyRound className="w-4 h-4 text-[#93000B]" />
@@ -276,7 +276,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({ profileDat
             <button
               type="button"
               onClick={logout}
-              className="flex py-3 px-6 items-center gap-2 rounded-lg bg-[#93000B] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10)] transition-all hover:bg-[#7a0009] cursor-pointer active:scale-98"
+              className="flex justify-center py-3 px-6 items-center gap-2 rounded-lg bg-[#93000B] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10)] transition-all hover:bg-[#7a0009] cursor-pointer active:scale-98"
             >
               <span className="text-[#FFF] font-inter text-base leading-6">Sign Out</span>
             </button>

@@ -41,6 +41,11 @@ const router = Router();
  *         schema:
  *           type: string
  *           enum: [Low, Medium, High]
+ *       - in: query
+ *         name: includeFacilities
+ *         schema:
+ *           type: boolean
+ *         description: Gộp bệnh viện và trung tâm máu làm lớp marker nền
  *     responses:
  *       200:
  *         description: Lấy danh sách địa điểm thành công

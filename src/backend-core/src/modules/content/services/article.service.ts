@@ -6,10 +6,47 @@ import { AdminAuditLog } from '../../admin/models/audit-log.model';
 import { CreateArticleInput, UpdateArticleInput } from '../schemas/article.schema';
 import { NotificationService } from '../../notification/services/notification.service';
 import { User } from '../../auth-account/models/user.model';
+import { isFeatureEnabled } from '../../admin/services/admin-toggle.service';
+import { SystemConfig } from '../../admin/models/system-config.model';
+import sanitizeHtml from 'sanitize-html';
 
 export class ArticleService {
+  private static sanitizeArticleHtml(value: string): string {
+    return sanitizeHtml(value || '', {
+      allowedTags: [
+        'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'blockquote',
+        'ul', 'ol', 'li', 'h2', 'h3', 'h4', 'a', 'img', 'figure', 'figcaption',
+        'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr', 'span'
+      ],
+      allowedAttributes: {
+        a: ['href', 'target', 'rel'],
+        img: ['src', 'alt', 'title', 'width', 'height'],
+        '*': ['class']
+      },
+      allowedSchemes: ['http', 'https', 'mailto'],
+      allowedSchemesByTag: { img: ['http', 'https', 'data'] },
+      transformTags: {
+        a: (_tagName, attribs) => ({
+          tagName: 'a',
+          attribs: { ...attribs, rel: 'noopener noreferrer', target: '_blank' }
+        })
+      },
+      disallowedTagsMode: 'discard'
+    });
+  }
+
+  private static async writeContentAudit(entry: Record<string, unknown>): Promise<void> {
+    try {
+      await ContentAuditLog.create(entry);
+    } catch (error) {
+      console.error('[ArticleService] Content audit write failed after content mutation:', error);
+    }
+  }
+
   private static async broadcastArticleNotification(article: any) {
     try {
+      if (!(await isFeatureEnabled('news_content_portal'))) return;
+
       const { title, category, targetAudience } = article;
       
       const rolesToQuery: Array<'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator'> = [];
@@ -58,7 +95,8 @@ export class ArticleService {
     actorUserId: string,
     ipAddress?: string
   ): Promise<IArticle> {
-    const wordsCount = (input.bodyContent || '').replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length;
+    const safeBodyContent = this.sanitizeArticleHtml(input.bodyContent || '');
+    const wordsCount = safeBodyContent.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length;
     const readTimeMinutes = Math.max(1, Math.ceil(wordsCount / 200));
 
     let publishedAt: Date | undefined;
@@ -72,7 +110,7 @@ export class ArticleService {
 
     const article = new Article({
       title: input.title,
-      bodyContent: input.bodyContent || '',
+      bodyContent: safeBodyContent,
       status,
       category: input.category || 'News',
       targetAudience: input.targetAudience || ['Donors'],
@@ -85,7 +123,7 @@ export class ArticleService {
 
     await article.save();
 
-    await ContentAuditLog.create({
+    await this.writeContentAudit({
       actorUserId: new mongoose.Types.ObjectId(actorUserId),
       action: 'CREATE_ARTICLE',
       resourceType: 'Article',
@@ -128,7 +166,7 @@ export class ArticleService {
     isPublic?: boolean;
   }) {
     const page = Math.max(1, params?.page || 1);
-    const limit = Math.max(1, params?.limit || 10);
+    const limit = Math.max(1, Math.min(100, params?.limit || 10));
     const skip = (page - 1) * limit;
 
     const query: any = {};
@@ -143,7 +181,8 @@ export class ArticleService {
     }
 
     if (params?.search) {
-      query.title = { $regex: params.search, $options: 'i' };
+      const escapedSearch = params.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.title = { $regex: escapedSearch, $options: 'i' };
     }
 
     const [articles, total] = await Promise.all([
@@ -160,6 +199,7 @@ export class ArticleService {
 
     const mappedArticles = articles.map((article: any) => ({
       ...article,
+      bodyContent: this.sanitizeArticleHtml(article.bodyContent || ''),
       authorName: (article.authorStaffId as any)?.fullName || 'Blood Center Staff',
       coverImageUrl: article.imageUrls?.[0] || '',
       performance: {
@@ -197,7 +237,9 @@ export class ArticleService {
       article = await Article.findOneAndUpdate(
         query,
         { $inc: { viewsCount: 1, 'performance.reach': 1 } },
-        { new: true }
+        // A view is analytics, not an editorial update. Keep updatedAt reserved
+        // for actual content changes so the public UI remains trustworthy.
+        { returnDocument: 'after', timestamps: false }
       ).populate('authorStaffId', 'fullName role');
     } else {
       article = await Article.findOne(query).populate('authorStaffId', 'fullName role');
@@ -211,6 +253,7 @@ export class ArticleService {
     // Map for frontend which expects coverImageUrl, authorName and performance
     return {
       ...articleObj,
+      bodyContent: this.sanitizeArticleHtml(articleObj.bodyContent || ''),
       authorName: (articleObj.authorStaffId as any)?.fullName || 'Blood Center Staff',
       coverImageUrl: articleObj.imageUrls?.[0] || '',
       performance: {
@@ -241,7 +284,7 @@ export class ArticleService {
 
     if (input.title !== undefined) article.title = input.title;
     if (input.bodyContent !== undefined) {
-      article.bodyContent = input.bodyContent;
+      article.bodyContent = this.sanitizeArticleHtml(input.bodyContent);
       const wordsCount = article.bodyContent.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length;
       article.readTimeMinutes = Math.max(1, Math.ceil(wordsCount / 200));
     }
@@ -252,6 +295,7 @@ export class ArticleService {
     }
     if (input.scheduledAt !== undefined) {
       article.scheduledAt = input.scheduledAt ? new Date(input.scheduledAt) : null;
+      if (input.scheduledAt && input.status === undefined) article.status = 'Scheduled';
     }
     if (input.status !== undefined) {
       article.status = input.status;
@@ -267,7 +311,7 @@ export class ArticleService {
       this.broadcastArticleNotification(article);
     }
 
-    await ContentAuditLog.create({
+    await this.writeContentAudit({
       actorUserId: new mongoose.Types.ObjectId(actorUserId),
       action: 'UPDATE_ARTICLE',
       resourceType: 'Article',
@@ -312,7 +356,7 @@ export class ArticleService {
     const previousValue = article.toObject();
     await Article.deleteOne({ _id: article._id });
 
-    await ContentAuditLog.create({
+    await this.writeContentAudit({
       actorUserId: new mongoose.Types.ObjectId(actorUserId),
       action: 'DELETE_ARTICLE',
       resourceType: 'Article',
@@ -354,6 +398,10 @@ export class ArticleService {
   }
 
   static async publishScheduledArticles() {
+    if (!(await isFeatureEnabled('news_content_portal'))) return 0;
+    const autoPublish = await SystemConfig.findOne({ key: 'autoPublishArticles' }).lean();
+    if (autoPublish && autoPublish.value === false) return 0;
+
     const now = new Date();
     const scheduled = await Article.find({
       status: 'Scheduled',
@@ -365,7 +413,7 @@ export class ArticleService {
       article.publishedAt = now;
       await article.save();
 
-      await ContentAuditLog.create({
+      await this.writeContentAudit({
         actorUserId: article.authorStaffId,
         action: 'PUBLISH_ARTICLE',
         resourceType: 'Article',

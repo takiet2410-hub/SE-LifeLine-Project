@@ -39,6 +39,7 @@ export interface ISOSRequest extends Document {
   patientReference?: string;
   fulfillmentDeadline: Date;
   status: 'Pending' | 'EvaluationInProgress' | 'NotificationsDispatched' | 'InventoryDispatched' | 'Fulfilled' | 'Expired' | 'Cancelled' | 'EvaluationFailed';
+  pledgedQuantityMl: number;
   collectedQuantityMl: number;
   receivedQuantityMl: number;
   inTransitQuantityMl: number;
@@ -92,6 +93,7 @@ const sosRequestSchema = new Schema<ISOSRequest>({
     default: 'Pending',
     index: true
   },
+  pledgedQuantityMl: { type: Number, default: 0, min: 0 },
   collectedQuantityMl: { type: Number, default: 0 },
   receivedQuantityMl: { type: Number, default: 0 },
   inTransitQuantityMl: { type: Number, default: 0 },

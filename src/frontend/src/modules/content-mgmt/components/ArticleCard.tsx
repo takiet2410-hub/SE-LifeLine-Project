@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Eye, Calendar, User, MoreVertical, Edit3, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Eye, Calendar, User, MoreVertical, Edit3, Trash2, ImageOff } from 'lucide-react';
 import type { Article } from '../types/article.types';
 
 interface ArticleCardProps {
@@ -20,6 +20,11 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   variant = 'admin'
 }) => {
   const [showMenu, setShowMenu] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [article.coverImageUrl]);
 
   const getStatusBadge = (status: Article['status']) => {
     switch (status) {
@@ -57,15 +62,17 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           else if (onSelect) onSelect(article._id);
         }}
       >
-        {article.coverImageUrl ? (
+        {article.coverImageUrl && !imageFailed ? (
           <img
             src={article.coverImageUrl}
             alt={article.title}
+            onError={() => setImageFailed(true)}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-gray-100 to-gray-200 text-gray-400 font-medium text-sm">
-            No Cover Image
+          <div className="w-full h-full flex flex-col gap-2 items-center justify-center bg-gradient-to-tr from-gray-100 to-gray-200 text-gray-500 font-medium text-sm">
+            <ImageOff className="h-6 w-6 text-gray-400" aria-hidden="true" />
+            {imageFailed ? 'Ảnh không khả dụng' : 'No Cover Image'}
           </div>
         )}
 

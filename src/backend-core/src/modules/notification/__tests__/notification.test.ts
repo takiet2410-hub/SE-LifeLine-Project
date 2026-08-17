@@ -1,16 +1,27 @@
 import { NotificationService } from '../services/notification.service';
 import { Notification } from '../models/Notification';
 import { PushService } from '../services/push.service';
+import { EmailService } from '../services/email.service';
+import { NotificationPreference } from '../models/NotificationPreference';
+import { User } from '../../auth-account/models/user.model';
+import { isFeatureEnabled } from '../../admin/services/admin-toggle.service';
 
 jest.mock('../models/Notification');
 jest.mock('../models/NotificationPreference');
 jest.mock('../models/NotificationTemplate');
 jest.mock('../services/push.service');
 jest.mock('../services/email.service');
+jest.mock('../../auth-account/models/user.model', () => ({
+  User: { findById: jest.fn(), find: jest.fn() },
+}));
+jest.mock('../../admin/services/admin-toggle.service', () => ({
+  isFeatureEnabled: jest.fn().mockResolvedValue(true),
+}));
 
 describe('Notification Module Unit Tests', () => {
   afterEach(() => {
     jest.clearAllMocks();
+    (isFeatureEnabled as jest.Mock).mockResolvedValue(true);
   });
 
   describe('getUserNotifications', () => {
@@ -74,6 +85,117 @@ describe('Notification Module Unit Tests', () => {
       });
 
       expect(res).toBe(true);
+    });
+  });
+
+  describe('sendNotification feature control', () => {
+    it('should suppress queued SOS notifications after the SOS feature is disabled', async () => {
+      (isFeatureEnabled as jest.Mock).mockResolvedValue(false);
+
+      const result = await NotificationService.sendNotification({
+        recipientIds: ['507f1f77bcf86cd799439011'],
+        type: 'SOS',
+        title: 'SOS',
+        body: 'Emergency request',
+      });
+
+      expect(result).toEqual(expect.objectContaining({ success: false, sent: 0, skippedReason: 'FEATURE_DISABLED' }));
+      expect(Notification.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('recipient audience control', () => {
+    it('does not send a donor SOS alert to a HospitalStaff account that also has the Donor base role', async () => {
+      (User.find as jest.Mock).mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([]),
+        }),
+      });
+
+      const result = await NotificationService.sendNotification({
+        recipientIds: ['507f1f77bcf86cd799439011'],
+        type: 'SOS',
+        title: 'Cần hiến máu SOS',
+        body: 'Thông báo chỉ dành cho donor',
+        allowedRecipientRoles: ['Donor'],
+      });
+
+      expect(User.find).toHaveBeenCalledWith(expect.objectContaining({
+        role: { $in: ['Donor'] },
+        accountStatus: 'Active',
+      }));
+      expect(Notification.create).not.toHaveBeenCalled();
+      expect(result).toEqual(expect.objectContaining({ success: true, sent: 0 }));
+    });
+  });
+
+  describe('delivery safety', () => {
+    beforeEach(() => {
+      (NotificationPreference.findOne as jest.Mock).mockResolvedValue({
+        emailEnabled: true,
+        pushEnabled: true,
+        sosEnabled: true,
+        campaignEnabled: true,
+        appointmentEnabled: true,
+      });
+    });
+
+    it('propagates an email provider failure instead of marking it sent', async () => {
+      (User.findById as jest.Mock).mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue({ email: 'qa@example.com' }),
+        }),
+      });
+      (EmailService.send as jest.Mock).mockResolvedValue(false);
+
+      const delivered = await NotificationService.sendEmail({
+        recipientUserId: '507f1f77bcf86cd799439011',
+        type: 'SOS',
+        title: 'SOS',
+        body: 'Test',
+        payload: {},
+      });
+
+      expect(delivered).toBe(false);
+    });
+
+    it('propagates a push provider failure instead of marking it sent', async () => {
+      (PushService.send as jest.Mock).mockResolvedValue(false);
+
+      const delivered = await NotificationService.sendPush({
+        recipientUserId: { toString: () => '507f1f77bcf86cd799439011' },
+        type: 'SOS',
+        title: 'SOS',
+        body: 'Test',
+        payload: {},
+      });
+
+      expect(delivered).toBe(false);
+    });
+
+    it('escapes untrusted notification text in HTML email templates', () => {
+      const html = NotificationService.renderEmailTemplate({
+        title: '<img src=x onerror=alert(1)>',
+        body: '<script>alert(1)</script>',
+        payload: { deepLink: 'javascript:alert(1)' },
+      });
+
+      expect(html).not.toContain('<script>');
+      expect(html).not.toContain('<img src=x');
+      expect(html).not.toContain('javascript:');
+      expect(html).toContain('&lt;script&gt;');
+    });
+
+    it('returns failed deliveries to Pending before queueing a retry', async () => {
+      const failed = { _id: { toString: () => 'notif-failed' }, channel: 'Email', deliveryStatus: 'Failed', save: jest.fn() };
+      (Notification.find as jest.Mock).mockReturnValue({ limit: jest.fn().mockResolvedValue([failed]) });
+      jest.spyOn(NotificationService, 'queueDelivery').mockResolvedValue();
+
+      await NotificationService.retryFailedDeliveries();
+
+      expect(failed.deliveryStatus).toBe('Pending');
+      expect(failed.save).toHaveBeenCalled();
+      expect(NotificationService.queueDelivery).toHaveBeenCalledWith('notif-failed', ['Email'], true);
     });
   });
 });

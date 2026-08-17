@@ -1,15 +1,27 @@
 import { Router } from 'express';
 import { SOSRequestController } from '../controllers/sos-request.controller';
 import { validateRequest } from '../../../shared/validate.middleware';
-import { authenticateJWT, authorizeRoles } from '../../../shared/auth.middleware';
+import { authenticateJWT, authorizePermissions, authorizeRoles } from '../../../shared/auth.middleware';
 import { CreateSOSRequestSchema, UpdateSOSStatusSchema, SOSQuerySchema, RespondSOSSchema, FulfillFromInventorySchema, RecordDirectDonationSchema } from '../schemas/sos-request.schema';
+import { requireFeatureEnabled } from '../../admin/feature-toggle.middleware';
 
 const router = Router();
+const sosFeature = requireFeatureEnabled('sos_emergency_alerts');
+
+const authorizeSOSDetailAccess = async (req: any, res: any, next: any) => {
+  const roles = new Set([req.user?.role, ...(Array.isArray(req.user?.roles) ? req.user.roles : [])]);
+  if (roles.has('Donor') && !roles.has('HospitalStaff') && !roles.has('BloodCenterStaff') && !roles.has('Administrator')) {
+    return next();
+  }
+  return authorizePermissions('sos:read')(req, res, next);
+};
 
 router.post(
   '/',
   authenticateJWT,
+  sosFeature,
   authorizeRoles('HospitalStaff', 'Administrator'),
+  authorizePermissions('sos:create'),
   validateRequest(CreateSOSRequestSchema),
   SOSRequestController.createSOSRequest
 );
@@ -17,6 +29,9 @@ router.post(
 router.get(
   '/',
   authenticateJWT,
+  sosFeature,
+  authorizeRoles('HospitalStaff', 'BloodCenterStaff', 'Administrator'),
+  authorizePermissions('sos:read'),
   validateRequest(SOSQuerySchema),
   SOSRequestController.listSOSRequests
 );
@@ -27,7 +42,9 @@ if (process.env.NODE_ENV !== 'production') {
   const { Notification } = require('../../notification/models/Notification');
   const mongoose = require('mongoose');
 
-  router.get('/debug-broadcast', async (req: any, res: any) => {
+  const debugAuth = [authenticateJWT, sosFeature, authorizeRoles('Administrator'), authorizePermissions('system:logs')];
+
+  router.get('/debug-broadcast', ...debugAuth, async (req: any, res: any) => {
     try {
       const bcStaffUsers = await User.find({ role: 'BloodCenterStaff' });
       let count = 0;
@@ -53,7 +70,7 @@ if (process.env.NODE_ENV !== 'production') {
   const { BloodCenter } = require('../../auth-account/models/blood-center.model');
   const { DonorProfile } = require('../../auth-account/models/donor-profile.model');
 
-  router.get('/debug-geonear', async (req: any, res: any) => {
+  router.get('/debug-geonear', ...debugAuth, async (req: any, res: any) => {
     try {
       const centers = await BloodCenter.aggregate([
         {
@@ -80,7 +97,7 @@ if (process.env.NODE_ENV !== 'production') {
   });
 
   const { SOSEvaluationService } = require('../services/sos-evaluation.service');
-  router.get('/debug-eval/:id', async (req: any, res: any) => {
+  router.get('/debug-eval/:id', ...debugAuth, async (req: any, res: any) => {
     try {
       const evalLog = await SOSEvaluationService.evaluateAndPrioritize(req.params.id);
       res.json({ success: true, evalLog });
@@ -92,19 +109,25 @@ if (process.env.NODE_ENV !== 'production') {
 
 router.get(
   '/hospitals',
+  sosFeature,
   SOSRequestController.listHospitals
 );
 
 router.get(
   '/:id',
   authenticateJWT,
+  sosFeature,
+  authorizeRoles('Donor', 'HospitalStaff', 'BloodCenterStaff', 'Administrator'),
+  authorizeSOSDetailAccess,
   SOSRequestController.getSOSRequest
 );
 
 router.patch(
   '/:id/status',
   authenticateJWT,
+  sosFeature,
   authorizeRoles('HospitalStaff', 'Administrator'),
+  authorizePermissions('sos:cancel'),
   validateRequest(UpdateSOSStatusSchema),
   SOSRequestController.updateStatus
 );
@@ -112,13 +135,16 @@ router.patch(
 router.get(
   '/:id/evaluation-log',
   authenticateJWT,
+  sosFeature,
   authorizeRoles('HospitalStaff', 'BloodCenterStaff', 'Administrator'),
+  authorizePermissions('sos:read'),
   SOSRequestController.getEvaluationLog
 );
 
 router.post(
   '/:id/respond',
   authenticateJWT,
+  sosFeature,
   authorizeRoles('Donor'),
   validateRequest(RespondSOSSchema),
   SOSRequestController.respondToSOS
@@ -127,14 +153,18 @@ router.post(
 router.post(
   '/:id/reopen',
   authenticateJWT,
+  sosFeature,
   authorizeRoles('HospitalStaff', 'Administrator'),
+  authorizePermissions('sos:create'),
   SOSRequestController.reopenSOSRequest
 );
 
 router.post(
   '/:id/fulfill-from-inventory',
   authenticateJWT,
-  authorizeRoles('BloodCenterStaff', 'HospitalStaff', 'Administrator'),
+  sosFeature,
+  authorizeRoles('BloodCenterStaff'),
+  authorizePermissions('inventory:stock_out'),
   validateRequest(FulfillFromInventorySchema),
   SOSRequestController.fulfillFromInventory
 );
@@ -143,7 +173,9 @@ router.post(
 router.patch(
   '/:id/confirm-received',
   authenticateJWT,
+  sosFeature,
   authorizeRoles('HospitalStaff'),
+  authorizePermissions('sos:read'),
   SOSRequestController.confirmReceived
 );
 
@@ -151,7 +183,9 @@ router.patch(
 router.patch(
   '/:id/shipments/:shipmentId/confirm-received',
   authenticateJWT,
+  sosFeature,
   authorizeRoles('HospitalStaff'),
+  authorizePermissions('sos:read'),
   SOSRequestController.confirmShipmentReceived
 );
 
@@ -159,7 +193,9 @@ router.patch(
 router.post(
   '/:id/direct-donations',
   authenticateJWT,
+  sosFeature,
   authorizeRoles('HospitalStaff'),
+  authorizePermissions('sos:read'),
   validateRequest(RecordDirectDonationSchema),
   SOSRequestController.recordDirectDonation
 );
@@ -168,7 +204,9 @@ router.post(
 router.get(
   '/:id/lookup-donor',
   authenticateJWT,
+  sosFeature,
   authorizeRoles('HospitalStaff'),
+  authorizePermissions('sos:read'),
   SOSRequestController.lookupDonor
 );
 

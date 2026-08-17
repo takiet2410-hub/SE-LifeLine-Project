@@ -149,12 +149,9 @@ export class NotificationController {
       const { SOSRequestService } = await import('../../sos-request/services/sos-request.service');
       const sosResult = await SOSRequestService.recordDonorResponse(sosRequestId, userIdStr, response);
 
-      // We only record 'accepted' or 'declined' into the payload if it wasn't already fulfilled
-      const finalResponseState = sosResult.status === 'fulfilled' ? 'fulfilled' : response;
-
       notif.payload = {
         ...notif.payload,
-        donorResponse: finalResponseState
+        donorResponse: response
       };
       notif.markModified('payload');
       await notif.save();
@@ -195,7 +192,7 @@ export class NotificationController {
   public static async getPreferences(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?._id || (req as any).user?.id;
-      const prefs = await NotificationPreference.findOne({ userId });
+      const prefs = await NotificationPreference.findOne({ userId }).sort({ updatedAt: -1 });
       
       if (!prefs) {
         // Return defaults
@@ -225,11 +222,7 @@ export class NotificationController {
       const userId = (req as any).user?._id || (req as any).user?.id;
       const updates = req.body;
 
-      const prefs = await NotificationPreference.findOneAndUpdate(
-        { userId },
-        { $set: updates },
-        { returnDocument: 'after', upsert: true, runValidators: true }
-      );
+      const prefs = await NotificationService.updatePreferences(userId, updates);
 
       // Sync emergencyOptIn to DonorProfile if sosEnabled was changed
       if (updates.sosEnabled !== undefined) {

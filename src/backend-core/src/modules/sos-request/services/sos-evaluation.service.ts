@@ -7,48 +7,74 @@ import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { BloodBag } from '../../blood-inventory/models/blood-bag.model';
 import { SOSBroadcastService } from './sos-broadcast.service';
 import { getCompatibleDonorBloodTypes } from '../../../shared/blood-type.utils';
+import { isFeatureEnabled } from '../../admin/services/admin-toggle.service';
+import { User } from '../../auth-account/models/user.model';
 
 export class SOSEvaluationService {
-  
+  private static async getSearchRadiusSettings(): Promise<{ initialRadiusKm: number; maxRadiusKm: number }> {
+    let initialRadiusKm = 10;
+    let maxRadiusKm = 50;
+
+    try {
+      const { SystemConfig } = await import('../../admin/models/system-config.model');
+      const configs = await SystemConfig.find({ key: { $in: ['sosSearchRadiusKm', 'sosMaxRadiusKm'] } }).lean();
+      for (const config of configs) {
+        if (config.key === 'sosSearchRadiusKm' && typeof config.value === 'number') initialRadiusKm = config.value;
+        if (config.key === 'sosMaxRadiusKm' && typeof config.value === 'number') maxRadiusKm = config.value;
+      }
+    } catch {
+      // Fall back to safe defaults when configuration storage is temporarily unavailable.
+    }
+
+    return {
+      initialRadiusKm: Math.max(1, initialRadiusKm),
+      maxRadiusKm: Math.max(initialRadiusKm, maxRadiusKm),
+    };
+  }
+
+  public static async getRadiusExpansionState(sosRequestId: string) {
+    const { maxRadiusKm } = await this.getSearchRadiusSettings();
+    const lastLog = await SOSEvaluationLog.findOne({ sosRequestId }).sort({ evaluatedAt: -1 });
+    const lastRadiusKm = lastLog?.searchRadiusKmUsed || 0;
+
+    return {
+      canExpand: lastRadiusKm < maxRadiusKm,
+      lastRadiusKm,
+      maxRadiusKm,
+    };
+  }
+
   public static async evaluateAndPrioritize(sosRequestId: string, expandRadius: boolean = false) {
+    if (!(await isFeatureEnabled('sos_emergency_alerts'))) {
+      console.log(`[SOSEvaluationService] SOS feature disabled. Skipping evaluation for ${sosRequestId}.`);
+      return null;
+    }
     console.log(`[SOSEvaluationService] Starting evaluation for SOS Request: ${sosRequestId}`);
     const request = await SOSRequest.findById(sosRequestId);
     if (!request) throw new Error('Request not found');
-    
+
+    const { initialRadiusKm, maxRadiusKm } = await this.getSearchRadiusSettings();
+    let currentRadiusKm = initialRadiusKm;
+    let expansionCount = 0;
+
+    if (expandRadius) {
+      const lastLog = await SOSEvaluationLog.findOne({ sosRequestId }).sort({ evaluatedAt: -1 });
+      if (lastLog) {
+        if (lastLog.searchRadiusKmUsed >= maxRadiusKm) {
+          console.log(`[SOSEvaluationService] Maximum search radius (${maxRadiusKm}km) already reached. Skipping duplicate evaluation.`);
+          return lastLog;
+        }
+        currentRadiusKm = Math.min(lastLog.searchRadiusKmUsed + initialRadiusKm, maxRadiusKm);
+        expansionCount = lastLog.radiusExpansionCount + 1;
+      }
+    }
+
     // Get hospital location
     const hospital = await Hospital.findById(request.hospitalId);
     if (!hospital || !hospital.location || !hospital.location.coordinates) {
       throw new Error(`Hospital location is missing. Cannot perform GeoNear query. Hospital object: ${JSON.stringify(hospital)}`);
     }
     const [lng, lat] = hospital.location.coordinates;
-
-    // Check SystemConfig for initial and max search radius (Configurable by Admin)
-    let initialRadiusKm = 10;
-    let maxRadiusKm = 50;
-    try {
-      const { SystemConfig } = await import('../../admin/models/system-config.model');
-      const configs = await SystemConfig.find({ key: { $in: ['sosSearchRadiusKm', 'sosMaxRadiusKm'] } }).lean();
-      for (const c of configs) {
-        if (c.key === 'sosSearchRadiusKm' && typeof c.value === 'number') initialRadiusKm = c.value;
-        if (c.key === 'sosMaxRadiusKm' && typeof c.value === 'number') maxRadiusKm = c.value;
-      }
-    } catch (e) {}
-
-    // Check if there is an existing eval log to determine current radius
-    let currentRadiusKm = initialRadiusKm;
-    let expansionCount = 0;
-    
-    if (expandRadius) {
-      const lastLog = await SOSEvaluationLog.findOne({ sosRequestId }).sort({ evaluatedAt: -1 });
-      if (lastLog) {
-        currentRadiusKm = lastLog.searchRadiusKmUsed + initialRadiusKm;
-        expansionCount = lastLog.radiusExpansionCount + 1;
-        if (currentRadiusKm > maxRadiusKm) {
-          console.log(`[SOSEvaluationService] Reached maximum search radius (${maxRadiusKm}km)`);
-          currentRadiusKm = maxRadiusKm; // Cap at maxRadiusKm
-        }
-      }
-    }
 
     request.status = 'EvaluationInProgress';
     await request.save();
@@ -114,7 +140,18 @@ export class SOSEvaluationService {
       }
     ]);
 
-    const rankedDonors = nearbyDonors.map(d => {
+    const nearbyDonorUserIds = nearbyDonors.map((donor) => donor.userId).filter(Boolean);
+    const activeDonorAccounts = await User.find({
+      _id: { $in: nearbyDonorUserIds },
+      role: 'Donor',
+      accountStatus: 'Active',
+      isDeleted: { $ne: true },
+    }).select('_id').lean();
+    const activeDonorIds = new Set(activeDonorAccounts.map((user: any) => user._id.toString()));
+
+    const rankedDonors = nearbyDonors
+      .filter((donor) => donor.userId && activeDonorIds.has(donor.userId.toString()))
+      .map(d => {
       const distance = d.distance || 1;
       const isExactMatch = d.bloodType === request.bloodType;
       // Exact blood type matches get 1.0 weight multiplier, compatible types get 0.85 multiplier
@@ -128,7 +165,7 @@ export class SOSEvaluationService {
         lastDonationDate: d.lastDonationDate,
         engagementTier: d.donorLevel || 1
       };
-    }).sort((a, b) => b.score - a.score);
+      }).sort((a, b) => b.score - a.score);
 
     // 3. Create Evaluation Log
     const evalLog = new SOSEvaluationLog({

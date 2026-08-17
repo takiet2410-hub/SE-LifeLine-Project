@@ -5,6 +5,7 @@ export class BookingController {
   public static async listLocations(req: Request, res: Response, next: NextFunction) {
     try {
       const locations = await BookingService.searchLocations(req.query);
+      res.setHeader('Cache-Control', 'no-store');
       res.status(200).json(locations);
     } catch (error) {
       next(error);

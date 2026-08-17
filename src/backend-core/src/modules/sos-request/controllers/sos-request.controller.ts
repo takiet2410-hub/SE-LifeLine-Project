@@ -2,6 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import { SOSRequestService } from '../services/sos-request.service';
 import { SOSEvaluationLog } from '../models/sos-evaluation-log.model';
 import { Hospital } from '../../auth-account/models/hospital.model';
+import { Notification } from '../../notification/models/Notification';
+
+const getUserId = (req: Request) => (req as any).user?._id?.toString() || (req as any).user?.id?.toString();
+const getUserRoles = (req: Request): string[] => Array.from(new Set([
+  (req as any).user?.role,
+  ...(Array.isArray((req as any).user?.roles) ? (req as any).user.roles : []),
+].filter(Boolean))) as string[];
 
 export class SOSRequestController {
   public static async listHospitals(req: Request, res: Response, next: NextFunction) {
@@ -22,7 +29,8 @@ export class SOSRequestController {
       if (!userId) {
         return res.status(401).json({ message: 'Unauthorized: user identity is required' });
       }
-      const hospitalId = req.body.hospitalId;
+      const roles = getUserRoles(req);
+      const hospitalId = roles.includes('Administrator') ? req.body.hospitalId : (req as any).user?.hospitalId?.toString();
       
       if (!hospitalId) {
         return res.status(400).json({ message: 'hospitalId is required' });
@@ -37,11 +45,13 @@ export class SOSRequestController {
 
   public static async listSOSRequests(req: Request, res: Response, next: NextFunction) {
     try {
-      const userRole = (req as any).user?.role;
-      let hospitalId = undefined;
-      
-      if (userRole === 'HospitalStaff') {
-        hospitalId = req.query.hospitalId; 
+      const roles = getUserRoles(req);
+      const hospitalId = roles.includes('HospitalStaff') && !roles.includes('Administrator')
+        ? (req as any).user?.hospitalId?.toString()
+        : req.query.hospitalId;
+
+      if (roles.includes('HospitalStaff') && !roles.includes('Administrator') && !hospitalId) {
+        return res.status(403).json({ code: 'HOSPITAL_NOT_ASSIGNED', message: 'Tài khoản chưa được gán bệnh viện.' });
       }
 
       const filters = { ...req.query, hospitalId };
@@ -55,6 +65,33 @@ export class SOSRequestController {
   public static async getSOSRequest(req: Request, res: Response, next: NextFunction) {
     try {
       const request = await SOSRequestService.getSOSRequestById(req.params.id as string);
+      const roles = getUserRoles(req);
+      const userId = getUserId(req);
+
+      if (roles.includes('HospitalStaff') && !roles.includes('Administrator')) {
+        const assignedHospitalId = (req as any).user?.hospitalId?.toString();
+        const requestHospitalId = (request as any).hospitalId?._id?.toString() || (request as any).hospitalId?.toString();
+        if (!assignedHospitalId || assignedHospitalId !== requestHospitalId) {
+          return res.status(403).json({ code: 'FORBIDDEN', message: 'Bạn không có quyền xem yêu cầu SOS của bệnh viện khác.' });
+        }
+      }
+
+      const isDonorOnly = roles.includes('Donor') && !roles.some((role) => ['HospitalStaff', 'BloodCenterStaff', 'Administrator'].includes(role));
+      if (isDonorOnly) {
+        const accepted = (request as any).acceptedDonorIds?.some((id: any) => id.toString() === userId);
+        const notified = userId ? await Notification.exists({
+          recipientUserId: userId,
+          type: 'SOS',
+          $or: [
+            { sourceRefId: req.params.id },
+            { 'payload.sosRequestId': req.params.id },
+            { 'payload.sourceRefId': req.params.id },
+          ],
+        }) : null;
+        if (!accepted && !notified) {
+          return res.status(403).json({ code: 'FORBIDDEN', message: 'Yêu cầu SOS này không được gửi đến tài khoản của bạn.' });
+        }
+      }
       res.status(200).json(request);
     } catch (error) {
       next(error);
@@ -63,7 +100,9 @@ export class SOSRequestController {
 
   public static async updateStatus(req: Request, res: Response, next: NextFunction) {
     try {
-      const request = await SOSRequestService.updateSOSRequestStatus(req.params.id as string, req.body.status);
+      const roles = getUserRoles(req);
+      const hospitalId = roles.includes('Administrator') ? undefined : (req as any).user?.hospitalId?.toString();
+      const request = await SOSRequestService.updateSOSRequestStatus(req.params.id as string, req.body.status, hospitalId);
       res.status(200).json(request);
     } catch (error) {
       next(error);
@@ -103,7 +142,9 @@ export class SOSRequestController {
       const { id } = req.params;
       const { cancelledDonorId } = req.body;
       
-      const result = await SOSRequestService.reopenSOSRequest(String(id), cancelledDonorId);
+      const roles = getUserRoles(req);
+      const hospitalId = roles.includes('Administrator') ? undefined : (req as any).user?.hospitalId?.toString();
+      const result = await SOSRequestService.reopenSOSRequest(String(id), cancelledDonorId, hospitalId);
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -174,7 +215,9 @@ export class SOSRequestController {
     try {
       const { id } = req.params;
       const { query } = req.query;
-      const result = await SOSRequestService.lookupDonorForSOS(String(id), String(query || ''));
+      const userId = getUserId(req);
+      if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+      const result = await SOSRequestService.lookupDonorForSOS(String(id), String(query || ''), userId);
       res.status(200).json(result);
     } catch (error: any) {
       const statusCode = error.statusCode || 400;

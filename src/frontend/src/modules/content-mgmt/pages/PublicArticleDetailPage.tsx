@@ -5,6 +5,7 @@ import { articleApi } from '../services/articleApi';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
 import type { Article, ArticleCategory } from '../types/article.types';
 import { format } from 'date-fns';
+import { getApiErrorMessage } from '../../../shared/api/apiError';
 
 export const PublicArticleDetailPage: React.FC = () => {
   const { articleId } = useParams<{ articleId: string }>();
@@ -29,8 +30,8 @@ export const PublicArticleDetailPage: React.FC = () => {
       } else {
         setError('Bài viết không tồn tại hoặc chưa được xuất bản');
       }
-    } catch (err: any) {
-      setError(err.message || 'Không thể tải bài viết');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Không thể tải bài viết'));
     } finally {
       setLoading(false);
     }

@@ -12,3 +12,4 @@ faiss-cpu
 python-jose
 python-dotenv
 scikit-learn
+gradio

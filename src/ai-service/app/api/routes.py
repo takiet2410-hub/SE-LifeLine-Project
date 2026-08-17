@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from app.middleware.auth import verify_token
-from app.middleware.auth import verify_token
+from fastapi.responses import StreamingResponse
+from app.generation.pipeline import process_chat_stream
 
 router = APIRouter()
 
@@ -19,9 +20,6 @@ class ChatRequest(BaseModel):
     history: Optional[List[ChatMessage]] = None
     conversationId: str
     clientRequestId: str
-
-from fastapi.responses import StreamingResponse
-from app.generation.pipeline import process_chat_stream
 
 @router.post("/api/v1/ai/chat", dependencies=[Depends(verify_token)])
 async def chat_endpoint(request: ChatRequest):

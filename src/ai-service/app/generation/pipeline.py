@@ -1,5 +1,14 @@
 import json
 import os
+import sys
+
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 from dotenv import load_dotenv
 load_dotenv()
 from typing import AsyncGenerator
@@ -228,13 +237,13 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
             err_str = str(err)
             print(f"Error executing AI generation with model {model_name}: {err_str}")
             
-            # If not the last model and error is 429 / Quota, try fallback model
-            is_quota_err = "429" in err_str or "Quota" in err_str or "RESOURCE_EXHAUSTED" in err_str
-            if is_quota_err and model_idx < len(models_to_try) - 1:
-                print(f"Quota exceeded on {model_name}. Retrying with fallback model {models_to_try[model_idx + 1]}...")
+            # If not the last model, try fallback model
+            if model_idx < len(models_to_try) - 1:
+                print(f"Retrying with fallback model {models_to_try[model_idx + 1]}...")
                 continue
                 
             # Otherwise yield user-friendly error message
+            is_quota_err = "429" in err_str or "Quota" in err_str or "RESOURCE_EXHAUSTED" in err_str
             err_msg = "Rất tiếc, hệ thống AI đang tạm thời gián đoạn. Vui lòng thử lại sau ít phút."
             if is_quota_err:
                 err_msg = "⚠️ Hệ thống AI đã đạt giới hạn truy cập (Quota Exceeded). Vui lòng đợi khoảng 30-60 giây và thử lại câu hỏi của bạn."

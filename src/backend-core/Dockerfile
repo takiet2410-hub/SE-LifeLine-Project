@@ -29,9 +29,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 node
+# Use the existing 'node' user provided by the node:20-alpine base image
 
 # Copy built application and production node_modules
 COPY --from=builder /app/dist ./dist

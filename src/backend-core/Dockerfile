@@ -3,13 +3,12 @@
 # ==========================================
 FROM node:20-alpine AS base
 
-# Install dependencies only when needed
+# Install ALL dependencies (including devDependencies like typescript) for building
 FROM base AS deps
 RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
-
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+RUN npm ci
 
 # Build the application
 FROM base AS builder
@@ -17,6 +16,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
+
+# Install ONLY production dependencies for the final image
+FROM base AS prod-deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev
 
 # Production image
 FROM base AS runner
@@ -28,9 +33,9 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 node
 
-# Copy built application
+# Copy built application and production node_modules
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
 USER node

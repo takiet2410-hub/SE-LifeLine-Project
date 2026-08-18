@@ -1,7 +1,7 @@
 # ==========================================
 # DOCKERFILE - Production Optimized
 # ==========================================
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
 # Install ALL dependencies (including devDependencies like typescript) for building
 FROM base AS deps

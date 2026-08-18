@@ -8,7 +8,7 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm install
 
 # Build the application
 FROM base AS builder
@@ -21,7 +21,7 @@ RUN npm run build
 FROM base AS prod-deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Production image
 FROM base AS runner

@@ -151,23 +151,20 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
     if (path.includes('/admin/toggles')) {
       return { title: 'Feature Toggles', subtitle: 'CONTROL SYSTEM FEATURE FLAGS & EXPERIMENTAL MODULES' };
     }
-    if (path.includes('/hospital/sos-requests')) {
+    if (path.includes('/hospital/sos-requests') || path.includes('/bc/sos-requests')) {
       return { title: 'SOS Requests Dashboard', subtitle: 'MONITOR AND MANAGE EMERGENCY BLOOD REQUESTS' };
     }
-    if (path.includes('/hospital/sos-reports')) {
+    if (path.includes('/hospital/sos-reports') || path.includes('/sos-reports')) {
       return { title: 'SOS Reports', subtitle: 'VIEW REPORTS AND ANALYTICS FOR SOS REQUESTS' };
     }
-    if (path.includes('/hospital/content')) {
-      return { title: 'Hospital Content & News', subtitle: 'BROWSE ADVISORIES, BLOOD GUIDELINES & ANNOUNCEMENTS' };
+    if (path.includes('/hospital/content') || path.includes('/content')) {
+      return { title: 'Content & News Management', subtitle: 'PUBLISH HEALTH ARTICLES, ADVISORIES & EMERGENCY ALERTS' };
     }
-    if (path.includes('/hospital/notifications')) {
-      return { title: 'Hospital Notifications', subtitle: 'REVIEW SYSTEM NOTIFICATIONS AND EMERGENCY RESPONSES' };
+    if (path.includes('/hospital/notifications') || path.includes('/notifications')) {
+      return { title: 'Notifications & Emergency SOS', subtitle: 'REVIEW CRITICAL HOSPITAL REQUESTS AND SYSTEM ALERTS' };
     }
     if (path.includes('/inventory')) {
       return { title: 'Blood Inventory Management', subtitle: 'MONITOR BLOOD BAG STOCK, FEFO EXPIRATION & DISPATCH' };
-    }
-    if (path.includes('/notifications')) {
-      return { title: 'Notifications & Emergency SOS', subtitle: 'REVIEW CRITICAL HOSPITAL REQUESTS AND SYSTEM ALERTS' };
     }
     return { title: 'Quản Lý Chiến Dịch & Phê Duyệt Đăng Ký', subtitle: 'ĐIỀU PHỐI CÁC ĐỢT TIẾP NHẬN MÁU LƯU ĐỘNG, RÀ SOÁT VÀ PHÊ DUYỆT ĐĂNG KÝ' };
   };

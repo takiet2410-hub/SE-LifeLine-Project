@@ -84,22 +84,18 @@ export const SOSDashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-text-main">SOS Requests Dashboard</h1>
-          <p className="text-brand-text-secondary mt-1">Monitor and manage emergency blood requests</p>
-        </div>
-        {isHospital && (
+      {/* Top Action Controls */}
+      {isHospital && (
+        <div className="flex items-center justify-end">
           <button 
             onClick={() => navigate('/hospital/sos-requests/create')}
-            className="bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm"
+            className="bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2 rounded-xl flex items-center gap-2 font-medium transition-colors shadow-sm cursor-pointer"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             Create SOS Request
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

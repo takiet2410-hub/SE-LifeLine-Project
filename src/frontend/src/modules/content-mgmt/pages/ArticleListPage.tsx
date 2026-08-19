@@ -78,16 +78,11 @@ export const ArticleListPage: React.FC = () => {
 
   return (
     <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
-      {/* Top Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Content Management</h1>
-          <p className="text-xs text-gray-500 mt-1">Manage announcements, news, and donor education articles</p>
-        </div>
-
+      {/* Top Action Controls */}
+      <div className="flex items-center justify-end">
         <button
           onClick={() => navigate(`${basePath}/content/create`)}
-          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-sm flex items-center justify-center space-x-2 transition-colors"
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Create Article</span>

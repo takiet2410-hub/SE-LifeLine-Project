@@ -169,78 +169,62 @@ export const NotificationListPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Top Banner Header */}
-      <div className="bg-white border border-[#f1f3f5] p-6 rounded-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
-              Thông Báo System & Yêu Cầu SOS
-            </h2>
-            {unreadCount > 0 && (
-              <span className="px-2.5 py-0.5 text-[11px] font-bold bg-[#93000b] text-white rounded-full">
-                {unreadCount} chưa đọc
-              </span>
-            )}
+      {/* Filter Controls & Action Bar */}
+      <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-wrap gap-3 items-center justify-between shadow-2xs">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Loại:</span>
+            {['All', 'SOS', 'Campaign', 'Routine', 'Appointment'].map((type) => (
+              <button
+                key={type}
+                onClick={() => { setTypeFilter(type); setPage(1); }}
+                className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all shrink-0 cursor-pointer ${
+                  typeFilter === type
+                    ? type === 'SOS'
+                      ? 'bg-[#93000b] text-white shadow-2xs'
+                      : 'bg-[#1a1a2e] text-white shadow-2xs'
+                    : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
+                }`}
+              >
+                {type === 'All' ? 'Tất cả' : type === 'SOS' ? '🚨 Cấp cứu (SOS)' : type}
+              </button>
+            ))}
           </div>
-          <p className="text-[13px] font-normal text-[#6c757d] mt-1">
-            Tiếp nhận yêu cầu cấp cứu khẩn cấp (SOS) từ các bệnh viện đối tác và cảnh báo vận hành kho máu.
-          </p>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-[12px] font-semibold text-[#6c757d] mr-1">Trạng thái:</span>
+            {['All', 'Unread', 'Read'].map((st) => (
+              <button
+                key={st}
+                onClick={() => { setStatusFilter(st); setPage(1); }}
+                className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all cursor-pointer ${
+                  statusFilter === st
+                    ? 'bg-[#1a1a2e] text-white shadow-2xs'
+                    : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
+                }`}
+              >
+                {st === 'All' ? 'Tất cả' : st === 'Unread' ? 'Chưa đọc' : 'Đã đọc'}
+              </button>
+            ))}
+          </div>
+
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="px-3 py-1.5 text-[12px] font-medium text-[#6c757d] hover:text-[#93000b] transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+              Xóa bộ lọc
+            </button>
+          )}
         </div>
+
         {unreadCount > 0 && (
           <button
             onClick={handleMarkAllAsRead}
-            className="px-4 py-2 text-[13px] font-semibold text-[#93000b] border border-[#93000b]/30 bg-[#93000b]/5 hover:bg-[#93000b]/10 rounded-xl transition-colors shrink-0"
+            className="px-3.5 py-1.5 text-[12px] font-semibold text-[#93000b] border border-[#93000b]/30 bg-[#93000b]/5 hover:bg-[#93000b]/10 rounded-xl transition-colors shrink-0 cursor-pointer"
           >
-            Đánh dấu tất cả đã đọc
-          </button>
-        )}
-      </div>
-
-      {/* Filter Controls */}
-      <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-wrap gap-3 items-center justify-between shadow-2xs">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
-          <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Loại:</span>
-          {['All', 'SOS', 'Campaign', 'Routine', 'Appointment'].map((type) => (
-            <button
-              key={type}
-              onClick={() => { setTypeFilter(type); setPage(1); }}
-              className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all shrink-0 cursor-pointer ${
-                typeFilter === type
-                  ? type === 'SOS'
-                    ? 'bg-[#93000b] text-white shadow-2xs'
-                    : 'bg-[#1a1a2e] text-white shadow-2xs'
-                  : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
-              }`}
-            >
-              {type === 'All' ? 'Tất cả' : type === 'SOS' ? '🚨 Cấp cứu (SOS)' : type}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <span className="text-[12px] font-semibold text-[#6c757d] mr-1">Trạng thái:</span>
-          {['All', 'Unread', 'Read'].map((st) => (
-            <button
-              key={st}
-              onClick={() => { setStatusFilter(st); setPage(1); }}
-              className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all cursor-pointer ${
-                statusFilter === st
-                  ? 'bg-[#1a1a2e] text-white shadow-2xs'
-                  : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
-              }`}
-            >
-              {st === 'All' ? 'Tất cả' : st === 'Unread' ? 'Chưa đọc' : 'Đã đọc'}
-            </button>
-          ))}
-        </div>
-
-        {hasFilters && (
-          <button
-            onClick={clearFilters}
-            className="px-3 py-1.5 text-[12px] font-medium text-[#6c757d] hover:text-[#93000b] transition-colors flex items-center gap-1"
-          >
-            <X className="w-4 h-4" />
-            Xóa bộ lọc
+            Đánh dấu tất cả đã đọc ({unreadCount})
           </button>
         )}
       </div>

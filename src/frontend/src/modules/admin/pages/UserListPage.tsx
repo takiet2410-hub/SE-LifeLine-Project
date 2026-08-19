@@ -140,30 +140,22 @@ export const UserListPage: React.FC = () => {
 
   return (
     <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
-      {/* Header & Main Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#271816]">User Accounts</h1>
-          <p className="text-sm font-medium text-[#6c757d]">
-            Manage user accounts, roles & status (AD-UC-01 & AD-UC-02)
-          </p>
-        </div>
-        <div className="flex flex-col xs:flex-row sm:items-center gap-2 sm:gap-3 [&>button]:w-full sm:[&>button]:w-auto">
-          <button
-            onClick={handleExportCsv}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#271816] text-sm font-semibold rounded-xl transition cursor-pointer"
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
-          <button
-            onClick={() => navigate('/admin/users/create')}
-            className="flex items-center gap-2 px-4 py-2 bg-[#93000b] hover:bg-[#780009] text-white text-sm font-semibold rounded-xl shadow-md transition cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            Create Account
-          </button>
-        </div>
+      {/* Top Action Controls */}
+      <div className="flex items-center justify-end gap-2 sm:gap-3">
+        <button
+          onClick={handleExportCsv}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#271816] text-sm font-semibold rounded-xl transition cursor-pointer"
+        >
+          <Download className="w-4 h-4" />
+          Export CSV
+        </button>
+        <button
+          onClick={() => navigate('/admin/users/create')}
+          className="flex items-center gap-2 px-4 py-2 bg-[#93000b] hover:bg-[#780009] text-white text-sm font-semibold rounded-xl shadow-md transition cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          Create Account
+        </button>
       </div>
 
       {/* Filter Controls Bar */}

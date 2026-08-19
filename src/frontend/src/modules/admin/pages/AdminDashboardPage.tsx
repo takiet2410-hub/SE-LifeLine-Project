@@ -45,18 +45,12 @@ export const AdminDashboardPage: React.FC = () => {
 
   return (
     <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#271816]">Trung tâm vận hành hệ thống</h1>
-          <p className="text-sm font-medium text-[#6c757d]">
-            Số liệu thực tế, trạng thái dịch vụ và cảnh báo vận hành
-          </p>
-        </div>
+      {/* Top Action Controls */}
+      <div className="flex items-center justify-end">
         <button
           onClick={handleRunDiagnostics}
           disabled={runningDiagnostics}
-          className="flex items-center gap-2 px-4 py-2 bg-[#93000b] hover:bg-[#780009] text-white font-semibold rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 bg-[#93000b] hover:bg-[#780009] text-white font-semibold rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer text-sm"
         >
           <RefreshCw className={`w-4 h-4 ${runningDiagnostics ? 'animate-spin' : ''}`} />
           {runningDiagnostics ? 'Đang kiểm tra...' : 'Kiểm tra hệ thống'}

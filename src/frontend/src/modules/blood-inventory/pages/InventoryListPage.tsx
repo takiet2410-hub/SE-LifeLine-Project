@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ArrowUpRight, BarChart2, Search, Eye, AlertCircle, Package, Sparkles } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { Plus, ArrowUpRight, BarChart2, Search, Eye, AlertCircle, Package } from 'lucide-react';
 import { inventoryApi } from '../services/inventoryApi';
 import type { BloodBagData } from '../../../services/mockData';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -10,7 +9,6 @@ import type { Column } from '../../../components/common/DataTable';
 import { format, differenceInDays } from 'date-fns';
 
 export const InventoryListPage: React.FC = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [bags, setBags] = useState<BloodBagData[]>([]);
@@ -159,46 +157,29 @@ export const InventoryListPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-6 rounded-2xl shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
-              {t('inventory.title') || 'Quản Lý Kho Túi Máu'}
-            </h2>
-            <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-red-50 text-[#93000b] border border-red-100 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#93000b]" />
-              FEFO Priority
-            </span>
-          </div>
-          <p className="text-[13px] font-normal text-[#6c757d] mt-1">
-            Theo dõi vị trí lưu trữ, cảnh báo hạn sử dụng FEFO và điều phối xuất nhập kho chuẩn ISO.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => navigate('/bc/inventory/stock-in')}
-            className="px-4 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-semibold rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-98"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Nhập Kho (Stock In)</span>
-          </button>
-          <button
-            onClick={() => navigate('/bc/inventory/stock-out')}
-            className="px-4 py-2.5 bg-white text-[#93000b] border border-[#93000b] hover:bg-red-50 text-[13px] font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer active:scale-98"
-          >
-            <ArrowUpRight className="w-4 h-4" />
-            <span>Xuất Kho (Stock Out)</span>
-          </button>
-          <button
-            onClick={() => navigate('/bc/inventory/stats')}
-            className="px-4 py-2.5 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[13px] font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
-          >
-            <BarChart2 className="w-4 h-4" />
-            <span>Thống Kê</span>
-          </button>
-        </div>
+      {/* Quick Action Buttons */}
+      <div className="flex items-center justify-end gap-2.5 flex-wrap">
+        <button
+          onClick={() => navigate('/bc/inventory/stock-in')}
+          className="px-4 py-2 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-semibold rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-98"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Nhập Kho (Stock In)</span>
+        </button>
+        <button
+          onClick={() => navigate('/bc/inventory/stock-out')}
+          className="px-4 py-2 bg-white text-[#93000b] border border-[#93000b] hover:bg-red-50 text-[13px] font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer active:scale-98"
+        >
+          <ArrowUpRight className="w-4 h-4" />
+          <span>Xuất Kho (Stock Out)</span>
+        </button>
+        <button
+          onClick={() => navigate('/bc/inventory/stats')}
+          className="px-4 py-2 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[13px] font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+        >
+          <BarChart2 className="w-4 h-4" />
+          <span>Thống Kê</span>
+        </button>
       </div>
 
       {/* Summary KPI Cards */}

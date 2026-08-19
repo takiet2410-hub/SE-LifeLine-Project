@@ -641,13 +641,10 @@ export const CampaignListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* KPI Overview Summary Cards */}
+      {/* KPI Overview Summary Cards (Display Only) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Tổng số chiến dịch */}
-        <div
-          onClick={() => setActiveTab('campaigns')}
-          className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4 cursor-pointer"
-        >
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-red-50 text-[#93000b] flex items-center justify-center shrink-0 border border-red-100">
             <Activity className="w-6 h-6" />
           </div>
@@ -658,13 +655,7 @@ export const CampaignListPage: React.FC = () => {
         </div>
 
         {/* Card 2: Đang tiếp nhận */}
-        <div
-          onClick={() => {
-            setActiveTab('campaigns');
-            setStatusFilter('Active');
-          }}
-          className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4 cursor-pointer"
-        >
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
             <Sparkles className="w-6 h-6" />
           </div>
@@ -675,10 +666,7 @@ export const CampaignListPage: React.FC = () => {
         </div>
 
         {/* Card 3: Tổng lượt đăng ký */}
-        <div
-          onClick={() => setActiveTab('campaigns')}
-          className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4"
-        >
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
             <Users className="w-6 h-6" />
           </div>
@@ -688,36 +676,27 @@ export const CampaignListPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 4: Đơn chờ phê duyệt (Click to jump to pending tab) */}
-        <div
-          onClick={() => setActiveTab('pendingRegistrations')}
-          className={`p-5 rounded-2xl border transition-all flex items-center justify-between gap-4 cursor-pointer shadow-2xs hover:shadow-md ${
-            pendingCount > 0
-              ? 'bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-white border-amber-300 ring-2 ring-amber-400/20'
-              : 'bg-white border-[#f1f3f5]'
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${
-                pendingCount > 0
-                  ? 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse'
-                  : 'bg-slate-50 text-slate-600 border-slate-200'
-              }`}
-            >
-              <Clock className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-[12px] font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1.5">
-                Đơn chờ phê duyệt
-                {pendingCount > 0 && (
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping inline-block" />
-                )}
-              </p>
-              <p className="text-[24px] font-bold text-amber-700 leading-tight mt-0.5">
-                {pendingCount} <span className="text-[13px] font-semibold text-[#6c757d]">đơn</span>
-              </p>
-            </div>
+        {/* Card 4: Đơn chờ phê duyệt */}
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs flex items-center gap-4">
+          <div
+            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${
+              pendingCount > 0
+                ? 'bg-amber-100 text-amber-800 border-amber-200'
+                : 'bg-slate-50 text-slate-600 border-slate-200'
+            }`}
+          >
+            <Clock className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[12px] font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1.5">
+              Đơn chờ phê duyệt
+              {pendingCount > 0 && (
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping inline-block" />
+              )}
+            </p>
+            <p className="text-[24px] font-bold text-amber-700 leading-tight mt-0.5">
+              {pendingCount} <span className="text-[13px] font-semibold text-[#6c757d]">đơn</span>
+            </p>
           </div>
         </div>
       </div>

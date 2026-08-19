@@ -234,13 +234,13 @@ export const InventoryStatsPage: React.FC = () => {
           </div>
 
           <div className="flex-1 min-h-[300px] w-full flex flex-col justify-center relative">
-            {stats?.summaryCards?.totalUnits === 0 && (
-               <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-medium text-sm">Chưa có dữ liệu kho</div>
+            {(!stats || stats.summaryCards.availableUnits === 0) && (
+               <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-medium text-sm">Chưa có dữ liệu kho khả dụng</div>
             )}
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={chartData}
+                  data={chartData.filter((d) => d.units > 0)}
                   cx="50%"
                   cy="50%"
                   innerRadius={65}
@@ -250,7 +250,7 @@ export const InventoryStatsPage: React.FC = () => {
                   stroke="none"
                   animationDuration={1500}
                 >
-                  {chartData.map((_entry: any, index: number) => (
+                  {chartData.filter((d) => d.units > 0).map((_entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

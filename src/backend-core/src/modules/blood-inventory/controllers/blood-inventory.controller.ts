@@ -92,9 +92,15 @@ export class BloodInventoryController {
     }
   }
 
-  static async getStatistics(_req: Request, res: Response) {
+  static async getStatistics(req: Request, res: Response) {
     try {
-      const stats = await BloodInventoryService.getInventoryStatistics();
+      const user = (req as any).user;
+      let userCenterId = req.query.bloodCenterId as string;
+      if (user && user.role === 'BloodCenterStaff' && user.bloodCenterId) {
+        userCenterId = user.bloodCenterId.toString();
+      }
+
+      const stats = await BloodInventoryService.getInventoryStatistics(userCenterId);
       return res.status(200).json({ success: true, data: stats });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });

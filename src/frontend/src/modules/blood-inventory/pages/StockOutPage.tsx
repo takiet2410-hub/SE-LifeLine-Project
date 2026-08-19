@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckSquare, Square, ClipboardList } from 'lucide-react';
+import { ArrowLeft, CheckSquare, Square, ClipboardList, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { inventoryApi } from '../services/inventoryApi';
 import type { BloodBagData } from '../../../services/mockData';
@@ -15,6 +15,8 @@ export const StockOutPage: React.FC = () => {
   const [availableBags, setAvailableBags] = useState<BloodBagData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBagIds, setSelectedBagIds] = useState<string[]>([]);
+  const [search, setSearch] = useState('');
+  const [bloodTypeFilter, setBloodTypeFilter] = useState('All');
   const searchParams = new URLSearchParams(window.location.search);
   const initialReason = searchParams.get('reason') as 'Dispatch' | 'Disposal' | 'Transfer' | 'Other' || 'Dispatch';
   const [reason, setReason] = useState<'Dispatch' | 'Disposal' | 'Transfer' | 'Other'>(initialReason);
@@ -36,6 +38,16 @@ export const StockOutPage: React.FC = () => {
   const nearExpiryBags = availableBags.filter((b) => {
     const diffDays = differenceInDays(new Date(b.expiryDate), new Date());
     return diffDays >= 0 && diffDays <= 7;
+  });
+
+  const filteredBags = availableBags.filter((b) => {
+    const q = search.toLowerCase().trim();
+    const matchesSearch = !q ||
+      (b.bagCode && b.bagCode.toLowerCase().includes(q)) ||
+      (b.storageLocation && b.storageLocation.toLowerCase().includes(q)) ||
+      (b._id && b._id.toLowerCase().includes(q));
+    const matchesBloodType = bloodTypeFilter === 'All' || b.bloodType === bloodTypeFilter;
+    return matchesSearch && matchesBloodType;
   });
 
   const toggleSelectBag = (id: string) => {
@@ -71,12 +83,20 @@ export const StockOutPage: React.FC = () => {
     }
   };
 
+  const handleExit = () => {
+    if (selectedBagIds.length > 0) {
+      setShowCancelDialog(true);
+    } else {
+      navigate('/bc/inventory');
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Top Action Bar */}
       <div className="flex items-center justify-between">
         <button
-          onClick={() => setShowCancelDialog(true)}
+          onClick={handleExit}
           className="h-10 px-3.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-2 text-sm font-semibold shadow-2xs"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -116,18 +136,65 @@ export const StockOutPage: React.FC = () => {
       {/* Main Stock Out Selection Form */}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Selection Table */}
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs space-y-4 p-5">
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs space-y-3.5 p-5">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-sm font-bold text-slate-900">
-              Danh sách túi máu sẵn có ({availableBags.length})
+              Danh sách túi máu sẵn có ({filteredBags.length}/{availableBags.length})
             </h3>
+          </div>
+
+          {/* Search & Blood Type Filter Bar */}
+          <div className="space-y-2.5 bg-slate-50/70 p-3 rounded-xl border border-slate-200/80">
+            {/* Search Box */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm theo Mã túi máu (BB-...), Vị trí lưu trữ..."
+                className="w-full h-9 pl-9 pr-8 bg-white border border-slate-200 focus:border-[#93000b] rounded-lg text-xs text-[#271816] placeholder-slate-400 outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Blood Type Filter Pills */}
+            <div className="flex items-center gap-1 overflow-x-auto pt-0.5">
+              <span className="text-[11px] font-semibold text-slate-500 shrink-0 mr-1">Nhóm máu:</span>
+              {['All', 'O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setBloodTypeFilter(type)}
+                  className={`h-7 px-2.5 text-[11px] font-bold rounded-lg transition-all shrink-0 cursor-pointer flex items-center justify-center ${
+                    bloodTypeFilter === type
+                      ? 'bg-[#93000b] text-white shadow-2xs'
+                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {type === 'All' ? 'Tất cả' : type}
+                </button>
+              ))}
+            </div>
           </div>
 
           {loading ? (
             <SkeletonLoader type="table" rows={4} />
+          ) : filteredBags.length === 0 ? (
+            <div className="text-center py-10 text-slate-400 text-xs">
+              Không tìm thấy túi máu nào phù hợp với điều kiện tìm kiếm/lọc.
+            </div>
           ) : (
-            <div className="divide-y divide-slate-100 max-h-[420px] overflow-y-auto pr-1">
-              {availableBags.map((bag) => {
+            <div className="divide-y divide-slate-100 max-h-[380px] overflow-y-auto pr-1">
+              {filteredBags.map((bag) => {
                 const isSelected = selectedBagIds.includes(bag._id);
                 const diffDays = differenceInDays(new Date(bag.expiryDate), new Date());
                 const isNearExpiry = diffDays >= 0 && diffDays <= 7;
@@ -136,12 +203,12 @@ export const StockOutPage: React.FC = () => {
                   <div
                     key={bag._id}
                     onClick={() => toggleSelectBag(bag._id)}
-                    className={`p-3 rounded-lg flex items-center justify-between transition-colors cursor-pointer my-1 ${
+                    className={`p-3 rounded-xl flex items-center justify-between transition-colors cursor-pointer my-1 ${
                       isSelected
                         ? 'bg-red-50 border border-red-200'
                         : isNearExpiry
                         ? 'bg-amber-50/50 hover:bg-amber-50 border border-amber-200/60'
-                        : 'hover:bg-slate-50'
+                        : 'hover:bg-slate-50 border border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -228,7 +295,7 @@ export const StockOutPage: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => setShowCancelDialog(true)}
+              onClick={handleExit}
               className="w-full h-9 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer flex items-center justify-center"
             >
               Hủy bỏ

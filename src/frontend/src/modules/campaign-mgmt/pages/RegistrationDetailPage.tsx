@@ -277,41 +277,38 @@ export const RegistrationDetailPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Navigation & Header Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-4 sm:p-5 rounded-2xl shadow-2xs">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate(`/bc/campaigns/${campaignId || 'all'}/registrations`)}
-            className="p-2 rounded-xl text-[#6c757d] hover:text-[#271816] hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+            className="h-10 w-10 rounded-xl bg-white border border-[#f1f3f5] text-[#6c757d] hover:text-[#271816] hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-center shrink-0 shadow-2xs"
             title="Quay lại danh sách đăng ký"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-0.5 text-[11px] font-mono font-bold bg-[#1a1a2e] text-white rounded-md shrink-0">
+              <span className="px-2.5 py-1 text-[11px] font-mono font-bold bg-[#1a1a2e] text-white rounded-md shrink-0">
                 {codeId}
               </span>
-              <h2 className="text-[18px] md:text-[20px] font-bold text-[#271816] tracking-tight whitespace-nowrap">
-                Xác Nhận & Phê Duyệt Đơn Sàng Lọc
-              </h2>
-              <div className="scale-125 origin-left ml-2 inline-flex items-center">
+              <span className="text-sm font-bold text-[#271816]">
+                Hồ sơ: {registration.donorName || 'Người hiến máu'}
+              </span>
+              <div className="ml-1 inline-flex items-center">
                 <StatusBadge status={registration.status as any} />
               </div>
             </div>
-            <p className="text-[12px] text-[#6c757d] mt-0.5">
-              Hồ sơ đăng ký hiến máu — Trung tâm Truyền máu TP.HCM
-            </p>
           </div>
         </div>
 
         {/* Action Buttons for Doctor based on Registration Status Flow */}
-        <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+        <div className="flex items-center gap-2 shrink-0 self-end md:self-center flex-wrap">
           {(registration.status === 'Pending' || (registration.status as string) === 'Registered') && (
             <>
               <button
                 type="button"
                 onClick={() => setConfirmStatusModal({ isOpen: true, targetStatus: 'Confirmed' })}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+                className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
               >
                 <CheckCircle2 className="w-4 h-4 text-white" />
                 <span>Xác Nhận (Confirmed)</span>
@@ -319,7 +316,7 @@ export const RegistrationDetailPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setRejectModal({ isOpen: true, reason: '' })}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+                className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
               >
                 <XCircle className="w-4 h-4 text-white" />
                 <span>Từ Chối (Rejected)</span>
@@ -331,7 +328,7 @@ export const RegistrationDetailPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setConfirmStatusModal({ isOpen: true, targetStatus: 'CheckedIn' })}
-              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+              className="h-10 px-4 bg-amber-600 hover:bg-amber-700 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
             >
               <Clock className="w-4 h-4 text-white" />
               <span>Điểm Danh (CheckIn)</span>
@@ -351,7 +348,7 @@ export const RegistrationDetailPage: React.FC = () => {
                   }
                   setConfirmStatusModal({ isOpen: true, targetStatus: 'Eligible' });
                 }}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+                className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
               >
                 <CheckCircle2 className="w-4 h-4 text-white" />
                 <span>Đủ Điều Kiện (Eligible)</span>
@@ -359,7 +356,7 @@ export const RegistrationDetailPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setConfirmStatusModal({ isOpen: true, targetStatus: 'Ineligible' })}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+                className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
               >
                 <XCircle className="w-4 h-4 text-white" />
                 <span>Không Đủ Điều Kiện (Ineligible)</span>
@@ -371,7 +368,7 @@ export const RegistrationDetailPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setConfirmStatusModal({ isOpen: true, targetStatus: 'Examining' })}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+              className="h-10 px-4 bg-purple-600 hover:bg-purple-700 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
             >
               <Activity className="w-4 h-4 text-white" />
               <span>Examining</span>
@@ -382,7 +379,7 @@ export const RegistrationDetailPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowExaminingModal(true)}
-              className="px-4 py-2 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+              className="h-10 px-4 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
             >
               <Sparkles className="w-4 h-4 text-amber-400" />
               <span>Completed</span>

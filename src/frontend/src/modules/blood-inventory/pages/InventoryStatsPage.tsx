@@ -57,26 +57,21 @@ export const InventoryStatsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/bc/inventory')}
-            className="p-2 rounded-xl text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition-all cursor-pointer"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Báo Cáo & Thống Kê Kho Máu</h2>
-            <p className="text-[13px] font-medium text-slate-500">Phân tích biểu đồ tồn kho, thể tích và cảnh báo dự trữ an toàn</p>
-          </div>
-        </div>
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between gap-4">
+        <button
+          onClick={() => navigate('/bc/inventory')}
+          className="h-10 px-3.5 rounded-xl bg-white border border-[#f1f3f5] hover:bg-slate-50 text-[#6c757d] hover:text-[#271816] transition-all cursor-pointer flex items-center gap-2 text-sm font-semibold shadow-2xs"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Quay lại Kho Máu</span>
+        </button>
 
         {/* Mode Toggle */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200/60">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200/60 h-10">
           <button
             onClick={() => setChartMode('Units')}
-            className={`px-4 py-2 text-[13px] font-bold rounded-lg transition-all cursor-pointer ${
+            className={`h-8 px-3.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center ${
               chartMode === 'Units' 
                 ? 'bg-white text-[#93000b] shadow-sm border border-slate-200/50' 
                 : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
@@ -86,7 +81,7 @@ export const InventoryStatsPage: React.FC = () => {
           </button>
           <button
             onClick={() => setChartMode('Volume')}
-            className={`px-4 py-2 text-[13px] font-bold rounded-lg transition-all cursor-pointer ${
+            className={`h-8 px-3.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center ${
               chartMode === 'Volume' 
                 ? 'bg-white text-[#93000b] shadow-sm border border-slate-200/50' 
                 : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'

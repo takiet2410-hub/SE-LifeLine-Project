@@ -99,57 +99,57 @@ export const SOSDashboardPage: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-brand-bg-card p-5 rounded-xl border border-brand-border shadow-sm flex items-start gap-4">
-          <div className="p-3 bg-brand-info/10 text-brand-info rounded-lg">
+        <div className="bg-brand-bg-card p-5 rounded-2xl border border-brand-border shadow-sm flex items-start gap-4">
+          <div className="p-3 bg-brand-info/10 text-brand-info rounded-xl">
             <Activity className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-brand-text-muted">Total Requests</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand-text-muted">Total Requests</p>
             <h3 className="text-2xl font-bold text-brand-text-main mt-1">{stats.total}</h3>
           </div>
         </div>
-        <div className="bg-brand-bg-card p-5 rounded-xl border border-brand-border shadow-sm flex items-start gap-4">
-          <div className="p-3 bg-brand-error/10 text-brand-error rounded-lg">
+        <div className="bg-brand-bg-card p-5 rounded-2xl border border-brand-border shadow-sm flex items-start gap-4">
+          <div className="p-3 bg-brand-error/10 text-brand-error rounded-xl">
             <AlertTriangle className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-brand-text-muted">Critical Urgency</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand-text-muted">Critical Urgency</p>
             <h3 className="text-2xl font-bold text-brand-text-main mt-1">{stats.critical}</h3>
           </div>
         </div>
-        <div className="bg-brand-bg-card p-5 rounded-xl border border-brand-border shadow-sm flex items-start gap-4">
-          <div className="p-3 bg-brand-warning/10 text-brand-warning rounded-lg">
+        <div className="bg-brand-bg-card p-5 rounded-2xl border border-brand-border shadow-sm flex items-start gap-4">
+          <div className="p-3 bg-brand-warning/10 text-brand-warning rounded-xl">
             <Clock className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-brand-text-muted">Pending Review</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand-text-muted">Pending Review</p>
             <h3 className="text-2xl font-bold text-brand-text-main mt-1">{stats.pending}</h3>
           </div>
         </div>
-        <div className="bg-brand-bg-card p-5 rounded-xl border border-brand-border shadow-sm flex items-start gap-4">
-          <div className="p-3 bg-brand-success/10 text-brand-success rounded-lg">
+        <div className="bg-brand-bg-card p-5 rounded-2xl border border-brand-border shadow-sm flex items-start gap-4">
+          <div className="p-3 bg-brand-success/10 text-brand-success rounded-xl">
             <CheckCircle className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-brand-text-muted">Fulfilled</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand-text-muted">Fulfilled</p>
             <h3 className="text-2xl font-bold text-brand-text-main mt-1">{stats.fulfilled}</h3>
           </div>
         </div>
       </div>
 
       {/* List Section */}
-      <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm overflow-hidden">
+      <div className="bg-brand-bg-card rounded-2xl border border-brand-border shadow-sm overflow-hidden">
         <div className="p-5 border-b border-brand-border flex flex-col sm:flex-row justify-between gap-4">
           <h2 className="text-lg font-bold text-brand-text-main">Recent SOS Requests</h2>
           <div className="flex gap-3">
-            <div className="relative">
-              <Search className="w-5 h-5 text-brand-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="relative flex-1 sm:flex-initial">
+              <Search className="w-4 h-4 text-brand-text-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input 
                 type="text" 
                 placeholder="Search Request ID or Patient..." 
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-sm w-full sm:w-64"
+                className="h-10 pl-10 pr-4 bg-brand-bg-muted border border-brand-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-sm w-full sm:w-64"
               />
             </div>
             <button
@@ -157,13 +157,13 @@ export const SOSDashboardPage: React.FC = () => {
               onClick={() => setIsFilterOpen((open) => !open)}
               aria-label="Filter SOS requests"
               aria-expanded={isFilterOpen}
-              className={`relative p-2 border rounded-lg transition-colors ${
+              className={`relative h-10 w-10 flex items-center justify-center border rounded-xl transition-colors cursor-pointer shrink-0 ${
                 bloodTypeFilter || urgencyFilter
                   ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
                   : 'border-brand-border-dark text-brand-text-secondary hover:bg-brand-bg-muted'
               }`}
             >
-              <Filter className="w-5 h-5" />
+              <Filter className="w-4 h-4" />
               {(bloodTypeFilter || urgencyFilter) && (
                 <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-brand-primary ring-2 ring-white" />
               )}

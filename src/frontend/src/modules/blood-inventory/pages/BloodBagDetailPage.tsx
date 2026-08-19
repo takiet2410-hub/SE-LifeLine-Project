@@ -77,27 +77,26 @@ export const BloodBagDetailPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/bc/inventory')}
-            className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors"
+            className="h-10 px-3.5 rounded-xl bg-white border border-[#f1f3f5] hover:bg-slate-50 text-[#6c757d] hover:text-[#271816] transition-colors cursor-pointer flex items-center gap-2 text-sm font-semibold shadow-2xs"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
+            <span>Quay lại Kho Máu</span>
           </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-slate-900 font-mono">{bag.bagCode}</h2>
-              <StatusBadge status={bag.status} />
-            </div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-slate-900 font-mono">{bag.bagCode}</h2>
+            <StatusBadge status={bag.status} />
           </div>
         </div>
 
         {!isEditing && !isExpired && (
           <button
             onClick={() => setIsEditing(true)}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg flex items-center gap-2 shadow-xs transition-colors"
+            className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-sm font-semibold rounded-xl flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
           >
             <Edit3 className="w-4 h-4" />
             <span>Cập nhật trạng thái</span>

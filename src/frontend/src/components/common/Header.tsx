@@ -151,20 +151,39 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
     if (path.includes('/admin/toggles')) {
       return { title: 'Feature Toggles', subtitle: 'CONTROL SYSTEM FEATURE FLAGS & EXPERIMENTAL MODULES' };
     }
-    if (path.includes('/hospital/sos-requests') || path.includes('/bc/sos-requests')) {
-      return { title: 'SOS Requests Dashboard', subtitle: 'MONITOR AND MANAGE EMERGENCY BLOOD REQUESTS' };
+    // Blood Center Staff Routes (Tiếng Việt)
+    if (path.includes('/campaigns/create')) {
+      return { title: 'Tạo Chiến Dịch Hiến Máu Mới', subtitle: 'THIẾT LẬP THÔNG TIN, ĐỊA ĐIỂM VÀ LỊCH TIẾP NHẬN MÁU' };
     }
-    if (path.includes('/hospital/sos-reports') || path.includes('/sos-reports')) {
-      return { title: 'SOS Reports', subtitle: 'VIEW REPORTS AND ANALYTICS FOR SOS REQUESTS' };
+    if (path.includes('/registrations')) {
+      return { title: 'Danh Sách Người Đăng Ký & Phê Duyệt Sàng Lọc', subtitle: 'RÀ SOÁT HỒ SƠ NGƯỜI HIẾN, LỊCH HẸN VÀ KẾT QUẢ SÀNG LỌC' };
     }
-    if (path.includes('/hospital/content') || path.includes('/content')) {
-      return { title: 'Content & News Management', subtitle: 'PUBLISH HEALTH ARTICLES, ADVISORIES & EMERGENCY ALERTS' };
+    if (path.includes('/qr-scan')) {
+      return { title: 'Quét Mã QR & Check-in', subtitle: 'XÁC THỰC VÉ E-TICKET VÀ TIẾP NHẬN NGƯỜI HIẾN MÁU' };
     }
-    if (path.includes('/hospital/notifications') || path.includes('/notifications')) {
-      return { title: 'Notifications & Emergency SOS', subtitle: 'REVIEW CRITICAL HOSPITAL REQUESTS AND SYSTEM ALERTS' };
+    if (path.includes('/inventory/stock-in')) {
+      return { title: 'Nhập Túi Máu Vào Kho', subtitle: 'TIẾP NHẬN TÚI MÁU MỚI TỪ CHIẾN DỊCH HOẶC HIẾN TRỰC TIẾP' };
+    }
+    if (path.includes('/inventory/stock-out')) {
+      return { title: 'Xuất Túi Máu Khỏi Kho', subtitle: 'ĐIỀU PHỐI TÚI MÁU CHO BỆNH VIỆN VÀ CẤP CỨU SOS' };
+    }
+    if (path.includes('/inventory/stats')) {
+      return { title: 'Thống Kê Kho Máu & Phân Tích', subtitle: 'BÁO CÁO CƠ CẤU NHÓM MÁU, HẠN SỬ DỤNG VÀ BIẾN ĐỘNG KHO' };
     }
     if (path.includes('/inventory')) {
-      return { title: 'Blood Inventory Management', subtitle: 'MONITOR BLOOD BAG STOCK, FEFO EXPIRATION & DISPATCH' };
+      return { title: 'Quản Lý Kho Máu & Tồn Trữ', subtitle: 'THEO DÕI VỊ TRÍ LƯU TRỮ, CẢNH BÁO HẠN DÙNG FEFO VÀ ĐIỀU PHỐI XUẤT NHẬP KHO' };
+    }
+    if (path.includes('/content/create')) {
+      return { title: 'Tạo Bài Viết & Thông Báo Mới', subtitle: 'SOẠN THẢO BÀI VIẾT, HƯỚNG DẪN HOẶC CẢNH BÁO KHẨN CẤP' };
+    }
+    if (path.includes('/content')) {
+      return { title: 'Quản Lý Nội Dung & Tin Tức', subtitle: 'XUẤT BẢN BÀI VIẾT, CẨM NANG SỨC KHỎE VÀ THÔNG BÁO' };
+    }
+    if (path.includes('/sos-requests')) {
+      return { title: 'Yêu Cầu Cấp Cứu SOS', subtitle: 'TIẾP NHẬN VÀ ĐIỀU PHỐI MÁU CẤP CỨU CHO CÁC BỆNH VIỆN ĐỐI TÁC' };
+    }
+    if (path.includes('/notifications')) {
+      return { title: 'Thông Báo Hệ Thống & Cảnh Báo', subtitle: 'TIẾP NHẬN YÊU CẦU CẤP CỨU KHẨN CẤP VÀ CẢNH BÁO VẬN HÀNH' };
     }
     return { title: 'Quản Lý Chiến Dịch & Phê Duyệt Đăng Ký', subtitle: 'ĐIỀU PHỐI CÁC ĐỢT TIẾP NHẬN MÁU LƯU ĐỘNG, RÀ SOÁT VÀ PHÊ DUYỆT ĐĂNG KÝ' };
   };
@@ -195,7 +214,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
                 : 'text-[#93000b] bg-red-50 border-red-100'
             }`}>
               <ShieldCheck className={`w-3 h-3 ${isAdmin ? 'text-purple-700' : isHospital ? 'text-emerald-700' : 'text-[#93000b]'}`} />
-              {isAdmin ? 'System Admin' : isHospital ? 'Hospital Portal' : 'Staff Portal'}
+              {isAdmin ? 'System Admin' : isHospital ? 'Hospital Portal' : 'Cổng Nhân Viên'}
             </span>
           </div>
           <p className="text-[11px] font-semibold text-[#6c757d] uppercase tracking-wider mt-0.5">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight, CheckSquare, Square, ClipboardList } from 'lucide-react';
+import { ArrowLeft, CheckSquare, Square, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 import { inventoryApi } from '../services/inventoryApi';
 import type { BloodBagData } from '../../../services/mockData';
@@ -73,23 +73,15 @@ export const StockOutPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between">
         <button
           onClick={() => setShowCancelDialog(true)}
-          className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors"
+          className="h-10 px-3.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-2 text-sm font-semibold shadow-2xs"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
+          <span>Quay lại Kho Máu</span>
         </button>
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <ArrowUpRight className="w-5 h-5 text-red-600" />
-            <span>Xuất Kho Túi Máu (Stock Out)</span>
-          </h2>
-          <p className="text-xs text-slate-500">
-            Chọn các túi máu xuất kho theo quy tắc ưu tiên FEFO (Hết hạn trước - Xuất trước)
-          </p>
-        </div>
       </div>
 
       {/* 📋 FEFO Recommendation Panel (BC-UC-16 Special Requirement) */}
@@ -192,22 +184,22 @@ export const StockOutPage: React.FC = () => {
         </div>
 
         {/* Right Column: Reason & Submit Summary Panel */}
-        <div className="lg:col-span-1 bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4 flex flex-col justify-between">
+        <div className="lg:col-span-1 bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4 flex flex-col justify-between">
           <div className="space-y-4">
             <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
               Thông tin xuất kho
             </h3>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-1">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs space-y-1">
               <span className="text-slate-500 block">Số túi máu đã chọn:</span>
-              <span className="text-xl font-black text-red-600">{selectedBagIds.length} túi</span>
+              <span className="text-2xl font-black text-[#93000b]">{selectedBagIds.length} túi</span>
             </div>
 
             <FormField label="Lý do xuất kho" required>
               <select
                 value={reason}
                 onChange={(e) => setReason(e.target.value as any)}
-                className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none bg-white font-medium"
+                className="w-full h-10 px-3.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none bg-white font-medium cursor-pointer"
               >
                 <option value="Dispatch">Cấp phát cho bệnh viện (Dispatch)</option>
                 <option value="Transfer">Điều chuyển cơ sở khác (Transfer)</option>
@@ -222,7 +214,7 @@ export const StockOutPage: React.FC = () => {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Nhập tên bệnh viện tiếp nhận hoặc ghi chú..."
-                className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
               />
             </FormField>
           </div>
@@ -231,14 +223,14 @@ export const StockOutPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting || selectedBagIds.length === 0}
-              className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm rounded-lg shadow-xs transition-colors disabled:opacity-40"
+              className="w-full h-10 bg-[#93000b] hover:bg-[#7a0009] text-white font-semibold text-sm rounded-xl shadow-xs transition-colors disabled:opacity-40 cursor-pointer flex items-center justify-center"
             >
               {isSubmitting ? 'Đang xuất kho...' : `Xác nhận xuất ${selectedBagIds.length} túi máu`}
             </button>
             <button
               type="button"
               onClick={() => setShowCancelDialog(true)}
-              className="w-full py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="w-full h-9 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer flex items-center justify-center"
             >
               Hủy bỏ
             </button>

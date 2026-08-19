@@ -178,7 +178,7 @@ export const NotificationListPage: React.FC = () => {
               <button
                 key={type}
                 onClick={() => { setTypeFilter(type); setPage(1); }}
-                className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all shrink-0 cursor-pointer ${
+                className={`h-9 px-3.5 text-[12px] font-bold rounded-xl transition-all shrink-0 cursor-pointer flex items-center justify-center ${
                   typeFilter === type
                     ? type === 'SOS'
                       ? 'bg-[#93000b] text-white shadow-2xs'
@@ -191,13 +191,13 @@ export const NotificationListPage: React.FC = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 border-l border-[#f1f3f5] pl-3">
             <span className="text-[12px] font-semibold text-[#6c757d] mr-1">Trạng thái:</span>
             {['All', 'Unread', 'Read'].map((st) => (
               <button
                 key={st}
                 onClick={() => { setStatusFilter(st); setPage(1); }}
-                className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all cursor-pointer ${
+                className={`h-9 px-3.5 text-[12px] font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center ${
                   statusFilter === st
                     ? 'bg-[#1a1a2e] text-white shadow-2xs'
                     : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
@@ -211,7 +211,7 @@ export const NotificationListPage: React.FC = () => {
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="px-3 py-1.5 text-[12px] font-medium text-[#6c757d] hover:text-[#93000b] transition-colors flex items-center gap-1 cursor-pointer"
+              className="h-9 px-3 text-[12px] font-medium text-[#6c757d] hover:text-[#93000b] transition-colors flex items-center gap-1 cursor-pointer"
             >
               <X className="w-4 h-4" />
               Xóa bộ lọc
@@ -222,7 +222,7 @@ export const NotificationListPage: React.FC = () => {
         {unreadCount > 0 && (
           <button
             onClick={handleMarkAllAsRead}
-            className="px-3.5 py-1.5 text-[12px] font-semibold text-[#93000b] border border-[#93000b]/30 bg-[#93000b]/5 hover:bg-[#93000b]/10 rounded-xl transition-colors shrink-0 cursor-pointer"
+            className="h-9 px-3.5 text-[12px] font-semibold text-[#93000b] border border-[#93000b]/30 bg-[#93000b]/5 hover:bg-[#93000b]/10 rounded-xl transition-colors shrink-0 cursor-pointer flex items-center justify-center"
           >
             Đánh dấu tất cả đã đọc ({unreadCount})
           </button>

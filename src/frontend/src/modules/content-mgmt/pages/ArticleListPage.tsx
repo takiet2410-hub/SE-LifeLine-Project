@@ -82,10 +82,10 @@ export const ArticleListPage: React.FC = () => {
       <div className="flex items-center justify-end">
         <button
           onClick={() => navigate(`${basePath}/content/create`)}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
+          className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-sm font-semibold rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Create Article</span>
+          <span>Tạo Bài Viết Mới</span>
         </button>
       </div>
 
@@ -93,8 +93,9 @@ export const ArticleListPage: React.FC = () => {
       <ContentStatsCards summary={summary} loading={loading} />
 
       {/* Filters & Search */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl border border-[#f1f3f5] p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
@@ -102,53 +103,52 @@ export const ArticleListPage: React.FC = () => {
               setSearchQuery(e.target.value);
               setPage(1);
             }}
-            placeholder="Search articles by title..."
-            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-red-500 focus:border-red-500"
+            placeholder="Tìm kiếm bài viết theo tiêu đề..."
+            className="w-full h-10 pl-10 pr-4 bg-white border border-[#f1f3f5] rounded-xl text-sm focus:border-[#93000b] outline-none"
           />
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex min-w-0 flex-1 sm:flex-none items-center gap-1.5 text-xs text-gray-500 font-medium">
             <Filter className="w-4 h-4 text-gray-400" />
-            <span>Category:</span>
+            <span>Chuyên mục:</span>
             <select
               value={categoryFilter}
               onChange={(e) => {
                 setCategoryFilter(e.target.value);
                 setPage(1);
               }}
-              className="px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-red-500 focus:border-red-500 bg-white"
+              className="h-10 px-3 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-red-500 focus:border-red-500 bg-white cursor-pointer"
             >
-              <option value="All">All Categories</option>
-              <option value="News">News</option>
-              <option value="Alert">Alerts</option>
-              <option value="Educational">Educational</option>
-              <option value="Campaign">Campaign</option>
+              <option value="All">Tất cả chuyên mục</option>
+              <option value="News">Tin tức</option>
+              <option value="Alert">Cảnh báo</option>
+              <option value="Educational">Kiến thức</option>
+              <option value="Campaign">Chiến dịch</option>
             </select>
           </div>
 
           <div className="flex min-w-0 flex-1 sm:flex-none items-center gap-1.5 text-xs text-gray-500 font-medium">
-            <span>Status:</span>
+            <span>Trạng thái:</span>
             <select
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-red-500 focus:border-red-500 bg-white"
+              className="h-10 px-3 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-red-500 focus:border-red-500 bg-white cursor-pointer"
             >
-              <option value="All">All Statuses</option>
-              <option value="Published">Published</option>
-              <option value="Draft">Draft</option>
-              <option value="Scheduled">Scheduled</option>
+              <option value="All">Tất cả trạng thái</option>
+              <option value="Published">Đã xuất bản</option>
+              <option value="Draft">Bản nháp</option>
+              <option value="Scheduled">Đã lên lịch</option>
             </select>
           </div>
 
           <button
             onClick={fetchArticles}
-            className="p-2 text-gray-500 hover:text-gray-900 border border-gray-200 rounded-md hover:bg-gray-50"
-            title="Refresh list"
+            className="h-10 w-10 flex items-center justify-center text-gray-500 hover:text-gray-900 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer shadow-2xs"
+            title="Làm mới danh sách"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -157,28 +157,28 @@ export const ArticleListPage: React.FC = () => {
 
       {/* Grid View */}
       {loading ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
-          <div className="inline-block animate-spin w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full mb-2"></div>
-          <p className="text-sm text-gray-500">Loading articles...</p>
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+          <div className="inline-block animate-spin w-8 h-8 border-4 border-[#93000b] border-t-transparent rounded-full mb-2"></div>
+          <p className="text-sm text-gray-500">Đang tải danh sách bài viết...</p>
         </div>
       ) : error ? (
-        <div className="text-center py-12 bg-red-50 rounded-xl border border-red-100 text-red-700 text-sm">
+        <div className="text-center py-12 bg-red-50 rounded-2xl border border-red-100 text-red-700 text-sm">
           {error}
         </div>
       ) : articles.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-gray-200 p-8 space-y-3">
-          <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto">
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 p-8 space-y-3">
+          <div className="w-12 h-12 bg-red-50 text-[#93000b] rounded-full flex items-center justify-center mx-auto">
             <Plus className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-bold text-gray-900">No articles found</h3>
+          <h3 className="text-base font-bold text-gray-900">Không tìm thấy bài viết nào</h3>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
-            No articles match your current filter settings. Click below to create your first article!
+            Không có bài viết nào phù hợp với bộ lọc hiện tại. Nhấn nút bên dưới để tạo bài viết mới!
           </p>
           <button
             onClick={() => navigate(`${basePath}/content/create`)}
-            className="px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700"
+            className="px-4 py-2 bg-[#93000b] text-white text-xs font-semibold rounded-xl hover:bg-[#7a0009] cursor-pointer"
           >
-            Create First Article
+            Tạo bài viết đầu tiên
           </button>
         </div>
       ) : (

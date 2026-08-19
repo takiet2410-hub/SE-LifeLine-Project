@@ -315,19 +315,21 @@ export const CampaignListPage: React.FC = () => {
   const campaignColumns: Column<CampaignData>[] = [
     {
       header: 'Tên chiến dịch',
+      className: 'max-w-[220px]',
       accessor: (row: CampaignData) => {
         const id = row._id || (row as any).id;
         return (
-          <div className="space-y-1">
+          <div className="space-y-0.5 max-w-[200px] sm:max-w-[220px]">
             <p
-              className="font-bold text-[#271816] text-[14px] hover:text-[#93000b] transition-colors cursor-pointer"
+              className="font-bold text-[#271816] text-[13px] sm:text-[14px] truncate hover:text-[#93000b] transition-colors cursor-pointer"
+              title={row.name || 'Chiến dịch Hiến máu'}
               onClick={() => navigate(`/bc/campaigns/${id}`)}
             >
               {row.name || 'Chiến dịch Hiến máu'}
             </p>
-            <div className="flex items-center gap-1.5 text-[12px] text-[#6c757d]">
-              <MapPin className="w-3.5 h-3.5 text-[#93000b] shrink-0" />
-              <span className="truncate max-w-xs">{row.venue || (row as any).fullAddress || 'TP. Hồ Chí Minh'}</span>
+            <div className="flex items-center gap-1 text-[11px] text-[#6c757d] truncate" title={row.venue || (row as any).fullAddress || 'TP. Hồ Chí Minh'}>
+              <MapPin className="w-3 h-3 text-[#93000b] shrink-0" />
+              <span className="truncate">{row.venue || (row as any).fullAddress || 'TP. Hồ Chí Minh'}</span>
             </div>
           </div>
         );
@@ -336,12 +338,12 @@ export const CampaignListPage: React.FC = () => {
     {
       header: 'Thời gian',
       accessor: (row: CampaignData) => (
-        <div className="text-[12px] space-y-0.5">
-          <div className="flex items-center gap-1.5 text-[#271816] font-medium">
+        <div className="text-[11px] sm:text-[12px] space-y-0.5 whitespace-nowrap">
+          <div className="flex items-center gap-1 text-[#271816] font-medium">
             <Calendar className="w-3.5 h-3.5 text-[#93000b] shrink-0" />
             <span>{formatDateSafe(row.startDateTime)}</span>
           </div>
-          <p className="text-[#6c757d] pl-5">đến {formatDateSafe(row.endDateTime)}</p>
+          <p className="text-[#6c757d] pl-4 text-[10px] sm:text-[11px]">đến {formatDateSafe(row.endDateTime)}</p>
         </div>
       ),
     },
@@ -353,15 +355,20 @@ export const CampaignListPage: React.FC = () => {
             ? row.targetBloodGroups
             : ['A+', 'B+', 'O+'];
         return (
-          <div className="flex flex-wrap gap-1">
-            {groups.map((group, i) => (
+          <div className="flex flex-wrap gap-1 max-w-[120px]">
+            {groups.slice(0, 3).map((group, i) => (
               <span
                 key={`${group}-${i}`}
-                className="px-2 py-0.5 text-[11px] font-bold bg-red-50 text-[#93000b] rounded-md border border-red-200 shadow-2xs"
+                className="px-1.5 py-0.2 text-[10px] font-bold bg-red-50 text-[#93000b] rounded border border-red-200 shadow-2xs"
               >
                 {group}
               </span>
             ))}
+            {groups.length > 3 && (
+              <span className="px-1.5 py-0.2 text-[10px] font-medium bg-slate-100 text-slate-600 rounded">
+                +{groups.length - 3}
+              </span>
+            )}
           </div>
         );
       },
@@ -373,12 +380,12 @@ export const CampaignListPage: React.FC = () => {
         const cap = row.capacity || (row as any).capacityProgress?.total || 100;
         const percent = Math.min(100, Math.round((reg / Math.max(1, cap)) * 100));
         return (
-          <div className="w-40">
-            <div className="flex justify-between text-[12px] font-bold mb-1">
-              <span className="text-[#271816]">{reg} / {cap} lượt</span>
+          <div className="w-24 sm:w-28 space-y-1">
+            <div className="flex justify-between text-[11px] font-bold">
+              <span className="text-[#271816] font-mono">{reg}/{cap}</span>
               <span className="text-[#93000b]">{percent}%</span>
             </div>
-            <div className="w-full h-2 bg-[#f1f3f5] rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-[#f1f3f5] rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${
                   percent >= 100 ? 'bg-amber-500' : 'bg-[#93000b]'
@@ -399,27 +406,27 @@ export const CampaignListPage: React.FC = () => {
       accessor: (row: CampaignData) => {
         const id = row._id || (row as any).id;
         return (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => navigate(`/bc/campaigns/${id}`)}
-              className="p-2 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+              className="p-1.5 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
               title="Xem chi tiết chiến dịch"
             >
-              <Eye className="w-4 h-4 text-[#93000b]" />
+              <Eye className="w-3.5 h-3.5 text-[#93000b]" />
             </button>
             <button
               onClick={() => navigate(`/bc/campaigns/${id}/edit`)}
-              className="p-2 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+              className="p-1.5 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
               title="Chỉnh sửa thông tin chiến dịch"
             >
-              <Edit className="w-4 h-4 text-blue-600" />
+              <Edit className="w-3.5 h-3.5 text-blue-600" />
             </button>
             <button
               onClick={() => navigate(`/bc/campaigns/${id}/registrations`)}
-              className="p-2 text-white bg-[#93000b] hover:bg-[#7a0009] rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+              className="p-1.5 text-white bg-[#93000b] hover:bg-[#7a0009] rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
               title="Danh sách người đăng ký"
             >
-              <Users className="w-4 h-4" />
+              <Users className="w-3.5 h-3.5" />
             </button>
           </div>
         );

@@ -78,79 +78,83 @@ export const ArticleListPage: React.FC = () => {
 
   return (
     <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
-      {/* Top Action Controls */}
-      <div className="flex items-center justify-end">
-        <button
-          onClick={() => navigate(`${basePath}/content/create`)}
-          className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-sm font-semibold rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tạo Bài Viết Mới</span>
-        </button>
-      </div>
-
       {/* Summary Cards */}
       <ContentStatsCards summary={summary} loading={loading} />
 
-      {/* Filters & Search */}
-      <div className="bg-white rounded-2xl border border-[#f1f3f5] p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Tìm kiếm bài viết theo tiêu đề..."
-            className="w-full h-10 pl-10 pr-4 bg-white border border-[#f1f3f5] rounded-xl text-sm focus:border-[#93000b] outline-none"
-          />
+      {/* Filters, Search & Action Bar */}
+      <div className="bg-white rounded-2xl border border-[#f1f3f5] p-4 shadow-2xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        {/* Left / Center: Search + Filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
+          {/* Search Box */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Tìm kiếm bài viết theo tiêu đề..."
+              className="w-full h-10 pl-10 pr-4 bg-white border border-[#f1f3f5] rounded-xl text-sm focus:border-[#93000b] outline-none"
+            />
+          </div>
+
+          {/* Filter Dropdowns */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex min-w-0 flex-1 sm:flex-none items-center gap-1.5 text-xs text-gray-500 font-medium">
+              <Filter className="w-4 h-4 text-gray-400" />
+              <span>Chuyên mục:</span>
+              <select
+                value={categoryFilter}
+                onChange={(e) => {
+                  setCategoryFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="h-10 px-3 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-red-500 focus:border-red-500 bg-white cursor-pointer"
+              >
+                <option value="All">Tất cả chuyên mục</option>
+                <option value="News">Tin tức</option>
+                <option value="Alert">Cảnh báo</option>
+                <option value="Educational">Kiến thức</option>
+                <option value="Campaign">Chiến dịch</option>
+              </select>
+            </div>
+
+            <div className="flex min-w-0 flex-1 sm:flex-none items-center gap-1.5 text-xs text-gray-500 font-medium">
+              <span>Trạng thái:</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="h-10 px-3 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-red-500 focus:border-red-500 bg-white cursor-pointer"
+              >
+                <option value="All">Tất cả trạng thái</option>
+                <option value="Published">Đã xuất bản</option>
+                <option value="Draft">Bản nháp</option>
+                <option value="Scheduled">Đã lên lịch</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex min-w-0 flex-1 sm:flex-none items-center gap-1.5 text-xs text-gray-500 font-medium">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <span>Chuyên mục:</span>
-            <select
-              value={categoryFilter}
-              onChange={(e) => {
-                setCategoryFilter(e.target.value);
-                setPage(1);
-              }}
-              className="h-10 px-3 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-red-500 focus:border-red-500 bg-white cursor-pointer"
-            >
-              <option value="All">Tất cả chuyên mục</option>
-              <option value="News">Tin tức</option>
-              <option value="Alert">Cảnh báo</option>
-              <option value="Educational">Kiến thức</option>
-              <option value="Campaign">Chiến dịch</option>
-            </select>
-          </div>
-
-          <div className="flex min-w-0 flex-1 sm:flex-none items-center gap-1.5 text-xs text-gray-500 font-medium">
-            <span>Trạng thái:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="h-10 px-3 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-red-500 focus:border-red-500 bg-white cursor-pointer"
-            >
-              <option value="All">Tất cả trạng thái</option>
-              <option value="Published">Đã xuất bản</option>
-              <option value="Draft">Bản nháp</option>
-              <option value="Scheduled">Đã lên lịch</option>
-            </select>
-          </div>
-
+        {/* Right: Refresh & Create Article Button */}
+        <div className="flex items-center gap-2.5 shrink-0 self-end xl:self-auto">
           <button
             onClick={fetchArticles}
-            className="h-10 w-10 flex items-center justify-center text-gray-500 hover:text-gray-900 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer shadow-2xs"
+            className="h-10 w-10 flex items-center justify-center text-gray-500 hover:text-gray-900 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer shadow-2xs shrink-0"
             title="Làm mới danh sách"
           >
             <RefreshCw className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => navigate(`${basePath}/content/create`)}
+            className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-sm font-semibold rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 active:scale-98"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tạo Bài Viết Mới</span>
           </button>
         </div>
       </div>

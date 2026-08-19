@@ -19,7 +19,6 @@ import {
   Phone,
   RefreshCw,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
 import { confirmAppointmentByBloodCenterApi } from '../../booking-location/api/bookingApi';
@@ -31,7 +30,6 @@ import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { format } from 'date-fns';
 
 export const CampaignListPage: React.FC = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // Active View Tab: 'campaigns' | 'pendingRegistrations'
@@ -602,45 +600,6 @@ export const CampaignListPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-6 rounded-2xl shadow-xs">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
-              {t('campaign.title') || 'Quản Lý Chiến Dịch & Phê Duyệt Đăng Ký'}
-            </h2>
-            <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-red-50 text-[#93000b] border border-red-100 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#93000b]" />
-              Staff Portal
-            </span>
-          </div>
-          <p className="text-[13px] font-normal text-[#6c757d] mt-1">
-            Điều phối các đợt tiếp nhận máu lưu động, rà soát và phê duyệt nhanh các đơn đăng ký của người hiến.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <button
-            onClick={() => {
-              fetchCampaigns();
-              fetchPendingRegistrations();
-              toast.success('Đã làm mới dữ liệu!');
-            }}
-            className="p-2.5 bg-white border border-[#f1f3f5] hover:bg-slate-50 text-[#6c757d] hover:text-[#271816] rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-2xs"
-            title="Làm mới dữ liệu"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => navigate('/bc/campaigns/create')}
-            className="px-4.5 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[14px] font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-98"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Tạo Chiến Dịch Mới</span>
-          </button>
-        </div>
-      </div>
-
       {/* KPI Overview Summary Cards (Display Only) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Tổng số chiến dịch */}
@@ -727,43 +686,68 @@ export const CampaignListPage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content Tabs & Switcher */}
-      <div className="flex border-b border-[#dee2e6] gap-2">
-        <button
-          onClick={() => setActiveTab('campaigns')}
-          className={`pb-3 px-4 text-[14px] font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'campaigns'
-              ? 'border-[#93000b] text-[#93000b]'
-              : 'border-transparent text-[#6c757d] hover:text-[#271816]'
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          <span>Danh Sách Chiến Dịch</span>
-          <span className="px-2 py-0.5 text-[11px] rounded-full bg-slate-100 text-slate-700 font-semibold">
-            {totalCount}
-          </span>
-        </button>
+      {/* Main Content Tabs & Action Controls Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#dee2e6] gap-3 pb-2 sm:pb-0">
+        {/* Left: View Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('campaigns')}
+            className={`pb-3 px-4 text-[14px] font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'campaigns'
+                ? 'border-[#93000b] text-[#93000b]'
+                : 'border-transparent text-[#6c757d] hover:text-[#271816]'
+            }`}
+          >
+            <Building2 className="w-4 h-4" />
+            <span>Danh Sách Chiến Dịch</span>
+            <span className="px-2 py-0.5 text-[11px] rounded-full bg-slate-100 text-slate-700 font-semibold">
+              {totalCount}
+            </span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('pendingRegistrations')}
-          className={`pb-3 px-4 text-[14px] font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'pendingRegistrations'
-              ? 'border-[#93000b] text-[#93000b]'
-              : 'border-transparent text-[#6c757d] hover:text-[#271816]'
-          }`}
-        >
-          <Clock className="w-4 h-4 text-amber-600" />
-          <span>Đơn Đăng Ký Chờ Phê Duyệt</span>
-          {pendingCount > 0 ? (
-            <span className="px-2 py-0.5 text-[11px] rounded-full bg-amber-100 text-amber-800 font-extrabold border border-amber-200 animate-pulse">
-              {pendingCount} đơn mới
-            </span>
-          ) : (
-            <span className="px-2 py-0.5 text-[11px] rounded-full bg-slate-100 text-slate-500 font-semibold">
-              0
-            </span>
-          )}
-        </button>
+          <button
+            onClick={() => setActiveTab('pendingRegistrations')}
+            className={`pb-3 px-4 text-[14px] font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'pendingRegistrations'
+                ? 'border-[#93000b] text-[#93000b]'
+                : 'border-transparent text-[#6c757d] hover:text-[#271816]'
+            }`}
+          >
+            <Clock className="w-4 h-4 text-amber-600" />
+            <span>Đơn Đăng Ký Chờ Phê Duyệt</span>
+            {pendingCount > 0 ? (
+              <span className="px-2 py-0.5 text-[11px] rounded-full bg-amber-100 text-amber-800 font-extrabold border border-amber-200 animate-pulse">
+                {pendingCount} đơn mới
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 text-[11px] rounded-full bg-slate-100 text-slate-500 font-semibold">
+                0
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Right: Quick Action Buttons */}
+        <div className="flex items-center gap-2 pb-2 sm:pb-2.5 shrink-0 self-end sm:self-auto">
+          <button
+            onClick={() => {
+              fetchCampaigns();
+              fetchPendingRegistrations();
+              toast.success('Đã làm mới dữ liệu!');
+            }}
+            className="p-2 bg-white border border-[#dee2e6] hover:bg-slate-50 text-[#6c757d] hover:text-[#271816] rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+            title="Làm mới dữ liệu"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => navigate('/bc/campaigns/create')}
+            className="px-3.5 py-2 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-semibold rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-98"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tạo Chiến Dịch Mới</span>
+          </button>
+        </div>
       </div>
 
       {/* TAB 1: CAMPAIGN LIST VIEW */}

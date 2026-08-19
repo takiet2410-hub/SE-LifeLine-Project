@@ -166,13 +166,10 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
     if (path.includes('/inventory')) {
       return { title: 'Blood Inventory Management', subtitle: 'MONITOR BLOOD BAG STOCK, FEFO EXPIRATION & DISPATCH' };
     }
-    if (path.includes('/content')) {
-      return { title: 'Content Management', subtitle: 'PUBLISH HEALTH ARTICLES & EMERGENCY BLOOD ALERTS' };
-    }
     if (path.includes('/notifications')) {
       return { title: 'Notifications & Emergency SOS', subtitle: 'REVIEW CRITICAL HOSPITAL REQUESTS AND SYSTEM ALERTS' };
     }
-    return { title: 'Campaign Management', subtitle: 'COORDINATE MOBILE DONATION DRIVES & MONITOR CAPACITY' };
+    return { title: 'Quản Lý Chiến Dịch & Phê Duyệt Đăng Ký', subtitle: 'ĐIỀU PHỐI CÁC ĐỢT TIẾP NHẬN MÁU LƯU ĐỘNG, RÀ SOÁT VÀ PHÊ DUYỆT ĐĂNG KÝ' };
   };
 
   const pageMeta = getPageMeta();

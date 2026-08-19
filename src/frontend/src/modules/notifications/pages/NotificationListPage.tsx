@@ -261,7 +261,7 @@ export const NotificationListPage: React.FC = () => {
                 <div
                   key={item._id}
                   onClick={() => handleNotificationClick(item)}
-                  className={`rounded-2xl p-5 border transition-all cursor-pointer relative group ${
+                  className={`rounded-2xl p-4 sm:p-5 border transition-all cursor-pointer relative group ${
                     isSOS
                       ? isUnread 
                         ? 'bg-red-50/70 border-red-300 border-l-4 border-l-[#93000b] shadow-xs hover:bg-red-100/70'
@@ -271,11 +271,11 @@ export const NotificationListPage: React.FC = () => {
                       : 'bg-white border-[#f1f3f5] hover:bg-slate-50'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
                       {/* Icon */}
                       <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                           isSOS
                             ? isUnread ? 'bg-[#93000b] text-white shadow-sm animate-pulse' : 'bg-red-100 text-[#93000b]'
                             : 'bg-slate-100 text-[#1a1a2e]'
@@ -289,14 +289,15 @@ export const NotificationListPage: React.FC = () => {
                       </div>
 
                       {/* Notification Details */}
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2 flex-wrap">
+                      <div className="space-y-1 flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
                           <h3
-                            className={`text-[15px] ${
+                            title={item.title}
+                            className={`text-[14px] sm:text-[15px] truncate font-bold ${
                               isSOS
-                                ? isUnread ? 'text-[#93000b] font-bold' : 'text-red-800 font-medium'
+                                ? isUnread ? 'text-[#93000b]' : 'text-red-800'
                                 : isUnread
-                                ? 'text-[#271816] font-bold'
+                                ? 'text-[#271816]'
                                 : 'text-[#271816] font-medium'
                             }`}
                           >
@@ -305,78 +306,75 @@ export const NotificationListPage: React.FC = () => {
 
                           {/* Badge */}
                           <span
-                            className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0 ${
                               isSOS
                                 ? 'bg-[#93000b] text-white shadow-2xs'
                                 : 'bg-blue-50 text-blue-700 border border-blue-100'
                             }`}
                           >
-                            {isSOS ? '🚨 SOS EMERGENCY' : item.type}
+                            {isSOS ? '🚨 SOS' : item.type}
                           </span>
                         </div>
 
                         <p
-                          className={`text-[13px] ${
+                          title={item.body}
+                          className={`text-[13px] truncate ${
                             isSOS ? isUnread ? 'text-[#93000b] font-medium' : 'text-red-900/70' : 'text-[#5b403d]'
-                          } leading-relaxed`}
+                          }`}
                         >
                           {item.body}
                         </p>
 
-                        <div className="flex items-center gap-4 text-[11px] text-[#6c757d] pt-1">
-                          <span className="flex items-center gap-1 font-semibold text-[#271816]">
-                            <Hospital className="w-3.5 h-3.5 text-[#93000b]" />
-                            {item.senderName || 'System'}
+                        <div className="flex items-center gap-4 text-[11px] text-[#6c757d] pt-0.5">
+                          <span className="flex items-center gap-1 font-semibold text-[#271816] truncate max-w-[200px]" title={item.senderName || 'System'}>
+                            <Hospital className="w-3.5 h-3.5 text-[#93000b] shrink-0" />
+                            <span className="truncate">{item.senderName || 'System'}</span>
                           </span>
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 shrink-0">
                             <Clock className="w-3.5 h-3.5 text-[#6c757d]" />
-                            {item.createdAt ? format(new Date(item.createdAt), 'dd/MM/yyyy HH:mm') : 'N/A'}
+                            <span>{item.createdAt ? format(new Date(item.createdAt), 'dd/MM/yyyy HH:mm') : 'N/A'}</span>
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Interactive Action for BC SOS */}
-                    {isSOS && isBcPage && (
-                      <div className="mt-4 flex gap-2 pl-[56px]">
+                    {/* Actions: SOS Button & Delete */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isSOS && isBcPage && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             const sosId = extractSOSId(item);
                             navigate(sosId ? `/bc/sos-requests/${sosId}` : `/bc/sos-requests`);
                           }}
-                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer"
+                          className="px-3 py-1.5 bg-[#93000b] text-white text-[12px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer whitespace-nowrap"
                         >
-                          Xử lý yêu cầu SOS →
+                          Xử lý SOS →
                         </button>
-                      </div>
-                    )}
-                    {isSOS && isHospitalPage && (
-                      <div className="mt-4 flex gap-2 pl-[56px]">
+                      )}
+                      {isSOS && isHospitalPage && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             const sosId = extractSOSId(item);
                             navigate(sosId ? `/hospital/sos-requests/${sosId}` : `/hospital/sos-requests`);
                           }}
-                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer"
+                          className="px-3 py-1.5 bg-[#93000b] text-white text-[12px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer whitespace-nowrap"
                         >
-                          Xem yêu cầu SOS →
+                          Xem SOS →
                         </button>
-                      </div>
-                    )}
-
-                    {/* Actions: Delete Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteTargetId(item._id);
-                      }}
-                      className="p-2 text-[#a3a3a3] hover:text-[#93000b] hover:bg-white rounded-lg transition-colors cursor-pointer"
-                      title="Xóa thông báo"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTargetId(item._id);
+                        }}
+                        className="p-2 text-[#a3a3a3] hover:text-[#93000b] hover:bg-white rounded-lg transition-colors cursor-pointer"
+                        title="Xóa thông báo"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

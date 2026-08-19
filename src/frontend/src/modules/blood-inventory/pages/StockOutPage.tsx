@@ -121,7 +121,6 @@ export const StockOutPage: React.FC = () => {
             <h3 className="text-sm font-bold text-slate-900">
               Danh sách túi máu sẵn có ({availableBags.length})
             </h3>
-            <span className="text-xs text-slate-400">📋 Sắp xếp: Hết hạn trước lên đầu</span>
           </div>
 
           {loading ? (

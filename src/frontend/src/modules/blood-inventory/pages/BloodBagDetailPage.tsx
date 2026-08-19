@@ -49,6 +49,8 @@ export const BloodBagDetailPage: React.FC = () => {
   }
 
   const isExpired = bag.status === 'Expired' || differenceInDays(new Date(bag.expiryDate), new Date()) < 0;
+  const isUsed = bag.status === 'Used';
+  const isLocked = isExpired || isUsed || bag.status === 'Discarded';
 
   // Valid status transitions based on current status (BC-UC-14)
   const getValidTransitions = (current: BloodBagData['status']) => {
@@ -60,7 +62,7 @@ export const BloodBagDetailPage: React.FC = () => {
   const validTransitions = getValidTransitions(bag.status);
 
   const handleSaveStatus = async () => {
-    if (!bagId) return;
+    if (!bagId || isLocked) return;
     setIsSubmitting(true);
     try {
       const updated = await inventoryApi.updateStatus(bagId, newStatus, reason);
@@ -93,10 +95,24 @@ export const BloodBagDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {!isEditing && !isExpired && (
+        {!isEditing && (
           <button
-            onClick={() => setIsEditing(true)}
-            className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-sm font-semibold rounded-xl flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+            disabled={isLocked}
+            onClick={() => {
+              if (!isLocked) setIsEditing(true);
+            }}
+            className={`h-10 px-4 text-sm font-semibold rounded-xl flex items-center gap-2 shadow-xs transition-colors ${
+              isLocked
+                ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                : 'bg-[#93000b] hover:bg-[#7a0009] text-white cursor-pointer'
+            }`}
+            title={
+              isExpired
+                ? 'Túi máu đã hết hạn sử dụng (không thể cập nhật)'
+                : isUsed
+                ? 'Túi máu đã được xuất dùng (không thể cập nhật)'
+                : 'Cập nhật trạng thái túi máu'
+            }
           >
             <Edit3 className="w-4 h-4" />
             <span>Cập nhật trạng thái</span>
@@ -112,6 +128,19 @@ export const BloodBagDetailPage: React.FC = () => {
             <p className="font-bold">Túi máu đã hết hạn sử dụng!</p>
             <p className="text-xs text-red-700 mt-0.5">
               Theo quy định an toàn huyết học, trạng thái túi máu đã hết hạn không thể thay đổi thủ công.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Used Info Banner */}
+      {isUsed && !isExpired && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center gap-3 text-slate-800 text-sm">
+          <AlertCircle className="w-5 h-5 text-slate-500 shrink-0" />
+          <div>
+            <p className="font-bold">Túi máu đã được xuất kho / sử dụng!</p>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Túi máu đã hoàn tất chu trình sử dụng và được lưu trữ hồ sơ vĩnh viễn (không thể thay đổi trạng thái).
             </p>
           </div>
         </div>

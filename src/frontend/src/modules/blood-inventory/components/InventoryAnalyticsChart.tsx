@@ -35,10 +35,12 @@ export const InventoryAnalyticsChart: React.FC<Props> = ({ data }) => {
         : b.nearExpiry,
   }));
 
-  const pieData = data.byBloodType.map((b) => ({
-    name: b.bloodType,
-    value: b.totalUnits,
-  }));
+  const pieData = data.byBloodType
+    .filter((b) => b.totalUnits > 0)
+    .map((b) => ({
+      name: b.bloodType,
+      value: b.totalUnits,
+    }));
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

@@ -78,112 +78,111 @@ export const ArticleListPage: React.FC = () => {
 
   return (
     <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
-      {/* Top Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Content Management</h1>
-          <p className="text-xs text-gray-500 mt-1">Manage announcements, news, and donor education articles</p>
-        </div>
-
-        <button
-          onClick={() => navigate(`${basePath}/content/create`)}
-          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-sm flex items-center justify-center space-x-2 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Create Article</span>
-        </button>
-      </div>
-
       {/* Summary Cards */}
       <ContentStatsCards summary={summary} loading={loading} />
 
-      {/* Filters & Search */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search articles by title..."
-            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-red-500 focus:border-red-500"
-          />
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+      {/* Filters, Search & Action Bar */}
+      <div className="bg-white rounded-2xl border border-[#f1f3f5] p-4 shadow-2xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        {/* Left / Center: Search + Filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
+          {/* Search Box */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Tìm kiếm bài viết theo tiêu đề..."
+              className="w-full h-10 pl-10 pr-4 bg-white border border-[#f1f3f5] rounded-xl text-sm focus:border-[#93000b] outline-none"
+            />
+          </div>
+
+          {/* Filter Dropdowns */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex min-w-0 flex-1 sm:flex-none items-center gap-1.5 text-xs text-gray-500 font-medium">
+              <Filter className="w-4 h-4 text-gray-400" />
+              <span>Chuyên mục:</span>
+              <select
+                value={categoryFilter}
+                onChange={(e) => {
+                  setCategoryFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="h-10 px-3 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-red-500 focus:border-red-500 bg-white cursor-pointer"
+              >
+                <option value="All">Tất cả chuyên mục</option>
+                <option value="News">Tin tức</option>
+                <option value="Alert">Cảnh báo</option>
+                <option value="Educational">Kiến thức</option>
+                <option value="Campaign">Chiến dịch</option>
+              </select>
+            </div>
+
+            <div className="flex min-w-0 flex-1 sm:flex-none items-center gap-1.5 text-xs text-gray-500 font-medium">
+              <span>Trạng thái:</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="h-10 px-3 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-red-500 focus:border-red-500 bg-white cursor-pointer"
+              >
+                <option value="All">Tất cả trạng thái</option>
+                <option value="Published">Đã xuất bản</option>
+                <option value="Draft">Bản nháp</option>
+                <option value="Scheduled">Đã lên lịch</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex min-w-0 flex-1 sm:flex-none items-center gap-1.5 text-xs text-gray-500 font-medium">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <span>Category:</span>
-            <select
-              value={categoryFilter}
-              onChange={(e) => {
-                setCategoryFilter(e.target.value);
-                setPage(1);
-              }}
-              className="px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-red-500 focus:border-red-500 bg-white"
-            >
-              <option value="All">All Categories</option>
-              <option value="News">News</option>
-              <option value="Alert">Alerts</option>
-              <option value="Educational">Educational</option>
-              <option value="Campaign">Campaign</option>
-            </select>
-          </div>
-
-          <div className="flex min-w-0 flex-1 sm:flex-none items-center gap-1.5 text-xs text-gray-500 font-medium">
-            <span>Status:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="px-2.5 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-red-500 focus:border-red-500 bg-white"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Published">Published</option>
-              <option value="Draft">Draft</option>
-              <option value="Scheduled">Scheduled</option>
-            </select>
-          </div>
-
+        {/* Right: Refresh & Create Article Button */}
+        <div className="flex items-center gap-2.5 shrink-0 self-end xl:self-auto">
           <button
             onClick={fetchArticles}
-            className="p-2 text-gray-500 hover:text-gray-900 border border-gray-200 rounded-md hover:bg-gray-50"
-            title="Refresh list"
+            className="h-10 w-10 flex items-center justify-center text-gray-500 hover:text-gray-900 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer shadow-2xs shrink-0"
+            title="Làm mới danh sách"
           >
             <RefreshCw className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => navigate(`${basePath}/content/create`)}
+            className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-sm font-semibold rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 active:scale-98"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tạo Bài Viết Mới</span>
           </button>
         </div>
       </div>
 
       {/* Grid View */}
       {loading ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
-          <div className="inline-block animate-spin w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full mb-2"></div>
-          <p className="text-sm text-gray-500">Loading articles...</p>
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+          <div className="inline-block animate-spin w-8 h-8 border-4 border-[#93000b] border-t-transparent rounded-full mb-2"></div>
+          <p className="text-sm text-gray-500">Đang tải danh sách bài viết...</p>
         </div>
       ) : error ? (
-        <div className="text-center py-12 bg-red-50 rounded-xl border border-red-100 text-red-700 text-sm">
+        <div className="text-center py-12 bg-red-50 rounded-2xl border border-red-100 text-red-700 text-sm">
           {error}
         </div>
       ) : articles.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-gray-200 p-8 space-y-3">
-          <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto">
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 p-8 space-y-3">
+          <div className="w-12 h-12 bg-red-50 text-[#93000b] rounded-full flex items-center justify-center mx-auto">
             <Plus className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-bold text-gray-900">No articles found</h3>
+          <h3 className="text-base font-bold text-gray-900">Không tìm thấy bài viết nào</h3>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
-            No articles match your current filter settings. Click below to create your first article!
+            Không có bài viết nào phù hợp với bộ lọc hiện tại. Nhấn nút bên dưới để tạo bài viết mới!
           </p>
           <button
             onClick={() => navigate(`${basePath}/content/create`)}
-            className="px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700"
+            className="px-4 py-2 bg-[#93000b] text-white text-xs font-semibold rounded-xl hover:bg-[#7a0009] cursor-pointer"
           >
-            Create First Article
+            Tạo bài viết đầu tiên
           </button>
         </div>
       ) : (

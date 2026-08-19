@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Save, PackagePlus } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { inventoryApi } from '../services/inventoryApi';
 import { FormField } from '../../../components/common/FormField';
@@ -95,23 +95,15 @@ export const StockInPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between">
         <button
           onClick={() => setShowCancelDialog(true)}
-          className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors"
+          className="h-10 px-3.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-2 text-sm font-semibold shadow-2xs"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
+          <span>Quay lại Kho Máu</span>
         </button>
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <PackagePlus className="w-5 h-5 text-red-600" />
-            <span>Nhập Kho Túi Mới (Stock In)</span>
-          </h2>
-          <p className="text-xs text-slate-500">
-            Đăng ký thông tin các đơn vị máu mới thu nhận sau khi kiểm định xét nghiệm
-          </p>
-        </div>
       </div>
 
       {/* Dynamic Multi-row Form */}
@@ -119,7 +111,7 @@ export const StockInPage: React.FC = () => {
         {rows.map((row, idx) => (
           <div
             key={row.id}
-            className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4 relative"
+            className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4 relative"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -129,7 +121,7 @@ export const StockInPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => removeRow(row.id)}
-                  className="text-slate-400 hover:text-red-600 p-1 transition-colors"
+                  className="text-slate-400 hover:text-red-600 p-1.5 transition-colors cursor-pointer"
                   title="Xóa dòng"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -142,7 +134,7 @@ export const StockInPage: React.FC = () => {
                 <select
                   value={row.bloodType}
                   onChange={(e) => updateRow(row.id, 'bloodType', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none bg-white font-bold text-red-600"
+                  className="w-full h-10 px-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none bg-white font-bold text-red-600 cursor-pointer"
                 >
                   {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].map((type) => (
                     <option key={type} value={type}>
@@ -157,7 +149,7 @@ export const StockInPage: React.FC = () => {
                   type="number"
                   value={row.volumeMl}
                   onChange={(e) => updateRow(row.id, 'volumeMl', Number(e.target.value))}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                  className="w-full h-10 px-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
                 />
               </FormField>
 
@@ -166,7 +158,7 @@ export const StockInPage: React.FC = () => {
                   type="date"
                   value={row.collectionDate}
                   onChange={(e) => updateRow(row.id, 'collectionDate', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                  className="w-full h-10 px-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
                 />
               </FormField>
 
@@ -175,7 +167,7 @@ export const StockInPage: React.FC = () => {
                   type="date"
                   value={row.expiryDate}
                   onChange={(e) => updateRow(row.id, 'expiryDate', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                  className="w-full h-10 px-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
                 />
               </FormField>
 
@@ -185,7 +177,7 @@ export const StockInPage: React.FC = () => {
                   value={row.storageLocation}
                   onChange={(e) => updateRow(row.id, 'storageLocation', e.target.value)}
                   placeholder="Khu A - Tủ 01"
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                  className="w-full h-10 px-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
                 />
               </FormField>
             </div>
@@ -196,25 +188,25 @@ export const StockInPage: React.FC = () => {
         <button
           type="button"
           onClick={addRow}
-          className="w-full py-3 border-2 border-dashed border-slate-300 hover:border-red-600 hover:text-red-600 text-slate-600 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors bg-white/50"
+          className="w-full h-11 border-2 border-dashed border-slate-300 hover:border-red-600 hover:text-red-600 text-slate-600 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors bg-white/50 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>+ Thêm túi máu nữa</span>
         </button>
 
         {/* Action Controls */}
-        <div className="pt-4 flex items-center justify-end gap-3">
+        <div className="pt-2 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={() => setShowCancelDialog(true)}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors"
+            className="h-10 px-4 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
           >
             Hủy bỏ
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-5 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg flex items-center gap-2 shadow-xs transition-colors disabled:opacity-50"
+            className="h-10 px-5 text-sm font-semibold text-white bg-[#93000b] hover:bg-[#7a0009] rounded-xl flex items-center gap-2 shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
           >
             <Save className="w-4 h-4" />
             <span>{isSubmitting ? 'Đang lưu...' : `Xác nhận nhập ${rows.length} túi máu`}</span>

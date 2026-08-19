@@ -182,24 +182,21 @@ export const SOSReportsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <button 
-            onClick={() => navigate('/hospital/sos-requests')}
-            className="mb-4 p-2 hover:bg-brand-bg-muted rounded-full transition-colors text-brand-text-secondary"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <h1 className="text-2xl font-bold text-brand-text-main">SOS Reports</h1>
-          <p className="text-brand-text-secondary mt-1">Analyze emergency blood request trends and performance</p>
-        </div>
+      {/* Top Action Controls */}
+      <div className="flex items-center justify-between gap-4">
+        <button 
+          onClick={() => navigate('/hospital/sos-requests')}
+          className="p-2 hover:bg-slate-100 rounded-full transition-colors text-brand-text-secondary flex items-center gap-1.5 text-sm font-medium cursor-pointer"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>Quay lại Dashboard</span>
+        </button>
         <button 
           onClick={handleExportCSV}
           disabled={isLoading || reportRows.length === 0}
-          className="bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm disabled:opacity-50"
+          className="bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2 rounded-xl flex items-center gap-2 font-medium transition-colors shadow-sm disabled:opacity-50 cursor-pointer text-sm"
         >
-          <Download className="w-5 h-5" />
+          <Download className="w-4 h-4" />
           Export CSV
         </button>
       </div>

@@ -137,9 +137,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnrea
 
       {/* Navigation Menu */}
       <nav className="flex-1 px-4 py-6 flex flex-col gap-1.5 overflow-y-auto">
-        <div className="px-3 pb-2 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
-          {isAdmin ? 'Admin Portal' : isHospital ? 'Hospital Portal' : 'Management Portal'}
-        </div>
+        {(isAdmin || isHospital) && (
+          <div className="px-3 pb-2 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+            {isAdmin ? 'Admin Portal' : 'Hospital Portal'}
+          </div>
+        )}
         {navItems.map((item) => {
           const Icon = item.icon;
           return (

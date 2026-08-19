@@ -114,29 +114,24 @@ export const QRScanPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto pb-10">
-      {/* Top Navigation Bar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(`/bc/campaigns/${campaignId || 'all'}/registrations`)}
-            className="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer shadow-2xs"
-            title="Quay lại danh sách đăng ký"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Quét QR Điểm Danh</h2>
-            <p className="text-xs text-slate-500 font-medium">Xác thực Thẻ E-Ticket & tự động chuyển trạng thái sang CheckedIn</p>
-          </div>
-        </div>
+    <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between gap-4">
+        <button
+          onClick={() => navigate(`/bc/campaigns/${campaignId || 'all'}/registrations`)}
+          className="h-10 px-3.5 rounded-xl bg-white border border-[#f1f3f5] text-[#6c757d] hover:text-[#271816] hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-2 text-sm font-semibold shadow-2xs"
+          title="Quay lại danh sách đăng ký"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Quay lại Danh Sách Đăng Ký</span>
+        </button>
 
         {scanState !== 'idle' && (
           <button
             onClick={handleResetScan}
-            className="px-3.5 py-1.5 text-[12px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+            className="h-10 px-4 text-[13px] font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-2 transition-all cursor-pointer shadow-2xs"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className="w-4 h-4" />
             <span>Quét Mã Khác</span>
           </button>
         )}

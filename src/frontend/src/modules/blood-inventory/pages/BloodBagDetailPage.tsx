@@ -49,6 +49,8 @@ export const BloodBagDetailPage: React.FC = () => {
   }
 
   const isExpired = bag.status === 'Expired' || differenceInDays(new Date(bag.expiryDate), new Date()) < 0;
+  const isUsed = bag.status === 'Used';
+  const isLocked = isExpired || isUsed || bag.status === 'Discarded';
 
   // Valid status transitions based on current status (BC-UC-14)
   const getValidTransitions = (current: BloodBagData['status']) => {
@@ -60,7 +62,7 @@ export const BloodBagDetailPage: React.FC = () => {
   const validTransitions = getValidTransitions(bag.status);
 
   const handleSaveStatus = async () => {
-    if (!bagId) return;
+    if (!bagId || isLocked) return;
     setIsSubmitting(true);
     try {
       const updated = await inventoryApi.updateStatus(bagId, newStatus, reason);
@@ -77,27 +79,40 @@ export const BloodBagDetailPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/bc/inventory')}
-            className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors"
+            className="h-10 px-3.5 rounded-xl bg-white border border-[#f1f3f5] hover:bg-slate-50 text-[#6c757d] hover:text-[#271816] transition-colors cursor-pointer flex items-center gap-2 text-sm font-semibold shadow-2xs"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
+            <span>Quay lại Kho Máu</span>
           </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-slate-900 font-mono">{bag.bagCode}</h2>
-              <StatusBadge status={bag.status} />
-            </div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-slate-900 font-mono">{bag.bagCode}</h2>
+            <StatusBadge status={bag.status} />
           </div>
         </div>
 
-        {!isEditing && !isExpired && (
+        {!isEditing && (
           <button
-            onClick={() => setIsEditing(true)}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg flex items-center gap-2 shadow-xs transition-colors"
+            disabled={isLocked}
+            onClick={() => {
+              if (!isLocked) setIsEditing(true);
+            }}
+            className={`h-10 px-4 text-sm font-semibold rounded-xl flex items-center gap-2 shadow-xs transition-colors ${
+              isLocked
+                ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                : 'bg-[#93000b] hover:bg-[#7a0009] text-white cursor-pointer'
+            }`}
+            title={
+              isExpired
+                ? 'Túi máu đã hết hạn sử dụng (không thể cập nhật)'
+                : isUsed
+                ? 'Túi máu đã được xuất dùng (không thể cập nhật)'
+                : 'Cập nhật trạng thái túi máu'
+            }
           >
             <Edit3 className="w-4 h-4" />
             <span>Cập nhật trạng thái</span>
@@ -113,6 +128,19 @@ export const BloodBagDetailPage: React.FC = () => {
             <p className="font-bold">Túi máu đã hết hạn sử dụng!</p>
             <p className="text-xs text-red-700 mt-0.5">
               Theo quy định an toàn huyết học, trạng thái túi máu đã hết hạn không thể thay đổi thủ công.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Used Info Banner */}
+      {isUsed && !isExpired && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center gap-3 text-slate-800 text-sm">
+          <AlertCircle className="w-5 h-5 text-slate-500 shrink-0" />
+          <div>
+            <p className="font-bold">Túi máu đã được xuất kho / sử dụng!</p>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Túi máu đã hoàn tất chu trình sử dụng và được lưu trữ hồ sơ vĩnh viễn (không thể thay đổi trạng thái).
             </p>
           </div>
         </div>

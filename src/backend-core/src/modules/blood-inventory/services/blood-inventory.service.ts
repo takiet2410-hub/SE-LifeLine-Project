@@ -28,7 +28,10 @@ export class BloodInventoryService {
     }
 
     if (params?.search) {
-      query.bagCode = { $regex: params.search, $options: 'i' };
+      query.$or = [
+        { bagCode: { $regex: params.search, $options: 'i' } },
+        { storageLocation: { $regex: params.search, $options: 'i' } }
+      ];
     }
 
     if (params?.bloodType && params.bloodType !== 'All') {
@@ -62,19 +65,22 @@ export class BloodInventoryService {
     const totalBags = allBags.length;
     const availableBags = allBags.filter((b) => b.status === 'Available').length;
     const usedBags = allBags.filter((b) => b.status === 'Used').length;
-    const totalVolumeMl = allBags.reduce((sum, b) => sum + (b.volumeMl || 0), 0);
+    const totalVolumeMl = allBags
+      .filter((b) => b.status === 'Available')
+      .reduce((sum, b) => sum + (b.volumeMl || 0), 0);
 
     const now = new Date();
     const nearExpiryCount = allBags.filter((b) => {
       const exp = new Date(b.expiryDate);
-      const diffDays = (exp.getTime() - now.getTime()) / (1000 * 3600 * 24);
-      return diffDays > 0 && diffDays <= 7 && b.status === 'Available';
+      const diffMs = exp.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 3600 * 24));
+      return diffDays >= 0 && diffDays <= 7 && b.status === 'Available';
     }).length;
 
     const bloodTypes: BloodType[] = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
     const lowStockTypesCount = bloodTypes.filter((type) => {
       const count = allBags.filter((b) => b.bloodType === type && b.status === 'Available').length;
-      return count < 3;
+      return count < 5;
     }).length;
 
     return {
@@ -247,16 +253,18 @@ export class BloodInventoryService {
     return updatedCount.modifiedCount;
   }
 
-  static async getInventoryStatistics() {
-    const bags = await BloodBag.find({}).lean();
+  static async getInventoryStatistics(bloodCenterId?: string) {
+    const query: any = bloodCenterId ? { bloodCenterId } : {};
+    const bags = await BloodBag.find(query).lean();
     const totalUnits = bags.length;
     const availableUnits = bags.filter((b) => b.status === 'Available').length;
 
     const now = new Date();
     const nearExpiryUnits = bags.filter((b) => {
       const exp = new Date(b.expiryDate);
-      const diffDays = (exp.getTime() - now.getTime()) / (1000 * 3600 * 24);
-      return diffDays > 0 && diffDays <= 7 && b.status === 'Available';
+      const diffMs = exp.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 3600 * 24));
+      return diffDays >= 0 && diffDays <= 7 && b.status === 'Available';
     }).length;
 
     const bloodTypes: BloodType[] = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
@@ -266,8 +274,9 @@ export class BloodInventoryService {
       const volumeMl = typeBags.reduce((sum, b) => sum + (b.volumeMl || 0), 0);
       const nearExp = typeBags.filter((b) => {
         const exp = new Date(b.expiryDate);
-        const diff = (exp.getTime() - now.getTime()) / (1000 * 3600 * 24);
-        return diff > 0 && diff <= 7;
+        const diffMs = exp.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffMs / (1000 * 3600 * 24));
+        return diffDays >= 0 && diffDays <= 7;
       }).length;
 
       let status: 'Critical' | 'Low Stock' | 'Sufficient' = 'Sufficient';

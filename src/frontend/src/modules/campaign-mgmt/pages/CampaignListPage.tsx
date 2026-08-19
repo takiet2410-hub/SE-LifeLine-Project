@@ -19,7 +19,6 @@ import {
   Phone,
   RefreshCw,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
 import { confirmAppointmentByBloodCenterApi } from '../../booking-location/api/bookingApi';
@@ -31,7 +30,6 @@ import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { format } from 'date-fns';
 
 export const CampaignListPage: React.FC = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // Active View Tab: 'campaigns' | 'pendingRegistrations'
@@ -315,19 +313,21 @@ export const CampaignListPage: React.FC = () => {
   const campaignColumns: Column<CampaignData>[] = [
     {
       header: 'Tên chiến dịch',
+      className: 'max-w-[220px]',
       accessor: (row: CampaignData) => {
         const id = row._id || (row as any).id;
         return (
-          <div className="space-y-1">
+          <div className="space-y-0.5 max-w-[200px] sm:max-w-[220px]">
             <p
-              className="font-bold text-[#271816] text-[14px] hover:text-[#93000b] transition-colors cursor-pointer"
+              className="font-bold text-[#271816] text-[13px] sm:text-[14px] truncate hover:text-[#93000b] transition-colors cursor-pointer"
+              title={row.name || 'Chiến dịch Hiến máu'}
               onClick={() => navigate(`/bc/campaigns/${id}`)}
             >
               {row.name || 'Chiến dịch Hiến máu'}
             </p>
-            <div className="flex items-center gap-1.5 text-[12px] text-[#6c757d]">
-              <MapPin className="w-3.5 h-3.5 text-[#93000b] shrink-0" />
-              <span className="truncate max-w-xs">{row.venue || (row as any).fullAddress || 'TP. Hồ Chí Minh'}</span>
+            <div className="flex items-center gap-1 text-[11px] text-[#6c757d] truncate" title={row.venue || (row as any).fullAddress || 'TP. Hồ Chí Minh'}>
+              <MapPin className="w-3 h-3 text-[#93000b] shrink-0" />
+              <span className="truncate">{row.venue || (row as any).fullAddress || 'TP. Hồ Chí Minh'}</span>
             </div>
           </div>
         );
@@ -336,12 +336,12 @@ export const CampaignListPage: React.FC = () => {
     {
       header: 'Thời gian',
       accessor: (row: CampaignData) => (
-        <div className="text-[12px] space-y-0.5">
-          <div className="flex items-center gap-1.5 text-[#271816] font-medium">
+        <div className="text-[11px] sm:text-[12px] space-y-0.5 whitespace-nowrap">
+          <div className="flex items-center gap-1 text-[#271816] font-medium">
             <Calendar className="w-3.5 h-3.5 text-[#93000b] shrink-0" />
             <span>{formatDateSafe(row.startDateTime)}</span>
           </div>
-          <p className="text-[#6c757d] pl-5">đến {formatDateSafe(row.endDateTime)}</p>
+          <p className="text-[#6c757d] pl-4 text-[10px] sm:text-[11px]">đến {formatDateSafe(row.endDateTime)}</p>
         </div>
       ),
     },
@@ -353,15 +353,20 @@ export const CampaignListPage: React.FC = () => {
             ? row.targetBloodGroups
             : ['A+', 'B+', 'O+'];
         return (
-          <div className="flex flex-wrap gap-1">
-            {groups.map((group, i) => (
+          <div className="flex flex-wrap gap-1 max-w-[120px]">
+            {groups.slice(0, 3).map((group, i) => (
               <span
                 key={`${group}-${i}`}
-                className="px-2 py-0.5 text-[11px] font-bold bg-red-50 text-[#93000b] rounded-md border border-red-200 shadow-2xs"
+                className="px-1.5 py-0.2 text-[10px] font-bold bg-red-50 text-[#93000b] rounded border border-red-200 shadow-2xs"
               >
                 {group}
               </span>
             ))}
+            {groups.length > 3 && (
+              <span className="px-1.5 py-0.2 text-[10px] font-medium bg-slate-100 text-slate-600 rounded">
+                +{groups.length - 3}
+              </span>
+            )}
           </div>
         );
       },
@@ -373,12 +378,12 @@ export const CampaignListPage: React.FC = () => {
         const cap = row.capacity || (row as any).capacityProgress?.total || 100;
         const percent = Math.min(100, Math.round((reg / Math.max(1, cap)) * 100));
         return (
-          <div className="w-40">
-            <div className="flex justify-between text-[12px] font-bold mb-1">
-              <span className="text-[#271816]">{reg} / {cap} lượt</span>
+          <div className="w-24 sm:w-28 space-y-1">
+            <div className="flex justify-between text-[11px] font-bold">
+              <span className="text-[#271816] font-mono">{reg}/{cap}</span>
               <span className="text-[#93000b]">{percent}%</span>
             </div>
-            <div className="w-full h-2 bg-[#f1f3f5] rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-[#f1f3f5] rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${
                   percent >= 100 ? 'bg-amber-500' : 'bg-[#93000b]'
@@ -399,27 +404,27 @@ export const CampaignListPage: React.FC = () => {
       accessor: (row: CampaignData) => {
         const id = row._id || (row as any).id;
         return (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => navigate(`/bc/campaigns/${id}`)}
-              className="p-2 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+              className="p-1.5 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
               title="Xem chi tiết chiến dịch"
             >
-              <Eye className="w-4 h-4 text-[#93000b]" />
+              <Eye className="w-3.5 h-3.5 text-[#93000b]" />
             </button>
             <button
               onClick={() => navigate(`/bc/campaigns/${id}/edit`)}
-              className="p-2 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+              className="p-1.5 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
               title="Chỉnh sửa thông tin chiến dịch"
             >
-              <Edit className="w-4 h-4 text-blue-600" />
+              <Edit className="w-3.5 h-3.5 text-blue-600" />
             </button>
             <button
               onClick={() => navigate(`/bc/campaigns/${id}/registrations`)}
-              className="p-2 text-white bg-[#93000b] hover:bg-[#7a0009] rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+              className="p-1.5 text-white bg-[#93000b] hover:bg-[#7a0009] rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
               title="Danh sách người đăng ký"
             >
-              <Users className="w-4 h-4" />
+              <Users className="w-3.5 h-3.5" />
             </button>
           </div>
         );
@@ -595,52 +600,10 @@ export const CampaignListPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-6 rounded-2xl shadow-xs">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
-              {t('campaign.title') || 'Quản Lý Chiến Dịch & Phê Duyệt Đăng Ký'}
-            </h2>
-            <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-red-50 text-[#93000b] border border-red-100 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#93000b]" />
-              Staff Portal
-            </span>
-          </div>
-          <p className="text-[13px] font-normal text-[#6c757d] mt-1">
-            Điều phối các đợt tiếp nhận máu lưu động, rà soát và phê duyệt nhanh các đơn đăng ký của người hiến.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <button
-            onClick={() => {
-              fetchCampaigns();
-              fetchPendingRegistrations();
-              toast.success('Đã làm mới dữ liệu!');
-            }}
-            className="p-2.5 bg-white border border-[#f1f3f5] hover:bg-slate-50 text-[#6c757d] hover:text-[#271816] rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-2xs"
-            title="Làm mới dữ liệu"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => navigate('/bc/campaigns/create')}
-            className="px-4.5 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[14px] font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-98"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Tạo Chiến Dịch Mới</span>
-          </button>
-        </div>
-      </div>
-
-      {/* KPI Overview Summary Cards */}
+      {/* KPI Overview Summary Cards (Display Only) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Tổng số chiến dịch */}
-        <div
-          onClick={() => setActiveTab('campaigns')}
-          className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4 cursor-pointer"
-        >
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-red-50 text-[#93000b] flex items-center justify-center shrink-0 border border-red-100">
             <Activity className="w-6 h-6" />
           </div>
@@ -651,13 +614,7 @@ export const CampaignListPage: React.FC = () => {
         </div>
 
         {/* Card 2: Đang tiếp nhận */}
-        <div
-          onClick={() => {
-            setActiveTab('campaigns');
-            setStatusFilter('Active');
-          }}
-          className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4 cursor-pointer"
-        >
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
             <Sparkles className="w-6 h-6" />
           </div>
@@ -668,10 +625,7 @@ export const CampaignListPage: React.FC = () => {
         </div>
 
         {/* Card 3: Tổng lượt đăng ký */}
-        <div
-          onClick={() => setActiveTab('campaigns')}
-          className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-4"
-        >
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
             <Users className="w-6 h-6" />
           </div>
@@ -681,36 +635,27 @@ export const CampaignListPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 4: Đơn chờ phê duyệt (Click to jump to pending tab) */}
-        <div
-          onClick={() => setActiveTab('pendingRegistrations')}
-          className={`p-5 rounded-2xl border transition-all flex items-center justify-between gap-4 cursor-pointer shadow-2xs hover:shadow-md ${
-            pendingCount > 0
-              ? 'bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-white border-amber-300 ring-2 ring-amber-400/20'
-              : 'bg-white border-[#f1f3f5]'
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${
-                pendingCount > 0
-                  ? 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse'
-                  : 'bg-slate-50 text-slate-600 border-slate-200'
-              }`}
-            >
-              <Clock className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-[12px] font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1.5">
-                Đơn chờ phê duyệt
-                {pendingCount > 0 && (
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping inline-block" />
-                )}
-              </p>
-              <p className="text-[24px] font-bold text-amber-700 leading-tight mt-0.5">
-                {pendingCount} <span className="text-[13px] font-semibold text-[#6c757d]">đơn</span>
-              </p>
-            </div>
+        {/* Card 4: Đơn chờ phê duyệt */}
+        <div className="bg-white border border-[#f1f3f5] p-5 rounded-2xl shadow-2xs flex items-center gap-4">
+          <div
+            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${
+              pendingCount > 0
+                ? 'bg-amber-100 text-amber-800 border-amber-200'
+                : 'bg-slate-50 text-slate-600 border-slate-200'
+            }`}
+          >
+            <Clock className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[12px] font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1.5">
+              Đơn chờ phê duyệt
+              {pendingCount > 0 && (
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping inline-block" />
+              )}
+            </p>
+            <p className="text-[24px] font-bold text-amber-700 leading-tight mt-0.5">
+              {pendingCount} <span className="text-[13px] font-semibold text-[#6c757d]">đơn</span>
+            </p>
           </div>
         </div>
       </div>
@@ -741,43 +686,68 @@ export const CampaignListPage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content Tabs & Switcher */}
-      <div className="flex border-b border-[#dee2e6] gap-2">
-        <button
-          onClick={() => setActiveTab('campaigns')}
-          className={`pb-3 px-4 text-[14px] font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'campaigns'
-              ? 'border-[#93000b] text-[#93000b]'
-              : 'border-transparent text-[#6c757d] hover:text-[#271816]'
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          <span>Danh Sách Chiến Dịch</span>
-          <span className="px-2 py-0.5 text-[11px] rounded-full bg-slate-100 text-slate-700 font-semibold">
-            {totalCount}
-          </span>
-        </button>
+      {/* Main Content Tabs & Action Controls Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#dee2e6] gap-3 pb-2 sm:pb-0">
+        {/* Left: View Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('campaigns')}
+            className={`pb-3 px-4 text-[14px] font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'campaigns'
+                ? 'border-[#93000b] text-[#93000b]'
+                : 'border-transparent text-[#6c757d] hover:text-[#271816]'
+            }`}
+          >
+            <Building2 className="w-4 h-4" />
+            <span>Danh Sách Chiến Dịch</span>
+            <span className="px-2 py-0.5 text-[11px] rounded-full bg-slate-100 text-slate-700 font-semibold">
+              {totalCount}
+            </span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('pendingRegistrations')}
-          className={`pb-3 px-4 text-[14px] font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'pendingRegistrations'
-              ? 'border-[#93000b] text-[#93000b]'
-              : 'border-transparent text-[#6c757d] hover:text-[#271816]'
-          }`}
-        >
-          <Clock className="w-4 h-4 text-amber-600" />
-          <span>Đơn Đăng Ký Chờ Phê Duyệt</span>
-          {pendingCount > 0 ? (
-            <span className="px-2 py-0.5 text-[11px] rounded-full bg-amber-100 text-amber-800 font-extrabold border border-amber-200 animate-pulse">
-              {pendingCount} đơn mới
-            </span>
-          ) : (
-            <span className="px-2 py-0.5 text-[11px] rounded-full bg-slate-100 text-slate-500 font-semibold">
-              0
-            </span>
-          )}
-        </button>
+          <button
+            onClick={() => setActiveTab('pendingRegistrations')}
+            className={`pb-3 px-4 text-[14px] font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'pendingRegistrations'
+                ? 'border-[#93000b] text-[#93000b]'
+                : 'border-transparent text-[#6c757d] hover:text-[#271816]'
+            }`}
+          >
+            <Clock className="w-4 h-4 text-amber-600" />
+            <span>Đơn Đăng Ký Chờ Phê Duyệt</span>
+            {pendingCount > 0 ? (
+              <span className="px-2 py-0.5 text-[11px] rounded-full bg-amber-100 text-amber-800 font-extrabold border border-amber-200 animate-pulse">
+                {pendingCount} đơn mới
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 text-[11px] rounded-full bg-slate-100 text-slate-500 font-semibold">
+                0
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Right: Quick Action Buttons */}
+        <div className="flex items-center gap-2 pb-2 sm:pb-2.5 shrink-0 self-end sm:self-auto">
+          <button
+            onClick={() => {
+              fetchCampaigns();
+              fetchPendingRegistrations();
+              toast.success('Đã làm mới dữ liệu!');
+            }}
+            className="h-10 w-10 bg-white border border-[#dee2e6] hover:bg-slate-50 text-[#6c757d] hover:text-[#271816] rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-2xs shrink-0"
+            title="Làm mới dữ liệu"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => navigate('/bc/campaigns/create')}
+            className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-98 shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tạo Chiến Dịch Mới</span>
+          </button>
+        </div>
       </div>
 
       {/* TAB 1: CAMPAIGN LIST VIEW */}
@@ -786,13 +756,13 @@ export const CampaignListPage: React.FC = () => {
           {/* Filter and Search Control Bar */}
           <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-col md:flex-row gap-3 items-center justify-between shadow-2xs">
             <div className="relative w-full md:w-80">
-              <Search className="w-4 h-4 text-[#a3a3a3] absolute left-3.5 top-3" />
+              <Search className="w-4 h-4 text-[#a3a3a3] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm theo tên chiến dịch, địa điểm..."
-                className="w-full pl-10 pr-4 py-2 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[13px] text-[#271816] placeholder-[#a3a3a3] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10"
+                className="w-full h-10 pl-10 pr-4 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[13px] text-[#271816] placeholder-[#a3a3a3] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10"
               />
             </div>
 
@@ -809,7 +779,7 @@ export const CampaignListPage: React.FC = () => {
                 <button
                   key={st.id}
                   onClick={() => setStatusFilter(st.id)}
-                  className={`px-3 py-1.5 text-[12px] font-semibold rounded-xl transition-all shrink-0 cursor-pointer ${
+                  className={`h-9 px-3 text-[12px] font-semibold rounded-xl transition-all shrink-0 cursor-pointer flex items-center justify-center ${
                     statusFilter === st.id
                       ? 'bg-[#93000b] text-white shadow-2xs'
                       : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
@@ -845,7 +815,7 @@ export const CampaignListPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto flex-1">
               {/* Search */}
               <div className="relative flex-1 max-w-md">
-                <Search className="w-4 h-4 text-[#a3a3a3] absolute left-3.5 top-3" />
+                <Search className="w-4 h-4 text-[#a3a3a3] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={pendingSearch}
@@ -854,7 +824,7 @@ export const CampaignListPage: React.FC = () => {
                     setPendingCurrentPage(1);
                   }}
                   placeholder="Tìm theo tên người hiến, CCCD, SĐT, mã phiếu hoặc chiến dịch..."
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[13px] text-[#271816] placeholder-[#a3a3a3] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10"
+                  className="w-full h-10 pl-10 pr-4 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[13px] text-[#271816] placeholder-[#a3a3a3] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10"
                 />
               </div>
 
@@ -865,7 +835,7 @@ export const CampaignListPage: React.FC = () => {
                   setPendingCampaignFilter(e.target.value);
                   setPendingCurrentPage(1);
                 }}
-                className="px-3 py-2 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[13px] text-[#271816] outline-none font-medium max-w-xs truncate cursor-pointer"
+                className="h-10 px-3 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[13px] text-[#271816] outline-none font-medium max-w-xs truncate cursor-pointer"
               >
                 <option value="All">🏥 Tất cả chiến dịch ({pendingRegistrations.length} đơn)</option>
                 {uniqueCampaignOptions.map((c) => {
@@ -887,7 +857,7 @@ export const CampaignListPage: React.FC = () => {
                 <button
                   disabled={batchProcessing}
                   onClick={() => setBatchModalOpen(true)}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-sm cursor-pointer active:scale-95 disabled:opacity-50"
+                  className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer active:scale-95 disabled:opacity-50"
                 >
                   <CheckCheck className="w-4 h-4" />
                   <span>

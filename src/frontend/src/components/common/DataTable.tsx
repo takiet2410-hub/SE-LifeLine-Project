@@ -42,12 +42,12 @@ export function DataTable<T>({
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-      <div className="overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Bảng dữ liệu có thể cuộn ngang">
-        <table className="w-full min-w-max text-left text-sm text-slate-700">
+      <div className="overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Bảng dữ liệu">
+        <table className="w-full min-w-full text-left text-sm text-slate-700">
           <thead className="bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
             <tr>
               {columns.map((col, idx) => (
-                <th key={idx} className={`px-4 py-3.5 whitespace-nowrap ${col.className || ''}`}>
+                <th key={idx} className={`px-3 sm:px-4 py-3 sm:py-3.5 whitespace-nowrap ${col.className || ''}`}>
                   {col.header}
                 </th>
               ))}

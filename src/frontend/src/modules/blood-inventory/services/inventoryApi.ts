@@ -96,9 +96,12 @@ export const inventoryApi = {
     return true;
   },
 
-  async getStatistics(): Promise<InventoryStatisticsData> {
+  async getStatistics(params?: { bloodCenterId?: string }): Promise<InventoryStatisticsData> {
+    const query = new URLSearchParams();
+    if (params?.bloodCenterId) query.append('bloodCenterId', params.bloodCenterId);
+
     const token = localStorage.getItem('accessToken');
-    const res = await fetch(`${API_BASE_URL}/bc/inventory/statistics`, {
+    const res = await fetch(`${API_BASE_URL}/bc/inventory/statistics${query.toString() ? `?${query.toString()}` : ''}`, {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {})

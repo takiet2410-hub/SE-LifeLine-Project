@@ -76,11 +76,6 @@ export const RoleManagementPage: React.FC = () => {
 
   return (
     <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#271816]">Role & Permission Matrix</h1>
-        <p className="text-sm font-medium text-[#6c757d]">Configure role-based access control policies (AD-UC-03)</p>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side: System Roles List */}
         <div className="bg-white p-5 rounded-2xl border border-[#f1f3f5] shadow-xs space-y-3">

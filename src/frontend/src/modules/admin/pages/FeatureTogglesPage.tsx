@@ -56,13 +56,6 @@ export const FeatureTogglesPage: React.FC = () => {
 
   return (
     <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#271816]">Feature Toggles</h1>
-        <p className="text-sm font-medium text-[#6c757d]">
-          Enable or disable platform modules without redeployment (AD-UC-06)
-        </p>
-      </div>
-
       {loading ? (
         <div className="p-12 text-center text-slate-400 text-sm">Loading feature switches...</div>
       ) : (

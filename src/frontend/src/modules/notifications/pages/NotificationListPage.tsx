@@ -169,78 +169,62 @@ export const NotificationListPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Top Banner Header */}
-      <div className="bg-white border border-[#f1f3f5] p-6 rounded-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
-              Thông Báo System & Yêu Cầu SOS
-            </h2>
-            {unreadCount > 0 && (
-              <span className="px-2.5 py-0.5 text-[11px] font-bold bg-[#93000b] text-white rounded-full">
-                {unreadCount} chưa đọc
-              </span>
-            )}
+      {/* Filter Controls & Action Bar */}
+      <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-wrap gap-3 items-center justify-between shadow-2xs">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Loại:</span>
+            {['All', 'SOS', 'Campaign', 'Routine', 'Appointment'].map((type) => (
+              <button
+                key={type}
+                onClick={() => { setTypeFilter(type); setPage(1); }}
+                className={`h-9 px-3.5 text-[12px] font-bold rounded-xl transition-all shrink-0 cursor-pointer flex items-center justify-center ${
+                  typeFilter === type
+                    ? type === 'SOS'
+                      ? 'bg-[#93000b] text-white shadow-2xs'
+                      : 'bg-[#1a1a2e] text-white shadow-2xs'
+                    : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
+                }`}
+              >
+                {type === 'All' ? 'Tất cả' : type === 'SOS' ? '🚨 Cấp cứu (SOS)' : type}
+              </button>
+            ))}
           </div>
-          <p className="text-[13px] font-normal text-[#6c757d] mt-1">
-            Tiếp nhận yêu cầu cấp cứu khẩn cấp (SOS) từ các bệnh viện đối tác và cảnh báo vận hành kho máu.
-          </p>
+
+          <div className="flex items-center gap-1.5 border-l border-[#f1f3f5] pl-3">
+            <span className="text-[12px] font-semibold text-[#6c757d] mr-1">Trạng thái:</span>
+            {['All', 'Unread', 'Read'].map((st) => (
+              <button
+                key={st}
+                onClick={() => { setStatusFilter(st); setPage(1); }}
+                className={`h-9 px-3.5 text-[12px] font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center ${
+                  statusFilter === st
+                    ? 'bg-[#1a1a2e] text-white shadow-2xs'
+                    : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
+                }`}
+              >
+                {st === 'All' ? 'Tất cả' : st === 'Unread' ? 'Chưa đọc' : 'Đã đọc'}
+              </button>
+            ))}
+          </div>
+
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="h-9 px-3 text-[12px] font-medium text-[#6c757d] hover:text-[#93000b] transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+              Xóa bộ lọc
+            </button>
+          )}
         </div>
+
         {unreadCount > 0 && (
           <button
             onClick={handleMarkAllAsRead}
-            className="px-4 py-2 text-[13px] font-semibold text-[#93000b] border border-[#93000b]/30 bg-[#93000b]/5 hover:bg-[#93000b]/10 rounded-xl transition-colors shrink-0"
+            className="h-9 px-3.5 text-[12px] font-semibold text-[#93000b] border border-[#93000b]/30 bg-[#93000b]/5 hover:bg-[#93000b]/10 rounded-xl transition-colors shrink-0 cursor-pointer flex items-center justify-center"
           >
-            Đánh dấu tất cả đã đọc
-          </button>
-        )}
-      </div>
-
-      {/* Filter Controls */}
-      <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-wrap gap-3 items-center justify-between shadow-2xs">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
-          <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Loại:</span>
-          {['All', 'SOS', 'Campaign', 'Routine', 'Appointment'].map((type) => (
-            <button
-              key={type}
-              onClick={() => { setTypeFilter(type); setPage(1); }}
-              className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all shrink-0 cursor-pointer ${
-                typeFilter === type
-                  ? type === 'SOS'
-                    ? 'bg-[#93000b] text-white shadow-2xs'
-                    : 'bg-[#1a1a2e] text-white shadow-2xs'
-                  : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
-              }`}
-            >
-              {type === 'All' ? 'Tất cả' : type === 'SOS' ? '🚨 Cấp cứu (SOS)' : type}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <span className="text-[12px] font-semibold text-[#6c757d] mr-1">Trạng thái:</span>
-          {['All', 'Unread', 'Read'].map((st) => (
-            <button
-              key={st}
-              onClick={() => { setStatusFilter(st); setPage(1); }}
-              className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all cursor-pointer ${
-                statusFilter === st
-                  ? 'bg-[#1a1a2e] text-white shadow-2xs'
-                  : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
-              }`}
-            >
-              {st === 'All' ? 'Tất cả' : st === 'Unread' ? 'Chưa đọc' : 'Đã đọc'}
-            </button>
-          ))}
-        </div>
-
-        {hasFilters && (
-          <button
-            onClick={clearFilters}
-            className="px-3 py-1.5 text-[12px] font-medium text-[#6c757d] hover:text-[#93000b] transition-colors flex items-center gap-1"
-          >
-            <X className="w-4 h-4" />
-            Xóa bộ lọc
+            Đánh dấu tất cả đã đọc ({unreadCount})
           </button>
         )}
       </div>
@@ -261,7 +245,7 @@ export const NotificationListPage: React.FC = () => {
                 <div
                   key={item._id}
                   onClick={() => handleNotificationClick(item)}
-                  className={`rounded-2xl p-5 border transition-all cursor-pointer relative group ${
+                  className={`rounded-2xl p-4 sm:p-5 border transition-all cursor-pointer relative group ${
                     isSOS
                       ? isUnread 
                         ? 'bg-red-50/70 border-red-300 border-l-4 border-l-[#93000b] shadow-xs hover:bg-red-100/70'
@@ -271,11 +255,11 @@ export const NotificationListPage: React.FC = () => {
                       : 'bg-white border-[#f1f3f5] hover:bg-slate-50'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
                       {/* Icon */}
                       <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                           isSOS
                             ? isUnread ? 'bg-[#93000b] text-white shadow-sm animate-pulse' : 'bg-red-100 text-[#93000b]'
                             : 'bg-slate-100 text-[#1a1a2e]'
@@ -289,14 +273,15 @@ export const NotificationListPage: React.FC = () => {
                       </div>
 
                       {/* Notification Details */}
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2 flex-wrap">
+                      <div className="space-y-1 flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
                           <h3
-                            className={`text-[15px] ${
+                            title={item.title}
+                            className={`text-[14px] sm:text-[15px] truncate font-bold ${
                               isSOS
-                                ? isUnread ? 'text-[#93000b] font-bold' : 'text-red-800 font-medium'
+                                ? isUnread ? 'text-[#93000b]' : 'text-red-800'
                                 : isUnread
-                                ? 'text-[#271816] font-bold'
+                                ? 'text-[#271816]'
                                 : 'text-[#271816] font-medium'
                             }`}
                           >
@@ -305,78 +290,75 @@ export const NotificationListPage: React.FC = () => {
 
                           {/* Badge */}
                           <span
-                            className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0 ${
                               isSOS
                                 ? 'bg-[#93000b] text-white shadow-2xs'
                                 : 'bg-blue-50 text-blue-700 border border-blue-100'
                             }`}
                           >
-                            {isSOS ? '🚨 SOS EMERGENCY' : item.type}
+                            {isSOS ? '🚨 SOS' : item.type}
                           </span>
                         </div>
 
                         <p
-                          className={`text-[13px] ${
+                          title={item.body}
+                          className={`text-[13px] truncate ${
                             isSOS ? isUnread ? 'text-[#93000b] font-medium' : 'text-red-900/70' : 'text-[#5b403d]'
-                          } leading-relaxed`}
+                          }`}
                         >
                           {item.body}
                         </p>
 
-                        <div className="flex items-center gap-4 text-[11px] text-[#6c757d] pt-1">
-                          <span className="flex items-center gap-1 font-semibold text-[#271816]">
-                            <Hospital className="w-3.5 h-3.5 text-[#93000b]" />
-                            {item.senderName || 'System'}
+                        <div className="flex items-center gap-4 text-[11px] text-[#6c757d] pt-0.5">
+                          <span className="flex items-center gap-1 font-semibold text-[#271816] truncate max-w-[200px]" title={item.senderName || 'System'}>
+                            <Hospital className="w-3.5 h-3.5 text-[#93000b] shrink-0" />
+                            <span className="truncate">{item.senderName || 'System'}</span>
                           </span>
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 shrink-0">
                             <Clock className="w-3.5 h-3.5 text-[#6c757d]" />
-                            {item.createdAt ? format(new Date(item.createdAt), 'dd/MM/yyyy HH:mm') : 'N/A'}
+                            <span>{item.createdAt ? format(new Date(item.createdAt), 'dd/MM/yyyy HH:mm') : 'N/A'}</span>
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Interactive Action for BC SOS */}
-                    {isSOS && isBcPage && (
-                      <div className="mt-4 flex gap-2 pl-[56px]">
+                    {/* Actions: SOS Button & Delete */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isSOS && isBcPage && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             const sosId = extractSOSId(item);
                             navigate(sosId ? `/bc/sos-requests/${sosId}` : `/bc/sos-requests`);
                           }}
-                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer"
+                          className="px-3 py-1.5 bg-[#93000b] text-white text-[12px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer whitespace-nowrap"
                         >
-                          Xử lý yêu cầu SOS →
+                          Xử lý SOS →
                         </button>
-                      </div>
-                    )}
-                    {isSOS && isHospitalPage && (
-                      <div className="mt-4 flex gap-2 pl-[56px]">
+                      )}
+                      {isSOS && isHospitalPage && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             const sosId = extractSOSId(item);
                             navigate(sosId ? `/hospital/sos-requests/${sosId}` : `/hospital/sos-requests`);
                           }}
-                          className="px-4 py-2 bg-[#93000b] text-white text-[13px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer"
+                          className="px-3 py-1.5 bg-[#93000b] text-white text-[12px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer whitespace-nowrap"
                         >
-                          Xem yêu cầu SOS →
+                          Xem SOS →
                         </button>
-                      </div>
-                    )}
-
-                    {/* Actions: Delete Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteTargetId(item._id);
-                      }}
-                      className="p-2 text-[#a3a3a3] hover:text-[#93000b] hover:bg-white rounded-lg transition-colors cursor-pointer"
-                      title="Xóa thông báo"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTargetId(item._id);
+                        }}
+                        className="p-2 text-[#a3a3a3] hover:text-[#93000b] hover:bg-white rounded-lg transition-colors cursor-pointer"
+                        title="Xóa thông báo"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

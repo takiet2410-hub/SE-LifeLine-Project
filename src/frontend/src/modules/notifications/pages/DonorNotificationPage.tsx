@@ -150,29 +150,37 @@ export const DonorNotificationPage: React.FC = () => {
                         : 'bg-white border-[#f1f3f5] hover:bg-slate-50 opacity-80'
                   }`}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-center gap-3.5">
                     <div className={`w-10 h-10 rounded-xl flex flex-shrink-0 items-center justify-center ${
                       isSOS ? 'bg-[#93000b] text-white animate-pulse' : 'bg-slate-100 text-[#1a1a2e]'
                     }`}>
                       {getIconForType(notif.type)}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className={`text-[15px] ${isSOS ? 'text-[#93000b] font-bold' : isUnread ? 'text-[#271816] font-bold' : 'text-[#271816] font-medium'}`}>
-                          {notif.title}
-                        </h4>
-                        <span className="text-[11px] text-[#6c757d] whitespace-nowrap">
+                    <div className="flex-1 min-w-0 space-y-0.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <h4
+                            title={notif.title}
+                            className={`text-[14px] sm:text-[15px] truncate ${isSOS ? 'text-[#93000b] font-bold' : isUnread ? 'text-[#271816] font-bold' : 'text-[#271816] font-medium'}`}
+                          >
+                            {notif.title}
+                          </h4>
+                          {isSOS && (
+                            <span className="px-2 py-0.2 rounded text-[10px] font-bold bg-[#93000b] text-white uppercase tracking-wider shrink-0">
+                              🚨 SOS
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-[#6c757d] whitespace-nowrap shrink-0">
                           {notif.createdAt ? format(new Date(notif.createdAt), 'dd/MM HH:mm') : ''}
                         </span>
                       </div>
-                      <p className={`text-[13px] mt-1 line-clamp-2 ${isSOS ? 'text-[#93000b] font-medium' : 'text-[#6c757d]'}`}>
+                      <p
+                        title={notif.body}
+                        className={`text-[13px] truncate ${isSOS ? 'text-[#93000b] font-medium' : 'text-[#6c757d]'}`}
+                      >
                         {notif.body}
                       </p>
-                      {isSOS && (
-                        <div className="mt-2 inline-block px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-[#93000b] text-white uppercase tracking-wider">
-                          🚨 Critical SOS Alert
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>

@@ -329,20 +329,15 @@ export const CreateCampaignPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Top Header */}
-      <div className="flex items-center gap-3">
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between">
         <button
           onClick={handleCancel}
-          className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+          className="h-10 px-3.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-2 text-sm font-semibold shadow-2xs"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
+          <span>Quay lại Quản lý Chiến dịch</span>
         </button>
-        <div>
-          <h2 className="text-xl font-bold text-slate-900">Tạo Chiến Dịch Mới</h2>
-          <p className="text-xs text-slate-500">
-            Điền đầy đủ thông tin để tổ chức đợt hiến máu lưu động
-          </p>
-        </div>
       </div>
 
       {/* Main Form Card */}

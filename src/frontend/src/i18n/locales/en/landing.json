@@ -1,0 +1,193 @@
+{
+  "nav": {
+    "aboutUs": "About Us",
+    "howItWorks": "How it Works",
+    "findLocations": "Find Locations",
+    "healthTips": "Health Tips"
+  },
+  "hero": {
+    "badge": "Kết nối giọt máu — Cứu sống sinh mạng",
+    "title": "Every Drop Saves a Life",
+    "description": "Join Vietnam's trusted blood donation network. Your contribution ensures that no one has to wait for a life-saving transfusion. Register today and help save lives in your community.",
+    "signUp": "Sign Up Now",
+    "learnMore": "Learn More",
+    "socialProof": "Joined by 50,000+ active donors"
+  },
+  "features": {
+    "title": "Why Donate with LifeLine?",
+    "description": "We use advanced technology to make the life-saving process of blood donation seamless, transparent, and rewarding for everyone.",
+    "pointsTitle": "Find Nearby Points",
+    "pointsDesc": "Browse active donation campaigns on an interactive map and book your preferred time slots in just a few seconds.",
+    "ticketsTitle": "Instant E-Tickets",
+    "ticketsDesc": "Get your personalized appointment ticket with a secure QR code for instant check-in at any donation center.",
+    "impactTitle": "Track Your Impact",
+    "impactDesc": "View your donation timeline, earn achievements, and track your donor level progression as you help save more lives.",
+    "aiTitle": "AI-Powered Guidance",
+    "aiDesc": "Chat with our intelligent assistant for personalized donation prep, health advice, and post-donation recovery tips."
+  },
+  "testimonials": {
+    "title": "What Our Donors Say",
+    "roles": {
+      "regular": "Regular Donor",
+      "student": "Student Volunteer",
+      "corporate": "Corporate Donor"
+    },
+    "quotes": {
+      "q1": "\"The app made finding a donation center so easy. I was in and out in 30 minutes, and I love seeing how many people my blood helped!\"",
+      "q2": "\"Using the AI chatbot to check if I was eligible saved me a trip when I was on medication. It's truly a modern way to save lives.\"",
+      "q3": "\"The E-ticket feature is a game changer. No more paperwork at the hospital. I just show my QR code and I'm ready to donate.\""
+    }
+  },
+  "cta": {
+    "title": "Ready to Make a Difference?",
+    "description": "Join 50,000+ active donors across Vietnam. Your single donation can save up to 3 lives. Be the hero someone is waiting for today.",
+    "button": "Sign Up Now"
+  },
+  "about": {
+    "mission": {
+      "badge": "OUR MISSION",
+      "title": "Every Drop Counts",
+      "description": "LifeLine is Vietnam's leading digital platform for blood donation management, bridging the gap between donors and hospitals to ensure no one has to wait for life-saving treatment.",
+      "joinButton": "Join Our Network"
+    },
+    "stats": {
+      "title": "The Difference We Make",
+      "activeDonors": "Active Donors",
+      "hospitals": "Partner Hospitals",
+      "impacted": "Lives Impacted"
+    },
+    "story": {
+      "title": "Our Story",
+      "p1": "Founded in 2024, LifeLine began with a simple goal: to modernize blood donation in Vietnam. We saw the challenges of emergency blood needs—the frantic social media appeals and the stress on families.",
+      "p2": "We decided to build a technology-driven solution that makes donating blood easier, more transparent, and more rewarding. By integrating hospital logistics with a donor-first mobile experience, we're building a resilient network for the future."
+    },
+    "values": {
+      "title": "Our Core Values",
+      "reliability": {
+        "title": "Reliability",
+        "desc": "Medical-grade standards in everything we do. We prioritize safety and data integrity above all else."
+      },
+      "humanCentered": {
+        "title": "Human-Centered",
+        "desc": "Designing for people, from donors to patients. We believe technology should serve human connections."
+      },
+      "innovation": {
+        "title": "Innovation",
+        "desc": "Using AI and data to speed up emergency responses. Modernizing logistics to save lives faster than ever."
+      }
+    },
+    "cta": {
+      "title": "Ready to save a life?",
+      "description": "Join 50,000+ donors making an impact every day.",
+      "button": "Sign Up Now"
+    }
+  },
+  "howItWorks": {
+    "journey": {
+      "title": "Your Journey to Saving Lives",
+      "steps": {
+        "registration": {
+          "title": "Registration & Screening",
+          "desc": "Sign up, answer a quick health questionnaire, and complete a basic screening to ensure you're fit to donate."
+        },
+        "donation": {
+          "title": "The Donation",
+          "desc": "Relax in a comfortable chair. The actual blood draw only takes 8-10 minutes under professional care."
+        },
+        "recovery": {
+          "title": "Rest & Refresh",
+          "desc": "Enjoy snacks and drinks in our recovery area for 15 minutes before continuing your day."
+        },
+        "track": {
+          "title": "Track Your Impact",
+          "desc": "Receive updates when your blood is tested, processed, and on its way to a patient in need."
+        }
+      }
+    },
+    "eligibility": {
+      "title": "Are You Eligible to Donate?",
+      "criteria": {
+        "age": {
+          "title": "Age & ID",
+          "desc": "Must be between 18 and 60 years old with a valid CCCD or Passport."
+        },
+        "weight": {
+          "title": "Weight Requirements",
+          "desc": "Minimum 42kg for women and 45kg for men to ensure safe donation volume."
+        },
+        "health": {
+          "title": "General Health",
+          "desc": "Feel well on donation day, free from cold or flu symptoms, with normal blood pressure."
+        },
+        "interval": {
+          "title": "Donation Interval",
+          "desc": "Wait at least 84 days (12 weeks) between whole blood donations to replenish your iron."
+        }
+      }
+    }
+  },
+  "healthTips": {
+    "pageTitle": "Health & Preparation Tips",
+    "pageDesc": "Expert advice to ensure your blood donation experience is safe, comfortable, and rewarding.",
+    "featured": {
+      "badge": "Featured Article",
+      "title": "Pre-Donation Prep Guide",
+      "desc": "Everything you need to know before your first donation. From getting enough rest to hydrating properly, follow our comprehensive guide to ensure a safe and comfortable experience.",
+      "readMore": "Read More",
+      "readMoreContent": "Thorough preparation before blood donation is key to a safe and smooth experience. Make sure you get 7-9 hours of sleep the night before. Avoid alcohol for 24 hours. Eat a light, low-fat meal 2-3 hours before donating to keep blood sugar stable. If you feel unwell, have flu symptoms, please reschedule."
+    },
+    "categories": {
+      "sectionTitle": "Essential Health Guidelines",
+      "sectionDesc": "Browse our curated tips to prepare your body before donation and recover optimally afterwards.",
+      "nutrition": {
+        "title": "What to Eat Before and After",
+        "desc": "Focus on complex carbs and lean proteins 3 hours prior.",
+        "readMoreContent": "Before donating, eat a healthy, low-fat meal. Avoid greasy foods as high fat in the blood can affect routine blood tests. After donating, rest and replenish your energy with snacks and juice provided at the site to help your body recover quickly."
+      },
+      "hydration": {
+        "title": "The Importance of Fluids",
+        "desc": "Why water is the most critical component of recovery.",
+        "readMoreContent": "Half of your blood is water. Drinking plenty of fluids (around 500ml) before donating helps maintain blood volume and prevents dizziness. After donating, continue to drink more water than usual for the next 24 hours. Minimize caffeinated or alcoholic drinks during this time."
+      },
+      "recovery": {
+        "title": "Rest and Recovery Tips",
+        "desc": "How to care for the donation site and avoid dizziness.",
+        "readMoreContent": "After donating, keep the bandage on your arm for at least 4 hours. Avoid standing for too long, taking very hot showers, or changing postures suddenly. Prioritize resting and gently relaxing for the rest of the day."
+      },
+      "iron": {
+        "title": "Iron-Rich Foods",
+        "desc": "Water spinach, beef, and beans help replenish hemoglobin.",
+        "readMoreContent": "Iron is an essential mineral needed for your body to regenerate red blood cells after donating. Increase iron-rich foods in your daily diet for the next few weeks. Good sources include beef, liver, spinach, broccoli, beans, and whole grains. Pair them with vitamin C rich foods for optimal absorption."
+      },
+      "sleep": {
+        "title": "Sleep and Rest Before Donation",
+        "desc": "Ensure 7-9 hours of quality sleep to prepare your body.",
+        "readMoreContent": "A deep and adequate sleep plays a crucial role in restoring energy and preparing the body before blood donation. Lack of sleep can increase the risk of low blood pressure and feelings of fatigue after donating. Ensure you get 7-9 hours of sleep."
+      },
+      "exercise": {
+        "title": "Managing Exercise Routine",
+        "desc": "Avoid strenuous physical activity immediately after donating.",
+        "readMoreContent": "You must absolutely avoid heavy physical activities, high-intensity gym workouts, or endurance sports for at least 24 to 48 hours after donating blood. Overexertion too early can increase heart rate and lead to dizziness or fainting."
+      }
+    },
+    "faq": {
+      "sectionTitle": "Frequently Asked Questions",
+      "sectionDesc": "Common questions about health preparation and recovery.",
+      "q1": {
+        "question": "Can I donate if I'm taking medication?",
+        "answer": "Depending on the medication you are taking. Most vitamins, supplements, and birth control pills are safe. However, if you are taking antibiotics, blood thinners, or specific acne medications, you may need a waiting period. Please bring your prescription and consult directly with the screening doctor."
+      },
+      "q2": {
+        "question": "What is the minimum interval between two blood donations?",
+        "answer": "According to Ministry of Health regulations, the minimum interval between two whole blood donations is 12 weeks (84 days). This interval ensures your body has enough time to completely regenerate red blood cells and iron."
+      },
+      "q3": {
+        "question": "What are the minimum age and weight requirements?",
+        "answer": "Donors need to be between 18 and 60 years old. For weight, females must be at least 42kg and males 45kg (donating 350ml usually requires over 50kg). You also need to have normal health, stable heart rate and blood pressure."
+      }
+    },
+    "common": {
+      "readMore": "Read More"
+    }
+  }
+}

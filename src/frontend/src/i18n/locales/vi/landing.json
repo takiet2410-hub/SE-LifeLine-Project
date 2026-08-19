@@ -1,0 +1,193 @@
+{
+  "nav": {
+    "aboutUs": "Về chúng tôi",
+    "howItWorks": "Cách hoạt động",
+    "findLocations": "Tìm địa điểm",
+    "healthTips": "Lời khuyên sức khỏe"
+  },
+  "hero": {
+    "badge": "Kết nối giọt máu — Cứu sống sinh mạng",
+    "title": "Mỗi giọt máu cho đi, một cuộc đời ở lại",
+    "description": "Tham gia mạng lưới hiến máu uy tín nhất Việt Nam. Đóng góp của bạn đảm bảo không ai phải chờ đợi một ca truyền máu cứu mạng. Đăng ký ngay hôm nay.",
+    "signUp": "Đăng ký ngay",
+    "learnMore": "Tìm hiểu thêm",
+    "socialProof": "Hơn 50.000+ người hiến máu đang tham gia"
+  },
+  "features": {
+    "title": "Tại sao nên hiến máu cùng LifeLine?",
+    "description": "Chúng tôi sử dụng công nghệ tiên tiến để giúp quá trình hiến máu trở nên liền mạch, minh bạch và ý nghĩa hơn cho tất cả mọi người.",
+    "pointsTitle": "Tìm điểm hiến gần nhất",
+    "pointsDesc": "Duyệt qua các chiến dịch hiến máu trên bản đồ tương tác và đặt lịch dễ dàng chỉ trong vài giây.",
+    "ticketsTitle": "Vé điện tử tức thì",
+    "ticketsDesc": "Nhận vé hẹn cá nhân hóa với mã QR bảo mật để check-in tức thì tại mọi trung tâm hiến máu.",
+    "impactTitle": "Theo dõi tác động",
+    "impactDesc": "Xem dòng thời gian hiến máu, nhận thành tựu và theo dõi tiến trình thăng hạng của bạn khi giúp cứu thêm nhiều người.",
+    "aiTitle": "Trợ lý AI hướng dẫn",
+    "aiDesc": "Trò chuyện với trợ lý thông minh để chuẩn bị hiến máu cá nhân hóa, nhận lời khuyên sức khỏe và phục hồi sau hiến."
+  },
+  "testimonials": {
+    "title": "Người hiến máu nói gì",
+    "roles": {
+      "regular": "Người hiến máu thường xuyên",
+      "student": "Sinh viên tình nguyện",
+      "corporate": "Tổ chức hiến máu"
+    },
+    "quotes": {
+      "q1": "\"Ứng dụng giúp tìm trung tâm hiến máu quá dễ dàng. Tôi chỉ mất 30 phút, và tôi rất vui khi thấy máu của mình giúp được bao nhiêu người!\"",
+      "q2": "\"Sử dụng chatbot AI để kiểm tra điều kiện hiến máu đã giúp tôi tiết kiệm một chuyến đi khi tôi đang uống thuốc. Thật sự là một cách cứu người hiện đại.\"",
+      "q3": "\"Tính năng vé điện tử là một bước đột phá. Không còn giấy tờ tại bệnh viện. Tôi chỉ cần đưa mã QR và sẵn sàng hiến.\""
+    }
+  },
+  "cta": {
+    "title": "Sẵn sàng tạo nên sự khác biệt?",
+    "description": "Tham gia cùng 50.000+ người hiến máu trên toàn quốc. Một lần hiến máu của bạn có thể cứu sống tới 3 người. Hãy trở thành người hùng ngay hôm nay.",
+    "button": "Đăng ký ngay"
+  },
+  "about": {
+    "mission": {
+      "badge": "SỨ MỆNH CỦA CHÚNG TÔI",
+      "title": "Mỗi Giọt Máu Đều Quý Giá",
+      "description": "LifeLine là nền tảng kỹ thuật số hàng đầu Việt Nam về quản lý hiến máu, thu hẹp khoảng cách giữa người hiến và bệnh viện để đảm bảo không ai phải chờ đợi phương pháp điều trị cứu người.",
+      "joinButton": "Tham Gia Mạng Lưới"
+    },
+    "stats": {
+      "title": "Sự Khác Biệt Chúng Tôi Tạo Ra",
+      "activeDonors": "Người Hiến Năng Động",
+      "hospitals": "Bệnh Viện Đối Tác",
+      "impacted": "Cuộc Đời Được Cứu"
+    },
+    "story": {
+      "title": "Câu Chuyện Của Chúng Tôi",
+      "p1": "Được thành lập vào năm 2024, LifeLine bắt đầu với một mục tiêu đơn giản: hiện đại hóa việc hiến máu tại Việt Nam. Chúng tôi đã thấy những thách thức của nhu cầu máu khẩn cấp — những lời kêu gọi cuống cuồng trên mạng xã hội và sự căng thẳng đối với các gia đình.",
+      "p2": "Chúng tôi quyết định xây dựng một giải pháp định hướng công nghệ giúp việc hiến máu trở nên dễ dàng, minh bạch và ý nghĩa hơn. Bằng cách tích hợp logistics bệnh viện với trải nghiệm di động đặt người hiến làm trung tâm, chúng tôi đang xây dựng một mạng lưới bền vững cho tương lai."
+    },
+    "values": {
+      "title": "Giá Trị Cốt Lõi",
+      "reliability": {
+        "title": "Đáng Tin Cậy",
+        "desc": "Tiêu chuẩn y tế trong mọi việc chúng tôi làm. Chúng tôi ưu tiên sự an toàn và toàn vẹn dữ liệu lên trên hết."
+      },
+      "humanCentered": {
+        "title": "Lấy Con Người Làm Trung Tâm",
+        "desc": "Thiết kế cho mọi người, từ người hiến đến bệnh nhân. Chúng tôi tin rằng công nghệ phải phục vụ sự kết nối con người."
+      },
+      "innovation": {
+        "title": "Đổi Mới",
+        "desc": "Sử dụng AI và dữ liệu để tăng tốc độ phản ứng khẩn cấp. Hiện đại hóa logistics để cứu người nhanh hơn bao giờ hết."
+      }
+    },
+    "cta": {
+      "title": "Sẵn sàng cứu một mạng người?",
+      "description": "Tham gia cùng 50.000+ người hiến tạo ra tác động mỗi ngày.",
+      "button": "Đăng ký ngay"
+    }
+  },
+  "howItWorks": {
+    "journey": {
+      "title": "Hành Trình Cứu Người Của Bạn",
+      "steps": {
+        "registration": {
+          "title": "Đăng ký & Khám Sàng Lọc",
+          "desc": "Đăng ký, trả lời bảng câu hỏi sức khỏe và khám sàng lọc cơ bản để đảm bảo bạn đủ điều kiện hiến máu."
+        },
+        "donation": {
+          "title": "Hiến Máu",
+          "desc": "Thư giãn trên ghế. Quá trình lấy máu thực tế chỉ mất 8-10 phút dưới sự chăm sóc của chuyên gia y tế."
+        },
+        "recovery": {
+          "title": "Nghỉ Ngơi & Hồi Phục",
+          "desc": "Thưởng thức đồ ăn nhẹ và nước uống tại khu vực nghỉ ngơi trong 15 phút trước khi tiếp tục ngày mới."
+        },
+        "track": {
+          "title": "Theo Dõi Tác Động",
+          "desc": "Nhận thông báo khi máu của bạn được xét nghiệm, xử lý và đang trên đường đến với bệnh nhân."
+        }
+      }
+    },
+    "eligibility": {
+      "title": "Bạn Có Đủ Điều Kiện Hiến Máu Không?",
+      "criteria": {
+        "age": {
+          "title": "Tuổi & Thẻ Căn Cước",
+          "desc": "Từ 18 đến 60 tuổi và có CCCD hoặc Hộ chiếu hợp lệ."
+        },
+        "weight": {
+          "title": "Yêu Cầu Cân Nặng",
+          "desc": "Tối thiểu 42kg đối với nữ và 45kg đối với nam để đảm bảo an toàn về thể tích máu hiến."
+        },
+        "health": {
+          "title": "Sức Khỏe Chung",
+          "desc": "Cảm thấy khỏe mạnh vào ngày hiến máu, không có triệu chứng cảm lạnh hoặc cúm, huyết áp bình thường."
+        },
+        "interval": {
+          "title": "Khoảng Cách Giữa Các Lần Hiến",
+          "desc": "Đợi ít nhất 84 ngày (12 tuần) giữa các lần hiến máu toàn phần để cơ thể phục hồi đủ lượng sắt."
+        }
+      }
+    }
+  },
+  "healthTips": {
+    "pageTitle": "Lời khuyên Sức khỏe & Chuẩn bị",
+    "pageDesc": "Lời khuyên từ chuyên gia để đảm bảo trải nghiệm hiến máu của bạn an toàn, thoải mái và ý nghĩa.",
+    "featured": {
+      "badge": "Bài Viết Nổi Bật",
+      "title": "Hướng dẫn chuẩn bị trước khi hiến máu",
+      "desc": "Tất cả những gì bạn cần biết trước lần hiến máu đầu tiên. Từ việc nghỉ ngơi đầy đủ đến bổ sung nước đúng cách, hãy làm theo hướng dẫn toàn diện của chúng tôi để đảm bảo trải nghiệm an toàn và thoải mái.",
+      "readMore": "Đọc Thêm",
+      "readMoreContent": "Chuẩn bị kỹ lưỡng trước khi hiến máu là chìa khóa để có một trải nghiệm an toàn và suôn sẻ. Hãy đảm bảo bạn ngủ đủ 7-9 tiếng vào đêm trước ngày hiến. Tránh sử dụng thức uống có cồn trong vòng 24 giờ. Ăn một bữa nhẹ ít béo trước khi hiến khoảng 2-3 giờ để giữ đường huyết ổn định. Nếu bạn cảm thấy không khỏe, có dấu hiệu cảm cúm, hãy dời lịch hiến máu."
+    },
+    "categories": {
+      "sectionTitle": "Hướng Dẫn Sức Khỏe Thiết Yếu",
+      "sectionDesc": "Duyệt qua các lời khuyên được chọn lọc của chúng tôi để chuẩn bị cho cơ thể trước khi hiến máu và phục hồi tối ưu sau đó.",
+      "nutrition": {
+        "title": "What to Eat Before and After",
+        "desc": "Focus on complex carbs and lean proteins 3 hours prior.",
+        "readMoreContent": "Trước khi hiến máu, hãy ăn một bữa ăn lành mạnh, ít chất béo. Tránh thức ăn nhiều dầu mỡ (như khoai tây chiên, gà rán) vì lượng chất béo cao trong máu có thể ảnh hưởng đến kết quả các xét nghiệm máu định kỳ. Sau khi hiến, hãy nghỉ ngơi và bổ sung năng lượng bằng các món ăn nhẹ và nước trái cây được cung cấp tại điểm hiến máu để giúp cơ thể nhanh chóng phục hồi."
+      },
+      "hydration": {
+        "title": "The Importance of Fluids",
+        "desc": "Why water is the most critical component of recovery.",
+        "readMoreContent": "Một nửa lượng máu của bạn là nước. Việc uống nhiều nước (khoảng 500ml) trước khi hiến máu giúp duy trì thể tích máu, giúp tìm ven dễ hơn và ngăn ngừa chóng mặt, tụt huyết áp. Sau khi hiến máu, tiếp tục uống nhiều nước hơn bình thường (thêm khoảng 4 ly nước) trong 24 giờ tiếp theo. Hạn chế tối đa các đồ uống có chứa caffein như trà, cà phê hay cồn trong thời gian này vì chúng có tác dụng lợi tiểu."
+      },
+      "recovery": {
+        "title": "Rest and Recovery Tips",
+        "desc": "How to care for the donation site and avoid dizziness.",
+        "readMoreContent": "Sau khi hiến máu, hãy giữ nguyên băng cá nhân trên tay ít nhất 4 giờ. Nếu vết kim tiêm bị chảy máu lại, hãy ấn chặt tay lên vùng tiêm và giơ tay lên cao trong 5-10 phút cho đến khi máu ngừng chảy. Tránh đứng quá lâu, tắm nước quá nóng hoặc thay đổi tư thế đột ngột. Hãy ưu tiên nghỉ ngơi, thư giãn nhẹ nhàng trong phần còn lại của ngày."
+      },
+      "iron": {
+        "title": "Iron-Rich Foods (Thực phẩm giàu sắt)",
+        "desc": "Rau muống, thịt bò, và các loại đậu giúp bổ sung huyết sắc tố.",
+        "readMoreContent": "Sắt là khoáng chất thiết yếu cần thiết để cơ thể tái tạo hồng cầu sau khi hiến máu. Hãy tăng cường bổ sung các thực phẩm giàu sắt vào chế độ ăn hàng ngày trong vài tuần tiếp theo. Các nguồn thực phẩm dồi dào sắt bao gồm: thịt bò, gan, rau bina (cải bó xôi), bông cải xanh, các loại đậu, và ngũ cốc nguyên hạt. Để tối ưu hóa việc hấp thu sắt, hãy kết hợp ăn cùng thực phẩm giàu vitamin C (cam, chanh, ổi, dâu tây)."
+      },
+      "sleep": {
+        "title": "Sleep and Rest Before Donation",
+        "desc": "Ensure 7-9 hours of quality sleep to prepare your body.",
+        "readMoreContent": "Một giấc ngủ sâu và đủ giấc đóng vai trò cực kỳ quan trọng trong việc phục hồi năng lượng và chuẩn bị cho cơ thể trước khi hiến máu. Việc thiếu ngủ có thể làm tăng nguy cơ hạ huyết áp và cảm giác mệt mỏi, chóng mặt sau khi rút máu. Hãy duy trì thói quen ngủ sớm, đảm bảo ngủ đủ 7-9 tiếng và tránh sử dụng các thiết bị điện tử ngay sát giờ đi ngủ vào đêm trước ngày hiến máu."
+      },
+      "exercise": {
+        "title": "Managing Exercise Routine",
+        "desc": "Avoid strenuous physical activity immediately after donating.",
+        "readMoreContent": "Bạn cần tuyệt đối tránh các hoạt động thể chất nặng, tập gym cường độ cao, nâng tạ hoặc các môn thể thao đòi hỏi sức bền trong ít nhất 24 đến 48 giờ sau khi hiến máu. Việc gắng sức quá sớm có thể gây bục vết tiêm, làm tăng nhịp tim và dẫn đến tình trạng hoa mắt, chóng mặt hoặc ngất xỉu. Nếu muốn vận động, hãy ưu tiên các bài tập thư giãn nhẹ nhàng như đi bộ chậm."
+      }
+    },
+    "faq": {
+      "sectionTitle": "Câu Hỏi Thường Gặp",
+      "sectionDesc": "Các câu hỏi phổ biến về việc chuẩn bị và phục hồi sức khỏe.",
+      "q1": {
+        "question": "Tôi có thể hiến máu nếu đang dùng thuốc không?",
+        "answer": "Tùy thuộc vào loại thuốc bạn đang dùng. Hầu hết các loại vitamin, thực phẩm chức năng và thuốc tránh thai là an toàn. Tuy nhiên, nếu bạn đang dùng thuốc kháng sinh, thuốc làm loãng máu, hoặc thuốc điều trị mụn đặc trị, bạn có thể cần thời gian chờ (trì hoãn). Vui lòng mang theo đơn thuốc và tham vấn trực tiếp với bác sĩ khám sàng lọc tại Bệnh viện hoặc trung tâm truyền máu."
+      },
+      "q2": {
+        "question": "Khoảng cách tối thiểu giữa hai lần hiến máu là bao lâu?",
+        "answer": "Theo quy định của Bộ Y tế, khoảng cách tối thiểu giữa hai lần hiến máu toàn phần là 12 tuần (84 ngày). Khoảng cách này đảm bảo cơ thể bạn có đủ thời gian để tái tạo hoàn toàn lượng hồng cầu và sắt đã cho đi. Đối với hiến thành phần máu (như tiểu cầu), thời gian chờ thường ngắn hơn, dao động từ 2 đến 4 tuần tùy thuộc vào quy định cụ thể của từng cơ sở y tế."
+      },
+      "q3": {
+        "question": "Yêu cầu về độ tuổi và cân nặng tối thiểu là bao nhiêu?",
+        "answer": "Người hiến máu cần nằm trong độ tuổi từ 18 đến 60. Về cân nặng, đối với nữ giới cần đạt tối thiểu 42kg và nam giới là 45kg (tuy nhiên để hiến mức 350ml thường yêu cầu cân nặng trên 50kg). Ngoài ra, bạn cần có sức khỏe bình thường, nhịp tim và huyết áp ổn định, không mắc các bệnh mãn tính nguy hiểm hay các bệnh lây nhiễm qua đường máu."
+      }
+    },
+    "common": {
+      "readMore": "Đọc Thêm"
+    }
+  }
+}

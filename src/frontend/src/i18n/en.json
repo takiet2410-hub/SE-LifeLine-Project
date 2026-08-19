@@ -1,0 +1,225 @@
+{
+  "common": {
+    "dashboard": "Dashboard",
+    "campaigns": "Campaigns",
+    "inventory": "Inventory",
+    "content": "Content",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "logout": "Logout",
+    "search": "Search...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View Details",
+    "back": "Back",
+    "create": "Create New",
+    "actions": "Actions",
+    "status": "Status",
+    "loading": "Loading data...",
+    "noData": "No data available",
+    "confirm": "Confirm",
+    "discard": "Discard Changes",
+    "discardTitle": "Discard Changes?",
+    "discardMessage": "You have unsaved changes. Are you sure you want to discard them?",
+    "success": "Success",
+    "error": "An error occurred"
+  },
+  "donorNav": {
+    "dashboard": "Dashboard",
+    "map": "Map",
+    "myAppointments": "My Appointments",
+    "newsFeed": "News Feed",
+    "notifications": "Notifications",
+    "sosAlerts": "SOS Alerts",
+    "myProfile": "My Profile",
+    "logout": "Log out"
+  },
+  "dashboardHeader": {
+    "title": {
+      "map": "Map",
+      "schedule": "Schedule Appointment",
+      "myAppointments": "My Appointments",
+      "profile": "My Profile & Donation Impact",
+      "news": "News & Information",
+      "notifications": "Notification Center",
+      "sosAlerts": "SOS Alerts",
+      "dashboard": "Dashboard"
+    },
+    "subtitle": {
+      "map": "FIND DONATION CENTERS AND ACTIVE CAMPAIGNS NEAR YOU",
+      "schedule": "BOOK A NEW DONATION OR SCREENING",
+      "myAppointments": "MANAGE YOUR LIFE-SAVING SCHEDULE",
+      "profile": "Track your life-saving journey and achievements",
+      "news": "LATEST UPDATES ON CAMPAIGNS AND HEALTH",
+      "notifications": "STAY UPDATED WITH YOUR LATEST MESSAGES",
+      "sosAlerts": "URGENT BLOOD REQUESTS IN YOUR AREA",
+      "dashboard": "OVERVIEW"
+    }
+  },
+  "campaign": {
+    "title": "Donation Campaign Management",
+    "createNew": "Create New Campaign",
+    "editCampaign": "Edit Campaign",
+    "name": "Campaign Name",
+    "venue": "Venue",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "targetGroups": "Target Blood Groups",
+    "capacity": "Target Capacity",
+    "registered": "Registered",
+    "registrations": "Registration List",
+    "qrScan": "QR Scan",
+    "statuses": {
+      "Draft": "Draft",
+      "Active": "Active",
+      "Full": "Capacity Full",
+      "Closed": "Closed",
+      "Cancelled": "Cancelled"
+    }
+  },
+  "donor": {
+    "profile": "Donor Profile",
+    "fullName": "Full Name",
+    "bloodType": "Blood Type",
+    "dob": "Date of Birth",
+    "idCard": "ID Card No.",
+    "phone": "Phone Number",
+    "email": "Email",
+    "totalDonations": "Total Donations",
+    "screening": "Medical Screening Results",
+    "bloodPressure": "Blood Pressure (mmHg)",
+    "weight": "Weight (kg)",
+    "temperature": "Body Temp (°C)",
+    "hemoglobin": "Hemoglobin Level (g/dL)",
+    "screeningNotes": "Screening Notes",
+    "eligibility": "Eligibility Assessment"
+  },
+  "inventory": {
+    "title": "Blood Inventory Management",
+    "stockIn": "Stock In",
+    "stockOut": "Stock Out",
+    "statistics": "Inventory Statistics",
+    "totalBags": "Total Blood Bags",
+    "availableBags": "Available Bags",
+    "nearExpiry": "Near Expiry (≤ 7 days)",
+    "lowStock": "Low Stock Warning",
+    "bagCode": "Blood Bag Code",
+    "volume": "Volume (ml)",
+    "collectionDate": "Collection Date",
+    "expiryDate": "Expiry Date",
+    "location": "Storage Location",
+    "fefoTitle": "FEFO Recommendation (First Expired, First Out)",
+    "fefoDesc": "List of blood bags closest to expiry date that should be prioritized for dispatch to prevent waste.",
+    "selectAllFefo": "Select All Near-Expiry Bags",
+    "reason": "Stock-Out Reason",
+    "statuses": {
+      "Available": "Available",
+      "Reserved": "Reserved",
+      "Used": "Used",
+      "Expired": "Expired",
+      "Discarded": "Discarded"
+    }
+  },
+  "notification": {
+    "title": "System Notifications",
+    "sosAlert": "EMERGENCY SOS REQUEST",
+    "emergencyTitle": "🚨 EMERGENCY BLOOD REQUEST",
+    "markAllRead": "Mark All Read",
+    "unreadOnly": "Unread Only",
+    "removeConfirm": "Are you sure you want to remove this notification?"
+  },
+  "dashboard": {
+    "welcome": {
+      "title": "Welcome back, {{name}}!",
+      "quote": "\"Every blood donor is a life saver.\"",
+      "eligibility": "Donation Eligibility",
+      "loading": "Loading...",
+      "timeMet": "Minimum wait time met",
+      "timeMetShort": "Time met",
+      "eligibleIn": "Eligible to donate in {{days}} days"
+    },
+    "quickActions": {
+      "schedule": "Schedule Appointment",
+      "findHospital": "Find Hospital",
+      "history": "Donation History"
+    },
+    "emergency": {
+      "title": "Emergency Alert",
+      "needsBlood": "urgently needs blood type(s):",
+      "action": "Support Now",
+      "viewMap": "View map"
+    },
+    "upcoming": {
+      "title": "Upcoming Appointment",
+      "pending": "Pending",
+      "scheduled": "Scheduled",
+      "noAppointment": "You don't have any upcoming appointments.",
+      "bookNow": "Book now",
+      "viewDetails": "View details"
+    },
+    "campaigns": {
+      "title": "Featured Campaigns",
+      "viewAll": "View all",
+      "register": "Register"
+    },
+    "handbook": {
+      "title": "Blood Donation Handbook",
+      "preDonation": "Before Donation",
+      "postDonation": "Aftercare",
+      "benefits": "Benefits of Donating"
+    },
+    "handbookContent": {
+      "preDonation": {
+        "title": "Before Donation",
+        "section1Title": "Physical Preparation",
+        "section1Points": [
+          "Get enough sleep (at least 6-8 hours) the night before donating.",
+          "Eat a light, non-fatty meal before donating.",
+          "Drink plenty of water (about 500ml) before donating to make the blood collection process easier.",
+          "Avoid using alcohol, beer, and stimulants within 24 hours prior to donating."
+        ],
+        "section2Title": "Medical Notes",
+        "section2Points": [
+          "Bring your Identity Card (CCCD/ID Card or Passport).",
+          "Ensure you feel completely healthy, without cold or cough.",
+          "If taking medication, inform the screening doctor immediately.",
+          "Ensure standard weight (Male ≥ 45kg, Female ≥ 42kg)."
+        ]
+      },
+      "postDonation": {
+        "title": "Post-Donation Care",
+        "section1Title": "Immediately After Donation",
+        "section1Points": [
+          "Rest on-site for at least 15 minutes, drink plenty of water and have light snacks provided by the organizers.",
+          "Only stand up when you feel truly comfortable. If you feel dizzy, immediately notify the medical staff.",
+          "Keep the bandage on the venipuncture site for at least 4-6 hours to prevent infection."
+        ],
+        "section2Title": "Recovery Nutrition (Next 24-48 hours)",
+        "section2Points": [
+          "Drink more water than usual (about 2-3 liters/day) to replenish lost fluids.",
+          "Supplement Iron-rich foods: beef, liver, beans, spinach, wood ear mushrooms.",
+          "Increase Vitamin C (oranges, lemons, guavas) to help the body absorb Iron better.",
+          "Do not do strenuous exercise or carry heavy objects with the donated arm for the first 24 hours."
+        ]
+      },
+      "benefits": {
+        "title": "Amazing Benefits of Blood Donation",
+        "section1Title": "Health Benefits",
+        "section1Points": [
+          "Stimulates bone marrow to produce new red blood cells, improving blood circulation.",
+          "Reduces the risk of iron overload in the body, helping to protect the cardiovascular system and liver.",
+          "Opportunity for a free health check: blood pressure, heart rate measurement, and screening for blood-borne diseases.",
+          "Burns a certain amount of calories, supporting metabolism."
+        ],
+        "section2Title": "Humanitarian & Social Value",
+        "section2Points": [
+          "Each of your blood donations can save up to 3 patients.",
+          "Contributes to replenishing the national reserve blood supply for emergency and treatment.",
+          "Receive a Volunteer Blood Donation Certificate (valid for free blood reimbursement at public health facilities when needed)."
+        ]
+      }
+    }
+  }
+}

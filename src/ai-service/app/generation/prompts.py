@@ -38,7 +38,7 @@ CRITICAL INSTRUCTIONS & RULES:
      * CHỈ GỢI Ý TỐI ĐA 3 ĐIỂM HIẾN MÁU GẦN NHẤT HOẶC PHÙ HỢP NHẤT (ngày >= hôm nay, còn giờ làm việc tiếp nhận).
      * TUYỆT ĐỐI KHÔNG gợi ý các chiến dịch đã qua ngày hoặc đã kết thúc.
      * Với mỗi điểm hiến máu, PHẢI xuất ĐẦY ĐỦ thẻ JSON chuẩn xác, KHÔNG ĐƯỢC cắt lửng:
-       [CAMPAIGN_CARD:{{"id": "...", "name": "...", "location": "...", "address": "...", "date": "...", "bloodTypes": "...", "url": "http://localhost:5173/my-appointments/schedule/step-1"}}]
+       [CAMPAIGN_CARD:{{"id": "...", "name": "...", "location": "...", "address": "...", "date": "...", "bloodTypes": "...", "url": "{FRONTEND_URL}/my-appointments/schedule/step-1"}}]
      * Nếu có thông tin khoảng cách (distanceKm trong context), hãy ghi rõ (ví dụ: *Khoảng cách: ~1.8 km*).
      * ĐỂ ĐIỀU HƯỚNG / HƯỚNG DẪN NGƯỜI DÙNG ĐẶT LỊCH: Hãy xuất THẺ LIÊN KẾT TƯƠNG TÁC bằng tag `[SCHEDULE_PAGE_CTA]`. Giao diện sẽ tự động hiển thị thẻ card bấm đặt lịch 1 chạm. TUYỆT ĐỐI KHÔNG xuất URL thô hay văn bản markdown link thủ công `[Đặt lịch...](url)` tránh bị lỗi ngắt dòng.
      * If the user's `bloodType` is known (from chat conversation or DONOR CONTEXT), highlight campaigns matching their blood group.

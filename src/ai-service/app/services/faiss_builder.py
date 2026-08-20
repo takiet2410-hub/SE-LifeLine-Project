@@ -228,13 +228,15 @@ def search_campaigns(query: str = "") -> str:
         blood_types = ", ".join(c.get('targetBloodGroups', [])) if c.get('targetBloodGroups') else "Tất cả nhóm máu (A, B, AB, O)"
         cid = str(c.get('_id'))
         
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+        
         results.append(
             f"- Chiến dịch: {c.get('name')}\n"
             f"  Địa điểm: {venue}\n"
             f"  Địa chỉ: {addr}\n"
             f"  Thời gian: {date_display}\n"
             f"  Nhóm máu tiếp nhận: {blood_types}\n"
-            f"  Định dạng thẻ: [CAMPAIGN_CARD:{{\"id\": \"{cid}\", \"name\": \"{c.get('name')}\", \"location\": \"{venue}\", \"address\": \"{addr}\", \"date\": \"{date_display}\", \"bloodTypes\": \"{blood_types}\", \"url\": \"http://localhost:5173/my-appointments/schedule/step-1\"}}]"
+            f"  Định dạng thẻ: [CAMPAIGN_CARD:{{\"id\": \"{cid}\", \"name\": \"{c.get('name')}\", \"location\": \"{venue}\", \"address\": \"{addr}\", \"date\": \"{date_display}\", \"bloodTypes\": \"{blood_types}\", \"url\": \"{frontend_url}/my-appointments/schedule/step-1\"}}]"
         )
         
     return "\n\n".join(results) + "\n\n[SCHEDULE_PAGE_CTA:{\"title\": \"Trang Đặt Lịch Hiến Máu LifeLine\", \"description\": \"Chọn điểm hiến máu gần nhất & đặt trước khung giờ 30 phút\", \"url\": \"/my-appointments/schedule/step-1\"}]"

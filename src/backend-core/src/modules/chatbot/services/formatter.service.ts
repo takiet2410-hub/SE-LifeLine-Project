@@ -3,6 +3,7 @@ import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { Campaign } from '../../campaign/models/campaign.model';
 import { Appointment } from '../../booking/models/appointment.model';
 import { BookingService } from '../../booking/services/booking.service';
+import { env } from '../../../config/env.config';
 
 function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth radius in km
@@ -65,7 +66,7 @@ export class FormatterService {
         remainingSlots: Math.max(0, (c.capacity || 0) - (c.registeredCount || 0)),
         distanceKm: c.distanceKm !== undefined ? c.distanceKm : null,
         status: c.status,
-        scheduleUrl: 'http://localhost:5173/my-appointments/schedule/step-1'
+        scheduleUrl: `${env.FRONTEND_URL}/my-appointments/schedule/step-1`
       }));
     } catch (err) {
       console.error('[FormatterService] Failed to fetch campaigns for donor context:', err);

@@ -144,9 +144,9 @@ async def process_chat_stream(request_data: dict) -> AsyncGenerator[str, None]:
 
     tools = [search_knowledge_base, search_campaigns] if not is_greeting else []
     
-    # Format system prompt
     formatted_sys = SYSTEM_PROMPT.format(
-        donor_context=json.dumps(donor_context, ensure_ascii=False) if donor_context else "None"
+        donor_context=json.dumps(donor_context, ensure_ascii=False) if donor_context else "None",
+        FRONTEND_URL=os.getenv("FRONTEND_URL", "http://localhost:5173")
     )
     
     prompt = ChatPromptTemplate.from_messages([

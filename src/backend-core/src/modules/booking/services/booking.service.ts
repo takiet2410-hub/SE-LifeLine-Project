@@ -286,6 +286,8 @@ export class BookingService {
         
         if (targetDate < nextEligibleDate) {
           const err: any = new Error('ELIGIBILITY_FAILED_84_DAYS');
+          err.code = 'ELIGIBILITY_FAILED_INTERVAL';
+          err.donationIntervalDays = donationIntervalDays;
           err.lastDonationDate = lastDonationDate.toISOString();
           err.nextEligibleDate = nextEligibleDate.toISOString();
           throw err;

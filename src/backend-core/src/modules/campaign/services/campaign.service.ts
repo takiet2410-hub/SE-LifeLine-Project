@@ -444,6 +444,17 @@ export class CampaignService {
       throw new Error('CAMPAIGN_NOT_FOUND');
     }
 
+    // Validation rule: Reject editing a campaign that has already ended or been cancelled
+    const now = new Date();
+    const isEnded =
+      campaign.status === 'Completed' ||
+      campaign.status === 'Cancelled' ||
+      (campaign.status !== 'Draft' && campaign.endDateTime && new Date(campaign.endDateTime).getTime() < now.getTime());
+
+    if (isEnded) {
+      throw new Error('CAMPAIGN_ALREADY_ENDED');
+    }
+
     // Validation rule: cannot reduce participant capacity below current number of registered donors
     if (updateData.capacity !== undefined && updateData.capacity < campaign.registeredCount) {
       throw new Error('CAPACITY_BELOW_REGISTERED');

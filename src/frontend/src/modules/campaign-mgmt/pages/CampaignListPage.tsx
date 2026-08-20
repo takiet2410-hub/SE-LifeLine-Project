@@ -251,48 +251,6 @@ export const CampaignListPage: React.FC = () => {
     setBatchProcessing(false);
   };
 
-  // Available operational dates for campaigns
-  const availableCampaignDates = useMemo(() => {
-    const datesSet = new Set<string>();
-    allCampaignList.forEach((c) => {
-      if (c.dailyTimeslots && Array.isArray(c.dailyTimeslots)) {
-        c.dailyTimeslots.forEach((dt: any) => {
-          if (dt.dateStr) datesSet.add(dt.dateStr);
-        });
-      }
-      if (c.startDateTime) {
-        try {
-          const startDate = new Date(c.startDateTime);
-          const endDate = c.endDateTime ? new Date(c.endDateTime) : startDate;
-          if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
-            const cur = new Date(startDate);
-            let count = 0;
-            while (cur <= endDate && count < 30) {
-              datesSet.add(cur.toISOString().split('T')[0]);
-              cur.setDate(cur.getDate() + 1);
-              count++;
-            }
-          }
-        } catch {
-          // ignore
-        }
-      }
-    });
-    return Array.from(datesSet).sort();
-  }, [allCampaignList]);
-
-  // Available appointment dates for pending registrations
-  const availablePendingDates = useMemo(() => {
-    const datesSet = new Set<string>();
-    pendingRegistrations.forEach((r) => {
-      if (r.appointmentDate) {
-        const dStr = typeof r.appointmentDate === 'string' ? r.appointmentDate.split('T')[0].split(' ')[0] : new Date(r.appointmentDate).toISOString().split('T')[0];
-        if (dStr && dStr.includes('-')) datesSet.add(dStr);
-      }
-    });
-    return Array.from(datesSet).sort();
-  }, [pendingRegistrations]);
-
   // Deduplicate campaign options for the filter dropdown
   const uniqueCampaignOptions = useMemo(() => {
     const map = new Map<string, { id: string; name: string }>();
@@ -463,6 +421,10 @@ export const CampaignListPage: React.FC = () => {
       header: 'Thao tác',
       accessor: (row: CampaignData) => {
         const id = row._id || (row as any).id;
+        const isEnded =
+          row.status === 'Completed' ||
+          row.status === 'Cancelled' ||
+          (row.status !== 'Draft' && row.endDateTime && new Date(row.endDateTime).getTime() < new Date().getTime());
         return (
           <div className="flex items-center gap-1">
             <button
@@ -473,11 +435,16 @@ export const CampaignListPage: React.FC = () => {
               <Eye className="w-3.5 h-3.5 text-[#93000b]" />
             </button>
             <button
-              onClick={() => navigate(`/bc/campaigns/${id}/edit`)}
-              className="p-1.5 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-              title="Chỉnh sửa thông tin chiến dịch"
+              disabled={isEnded}
+              onClick={() => !isEnded && navigate(`/bc/campaigns/${id}/edit`)}
+              className={`p-1.5 border rounded-lg flex items-center justify-center transition-all shadow-2xs ${
+                isEnded
+                  ? 'bg-slate-100 border-[#f1f3f5] text-slate-300 cursor-not-allowed opacity-50'
+                  : 'bg-white border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 cursor-pointer text-blue-600'
+              }`}
+              title={isEnded ? 'Chiến dịch đã kết thúc hoặc đã bị hủy, không thể chỉnh sửa' : 'Chỉnh sửa thông tin chiến dịch'}
             >
-              <Edit className="w-3.5 h-3.5 text-blue-600" />
+              <Edit className={`w-3.5 h-3.5 ${isEnded ? 'text-slate-400' : 'text-blue-600'}`} />
             </button>
             <button
               onClick={() => navigate(`/bc/campaigns/${id}/registrations`)}

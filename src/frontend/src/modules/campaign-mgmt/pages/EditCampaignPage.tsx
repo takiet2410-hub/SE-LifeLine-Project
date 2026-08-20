@@ -66,6 +66,8 @@ export const EditCampaignPage: React.FC = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isCampaignEnded, setIsCampaignEnded] = useState(false);
+  const [originalStatus, setOriginalStatus] = useState<string>('Upcoming');
 
   // Today string for past-date detection
   const todayStr = useMemo(() => {
@@ -147,6 +149,13 @@ export const EditCampaignPage: React.FC = () => {
         if (campaign) {
           const finalSDate = formatDateToYYYYMMDD(campaign.startDateTime || (campaign as any).startDate) || todayStr;
           const finalEDate = formatDateToYYYYMMDD(campaign.endDateTime || (campaign as any).endDate) || finalSDate;
+
+          const ended =
+            campaign.status === 'Completed' ||
+            campaign.status === 'Cancelled' ||
+            (campaign.status !== 'Draft' && campaign.endDateTime && new Date(campaign.endDateTime).getTime() < new Date().getTime());
+          setIsCampaignEnded(ended);
+          setOriginalStatus(campaign.status || 'Upcoming');
 
           // Normalize loaded blood groups
           let loadedBloodGroups: string[] = campaign.targetBloodGroups || ['O+', 'A+'];
@@ -269,6 +278,7 @@ export const EditCampaignPage: React.FC = () => {
   }, [slotsByDate, dateList, setValue]);
 
   const toggleBloodGroup = (group: string) => {
+    if (isCampaignEnded) return;
     if (group === 'All Types') {
       if (selectedBloodGroups.includes('All Types')) {
         setValue('targetBloodGroups', [], { shouldValidate: true, shouldDirty: true });
@@ -298,7 +308,7 @@ export const EditCampaignPage: React.FC = () => {
     { startTime: '13:30', endTime: '16:30', capacity: 50 },
   ];
 
-  const isCurrentActiveTabPast = activeDateTab < todayStr;
+  const isCurrentActiveTabPast = activeDateTab < todayStr || isCampaignEnded;
 
   const getNowTimeString = () => {
     const now = new Date();
@@ -307,13 +317,14 @@ export const EditCampaignPage: React.FC = () => {
   };
 
   const isIndividualSlotPast = (dateStr: string, slot?: DailySlot) => {
+    if (isCampaignEnded) return true;
     if (dateStr < todayStr) return true;
     return Boolean(slot?.isInitiallyLocked);
   };
 
   const handleUpdateSlot = (index: number, field: keyof DailySlot, value: any) => {
     const slot = (slotsByDate[activeDateTab] || [])[index];
-    if (isCurrentActiveTabPast || (slot && slot.isInitiallyLocked)) return;
+    if (isCampaignEnded || isCurrentActiveTabPast || (slot && slot.isInitiallyLocked)) return;
 
     setSlotsByDate((prev) => {
       const list = [...(prev[activeDateTab] || [])];
@@ -323,7 +334,7 @@ export const EditCampaignPage: React.FC = () => {
   };
 
   const handleAddSlot = () => {
-    if (isCurrentActiveTabPast) return;
+    if (isCampaignEnded || isCurrentActiveTabPast) return;
     setSlotsByDate((prev) => {
       const list = [...(prev[activeDateTab] || [])];
       const lastSlot = list[list.length - 1];
@@ -355,7 +366,7 @@ export const EditCampaignPage: React.FC = () => {
 
   const handleRemoveSlot = (index: number) => {
     const slot = (slotsByDate[activeDateTab] || [])[index];
-    if (isCurrentActiveTabPast || (slot && slot.isInitiallyLocked)) return;
+    if (isCampaignEnded || isCurrentActiveTabPast || (slot && slot.isInitiallyLocked)) return;
     setSlotsByDate((prev) => {
       const list = [...(prev[activeDateTab] || [])];
       if (list.length <= 1) {
@@ -368,6 +379,7 @@ export const EditCampaignPage: React.FC = () => {
   };
 
   const handleApplyToAllDates = () => {
+    if (isCampaignEnded) return;
     const curSlots = slotsByDate[activeDateTab] || [];
     setSlotsByDate((prev) => {
       const next = { ...prev };
@@ -384,6 +396,10 @@ export const EditCampaignPage: React.FC = () => {
 
   const onSubmit = async (data: CreateCampaignInput) => {
     if (!campaignId) return;
+    if (isCampaignEnded) {
+      toast.error('Không thể chỉnh sửa chiến dịch đã kết thúc hoặc đã bị hủy!');
+      return;
+    }
     try {
       const nowTimeStr = getNowTimeString();
 
@@ -449,7 +465,9 @@ export const EditCampaignPage: React.FC = () => {
         });
       });
 
-      const campaignStatus = data.isDraft ? 'Draft' : 'Upcoming';
+      const campaignStatus = data.isDraft
+        ? 'Draft'
+        : (originalStatus === 'Draft' ? 'Upcoming' : originalStatus);
 
       await apiService.updateCampaign(campaignId, {
         name: data.name,
@@ -461,17 +479,24 @@ export const EditCampaignPage: React.FC = () => {
         targetBloodGroups: data.targetBloodGroups,
         capacity: data.capacity,
         targetUnitsGoal: data.targetUnitsGoal,
-        contactPerson: data.contactPerson,
+        contactPerson: {
+          name: data.contactPerson?.name || '',
+          phone: data.contactPerson?.phone || '',
+        },
         timeslots: patternSlots,
         dailyTimeslots,
-        status: campaignStatus,
+        status: campaignStatus as any,
       });
 
       toast.success('Cập nhật thông tin chiến dịch thành công!');
       navigate(`/bc/campaigns/${campaignId}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error('Cập nhật chiến dịch thất bại. Vui lòng kiểm tra lại.');
+      const errMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Cập nhật chiến dịch thất bại. Vui lòng kiểm tra lại.';
+      toast.error(errMsg);
     }
   };
 
@@ -510,6 +535,19 @@ export const EditCampaignPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Alert Banner when Campaign is Ended */}
+      {isCampaignEnded && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3 text-amber-800 text-sm shadow-2xs">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-amber-900">Chiến dịch đã kết thúc hoặc đã bị hủy</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Chiến dịch này đã hoàn thành hoặc đã qua thời gian tiếp nhận. Toàn bộ thông tin chiến dịch (bao gồm nhóm máu ưu tiên và khung giờ) đã bị khóa và không thể chỉnh sửa.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Main Form Card */}
       <form onSubmit={handleSubmit(onSubmit)} className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -518,9 +556,10 @@ export const EditCampaignPage: React.FC = () => {
             <FormField label="Tên chiến dịch" required error={errors.name?.message}>
               <input
                 type="text"
+                disabled={isCampaignEnded}
                 {...register('name')}
                 placeholder="VD: Ngày Hội Hiến Máu Tình Nguyện Mùa Hè 2026"
-                className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
               />
             </FormField>
           </div>
@@ -530,9 +569,10 @@ export const EditCampaignPage: React.FC = () => {
             <FormField label="Mô tả chi tiết chiến dịch" error={errors.description?.message}>
               <textarea
                 rows={3}
+                disabled={isCampaignEnded}
                 {...register('description')}
                 placeholder="Nhập nội dung mô tả, mục đích và lưu ý dành cho người tham gia hiến máu..."
-                className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
               />
             </FormField>
           </div>
@@ -544,9 +584,10 @@ export const EditCampaignPage: React.FC = () => {
                 <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="text"
+                  disabled={isCampaignEnded}
                   {...register('venue')}
                   placeholder="VD: Ủy ban Nhân dân Quận 1 / Bệnh viện Chợ Rẫy"
-                  className="w-full pl-9 pr-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                  className="w-full pl-9 pr-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                 />
               </div>
             </FormField>
@@ -559,9 +600,10 @@ export const EditCampaignPage: React.FC = () => {
                 <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="text"
+                  disabled={isCampaignEnded}
                   {...register('fullAddress')}
                   placeholder="VD: 47 Lê Duẩn, Phường Bến Nghé, Quận 1, TP.HCM"
-                  className="w-full pl-9 pr-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                  className="w-full pl-9 pr-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                 />
               </div>
             </FormField>
@@ -585,9 +627,10 @@ export const EditCampaignPage: React.FC = () => {
           <FormField label="NGÀY KẾT THÚC" required error={errors.endDate?.message}>
             <input
               type="date"
+              disabled={isCampaignEnded}
               min={startDateWatch || todayStr}
               {...register('endDate')}
-              className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none font-bold text-slate-900"
+              className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none font-bold text-slate-900 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
             />
           </FormField>
 
@@ -609,9 +652,10 @@ export const EditCampaignPage: React.FC = () => {
             <div className="relative">
               <input
                 type="number"
+                disabled={isCampaignEnded}
                 {...register('targetUnitsGoal', { valueAsNumber: true })}
                 placeholder="VD: 8000 (ml)"
-                className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none font-bold text-red-700"
+                className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none font-bold text-red-700 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
               />
             </div>
           </FormField>
@@ -620,9 +664,10 @@ export const EditCampaignPage: React.FC = () => {
           <FormField label="Tên người liên hệ" required error={errors.contactPerson?.name?.message}>
             <input
               type="text"
+              disabled={isCampaignEnded}
               {...register('contactPerson.name')}
               placeholder="VD: Nguyễn Văn A"
-              className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+              className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
             />
           </FormField>
 
@@ -630,9 +675,10 @@ export const EditCampaignPage: React.FC = () => {
           <FormField label="Số điện thoại liên hệ" required error={errors.contactPerson?.phone?.message}>
             <input
               type="text"
+              disabled={isCampaignEnded}
               {...register('contactPerson.phone')}
               placeholder="0901234567"
-              className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+              className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
             />
           </FormField>
 
@@ -646,11 +692,16 @@ export const EditCampaignPage: React.FC = () => {
                     <button
                       type="button"
                       key={group}
+                      disabled={isCampaignEnded}
                       onClick={() => toggleBloodGroup(group)}
-                      className={`py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
-                        isChecked
-                          ? 'bg-red-600 text-white border-red-600 shadow-xs'
-                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      className={`py-2 text-xs font-bold rounded-lg border transition-all ${
+                        isCampaignEnded
+                          ? isChecked
+                            ? 'bg-slate-300 text-slate-700 border-slate-300 cursor-not-allowed opacity-80'
+                            : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                          : isChecked
+                            ? 'bg-red-600 text-white border-red-600 shadow-xs cursor-pointer'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 cursor-pointer'
                       }`}
                     >
                       {group}
@@ -830,10 +881,11 @@ export const EditCampaignPage: React.FC = () => {
               <input
                 type="checkbox"
                 id="isDraft"
+                disabled={isCampaignEnded}
                 {...register('isDraft')}
-                className="w-4 h-4 text-red-600 rounded border-slate-300 focus:ring-red-500 cursor-pointer"
+                className="w-4 h-4 text-red-600 rounded border-slate-300 focus:ring-red-500 cursor-pointer disabled:cursor-not-allowed"
               />
-              <label htmlFor="isDraft" className="text-sm font-semibold text-slate-800 cursor-pointer select-none">
+              <label htmlFor="isDraft" className={`text-sm font-semibold select-none ${isCampaignEnded ? 'text-slate-400 cursor-not-allowed' : 'text-slate-800 cursor-pointer'}`}>
                 Lưu ở bản nháp (Draft)
               </label>
               <span className="text-xs text-slate-500 ml-auto">
@@ -854,8 +906,12 @@ export const EditCampaignPage: React.FC = () => {
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="px-6 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-70 cursor-pointer"
+            disabled={isSubmitting || isCampaignEnded}
+            className={`px-6 py-2.5 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2 ${
+              isCampaignEnded
+                ? 'bg-slate-400 cursor-not-allowed opacity-60'
+                : 'bg-red-600 hover:bg-red-700 disabled:opacity-70 cursor-pointer'
+            }`}
           >
             {isSubmitting ? (
               <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

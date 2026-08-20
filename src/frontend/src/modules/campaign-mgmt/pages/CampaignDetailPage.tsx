@@ -150,13 +150,27 @@ export const CampaignDetailPage: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            onClick={() => navigate(`/bc/campaigns/${campaign._id}/edit`)}
-            className="px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 text-sm font-bold rounded-xl flex items-center gap-2 shadow-2xs transition-colors cursor-pointer"
-          >
-            <Edit className="w-4 h-4 text-blue-600" />
-            <span>Chỉnh sửa</span>
-          </button>
+          {(() => {
+            const isEnded =
+              campaign.status === 'Completed' ||
+              campaign.status === 'Cancelled' ||
+              (campaign.status !== 'Draft' && campaign.endDateTime && new Date(campaign.endDateTime).getTime() < new Date().getTime());
+            return (
+              <button
+                disabled={isEnded}
+                onClick={() => !isEnded && navigate(`/bc/campaigns/${campaign._id}/edit`)}
+                className={`px-4 py-2.5 border text-sm font-bold rounded-xl flex items-center gap-2 shadow-2xs transition-colors ${
+                  isEnded
+                    ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                    : 'bg-white border-slate-300 hover:bg-slate-50 text-slate-800 cursor-pointer'
+                }`}
+                title={isEnded ? 'Chiến dịch đã kết thúc hoặc đã bị hủy, không thể chỉnh sửa' : 'Chỉnh sửa'}
+              >
+                <Edit className={`w-4 h-4 ${isEnded ? 'text-slate-400' : 'text-blue-600'}`} />
+                <span>Chỉnh sửa</span>
+              </button>
+            );
+          })()}
 
           <button
             onClick={() => navigate(`/bc/campaigns/${campaign._id}/registrations`)}

@@ -51,7 +51,7 @@ export const CampaignDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto p-6 space-y-6">
+      <div className="space-y-6">
         <SkeletonLoader type="form" />
       </div>
     );
@@ -59,7 +59,7 @@ export const CampaignDetailPage: React.FC = () => {
 
   if (!campaign) {
     return (
-      <div className="max-w-5xl mx-auto py-16 text-center space-y-4">
+      <div className="py-16 text-center space-y-4">
         <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto">
           <Info className="w-8 h-8" />
         </div>
@@ -121,7 +121,7 @@ export const CampaignDetailPage: React.FC = () => {
   const unitsGoal = Number(campaign.targetUnitsGoal) || Math.round(totalCap * 0.8 * 350);
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+    <div className="space-y-6 pb-12">
       {/* Top Header & Breadcrumb */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div className="flex items-start gap-3.5">

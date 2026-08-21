@@ -7,7 +7,8 @@ export interface LoginCredentials {
 }
 
 export interface AuthUser {
-  id: string;
+  id?: string;
+  _id?: string;
   email: string;
   fullName: string;
   role: 'donor' | 'staff' | 'hospital' | 'admin' | string;
@@ -17,6 +18,7 @@ export interface AuthUser {
   hospitalId?: string;
   hospitalName?: string;
   bloodCenterId?: string;
+  donorProfileId?: string;
 }
 
 export interface AuthResponse {

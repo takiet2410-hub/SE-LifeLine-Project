@@ -873,22 +873,26 @@ export class RegistrationService {
       throw err;
     }
 
-    // 4. Validate Campaign Status & Scoping
-    if (appointment.campaignId) {
-      const campaign = await Campaign.findById(appointment.campaignId);
-      if (campaign && campaign.status !== 'Active') {
-        const err: any = new Error('Chiến dịch chưa diễn ra (chưa mở).');
-        err.statusCode = 400;
-        throw err;
-      }
-    }
-
+    // 4. Validate Campaign Scoping FIRST
     if (targetCampaignId && targetCampaignId !== 'all' && mongoose.Types.ObjectId.isValid(targetCampaignId)) {
       const campaignIdFromApp = appointment.campaignId ? appointment.campaignId.toString() : '';
       if (campaignIdFromApp !== targetCampaignId.toString()) {
         const err: any = new Error('Vé thuộc chiến dịch khác.');
         err.statusCode = 400;
         throw err;
+      }
+    }
+
+    // 5. Validate Campaign Status AFTER confirming it is the correct campaign
+    if (appointment.campaignId) {
+      const campaign = await Campaign.findById(appointment.campaignId);
+      if (campaign && campaign.status !== 'Active') {
+        const registrationDetails = await RegistrationService.getRegistrationById(appointment._id.toString());
+        return {
+          ...registrationDetails,
+          warning: 'Chiến dịch chưa diễn ra (chưa mở).',
+          isCampaignNotActive: true
+        };
       }
     }
 

@@ -37,20 +37,45 @@ export const QRScanPage: React.FC = () => {
       const res = await apiService.checkInQRCode(targetCode, campaignId);
       if (res) {
         const currentStatus = res.status || 'CheckedIn';
+        const regId = res.registrationId || res._id || targetCode;
+        const donorName = res.donorName || (res.donor ? res.donor.fullName : 'Người hiến máu');
+        const donorIdCard = res.donorIdCard || (res.donor ? res.donor.idDocumentNumber : '');
+        const donorBloodType = res.donorBloodType || (res.donor ? res.donor.bloodType : '');
+        const donorPhone = res.donorPhone || (res.donor ? res.donor.phoneNumber : '');
+
+        // If campaign is not active yet (Upcoming/Draft)
+        if (res.isCampaignNotActive || res.warning) {
+          setScanState('error');
+          const warningMsg = res.warning || 'Chiến dịch chưa diễn ra (chưa mở).';
+          setErrorMessage(warningMsg);
+          toast.error(warningMsg);
+          // Show donor profile below because it is the correct campaign
+          setScannedResult({
+            id: regId,
+            name: donorName,
+            status: currentStatus,
+            idCard: donorIdCard,
+            bloodType: donorBloodType,
+            phone: donorPhone,
+          });
+          return;
+        }
 
         if (currentStatus === 'Cancelled' || currentStatus === 'Rejected') {
           setScanState('error');
           const msg = currentStatus === 'Cancelled' ? 'Phiếu đăng ký đã bị hủy' : 'Phiếu đăng ký đã bị từ chối';
           setErrorMessage(msg);
           toast.error(msg);
+          setScannedResult({
+            id: regId,
+            name: donorName,
+            status: currentStatus,
+            idCard: donorIdCard,
+            bloodType: donorBloodType,
+            phone: donorPhone,
+          });
           return;
         }
-
-        const regId = res.registrationId || res._id || targetCode;
-        const donorName = res.donorName || (res.donor ? res.donor.fullName : 'Người hiến máu');
-        const donorIdCard = res.donorIdCard || (res.donor ? res.donor.idDocumentNumber : '');
-        const donorBloodType = res.donorBloodType || (res.donor ? res.donor.bloodType : '');
-        const donorPhone = res.donorPhone || (res.donor ? res.donor.phoneNumber : '');
 
         setScannedResult({
           id: regId,
@@ -68,11 +93,14 @@ export const QRScanPage: React.FC = () => {
         }
       } else {
         setScanState('error');
+        setScannedResult(null);
         setErrorMessage('Không tìm thấy phiếu đăng ký / vé.');
         toast.error('Không tìm thấy phiếu đăng ký!');
       }
     } catch (err: any) {
       setScanState('error');
+      // For tickets of other campaigns or invalid tickets: DO NOT show any donor profile
+      setScannedResult(null);
       const msg = err?.response?.data?.message || err?.message || 'Mã QR không hợp lệ.';
       setErrorMessage(msg);
       toast.error(msg);
@@ -279,10 +307,18 @@ export const QRScanPage: React.FC = () => {
           )}
 
           {scanState === 'error' && (
-            <div className="bg-rose-600 text-white p-6 rounded-2xl space-y-2 max-w-xs animate-in zoom-in-95 shadow-xl">
-              <XCircle className="w-12 h-12 mx-auto text-white" />
-              <h4 className="font-bold text-base">Xác Thực Thất Bại!</h4>
-              <p className="text-xs opacity-90 leading-relaxed">{errorMessage || 'Mã QR không tồn tại trong hệ thống hoặc không đúng định dạng.'}</p>
+            <div className="bg-rose-600 text-white p-5 rounded-2xl space-y-2 max-w-xs animate-in zoom-in-95 shadow-xl text-center">
+              <XCircle className="w-10 h-10 mx-auto text-white" />
+              <h4 className="font-bold text-base">Quét Thất Bại</h4>
+              <p className="text-xs opacity-95 leading-relaxed font-medium">{errorMessage || 'Mã QR không tồn tại trong hệ thống hoặc không đúng định dạng.'}</p>
+              {scannedResult && (
+                <div className="p-2.5 bg-white/10 rounded-xl text-left text-xs space-y-1 border border-white/20 mt-2">
+                  <p className="font-bold flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> {scannedResult.name}</p>
+                  {scannedResult.idCard && <p className="opacity-90 flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5" /> CCCD: {scannedResult.idCard}</p>}
+                  {scannedResult.bloodType && <p className="opacity-90 flex items-center gap-1.5"><Droplet className="w-3.5 h-3.5" /> Nhóm máu: {scannedResult.bloodType}</p>}
+                  <p className="opacity-90 font-semibold mt-0.5 text-amber-200">Trạng thái phiếu: {scannedResult.status}</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -290,8 +326,8 @@ export const QRScanPage: React.FC = () => {
           <div className="absolute inset-10 border-2 border-dashed border-red-500/70 rounded-2xl pointer-events-none" />
         </div>
 
-        {/* Action Button When Scan Succeeded */}
-        {scanState === 'success' && scannedResult && (
+        {/* Action Button When Scanned Record Exists */}
+        {scannedResult && (
           <div className="pt-2 flex justify-center">
             <button
               onClick={() =>
@@ -300,7 +336,7 @@ export const QRScanPage: React.FC = () => {
               className="px-6 py-3 bg-[#93000b] hover:bg-[#7a0009] text-white text-[14px] font-bold rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-2 active:scale-98"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>Mở Hồ Sơ Sàng Lọc Y Tế Ngay →</span>
+              <span>Mở Hồ Sơ Đăng Ký ({scannedResult.name}) →</span>
             </button>
           </div>
         )}

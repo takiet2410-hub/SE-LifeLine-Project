@@ -10,7 +10,7 @@ import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { DigitalDonorRecord } from '../../registration/models/digital-donor-record.model';
 import { sendBookingConfirmationEmail, sendBookingRejectionEmail } from '../../../utils/email.util';
 import { Campaign } from '../../campaign/models/campaign.model';
-import { notificationEvents, emitAppointmentConfirmed } from '../../notification/services/notification.events';
+import { notificationEvents, emitAppointmentConfirmed, emitEligibilityCheckFailed } from '../../notification/services/notification.events';
 import { Hospital } from '../../auth-account/models/hospital.model';
 import { BloodCenter } from '../../auth-account/models/blood-center.model';
 
@@ -667,22 +667,27 @@ export class BookingService {
         donorUser = await User.findById(donorProfile.userId).lean();
       }
 
-      const rawEmail = donorUser?.email || donorProfile?.email || '';
-      const recipientEmail = (rawEmail && typeof rawEmail === 'string' && rawEmail.includes('@')) ? rawEmail.trim() : null;
+      const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
+      const campaignName = (campaign?.name && typeof campaign.name === 'string' && campaign.name.trim())
+        ? campaign.name.trim()
+        : 'Trung tâm tiếp nhận máu LifeLine';
+      const appDateStr = appointment.appointmentDate instanceof Date
+        ? appointment.appointmentDate.toLocaleDateString('vi-VN')
+        : new Date(appointment.appointmentDate).toLocaleDateString('vi-VN');
 
-      if (recipientEmail) {
-        const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
-        const campaignName = (campaign?.name && typeof campaign.name === 'string' && campaign.name.trim())
-          ? campaign.name.trim()
-          : 'Trung tâm tiếp nhận máu LifeLine';
-        const appDate = appointment.appointmentDate;
-        await sendBookingRejectionEmail(recipientEmail, donorName, campaignName, appDate, reason)
-          .catch(err => console.error('Failed to send rejection email:', err));
-      } else {
-        console.log(`[BookingService] Skipping rejection email - No valid email for donorId: ${appointment.donorId}`);
-      }
+      const recipientUserId = (donorUser?._id || donorProfile?.userId || appointment.donorId)?.toString() || '';
+
+      await emitEligibilityCheckFailed({
+        donorId: recipientUserId,
+        donorName,
+        campaignName,
+        appointmentDate: appDateStr,
+        reason: reason || 'Chưa đủ điều kiện sức khỏe hoặc thuộc trường hợp tạm hoãn hiến máu đợt này.',
+        deepLink: '/profile',
+        audienceRole: 'Donor',
+      }).catch(err => console.error('Failed to emit rejection event:', err));
     } catch (err) {
-      console.error('Error sending rejection email:', err);
+      console.error('Error sending rejection notification:', err);
     }
 
     return appointment;

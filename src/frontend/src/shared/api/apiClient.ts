@@ -9,11 +9,20 @@ export const apiClient = axios.create({
   },
 });
 
-// Request interceptor: Attach Bearer token
+// Request interceptor: Attach Bearer token and active role
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  const storedUser = localStorage.getItem('user');
+  if (storedUser && config.headers) {
+    try {
+      const parsed = JSON.parse(storedUser);
+      if (parsed.role) {
+        config.headers['X-Active-Role'] = parsed.role;
+      }
+    } catch {}
   }
   return config;
 });

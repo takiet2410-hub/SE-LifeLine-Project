@@ -40,6 +40,19 @@ jest.mock('../../notification/models/NotificationPreference');
 jest.mock('../../notification/models/UserDevice');
 jest.mock('../../chatbot/models/chat-conversation.model');
 jest.mock('../../chatbot/models/chat-message.model');
+jest.mock('../../../config/redis.config', () => ({
+  redisConnection: {
+    ping: jest.fn().mockResolvedValue('PONG'),
+  },
+}));
+jest.mock('../../../config/queue.config', () => ({
+  notificationQueue: {
+    getJobCounts: jest.fn().mockResolvedValue({ waiting: 0, active: 0, delayed: 0, failed: 0 }),
+  },
+  scheduledTasksQueue: {
+    getJobSchedulers: jest.fn().mockResolvedValue([{ name: 'publish-articles' }]),
+  },
+}));
 jest.mock('../../notification/services/email.service', () => ({
   EmailService: { verifyConnection: jest.fn().mockResolvedValue(true) },
 }));

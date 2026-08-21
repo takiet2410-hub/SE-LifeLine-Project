@@ -630,16 +630,21 @@ export class RegistrationService {
               nextEligibleDate.setDate(nextEligibleDate.getDate() + 84); // 84 days wait time for whole blood
               const campaign = typeof appointment.campaignId === 'object' ? appointment.campaignId : await Campaign.findById(appointment.campaignId).lean();
               const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
+              const rawCampaignName = (campaign as any)?.name;
+              const campaignName = (rawCampaignName && typeof rawCampaignName === 'string' && rawCampaignName.trim())
+                ? rawCampaignName.trim()
+                : 'Trung tâm tiếp nhận máu LifeLine';
               
               await emitDonationCompleted({
                 donorId: appointment.donorId.toString(),
                 donorName,
-                campaignName: campaign ? (campaign as any).name : 'Chiến dịch hiến máu',
+                campaignName,
                 volume: payload.donationVolume || (appointment as any).donationVolume || 350,
                 bloodType: payload.bloodType || donorProfile?.bloodType || 'Chưa xác định',
                 donationDate: new Date().toLocaleDateString('vi-VN'),
                 nextEligibleDate: nextEligibleDate.toLocaleDateString('vi-VN'),
-                deepLink: 'https://lifeline.vn/profile'
+                deepLink: '/profile',
+                audienceRole: 'Donor',
               });
             }
           } catch (gErr) {
@@ -657,7 +662,8 @@ export class RegistrationService {
               await emitEligibilityCheckFailed({
                 donorId: appointment.donorId.toString(),
                 donorName,
-                deepLink: 'https://lifeline.vn/profile'
+                deepLink: '/profile',
+                audienceRole: 'Donor',
               });
             }
           } catch (nErr) {

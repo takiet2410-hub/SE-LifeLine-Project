@@ -160,7 +160,7 @@ export class SOSRequestService {
 
   public static async getSOSRequests(filters: any) {
     const { hospitalId, page = 1, limit = 10, status, urgencyLevel, bloodType, search } = filters;
-    
+
     const query: any = {};
     if (hospitalId) query.hospitalId = hospitalId;
     if (status) query.status = status;
@@ -179,7 +179,7 @@ export class SOSRequestService {
     }
 
     const skip = (Number(page) - 1) * Number(limit);
-    
+
     const [data, total] = await Promise.all([
       SOSRequest.find(query).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).populate('hospitalId'),
       SOSRequest.countDocuments(query)
@@ -203,7 +203,7 @@ export class SOSRequestService {
   public static async updateSOSRequestStatus(id: string, status: string, hospitalId?: string) {
     const request = hospitalId ? await SOSRequest.findOne({ _id: id, hospitalId }) : await SOSRequest.findById(id);
     if (!request) throw new Error('SOS Request not found');
-    
+
     const previousStatus = request.status;
     request.status = status as any;
     await request.save();
@@ -252,8 +252,8 @@ export class SOSRequestService {
 
     // 1. Eligibility Check (Medical interval & Age dynamically configured by Admin in SystemConfig)
     const { SystemConfig } = await import('../../admin/models/system-config.model');
-    const configs = await SystemConfig.find({ 
-      key: { $in: ['donationIntervalDays', 'minDonorAge', 'maxDonorAge'] } 
+    const configs = await SystemConfig.find({
+      key: { $in: ['donationIntervalDays', 'minDonorAge', 'maxDonorAge'] }
     }).lean();
 
     const configMap: Record<string, number> = {
@@ -300,13 +300,13 @@ export class SOSRequestService {
     // A donor response is a pledge, not collected or received blood.
     // Keep it separate so a request is only fulfilled after the hospital confirms receipt.
     const request = await SOSRequest.findOneAndUpdate(
-      { 
-        _id: sosRequestId, 
+      {
+        _id: sosRequestId,
         status: { $in: ['Pending', 'EvaluationInProgress', 'NotificationsDispatched'] },
         fulfillmentDeadline: { $gt: responseTime },
         acceptedDonorIds: { $ne: donorId }
       },
-      { 
+      {
         $inc: { pledgedQuantityMl: 250 },
         $addToSet: { acceptedDonorIds: donorId }
       },
@@ -324,7 +324,7 @@ export class SOSRequestService {
       if (existingRequest.acceptedDonorIds.map((id: any) => id.toString()).includes(donorId)) {
         return { success: true, status: 'already_responded', message: 'You have already responded to this request' };
       }
-      
+
       const error = new Error('Yêu cầu SOS này đã kết thúc hoặc hết hạn, không thể phản hồi thêm.');
       (error as any).statusCode = 409;
       (error as any).code = 'SOS_NOT_ACTIVE';
@@ -347,9 +347,9 @@ export class SOSRequestService {
       console.warn('[SOSRequestService] AuditLog warning:', auditErr);
     }
 
-    return { 
-      success: true, 
-      status: 'accepted', 
+    return {
+      success: true,
+      status: 'accepted',
       message: 'Đã ghi nhận cam kết hỗ trợ. Điểm thưởng chỉ được cộng sau khi bệnh viện tiếp nhận máu.',
       pledgedQuantityMl: request.pledgedQuantityMl
     };
@@ -409,9 +409,9 @@ export class SOSRequestService {
       console.warn('[SOSRequestService] AuditLog warning:', auditErr);
     }
 
-    return { 
-      success: true, 
-      message: 'SOS Request reopened successfully', 
+    return {
+      success: true,
+      message: 'SOS Request reopened successfully',
       pledgedQuantityMl: updatedRequest.pledgedQuantityMl,
       status: updatedRequest.status
     };
@@ -429,7 +429,7 @@ export class SOSRequestService {
         (error as any).statusCode = 404;
         throw error;
       }
-      
+
       if (sosRequest.status === 'Fulfilled') {
         const error = new Error('SOS Request is already fulfilled');
         (error as any).statusCode = 400;
@@ -451,7 +451,7 @@ export class SOSRequestService {
       }
 
       // 2. Fetch blood bags and verify
-      const bags = await BloodBag.find({ 
+      const bags = await BloodBag.find({
         _id: { $in: bagIds },
         status: 'Available'
       }).session(session);
@@ -487,7 +487,7 @@ export class SOSRequestService {
 
       // 3. Calculate total volume and verify against remaining needed (prevent over-fulfillment)
       const totalVolumeMl = bags.reduce((sum, bag) => sum + (bag.volumeMl || 0), 0);
-      
+
       if (totalVolumeMl <= 0) {
         throw new Error('Total volume of selected bags is 0');
       }
@@ -536,7 +536,7 @@ export class SOSRequestService {
       sosRequest.collectedQuantityMl = (sosRequest.collectedQuantityMl || 0) + totalVolumeMl;
       sosRequest.status = 'InventoryDispatched';
       sosRequest.fulfilledByStaffId = new mongoose.Types.ObjectId(staffId) as any;
-      
+
       await sosRequest.save({ session });
 
       await session.commitTransaction();
@@ -660,10 +660,10 @@ export class SOSRequestService {
         actionCategory: 'SOS Request',
         resourceType: 'SOSRequest',
         resourceId: sosRequestId,
-        newValue: { 
-          shipmentCode: shipment.shipmentCode, 
-          receivedQuantityMl: sosRequest.receivedQuantityMl, 
-          status: sosRequest.status 
+        newValue: {
+          shipmentCode: shipment.shipmentCode,
+          receivedQuantityMl: sosRequest.receivedQuantityMl,
+          status: sosRequest.status
         },
         details: `Hospital confirmed receipt for shipment ${shipment.shipmentCode} (${shipment.volumeMl}ml from ${shipment.bloodCenterName || 'Blood Center'})`,
         status: 'Success'
@@ -700,11 +700,11 @@ export class SOSRequestService {
       await this.notifySOSCompletion(sosRequest);
     }
 
-    return { 
-      success: true, 
-      status: sosRequest.status, 
+    return {
+      success: true,
+      status: sosRequest.status,
       message: `Đã xác nhận nhận đợt máu (${shipment.volumeMl}ml) từ ${shipment.bloodCenterName || 'Trung tâm máu'} thành công!`,
-      data: sosRequest 
+      data: sosRequest
     };
   }
 
@@ -741,11 +741,11 @@ export class SOSRequestService {
       await this.notifySOSCompletion(sosRequest);
     }
 
-    return { 
-      success: true, 
-      status: sosRequest.status, 
+    return {
+      success: true,
+      status: sosRequest.status,
       message: isFullyFulfilled ? 'Đã xác nhận nhận đủ máu! Ca SOS hoàn tất.' : `Đã xác nhận nhận các đợt máu (${sosRequest.receivedQuantityMl}/${sosRequest.requiredQuantityMl}ml).`,
-      data: sosRequest 
+      data: sosRequest
     };
   }
 
@@ -898,11 +898,11 @@ export class SOSRequestService {
         actionCategory: 'SOS Request',
         resourceType: 'SOSRequest',
         resourceId: sosRequestId,
-        newValue: { 
+        newValue: {
           donorName: payload.donorName,
-          volumeMl: payload.volumeMl, 
-          receivedQuantityMl: sosRequest.receivedQuantityMl, 
-          status: sosRequest.status 
+          volumeMl: payload.volumeMl,
+          receivedQuantityMl: sosRequest.receivedQuantityMl,
+          status: sosRequest.status
         },
         details: `Hospital recorded direct donation of ${payload.volumeMl}ml from ${payload.donorName} (${payload.fastTrackCode || 'Walk-in'})`,
         status: 'Success'

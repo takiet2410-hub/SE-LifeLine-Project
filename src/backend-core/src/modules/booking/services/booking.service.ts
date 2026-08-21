@@ -560,10 +560,14 @@ export class BookingService {
           if (recipientEmail && fullAppointment.eTicketId) {
             const eTicket: any = fullAppointment.eTicketId;
             const campaign: any = fullAppointment.campaignId;
+            const rawCampaignName = campaign?.name;
+            const campaignName = (rawCampaignName && typeof rawCampaignName === 'string' && rawCampaignName.trim())
+              ? rawCampaignName.trim()
+              : 'Trung tâm tiếp nhận máu LifeLine';
             sendBookingConfirmationEmail(
               recipientEmail,
               donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu',
-              campaign?.name || 'Chiến dịch hiến máu',
+              campaignName,
               fullAppointment.appointmentDate,
               fullAppointment.timeSlot,
               eTicket.ticketCode || '',
@@ -664,7 +668,9 @@ export class BookingService {
 
       if (recipientEmail) {
         const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
-        const campaignName = campaign?.name || 'Chiến dịch hiến máu';
+        const campaignName = (campaign?.name && typeof campaign.name === 'string' && campaign.name.trim())
+          ? campaign.name.trim()
+          : 'Trung tâm tiếp nhận máu LifeLine';
         const appDate = appointment.appointmentDate;
         await sendBookingRejectionEmail(recipientEmail, donorName, campaignName, appDate, reason)
           .catch(err => console.error('Failed to send rejection email:', err));

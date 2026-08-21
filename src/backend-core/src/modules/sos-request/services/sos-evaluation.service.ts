@@ -88,7 +88,7 @@ export class SOSEvaluationService {
       { $match: { bloodType: { $in: compatibleTypes }, status: 'Available' } },
       { $group: { _id: '$bloodCenterId', totalVolume: { $sum: '$volumeMl' } } }
     ]);
-    
+
     const centerInventoryMap = new Map();
     bloodBags.forEach(b => {
       if (b._id) centerInventoryMap.set(b._id.toString(), b.totalVolume);
@@ -152,19 +152,19 @@ export class SOSEvaluationService {
     const rankedDonors = nearbyDonors
       .filter((donor) => donor.userId && activeDonorIds.has(donor.userId.toString()))
       .map(d => {
-      const distance = d.distance || 1;
-      const isExactMatch = d.bloodType === request.bloodType;
-      // Exact blood type matches get 1.0 weight multiplier, compatible types get 0.85 multiplier
-      const compatibilityMultiplier = isExactMatch ? 1.0 : 0.85;
-      const score = (((d.donorLevel || 1) * 10) / distance) * compatibilityMultiplier;
-      return {
-        donorId: d.userId || d._id,
-        donorProfileId: d._id,
-        score,
-        distanceKm: distance,
-        lastDonationDate: d.lastDonationDate,
-        engagementTier: d.donorLevel || 1
-      };
+        const distance = d.distance || 1;
+        const isExactMatch = d.bloodType === request.bloodType;
+        // Exact blood type matches get 1.0 weight multiplier, compatible types get 0.85 multiplier
+        const compatibilityMultiplier = isExactMatch ? 1.0 : 0.85;
+        const score = (((d.donorLevel || 1) * 10) / distance) * compatibilityMultiplier;
+        return {
+          donorId: d.userId || d._id,
+          donorProfileId: d._id,
+          score,
+          distanceKm: distance,
+          lastDonationDate: d.lastDonationDate,
+          engagementTier: d.donorLevel || 1
+        };
       }).sort((a, b) => b.score - a.score);
 
     // 3. Create Evaluation Log

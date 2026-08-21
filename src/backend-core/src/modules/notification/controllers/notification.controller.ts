@@ -18,7 +18,7 @@ export class NotificationController {
   public static async listNotifications(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?._id || (req as any).user?.id;
-      const activeRole = (req as any).user?.role;
+      const activeRole = (req.headers['x-active-role'] as string) || (req as any).user?.role;
       const query = req.query as any;
 
       const result = await NotificationService.getUserNotifications(userId, {
@@ -115,9 +115,10 @@ export class NotificationController {
   public static async markMultipleAsRead(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?._id || (req as any).user?.id;
+      const activeRole = (req.headers['x-active-role'] as string) || (req as any).user?.role;
       const { ids, markAllAsRead } = req.body;
 
-      const result = await NotificationService.markMultipleAsRead(userId, ids, markAllAsRead);
+      const result = await NotificationService.markMultipleAsRead(userId, ids, markAllAsRead, activeRole);
       
       res.status(200).json({ success: true, data: result });
     } catch (error) {
@@ -182,7 +183,7 @@ export class NotificationController {
   public static async getUnreadCount(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?._id || (req as any).user?.id;
-      const activeRole = (req as any).user?.role;
+      const activeRole = (req.headers['x-active-role'] as string) || (req as any).user?.role;
       const count = await NotificationService.getUnreadCount(userId, activeRole);
       console.log(`[NotificationController] User ${userId} requested unread count. Found: ${count}`);
       res.status(200).json({ success: true, count });

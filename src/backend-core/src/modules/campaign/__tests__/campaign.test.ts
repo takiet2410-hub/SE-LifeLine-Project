@@ -56,12 +56,15 @@ describe('CampaignService', () => {
         contactPerson: { name: 'Jane Smith', phone: '0987654321' }
       };
 
+      jest.spyOn(Campaign, 'findOne').mockReturnValue({
+        sort: jest.fn().mockResolvedValue(null),
+      } as any);
       jest.spyOn(Campaign, 'countDocuments').mockResolvedValue(0 as any);
       jest.spyOn(Campaign.prototype, 'save').mockResolvedValue({} as any);
 
       const result = await CampaignService.createCampaign(data);
 
-      expect(result.campaignCode).toMatch(/^CMP-\d{4}-001$/);
+      expect(result.campaignCode).toMatch(/^CMP-\d{4}-0001$/);
       expect(result.status).toBe('Upcoming');
       expect(result.registeredCount).toBe(0);
       expect(result.name).toBe('New Donors Drive');

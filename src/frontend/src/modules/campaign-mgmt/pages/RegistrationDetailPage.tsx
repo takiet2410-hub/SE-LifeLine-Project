@@ -164,8 +164,8 @@ export const RegistrationDetailPage: React.FC = () => {
     if (!registrationId || !registration) return;
 
     if (['CheckedIn', 'Examining', 'Eligible', 'Completed'].includes(newStatus)) {
-      if (campaign && campaign.status !== 'Active') {
-        toast.error('Chiến dịch chưa mở, chưa thể điểm danh.');
+      if (campaign && campaign.status !== 'Active' && campaign.status !== 'Completed') {
+        toast.error('Chiến dịch chưa diễn ra (chưa mở).');
         setConfirmStatusModal({ isOpen: false, targetStatus: null });
         return;
       }
@@ -361,16 +361,16 @@ export const RegistrationDetailPage: React.FC = () => {
           {registration.status === 'Confirmed' && (
             <button
               type="button"
-              disabled={campaign ? campaign.status !== 'Active' : false}
+              disabled={campaign ? (campaign.status !== 'Active' && campaign.status !== 'Completed') : false}
               onClick={() => {
-                if (campaign && campaign.status !== 'Active') {
-                  toast.error('Chiến dịch chưa mở, chưa thể điểm danh.');
+                if (campaign && campaign.status !== 'Active' && campaign.status !== 'Completed') {
+                  toast.error('Chiến dịch chưa diễn ra (chưa mở).');
                   return;
                 }
                 setConfirmStatusModal({ isOpen: true, targetStatus: 'CheckedIn' });
               }}
               className={`h-10 px-4 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all whitespace-nowrap ${
-                campaign && campaign.status !== 'Active'
+                campaign && campaign.status !== 'Active' && campaign.status !== 'Completed'
                   ? 'bg-amber-600 opacity-40 cursor-not-allowed'
                   : 'bg-amber-600 hover:bg-amber-700 cursor-pointer'
               }`}
@@ -1378,7 +1378,7 @@ export const RegistrationDetailPage: React.FC = () => {
                 type="button"
                 onClick={async () => {
                   setShowExaminingModal(false);
-                  await handleUpdateStatus('Ineligible for Donation');
+                  await handleUpdateStatus('Completed', 'Rejected');
                 }}
                 className="w-full p-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-900 rounded-2xl flex items-center justify-between transition-all group cursor-pointer text-left"
               >

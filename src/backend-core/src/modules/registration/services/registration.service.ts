@@ -481,7 +481,7 @@ export class RegistrationService {
 
     if (isAdvancingToCheckInOrBeyond && appointment.campaignId) {
       const campaign = await Campaign.findById(appointment.campaignId);
-      if (campaign && campaign.status !== 'Active') {
+      if (campaign && campaign.status !== 'Active' && campaign.status !== 'Completed') {
         const err: any = new Error('Chiến dịch chưa diễn ra (chưa mở).');
         err.statusCode = 400;
         throw err;

@@ -221,25 +221,17 @@ export const QRScanPage: React.FC = () => {
 
             <label
               htmlFor="qr-file-input"
-              className="border-2 border-dashed border-red-200 hover:border-[#93000b] bg-[#fff8f7]/60 hover:bg-[#fff0ee] rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-all text-center group"
+              className="border-2 border-dashed border-red-200 hover:border-[#93000b] bg-[#fff8f7]/60 hover:bg-[#fff0ee] rounded-xl py-7 px-5 flex flex-col items-center justify-center cursor-pointer transition-all text-center group"
             >
-              <UploadCloud className="w-8 h-8 text-[#93000b] mb-2 group-hover:scale-110 transition-transform" />
+              <UploadCloud className="w-9 h-9 text-[#93000b] mb-2 group-hover:scale-110 transition-transform" />
               <span className="text-[13px] font-bold text-slate-800 group-hover:text-[#93000b]">
-                Bấm để chọn tệp ảnh QR
+                Bấm vào đây để tải lên ảnh mã QR
               </span>
-              <span className="text-[11px] text-slate-500 mt-0.5">
-                Hỗ trợ các định dạng PNG, JPG, JPEG, WebP
+              <span className="text-[11px] text-slate-500 mt-1">
+                Hỗ trợ định dạng PNG, JPG, JPEG, WebP
               </span>
             </label>
           </div>
-
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full py-3 border border-slate-300 text-slate-700 hover:bg-slate-100 text-[13px] font-bold rounded-xl transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <UploadCloud className="w-4 h-4 text-slate-600" />
-            <span>Chọn Ảnh Từ Thư Mục</span>
-          </button>
         </div>
       </div>
 

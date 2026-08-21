@@ -153,7 +153,7 @@ export const EditCampaignPage: React.FC = () => {
           const ended =
             campaign.status === 'Completed' ||
             campaign.status === 'Cancelled' ||
-            (campaign.status !== 'Draft' && campaign.endDateTime && new Date(campaign.endDateTime).getTime() < new Date().getTime());
+            Boolean(campaign.status !== 'Draft' && campaign.endDateTime && new Date(campaign.endDateTime).getTime() < new Date().getTime());
           setIsCampaignEnded(ended);
           setOriginalStatus(campaign.status || 'Upcoming');
 

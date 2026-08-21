@@ -424,7 +424,7 @@ export const CampaignListPage: React.FC = () => {
         const isEnded =
           row.status === 'Completed' ||
           row.status === 'Cancelled' ||
-          (row.status !== 'Draft' && row.endDateTime && new Date(row.endDateTime).getTime() < new Date().getTime());
+          Boolean(row.status !== 'Draft' && row.endDateTime && new Date(row.endDateTime).getTime() < new Date().getTime());
         return (
           <div className="flex items-center gap-1">
             <button

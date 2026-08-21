@@ -10,14 +10,12 @@ import {
   MapPin,
   Phone,
   Heart,
-  CheckCircle,
   XCircle,
   Droplets,
   HeartHandshake,
   Clock,
   X,
   ExternalLink,
-  ShieldAlert,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -28,7 +26,7 @@ export const DonorSOSDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const currentUserId = user?._id || user?.id || (user as any)?.userId || '';
+  const currentUserId = (user as any)?._id || user?.id || (user as any)?.userId || '';
 
   const [request, setRequest] = useState<SOSRequest | null>(null);
   const [isLoading, setIsLoading] = useState(true);

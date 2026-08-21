@@ -19,6 +19,16 @@ const AuthContext = createContext<AuthContextType>({
   updateUser: () => {},
 });
 
+const normalizeUser = (userData?: AuthUser | null): AuthUser | null => {
+  if (!userData) return null;
+  const uid = userData.id || userData._id || '';
+  return {
+    ...userData,
+    id: uid,
+    _id: uid,
+  };
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('accessToken'));
   const [user, setUser] = useState<AuthUser | null>(() => {
@@ -26,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        return JSON.parse(storedUser);
+        return normalizeUser(JSON.parse(storedUser));
       } catch {
         localStorage.removeItem('user');
         return null;
@@ -44,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setToken(storedToken);
         if (storedUser) {
           try {
-            setUser(JSON.parse(storedUser));
+            setUser(normalizeUser(JSON.parse(storedUser)));
           } catch {
             setUser(null);
           }
@@ -62,8 +72,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(newToken);
     // BUG-07 FIX: populate user ngay khi login nếu có userData
     if (userData) {
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
+      const normalized = normalizeUser(userData);
+      localStorage.setItem('user', JSON.stringify(normalized));
+      setUser(normalized);
     }
   }, []);
 
@@ -77,8 +88,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Cho phép cập nhật user sau khi fetch profile
   const updateUser = useCallback((userData: AuthUser) => {
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
+    const normalized = normalizeUser(userData);
+    if (normalized) {
+      localStorage.setItem('user', JSON.stringify(normalized));
+      setUser(normalized);
+    }
   }, []);
 
   return (

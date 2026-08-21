@@ -219,8 +219,24 @@ def search_campaigns(query: str = "") -> str:
     results = []
     print(f"\n[DEBUG CAMPAIGNS] AI filtered top {len(campaigns)} active & upcoming valid campaigns for: '{query}'")
     for c in campaigns:
-        start_str = c.get('startDateTime').strftime('%d/%m/%Y %H:%M') if c.get('startDateTime') else 'Đang cập nhật'
-        end_str = c.get('endDateTime').strftime('%d/%m/%Y %H:%M') if c.get('endDateTime') else ''
+        start_dt = c.get('startDateTime')
+        if start_dt:
+            if start_dt.tzinfo is None:
+                start_dt = start_dt.replace(tzinfo=datetime.timezone.utc)
+            start_dt = start_dt.astimezone(datetime.timezone(datetime.timedelta(hours=7)))
+            start_str = start_dt.strftime('%d/%m/%Y %H:%M')
+        else:
+            start_str = 'Đang cập nhật'
+            
+        end_dt = c.get('endDateTime')
+        if end_dt:
+            if end_dt.tzinfo is None:
+                end_dt = end_dt.replace(tzinfo=datetime.timezone.utc)
+            end_dt = end_dt.astimezone(datetime.timezone(datetime.timedelta(hours=7)))
+            end_str = end_dt.strftime('%d/%m/%Y %H:%M')
+        else:
+            end_str = ''
+            
         date_display = f"{start_str} - {end_str}" if end_str else start_str
         
         venue = c.get('venue') or c.get('name') or 'Điểm hiến máu'

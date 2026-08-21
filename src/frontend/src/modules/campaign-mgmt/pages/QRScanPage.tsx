@@ -34,15 +34,24 @@ export const QRScanPage: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      const res = await apiService.checkInQRCode(targetCode);
+      const res = await apiService.checkInQRCode(targetCode, campaignId);
       if (res) {
+        const currentStatus = res.status || 'CheckedIn';
+
+        if (currentStatus === 'Cancelled' || currentStatus === 'Rejected') {
+          setScanState('error');
+          const statusText = currentStatus === 'Cancelled' ? 'đã bị hủy' : 'đã bị từ chối';
+          const msg = `Phiếu đăng ký của người hiến máu ${statusText} trước đó. Không thể điểm danh.`;
+          setErrorMessage(msg);
+          toast.error(msg);
+          return;
+        }
+
         const regId = res.registrationId || res._id || targetCode;
         const donorName = res.donorName || (res.donor ? res.donor.fullName : 'Người hiến máu');
         const donorIdCard = res.donorIdCard || (res.donor ? res.donor.idDocumentNumber : '');
         const donorBloodType = res.donorBloodType || (res.donor ? res.donor.bloodType : '');
         const donorPhone = res.donorPhone || (res.donor ? res.donor.phoneNumber : '');
-
-        const currentStatus = res.status || 'CheckedIn';
 
         setScannedResult({
           id: regId,
@@ -65,8 +74,9 @@ export const QRScanPage: React.FC = () => {
       }
     } catch (err: any) {
       setScanState('error');
-      setErrorMessage(err?.message || 'Không thể xác thực mã QR. Vui lòng kiểm tra lại.');
-      toast.error('Lỗi xác thực mã QR.');
+      const msg = err?.response?.data?.message || err?.message || 'Không thể xác thực mã QR. Vui lòng kiểm tra lại.';
+      setErrorMessage(msg);
+      toast.error(msg);
     }
   };
 

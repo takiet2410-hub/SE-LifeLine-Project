@@ -788,66 +788,129 @@ export class RegistrationService {
   /**
    * Scan QR Code & Check-in registration automatically
    */
-  static async checkInByQRCode(qrPayload: string, actorUserId?: string) {
-    let appointment: any = null;
+  static async checkInByQRCode(qrPayload: string, actorUserId?: string, targetCampaignId?: string) {
     const cleanPayload = qrPayload ? qrPayload.trim() : '';
+    if (!cleanPayload) {
+      const err: any = new Error('Vui lòng cung cấp mã QR hoặc mã vé E-Ticket hợp lệ');
+      err.statusCode = 400;
+      throw err;
+    }
 
-    if (cleanPayload) {
-      // 1. Try finding ETicket by ticketCode or qrPayloadSigned
-      const eTicket = await ETicket.findOne({
-        $or: [
-          { ticketCode: cleanPayload },
-          { qrPayloadSigned: cleanPayload },
-          { ticketCode: cleanPayload.replace('SIGNED-', '') }
-        ]
-      }).lean();
+    let appointment: any = null;
+    let foundETicket: any = null;
 
-      if (eTicket) {
-        appointment = await Appointment.findById(eTicket.appointmentId);
-      }
+    // 1. Try finding ETicket by ticketCode or qrPayloadSigned or stripped prefix
+    const eTicket = await ETicket.findOne({
+      $or: [
+        { ticketCode: cleanPayload },
+        { qrPayloadSigned: cleanPayload },
+        { ticketCode: cleanPayload.replace('SIGNED-', '') }
+      ]
+    }).lean();
 
-      // 2. Try finding by CCCD (idDocumentNumber) in DonorProfile or User
-      if (!appointment) {
-        const matchingProfile = await DonorProfile.findOne({ idDocumentNumber: cleanPayload }).lean();
-        const matchingUser = await User.findOne({ idDocumentNumber: cleanPayload }).lean();
+    if (eTicket) {
+      foundETicket = eTicket;
+      appointment = await Appointment.findById(eTicket.appointmentId);
+    }
 
-        const donorUserIds = [
-          ...(matchingProfile ? [matchingProfile.userId, matchingProfile._id] : []),
-          ...(matchingUser ? [matchingUser._id] : [])
-        ].filter(Boolean);
-
-        if (donorUserIds.length > 0) {
-          appointment = await Appointment.findOne({
-            donorId: { $in: donorUserIds },
-            status: { $in: [AppointmentStatus.Confirmed, AppointmentStatus.Pending, AppointmentStatus.Scheduled, AppointmentStatus.CheckedIn] }
-          }).sort({ appointmentDate: -1, createdAt: -1 });
+    // 2. Try finding by CCCD (idDocumentNumber) in DonorProfile or User
+    if (!appointment) {
+      let cccdNumber = cleanPayload;
+      if (cleanPayload.includes('|')) {
+        const parts = cleanPayload.split('|');
+        if (parts[0] && /^\d{9,12}$/.test(parts[0].trim())) {
+          cccdNumber = parts[0].trim();
         }
       }
 
-      // 3. Try finding Appointment directly by _id
-      if (!appointment && mongoose.Types.ObjectId.isValid(cleanPayload)) {
-        appointment = await Appointment.findById(cleanPayload);
+      const matchingProfile = await DonorProfile.findOne({ idDocumentNumber: cccdNumber }).lean();
+      const matchingUser = await User.findOne({ idDocumentNumber: cccdNumber }).lean();
+
+      const donorUserIds = [
+        ...(matchingProfile ? [matchingProfile.userId, matchingProfile._id] : []),
+        ...(matchingUser ? [matchingUser._id] : [])
+      ].filter(Boolean);
+
+      if (donorUserIds.length > 0) {
+        const queryFilter: any = {
+          donorId: { $in: donorUserIds }
+        };
+        if (targetCampaignId && targetCampaignId !== 'all' && mongoose.Types.ObjectId.isValid(targetCampaignId)) {
+          queryFilter.campaignId = new mongoose.Types.ObjectId(targetCampaignId);
+        }
+        appointment = await Appointment.findOne(queryFilter).sort({ appointmentDate: -1, createdAt: -1 });
       }
     }
 
-    // 3. Fallback: if cleanPayload is empty or mock demo, find the first available confirmed/pending appointment
-    if (!appointment) {
-      appointment = await Appointment.findOne({
-        status: { $in: [AppointmentStatus.Confirmed, AppointmentStatus.Pending, AppointmentStatus.Scheduled, AppointmentStatus.CheckedIn] }
-      }).sort({ createdAt: -1 });
+    // 3. Try finding Appointment directly by _id
+    if (!appointment && mongoose.Types.ObjectId.isValid(cleanPayload)) {
+      appointment = await Appointment.findById(cleanPayload);
     }
 
+    // Strict validation: Do NOT fallback to random appointments!
     if (!appointment) {
-      const err: any = new Error('Không tìm thấy phiếu đăng ký / E-Ticket hợp lệ');
+      const err: any = new Error('Không tìm thấy phiếu đăng ký hoặc mã E-Ticket hợp lệ trong hệ thống.');
       err.statusCode = 404;
       throw err;
     }
 
-    // 4. Update status to CheckedIn ONLY IF registration is strictly in Confirmed / Pending / Scheduled status
+    // 4. Validate Campaign Scoping
+    if (targetCampaignId && targetCampaignId !== 'all' && mongoose.Types.ObjectId.isValid(targetCampaignId)) {
+      const campaignIdFromApp = appointment.campaignId ? appointment.campaignId.toString() : '';
+      if (campaignIdFromApp !== targetCampaignId.toString()) {
+        const err: any = new Error('Phiếu đăng ký / E-Ticket này thuộc về một chiến dịch khác, không hợp lệ cho chiến dịch đang quét.');
+        err.statusCode = 400;
+        throw err;
+      }
+    }
+
+    // 5. Check if ETicket is explicitly invalidated
+    if (foundETicket && (foundETicket.qrPayloadSigned === 'INVALIDATED' || foundETicket.qrPayloadSigned === 'EXPIRED')) {
+      const err: any = new Error('Mã E-Ticket này đã bị hủy hoặc đã hết hạn sử dụng. Không thể điểm danh.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // 6. Check Appointment status & DigitalDonorRecord status
     const registrationIdStr = appointment._id.toString();
     const digitalRecord = await DigitalDonorRecord.findOne({ appointmentId: appointment._id }).lean();
     const effectiveStatus: string = digitalRecord?.donationStatus || appointment.status;
 
+    if (
+      effectiveStatus === 'Cancelled' ||
+      effectiveStatus === (AppointmentStatus.Cancelled as string) ||
+      appointment.status === AppointmentStatus.Cancelled ||
+      appointment.status === 'Cancelled'
+    ) {
+      const err: any = new Error('Phiếu đăng ký / E-Ticket này đã bị hủy trước đó. Không thể điểm danh.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    if (
+      effectiveStatus === 'Rejected' ||
+      effectiveStatus === (AppointmentStatus.Rejected as string) ||
+      appointment.status === AppointmentStatus.Rejected ||
+      appointment.status === 'Rejected'
+    ) {
+      const err: any = new Error('Phiếu đăng ký này đã bị từ chối trước đó. Không thể điểm danh.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    if (
+      effectiveStatus === 'Completed' ||
+      effectiveStatus === 'Donation Completed' ||
+      effectiveStatus === (AppointmentStatus.Completed as string) ||
+      appointment.status === AppointmentStatus.Completed ||
+      appointment.status === 'Completed'
+    ) {
+      const err: any = new Error('Người hiến máu này đã hoàn thành lượt hiến máu trong chiến dịch này.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // 7. Update status to CheckedIn ONLY IF registration is in Confirmed / Pending / Scheduled status
     if (
       effectiveStatus === 'Confirmed' ||
       effectiveStatus === 'Pending' ||
@@ -862,7 +925,7 @@ export class RegistrationService {
       );
     }
 
-    // If already CheckedIn or later (Eligible, Ineligible, Completed, etc.), keep registration EXACTLY as is!
+    // If already CheckedIn / Examining / Eligible, return current registration details
     return await RegistrationService.getRegistrationById(registrationIdStr);
   }
 }

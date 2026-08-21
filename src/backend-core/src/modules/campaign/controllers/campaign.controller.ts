@@ -71,6 +71,11 @@ export class CampaignController {
     } catch (error: any) {
       if (error.message === 'CAMPAIGN_NOT_FOUND') {
         res.status(404).json({ code: 'NOT_FOUND', message: 'Campaign not found' });
+      } else if (error.message === 'CAMPAIGN_ALREADY_ENDED' || error.message === 'CAMPAIGN_ENDED') {
+        res.status(400).json({
+          code: 'VALIDATION_ERROR',
+          message: 'Không thể chỉnh sửa chiến dịch đã kết thúc hoặc đã bị hủy.'
+        });
       } else if (error.message === 'CAPACITY_BELOW_REGISTERED') {
         res.status(400).json({
           code: 'VALIDATION_ERROR',

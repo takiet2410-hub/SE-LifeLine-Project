@@ -15,7 +15,7 @@ export const EligibilityOverlay: React.FC<EligibilityOverlayProps> = ({
   isOpen,
   onClose,
   title = 'Không đủ điều kiện hiến máu',
-  message = 'Bạn chưa đủ khoảng cách 84 ngày kể từ lần hiến máu gần nhất hoặc thông tin sức khỏe chưa đáp ứng tiêu chuẩn.',
+  message = 'Bạn chưa đủ khoảng cách tối thiểu kể từ lần hiến máu gần nhất hoặc thông tin sức khỏe chưa đáp ứng tiêu chuẩn.',
   lastDonationDate,
   nextEligibleDate,
 }) => {

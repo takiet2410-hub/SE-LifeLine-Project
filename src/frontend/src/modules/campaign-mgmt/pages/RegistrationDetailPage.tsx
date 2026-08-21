@@ -25,7 +25,7 @@ import {
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
 import { formatDateToDDMMYYYY } from '../../booking-location/api/bookingApi';
-import type { RegistrationData } from '../../../services/mockData';
+import type { RegistrationData, CampaignData } from '../../../services/mockData';
 import { screeningSchema } from '../schemas/campaignSchema';
 import type { ScreeningInput } from '../schemas/campaignSchema';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -38,14 +38,16 @@ export const RegistrationDetailPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [registration, setRegistration] = useState<RegistrationData | null>(null);
+  const [campaign, setCampaign] = useState<CampaignData | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirmStatusModal, setConfirmStatusModal] = useState<{ isOpen: boolean; targetStatus: string | null }>({
     isOpen: false,
     targetStatus: null,
   });
-  const [rejectModal, setRejectModal] = useState<{ isOpen: boolean; reason: string }>({
+  const [rejectModal, setRejectModal] = useState<{ isOpen: boolean; reason: string; targetStatus: string }>({
     isOpen: false,
     reason: '',
+    targetStatus: 'Rejected',
   });
 
   const {
@@ -54,7 +56,7 @@ export const RegistrationDetailPage: React.FC = () => {
     reset,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<ScreeningInput>({
     resolver: zodResolver(screeningSchema),
   });
@@ -77,11 +79,15 @@ export const RegistrationDetailPage: React.FC = () => {
             screeningNotes: data.screeningNotes || '',
             status: (data.status as any) || 'Confirmed',
           });
+          const targetCId = data.campaignId || campaignId;
+          if (targetCId && targetCId !== 'all') {
+            apiService.getCampaignById(targetCId).then((c) => setCampaign(c)).catch(() => {});
+          }
         }
         setLoading(false);
       });
     }
-  }, [registrationId, reset]);
+  }, [registrationId, campaignId, reset]);
 
   const [editBloodType, setEditBloodType] = useState<string>('Unknown');
   const [donationVolume, setDonationVolume] = useState<number>(350);
@@ -97,6 +103,12 @@ export const RegistrationDetailPage: React.FC = () => {
   const isCheckedInOrLater = registration
     ? ['CheckedIn', 'Eligible', 'Examining', 'Ineligible', 'Completed'].includes(registration.status)
     : false;
+
+  const isVitalsLocked = registration
+    ? ['Eligible', 'Examining', 'Completed', 'Ineligible', 'Ineligible for Donation', 'Donation Completed'].includes(registration.status)
+    : false;
+
+  const canSave = isDirty && !isSubmitting && !isVitalsLocked;
 
   const isUnknownBloodType = registration
     ? !registration.donorBloodType ||
@@ -150,6 +162,14 @@ export const RegistrationDetailPage: React.FC = () => {
 
   const handleUpdateStatus = async (newStatus: string, testResult?: 'Pass' | 'Rejected') => {
     if (!registrationId || !registration) return;
+
+    if (['CheckedIn', 'Examining', 'Eligible', 'Completed'].includes(newStatus)) {
+      if (campaign && campaign.status !== 'Active') {
+        toast.error('Chiến dịch chưa mở, chưa thể điểm danh.');
+        setConfirmStatusModal({ isOpen: false, targetStatus: null });
+        return;
+      }
+    }
 
     if (newStatus === 'Eligible') {
       if (!areVitalsComplete()) {
@@ -214,13 +234,19 @@ export const RegistrationDetailPage: React.FC = () => {
             : `Đã cập nhật trạng thái phiếu sàng lọc: ${statusLabels[newStatus] || newStatus}`
         );
       }
-    } catch (err) {
-      toast.error('Cập nhật trạng thái thất bại. Vui lòng thử lại.');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Cập nhật trạng thái thất bại. Vui lòng thử lại.';
+      toast.error(msg);
     }
   };
 
   const onSubmit = async (data: ScreeningInput) => {
     if (!registrationId) return;
+
+    if (isVitalsLocked) {
+      toast.info('Thông tin khám lâm sàng đã khóa khi hồ sơ đạt trạng thái Đủ điều kiện.');
+      return;
+    }
 
     if (data.status === 'Completed' && !isBloodTypeValid(registration, editBloodType)) {
       toast.error('⚠️ Chưa thể Hoàn Thành! Vui lòng chọn & cập nhật nhóm máu cho người hiến (khác Unknown) trước khi hoàn tất.');
@@ -247,6 +273,14 @@ export const RegistrationDetailPage: React.FC = () => {
         ...(shouldUpdateBloodType ? { donorBloodType: editBloodType } : {}),
       });
       setRegistration(updated);
+      reset({
+        bloodPressure: updated.bloodPressure || '',
+        weight: updated.weight || undefined,
+        bodyTemperature: updated.bodyTemperature || undefined,
+        hemoglobinLevel: updated.hemoglobinLevel || undefined,
+        screeningNotes: updated.screeningNotes || '',
+        status: (updated.status as any) || 'Confirmed',
+      });
       toast.success(
         shouldUpdateBloodType
           ? 'Đã lưu kết quả khám lâm sàng & cập nhật nhóm máu vào hồ sơ người hiến!'
@@ -315,7 +349,7 @@ export const RegistrationDetailPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setRejectModal({ isOpen: true, reason: '' })}
+                onClick={() => setRejectModal({ isOpen: true, reason: '', targetStatus: 'Rejected' })}
                 className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
               >
                 <XCircle className="w-4 h-4 text-white" />
@@ -327,8 +361,24 @@ export const RegistrationDetailPage: React.FC = () => {
           {registration.status === 'Confirmed' && (
             <button
               type="button"
-              onClick={() => setConfirmStatusModal({ isOpen: true, targetStatus: 'CheckedIn' })}
-              className="h-10 px-4 bg-amber-600 hover:bg-amber-700 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+              disabled={campaign ? campaign.status !== 'Active' : false}
+              onClick={() => {
+                if (campaign && campaign.status !== 'Active') {
+                  toast.error('Chiến dịch chưa mở, chưa thể điểm danh.');
+                  return;
+                }
+                setConfirmStatusModal({ isOpen: true, targetStatus: 'CheckedIn' });
+              }}
+              className={`h-10 px-4 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all whitespace-nowrap ${
+                campaign && campaign.status !== 'Active'
+                  ? 'bg-amber-600 opacity-40 cursor-not-allowed'
+                  : 'bg-amber-600 hover:bg-amber-700 cursor-pointer'
+              }`}
+              title={
+                campaign && campaign.status !== 'Active'
+                  ? 'Chiến dịch chưa mở'
+                  : 'Điểm Danh (CheckIn)'
+              }
             >
               <Clock className="w-4 h-4 text-white" />
               <span>Điểm Danh (CheckIn)</span>
@@ -355,7 +405,7 @@ export const RegistrationDetailPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setConfirmStatusModal({ isOpen: true, targetStatus: 'Ineligible' })}
+                onClick={() => setRejectModal({ isOpen: true, reason: '', targetStatus: 'Ineligible' })}
                 className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
               >
                 <XCircle className="w-4 h-4 text-white" />
@@ -966,12 +1016,15 @@ export const RegistrationDetailPage: React.FC = () => {
                 <FormField label="Huyết áp (mmHg) *" error={errors.bloodPressure?.message}>
                   <input
                     type="text"
+                    disabled={isVitalsLocked}
                     {...register('bloodPressure')}
-                    placeholder="Chưa nhập (VD: 120/80)..."
-                    className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white ${
-                      vitalsError && (!watchBp || String(watchBp).trim() === '')
+                    placeholder={isVitalsLocked ? 'Chưa có thông tin' : 'Chưa nhập (VD: 120/80)...'}
+                    className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all ${
+                      isVitalsLocked
+                        ? 'bg-slate-100 text-slate-600 border-slate-200 cursor-not-allowed'
+                        : vitalsError && (!watchBp || String(watchBp).trim() === '')
                         ? 'border-red-500 bg-red-50/40 ring-2 ring-red-200'
-                        : 'border-[#f1f3f5] focus:border-[#93000b]'
+                        : 'border-[#f1f3f5] focus:border-[#93000b] focus:ring-2 focus:ring-[#93000b]/10 bg-white'
                     }`}
                   />
                 </FormField>
@@ -980,12 +1033,19 @@ export const RegistrationDetailPage: React.FC = () => {
                   <input
                     type="number"
                     step="0.1"
+                    min="0"
+                    disabled={isVitalsLocked}
+                    onKeyDown={(e) => {
+                      if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault();
+                    }}
                     {...register('weight', { valueAsNumber: true })}
-                    placeholder="Chưa nhập (VD: 62)..."
-                    className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white ${
-                      vitalsError && (watchWeight === undefined || watchWeight === null || isNaN(watchWeight) || Number(watchWeight) <= 0)
+                    placeholder={isVitalsLocked ? 'Chưa có thông tin' : 'Chưa nhập (VD: 62)...'}
+                    className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all ${
+                      isVitalsLocked
+                        ? 'bg-slate-100 text-slate-600 border-slate-200 cursor-not-allowed'
+                        : vitalsError && (watchWeight === undefined || watchWeight === null || isNaN(watchWeight) || Number(watchWeight) <= 0)
                         ? 'border-red-500 bg-red-50/40 ring-2 ring-red-200'
-                        : 'border-[#f1f3f5] focus:border-[#93000b]'
+                        : 'border-[#f1f3f5] focus:border-[#93000b] focus:ring-2 focus:ring-[#93000b]/10 bg-white'
                     }`}
                   />
                 </FormField>
@@ -994,12 +1054,19 @@ export const RegistrationDetailPage: React.FC = () => {
                   <input
                     type="number"
                     step="0.1"
+                    min="0"
+                    disabled={isVitalsLocked}
+                    onKeyDown={(e) => {
+                      if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault();
+                    }}
                     {...register('bodyTemperature', { valueAsNumber: true })}
-                    placeholder="Chưa nhập (VD: 36.6)..."
-                    className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white ${
-                      vitalsError && (watchTemp === undefined || watchTemp === null || isNaN(watchTemp) || Number(watchTemp) <= 0)
+                    placeholder={isVitalsLocked ? 'Chưa có thông tin' : 'Chưa nhập (VD: 36.6)...'}
+                    className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all ${
+                      isVitalsLocked
+                        ? 'bg-slate-100 text-slate-600 border-slate-200 cursor-not-allowed'
+                        : vitalsError && (watchTemp === undefined || watchTemp === null || isNaN(watchTemp) || Number(watchTemp) <= 0)
                         ? 'border-red-500 bg-red-50/40 ring-2 ring-red-200'
-                        : 'border-[#f1f3f5] focus:border-[#93000b]'
+                        : 'border-[#f1f3f5] focus:border-[#93000b] focus:ring-2 focus:ring-[#93000b]/10 bg-white'
                     }`}
                   />
                 </FormField>
@@ -1008,12 +1075,19 @@ export const RegistrationDetailPage: React.FC = () => {
                   <input
                     type="number"
                     step="0.1"
+                    min="0"
+                    disabled={isVitalsLocked}
+                    onKeyDown={(e) => {
+                      if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault();
+                    }}
                     {...register('hemoglobinLevel', { valueAsNumber: true })}
-                    placeholder="Chưa nhập (VD: 13.5)..."
-                    className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white ${
-                      vitalsError && (watchHgb === undefined || watchHgb === null || isNaN(watchHgb) || Number(watchHgb) <= 0)
+                    placeholder={isVitalsLocked ? 'Chưa có thông tin' : 'Chưa nhập (VD: 13.5)...'}
+                    className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all ${
+                      isVitalsLocked
+                        ? 'bg-slate-100 text-slate-600 border-slate-200 cursor-not-allowed'
+                        : vitalsError && (watchHgb === undefined || watchHgb === null || isNaN(watchHgb) || Number(watchHgb) <= 0)
                         ? 'border-red-500 bg-red-50/40 ring-2 ring-red-200'
-                        : 'border-[#f1f3f5] focus:border-[#93000b]'
+                        : 'border-[#f1f3f5] focus:border-[#93000b] focus:ring-2 focus:ring-[#93000b]/10 bg-white'
                     }`}
                   />
                 </FormField>
@@ -1022,9 +1096,14 @@ export const RegistrationDetailPage: React.FC = () => {
                   <FormField label="Ghi chú khám lâm sàng & Kết luận của Bác sĩ" error={errors.screeningNotes?.message}>
                     <textarea
                       rows={3}
+                      disabled={isVitalsLocked}
                       {...register('screeningNotes')}
-                      placeholder="Ghi chú chi tiết về tình trạng sức khỏe..."
-                      className="w-full px-3.5 py-2 text-[13px] border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[#271816] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10 bg-white"
+                      placeholder={isVitalsLocked ? 'Không có ghi chú thêm.' : 'Ghi chú chi tiết về tình trạng sức khỏe...'}
+                      className={`w-full px-3.5 py-2 text-[13px] border rounded-xl text-[#271816] outline-none transition-all ${
+                        isVitalsLocked
+                          ? 'bg-slate-100 text-slate-600 border-slate-200 cursor-not-allowed'
+                          : 'border-[#f1f3f5] focus:border-[#93000b] focus:ring-2 focus:ring-[#93000b]/10 bg-white'
+                      }`}
                     />
                   </FormField>
                 </div>
@@ -1033,11 +1112,16 @@ export const RegistrationDetailPage: React.FC = () => {
               <div className="pt-4 border-t border-[#f1f3f5] flex justify-end gap-3">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="px-6 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-semibold rounded-xl flex items-center gap-2 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                  disabled={!canSave}
+                  className={`px-6 py-2.5 text-[13px] font-bold rounded-xl flex items-center gap-2 transition-all shadow-sm ${
+                    canSave
+                      ? 'bg-[#93000b] hover:bg-[#7a0009] text-white cursor-pointer active:scale-98'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-70'
+                  }`}
+                  title={!canSave ? (isVitalsLocked ? 'Thông tin lâm sàng đã khóa' : 'Không có thay đổi để lưu') : 'Lưu thay đổi'}
                 >
                   <Save className="w-4 h-4" />
-                  <span>{isSubmitting ? 'Đang lưu...' : 'Lưu Đơn Sàng Lọc'}</span>
+                  <span>{isSubmitting ? 'Đang lưu...' : 'Lưu'}</span>
                 </button>
               </div>
             </form>
@@ -1112,68 +1196,107 @@ export const RegistrationDetailPage: React.FC = () => {
         onCancel={() => setConfirmStatusModal({ isOpen: false, targetStatus: null })}
       />
 
-      {/* Rejection Modal with Optional Reason Input */}
+      {/* Rejection / Ineligible Modal with Required Reason Input */}
       {rejectModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white border border-[#f1f3f5] rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4">
             <div className="flex items-center gap-3 text-red-600">
               <AlertCircle className="w-6 h-6 shrink-0 text-red-600" />
-              <h3 className="text-[18px] font-bold text-[#271816]">Từ chối đơn hiến máu (Rejected)</h3>
+              <h3 className="text-[18px] font-bold text-[#271816]">
+                {rejectModal.targetStatus === 'Ineligible'
+                  ? 'Không đủ điều kiện hiến máu (Ineligible)'
+                  : 'Từ chối đơn đăng ký (Rejected)'}
+              </h3>
             </div>
             
             <p className="text-[13px] text-[#6c757d] leading-relaxed">
-              Vui lòng nhập lý do từ chối (không bắt buộc). Lý do này sẽ được gửi tới email của người hiến và hiển thị khi họ xem chi tiết lịch hẹn.
+              {rejectModal.targetStatus === 'Ineligible'
+                ? 'Vui lòng nhập nguyên nhân người hiến không đủ điều kiện sức khỏe khám lâm sàng (bắt buộc). Lý do sẽ được lưu vào hồ sơ và thông báo tới người hiến.'
+                : 'Vui lòng nhập nguyên nhân từ chối đơn đăng ký này (bắt buộc). Lý do sẽ được lưu vào hồ sơ và thông báo tới người hiến.'}
             </p>
 
             <div>
               <label className="block text-[12px] font-bold text-[#271816] mb-1.5 uppercase tracking-wider">
-                Lý do từ chối (Tùy chọn)
+                {rejectModal.targetStatus === 'Ineligible' ? 'Lý do không đủ điều kiện *' : 'Nguyên nhân từ chối *'}
               </label>
               <textarea
                 value={rejectModal.reason}
                 onChange={(e) => setRejectModal(prev => ({ ...prev, reason: e.target.value }))}
-                placeholder="Ví dụ: Huyết áp chưa đạt chuẩn (145/95 mmHg), Chỉ số Hemoglobin thấp, Tiền sử dùng thuốc gần đây..."
+                placeholder={
+                  rejectModal.targetStatus === 'Ineligible'
+                    ? 'Ví dụ: Huyết áp quá cao (150/100 mmHg), Cân nặng dưới 45kg, Chỉ số Hemoglobin thấp (11.0 g/dL)...'
+                    : 'Nhập nguyên nhân từ chối (VD: Huyết áp chưa đạt chuẩn, Hemoglobin thấp, Tiền sử dùng thuốc...)...'
+                }
                 rows={3}
-                className="w-full p-3 text-[13px] border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className={`w-full p-3 text-[13px] border rounded-xl focus:outline-none focus:ring-2 ${
+                  !rejectModal.reason.trim()
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50/20'
+                    : 'border-gray-300 focus:ring-red-500 focus:border-red-500 bg-white'
+                }`}
               />
+              {!rejectModal.reason.trim() && (
+                <p className="text-[11px] text-red-500 mt-1 font-medium">
+                  {rejectModal.targetStatus === 'Ineligible'
+                    ? '⚠️ Bắt buộc phải nhập lý do không đủ điều kiện.'
+                    : '⚠️ Bắt buộc phải nhập nguyên nhân từ chối.'}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setRejectModal({ isOpen: false, reason: '' })}
+                onClick={() => setRejectModal({ isOpen: false, reason: '', targetStatus: 'Rejected' })}
                 className="px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-gray-100 rounded-xl transition-all cursor-pointer"
               >
                 Hủy bỏ
               </button>
               <button
                 type="button"
+                disabled={!rejectModal.reason.trim()}
                 onClick={async () => {
                   if (!registrationId) return;
-                  const toastId = toast.loading('Đang xử lý từ chối đơn...');
+                  const reason = rejectModal.reason.trim();
+                  if (!reason) {
+                    toast.error(
+                      rejectModal.targetStatus === 'Ineligible'
+                        ? 'Vui lòng nhập lý do không đủ điều kiện trước khi xác nhận!'
+                        : 'Vui lòng nhập nguyên nhân từ chối trước khi xác nhận!'
+                    );
+                    return;
+                  }
+                  const targetStatus = rejectModal.targetStatus || 'Rejected';
+                  const toastId = toast.loading('Đang xử lý cập nhật trạng thái...');
                   try {
-                    const reason = rejectModal.reason.trim() || 'Chưa đủ điều kiện sức khỏe hoặc đơn bị từ chối.';
                     const updated = await apiService.updateRegistration(registrationId, {
                       bloodPressure: watchBp || undefined,
                       weight: watchWeight || undefined,
                       bodyTemperature: watchTemp || undefined,
                       hemoglobinLevel: watchHgb || undefined,
                       screeningNotes: reason,
-                      status: 'Rejected' as any,
+                      status: targetStatus as any,
                     });
                     setRegistration(updated);
-                    setValue('status', 'Rejected' as any);
-                    setRejectModal({ isOpen: false, reason: '' });
+                    setValue('status', targetStatus as any);
+                    setRejectModal({ isOpen: false, reason: '', targetStatus: 'Rejected' });
                     toast.dismiss(toastId);
-                    toast.success('Đã từ chối đơn đăng ký và gửi thông báo lý do tới người hiến.');
+                    toast.success(
+                      targetStatus === 'Ineligible'
+                        ? 'Đã ghi nhận người hiến Không đủ điều kiện (Ineligible) & lưu lý do.'
+                        : 'Đã từ chối đơn đăng ký và lưu nguyên nhân từ chối.'
+                    );
                   } catch (err) {
                     toast.dismiss(toastId);
-                    toast.error('Có lỗi xảy ra khi từ chối đơn.');
+                    toast.error('Có lỗi xảy ra khi cập nhật trạng thái.');
                   }
                 }}
-                className="px-5 py-2 text-[13px] font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all shadow-2xs cursor-pointer"
+                className={`px-5 py-2 text-[13px] font-bold text-white rounded-xl transition-all shadow-2xs ${
+                  rejectModal.reason.trim()
+                    ? 'bg-red-600 hover:bg-red-700 cursor-pointer active:scale-98'
+                    : 'bg-slate-300 cursor-not-allowed opacity-60'
+                }`}
               >
-                Xác Nhận Từ Chối
+                {rejectModal.targetStatus === 'Ineligible' ? 'Xác Nhận Không Đủ ĐK' : 'Xác Nhận Từ Chối'}
               </button>
             </div>
           </div>

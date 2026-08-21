@@ -53,10 +53,13 @@ describe('CampaignService', () => {
         targetBloodGroups: ['O+'],
         capacity: 200,
         targetUnitsGoal: 150,
-        contactPerson: { name: 'Jane Smith', phone: '0987654321' }
+        contactPerson: { name: 'Jane Smith', phone: '0987654321' },
+        location: { type: 'Point', coordinates: [106.66, 10.76] }
       };
 
       jest.spyOn(Campaign, 'findOne').mockReturnValue({
+        sort: jest.fn().mockResolvedValue(null)
+      } as any);
         sort: jest.fn().mockResolvedValue(null),
       } as any);
       jest.spyOn(Campaign, 'countDocuments').mockResolvedValue(0 as any);
@@ -64,6 +67,7 @@ describe('CampaignService', () => {
 
       const result = await CampaignService.createCampaign(data);
 
+      expect(result.campaignCode).toMatch(/^CMP-\d{4}-\d{4}$/);
       expect(result.campaignCode).toMatch(/^CMP-\d{4}-0001$/);
       expect(result.status).toBe('Upcoming');
       expect(result.registeredCount).toBe(0);
@@ -123,12 +127,28 @@ describe('CampaignService', () => {
     it('should throw CAPACITY_BELOW_REGISTERED if new capacity is lower than registeredCount', async () => {
       jest.spyOn(Campaign, 'findById').mockReturnValue({
         _id: 'campaign-123',
+        status: 'Active',
+        endDateTime: new Date(Date.now() + 86400000).toISOString(),
         registeredCount: 50,
         capacity: 100
       } as any);
 
       await expect(CampaignService.updateCampaign('campaign-123', { capacity: 30 })).rejects.toThrow(
         'CAPACITY_BELOW_REGISTERED'
+      );
+    });
+
+    it('should throw CAMPAIGN_ALREADY_ENDED if campaign has already ended or is completed', async () => {
+      jest.spyOn(Campaign, 'findById').mockReturnValue({
+        _id: 'campaign-completed',
+        status: 'Completed',
+        endDateTime: new Date(Date.now() - 86400000).toISOString(),
+        registeredCount: 50,
+        capacity: 100
+      } as any);
+
+      await expect(CampaignService.updateCampaign('campaign-completed', { targetBloodGroups: ['O+'] })).rejects.toThrow(
+        'CAMPAIGN_ALREADY_ENDED'
       );
     });
   });

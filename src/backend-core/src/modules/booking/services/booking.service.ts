@@ -286,6 +286,8 @@ export class BookingService {
         
         if (targetDate < nextEligibleDate) {
           const err: any = new Error('ELIGIBILITY_FAILED_84_DAYS');
+          err.code = 'ELIGIBILITY_FAILED_INTERVAL';
+          err.donationIntervalDays = donationIntervalDays;
           err.lastDonationDate = lastDonationDate.toISOString();
           err.nextEligibleDate = nextEligibleDate.toISOString();
           throw err;
@@ -638,7 +640,9 @@ export class BookingService {
       throw new Error('APPOINTMENT_NOT_FOUND');
     }
 
-    if (appointment.status !== AppointmentStatus.Rejected && appointment.status !== AppointmentStatus.Cancelled) {
+    if (appointment.status !== AppointmentStatus.Rejected && 
+        appointment.status !== AppointmentStatus.Cancelled && 
+        appointment.status !== AppointmentStatus.Examining) {
       if (appointment.campaignId && appointment.appointmentDate) {
         const cId = typeof appointment.campaignId === 'object' ? (appointment.campaignId as any)._id : appointment.campaignId;
         await BookingService.decrementCampaignSlot(cId, appointment.appointmentDate.toISOString(), appointment.timeSlot || '');
@@ -806,9 +810,13 @@ export class BookingService {
         const slotStartTime = String(appointment.timeSlot || '').split('-')[0].trim();
         let slotFound = false;
 
+        const appDateStr = appointment.appointmentDate instanceof Date 
+          ? appointment.appointmentDate.toISOString().split('T')[0] 
+          : String(appointment.appointmentDate).split('T')[0];
+
         if (campaign.dailyTimeslots && campaign.dailyTimeslots.length > 0) {
           const targetDaily = campaign.dailyTimeslots.find(
-            (dt: any) => dt.dateStr === appointment.appointmentDate && dt.startTime === slotStartTime
+            (dt: any) => dt.dateStr === appDateStr && dt.startTime === slotStartTime
           );
           if (targetDaily) {
             targetDaily.registeredCount = Math.max(0, (targetDaily.registeredCount || 0) - 1);

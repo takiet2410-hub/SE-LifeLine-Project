@@ -72,7 +72,12 @@ export const Step3_Summary: React.FC = () => {
             message: 'Kết quả phiếu khảo sát sức khỏe của bạn chưa đáp ứng đủ tiêu chuẩn y tế để hiến máu trong đợt này.',
           });
           setShowEligibilityModal(true);
-        } else if (msg.includes('ELIGIBILITY_FAILED_84_DAYS') || msg.includes('84') || msg.includes('khoảng cách')) {
+        } else if (
+          msg.includes('ELIGIBILITY') ||
+          msg.includes('84') ||
+          msg.includes('khoảng cách') ||
+          res.data?.code === 'ELIGIBILITY_FAILED_INTERVAL'
+        ) {
           const rawLast = res.data?.lastDonationDate;
           const rawNext = res.data?.nextEligibleDate;
 
@@ -93,9 +98,16 @@ export const Step3_Summary: React.FC = () => {
           const formattedLast = formatDateStr(rawLast);
           const formattedNext = formatDateStr(rawNext);
 
+          const intervalDays =
+            res.data?.donationIntervalDays ||
+            (rawLast && rawNext ? Math.round((new Date(rawNext).getTime() - new Date(rawLast).getTime()) / (24 * 3600 * 1000)) : 84);
+
+          const errorMsg = `Bạn chưa đủ khoảng cách tối thiểu ${intervalDays} ngày kể từ lần hiến máu gần nhất.`;
+          setError(errorMsg);
+
           setEligibilityData({
             title: 'Chưa đủ thời gian giãn cách',
-            message: 'Bạn chưa đủ khoảng cách tối thiểu 84 ngày kể từ lần hiến máu gần nhất.',
+            message: errorMsg,
             lastDonationDate: formattedLast,
             nextEligibleDate: formattedNext,
           });

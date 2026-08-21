@@ -53,9 +53,24 @@ export type CreateCampaignInput = z.infer<typeof createCampaignSchema>;
 
 export const screeningSchema = z.object({
   bloodPressure: z.string().optional().or(z.literal('')),
-  weight: z.union([z.number().positive(), z.nan()]).optional(),
-  bodyTemperature: z.union([z.number().positive(), z.nan()]).optional(),
-  hemoglobinLevel: z.union([z.number().positive(), z.nan()]).optional(),
+  weight: z.union([
+    z.number({ invalid_type_error: 'Cân nặng phải là số' })
+      .min(0, 'Cân nặng không được là số âm')
+      .positive('Cân nặng phải lớn hơn 0'),
+    z.nan()
+  ]).optional(),
+  bodyTemperature: z.union([
+    z.number({ invalid_type_error: 'Thân nhiệt phải là số' })
+      .min(0, 'Thân nhiệt không được là số âm')
+      .positive('Thân nhiệt phải lớn hơn 0'),
+    z.nan()
+  ]).optional(),
+  hemoglobinLevel: z.union([
+    z.number({ invalid_type_error: 'Chỉ số Hemoglobin phải là số' })
+      .min(0, 'Hemoglobin không được là số âm')
+      .positive('Hemoglobin phải lớn hơn 0'),
+    z.nan()
+  ]).optional(),
   screeningNotes: z.string().optional(),
   status: z.string(),
 });

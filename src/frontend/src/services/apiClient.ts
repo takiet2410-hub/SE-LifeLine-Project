@@ -168,17 +168,19 @@ export const apiService = {
   },
 
   // ==================== CAMPAIGN APIs ====================
-  async getCampaigns(params?: { search?: string; status?: string; page?: number; limit?: number }) {
+  async getCampaigns(params?: { search?: string; status?: string; page?: number; limit?: number; startDate?: string; endDate?: string; sortBy?: string; sortOrder?: string }) {
     try {
       const queryParams: any = {};
       if (params?.search) queryParams.location = params.search;
       if (params?.status && params.status !== 'All') {
         queryParams.status = params.status;
       }
+      if (params?.startDate) queryParams.startDate = params.startDate;
+      if (params?.endDate) queryParams.endDate = params.endDate;
       queryParams.page = params?.page || 1;
       queryParams.limit = params?.limit || 20;
-      queryParams.sortBy = 'startDateTime';
-      queryParams.sortOrder = 'desc';
+      queryParams.sortBy = params?.sortBy || 'startDateTime';
+      queryParams.sortOrder = params?.sortOrder || 'desc';
 
       const res = await apiClient.get('/campaigns', { params: queryParams });
       
@@ -469,9 +471,9 @@ export const apiService = {
     }
   },
 
-  async checkInQRCode(qrPayload: string) {
+  async checkInQRCode(qrPayload: string, campaignId?: string) {
     try {
-      const res = await apiClient.post('/registrations/qr-checkin', { qrPayload });
+      const res = await apiClient.post('/registrations/qr-checkin', { qrPayload, campaignId });
       if (res.data) {
         return res.data;
       }

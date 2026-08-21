@@ -22,6 +22,7 @@ import {
 import { searchLocations } from '../../api/bookingApi';
 import { isSlotPassed, areAllSlotsPassedOnDate, getFirstAvailableSlot } from '../../utils/timeslotUtils';
 import { StatusBadge } from '../../../../components/common/StatusBadge';
+import { SlotTakenOverlay } from '../../components/BookingOverlays';
 
 interface LocationOption {
   id: string;
@@ -76,6 +77,7 @@ export const Step1_LocationTime: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState(data.timeSlot || '');
   const [locations, setLocations] = useState<LocationOption[]>([]);
   const [loadingLocations, setLoadingLocations] = useState(true);
+  const [showSlotTakenModal, setShowSlotTakenModal] = useState(false);
 
   const defaultSlots = [
     { startTime: '07:30', endTime: '09:00', capacity: 20, registeredCount: 0 },
@@ -176,11 +178,38 @@ export const Step1_LocationTime: React.FC = () => {
             });
           }
 
-          const isDataTimeSlotValid = data.timeSlot && data.date === selectedDate && !isSlotPassed(selectedDate, data.timeSlot.split('-')[1]?.trim() || '23:59');
+          let effectiveSlots = targetLocObj?.timeSlots || defaultSlots;
+          if (targetLocObj?.dailyTimeslots && targetLocObj.dailyTimeslots.length > 0) {
+            const matchingDaily = targetLocObj.dailyTimeslots.filter(dt => dt.dateStr === selectedDate);
+            if (matchingDaily.length > 0) {
+              effectiveSlots = matchingDaily.map(dt => ({
+                startTime: dt.startTime,
+                endTime: dt.endTime,
+                capacity: dt.capacity || 50,
+                registeredCount: dt.registeredCount || 0,
+              }));
+            }
+          }
+
+          // Check if data.timeSlot is valid (not passed AND not full)
+          let isDataTimeSlotValid = false;
+          if (data.timeSlot && data.date === selectedDate) {
+            const matchSlot = effectiveSlots.find(s => `${s.startTime} - ${s.endTime}` === data.timeSlot);
+            if (matchSlot) {
+              const cap = Number(matchSlot.capacity) || 0;
+              const reg = Number(matchSlot.registeredCount) || 0;
+              const isFull = cap > 0 && reg >= cap;
+              const isPassed = isSlotPassed(selectedDate, matchSlot.endTime);
+              if (!isFull && !isPassed) {
+                isDataTimeSlotValid = true;
+              }
+            }
+          }
+
           if (isDataTimeSlotValid) {
             setSelectedTime(data.timeSlot || '');
-          } else if (targetLocObj && targetLocObj.timeSlots && targetLocObj.timeSlots.length > 0) {
-            const availSlot = getFirstAvailableSlot(selectedDate, targetLocObj.timeSlots);
+          } else if (effectiveSlots && effectiveSlots.length > 0) {
+            const availSlot = getFirstAvailableSlot(selectedDate, effectiveSlots);
             setSelectedTime(availSlot ? `${availSlot.startTime} - ${availSlot.endTime}` : '');
           } else {
             setSelectedTime('');
@@ -217,17 +246,57 @@ export const Step1_LocationTime: React.FC = () => {
   const handleSelectLocation = (locId: string) => {
     setSelectedLoc(locId);
     const targetLocObj = locations.find(l => l.id === locId);
-    if (targetLocObj && targetLocObj.timeSlots && targetLocObj.timeSlots.length > 0) {
-      const availSlot = getFirstAvailableSlot(selectedDate, targetLocObj.timeSlots);
+    if (targetLocObj) {
+      let effectiveSlots = targetLocObj.timeSlots || defaultSlots;
+      if (targetLocObj.dailyTimeslots && targetLocObj.dailyTimeslots.length > 0) {
+        const matchingDaily = targetLocObj.dailyTimeslots.filter(dt => dt.dateStr === selectedDate);
+        if (matchingDaily.length > 0) {
+          effectiveSlots = matchingDaily.map(dt => ({
+            startTime: dt.startTime,
+            endTime: dt.endTime,
+            capacity: dt.capacity || 50,
+            registeredCount: dt.registeredCount || 0,
+          }));
+        }
+      }
+      const availSlot = getFirstAvailableSlot(selectedDate, effectiveSlots);
       setSelectedTime(availSlot ? `${availSlot.startTime} - ${availSlot.endTime}` : '');
     } else {
       setSelectedTime('');
     }
   };
 
+  const handleSelectTimeSlot = (slotLabel: string, isFull: boolean, isPassed: boolean) => {
+    if (isPassed) return;
+    if (isFull) {
+      setShowSlotTakenModal(true);
+      return;
+    }
+    setSelectedTime(slotLabel);
+  };
+
   const handleNext = () => {
     if (selectedLoc && selectedDate && selectedTime) {
       const locObj = locations.find(l => l.id === selectedLoc);
+
+      const selectedSlotObj = activeTimeSlots.find(
+        (s) => `${s.startTime} - ${s.endTime}` === selectedTime
+      );
+      if (selectedSlotObj) {
+        const cap = Number(selectedSlotObj.capacity) || 0;
+        const reg = Number(selectedSlotObj.registeredCount) || 0;
+        const isFull = cap > 0 && reg >= cap;
+        const isPassed = isSlotPassed(selectedDate, selectedSlotObj.endTime);
+
+        if (isFull) {
+          setShowSlotTakenModal(true);
+          return;
+        }
+        if (isPassed) {
+          return;
+        }
+      }
+
       updateData({
         locationId: selectedLoc,
         date: selectedDate,
@@ -588,25 +657,26 @@ export const Step1_LocationTime: React.FC = () => {
                       const remaining = Math.max(0, cap - reg);
                       const isFull = remaining <= 0;
                       const isPassed = isSlotPassed(selectedDate, slot.endTime);
-                      const isDisabled = isFull || isPassed;
 
                       return (
                         <button
                           key={index}
                           type="button"
-                          onClick={() => setSelectedTime(slotLabel)}
-                          disabled={isDisabled}
+                          onClick={() => handleSelectTimeSlot(slotLabel, isFull, isPassed)}
+                          disabled={isPassed}
                           className={`p-3.5 border rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
                             isSelected
                               ? 'border-[#93000b] bg-[#93000b] text-white shadow-sm ring-2 ring-[#93000b]/30'
-                              : isDisabled
+                              : isPassed
                                 ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-60'
-                                : 'border-slate-200 bg-white text-slate-900 hover:border-[#93000b]/50 hover:bg-slate-50'
+                                : isFull
+                                  ? 'border-red-200 bg-red-50/40 text-slate-700 hover:border-red-400 hover:bg-red-50/80'
+                                  : 'border-slate-200 bg-white text-slate-900 hover:border-[#93000b]/50 hover:bg-slate-50'
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-bold flex items-center gap-1.5">
-                              <Clock className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-[#93000b]'}`} />
+                              <Clock className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : isFull ? 'text-red-700' : 'text-[#93000b]'}`} />
                               {slotLabel}
                             </span>
                             {isSelected && <CheckCircle2 className="w-4 h-4 text-white shrink-0" />}
@@ -669,6 +739,12 @@ export const Step1_LocationTime: React.FC = () => {
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Slot Taken Alert Overlay */}
+      <SlotTakenOverlay
+        isOpen={showSlotTakenModal}
+        onClose={() => setShowSlotTakenModal(false)}
+      />
     </div>
   );
 };

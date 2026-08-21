@@ -636,6 +636,16 @@ export class RegistrationService {
 
         appointment.status = targetAppointmentStatus;
 
+        // If appointment transitions to Rejected from an active status, replenish the slots
+        const activeStatuses = [AppointmentStatus.Pending, AppointmentStatus.Confirmed, AppointmentStatus.Scheduled, AppointmentStatus.CheckedIn, AppointmentStatus.Eligible];
+        if (targetAppointmentStatus === AppointmentStatus.Rejected && activeStatuses.includes(previousStatus)) {
+          const appDateStr = appointment.appointmentDate instanceof Date 
+            ? appointment.appointmentDate.toISOString().split('T')[0] 
+            : String(appointment.appointmentDate).split('T')[0];
+          
+          await BookingService.decrementCampaignSlot(appointment.campaignId, appDateStr, appointment.timeSlot, session);
+        }
+
         // Process Gamification (+250 XP & Achievement unlocking) when donation is completed
         if (targetAppointmentStatus === AppointmentStatus.Completed && !appointment.xpRewardedForCompletion) {
           try {

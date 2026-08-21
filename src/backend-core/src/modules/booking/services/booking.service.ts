@@ -562,10 +562,14 @@ export class BookingService {
           if (recipientEmail && fullAppointment.eTicketId) {
             const eTicket: any = fullAppointment.eTicketId;
             const campaign: any = fullAppointment.campaignId;
+            const rawCampaignName = campaign?.name;
+            const campaignName = (rawCampaignName && typeof rawCampaignName === 'string' && rawCampaignName.trim())
+              ? rawCampaignName.trim()
+              : 'Trung tâm tiếp nhận máu LifeLine';
             sendBookingConfirmationEmail(
               recipientEmail,
               donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu',
-              campaign?.name || 'Chiến dịch hiến máu',
+              campaignName,
               fullAppointment.appointmentDate,
               fullAppointment.timeSlot,
               eTicket.ticketCode || '',
@@ -636,7 +640,9 @@ export class BookingService {
       throw new Error('APPOINTMENT_NOT_FOUND');
     }
 
-    if (appointment.status !== AppointmentStatus.Rejected && appointment.status !== AppointmentStatus.Cancelled) {
+    if (appointment.status !== AppointmentStatus.Rejected && 
+        appointment.status !== AppointmentStatus.Cancelled && 
+        appointment.status !== AppointmentStatus.Examining) {
       if (appointment.campaignId && appointment.appointmentDate) {
         const cId = typeof appointment.campaignId === 'object' ? (appointment.campaignId as any)._id : appointment.campaignId;
         await BookingService.decrementCampaignSlot(cId, appointment.appointmentDate.toISOString(), appointment.timeSlot || '');
@@ -666,7 +672,9 @@ export class BookingService {
 
       if (recipientEmail) {
         const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
-        const campaignName = campaign?.name || 'Chiến dịch hiến máu';
+        const campaignName = (campaign?.name && typeof campaign.name === 'string' && campaign.name.trim())
+          ? campaign.name.trim()
+          : 'Trung tâm tiếp nhận máu LifeLine';
         const appDate = appointment.appointmentDate;
         await sendBookingRejectionEmail(recipientEmail, donorName, campaignName, appDate, reason)
           .catch(err => console.error('Failed to send rejection email:', err));
@@ -802,9 +810,13 @@ export class BookingService {
         const slotStartTime = String(appointment.timeSlot || '').split('-')[0].trim();
         let slotFound = false;
 
+        const appDateStr = appointment.appointmentDate instanceof Date 
+          ? appointment.appointmentDate.toISOString().split('T')[0] 
+          : String(appointment.appointmentDate).split('T')[0];
+
         if (campaign.dailyTimeslots && campaign.dailyTimeslots.length > 0) {
           const targetDaily = campaign.dailyTimeslots.find(
-            (dt: any) => dt.dateStr === appointment.appointmentDate && dt.startTime === slotStartTime
+            (dt: any) => dt.dateStr === appDateStr && dt.startTime === slotStartTime
           );
           if (targetDaily) {
             targetDaily.registeredCount = Math.max(0, (targetDaily.registeredCount || 0) - 1);

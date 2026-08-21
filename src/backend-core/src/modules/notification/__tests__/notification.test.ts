@@ -48,6 +48,52 @@ describe('Notification Module Unit Tests', () => {
       expect(result.total).toBe(2);
       expect(result.page).toBe(1);
     });
+
+    it('should apply audience guard when activeRole is BloodCenterStaff to filter out donor-specific notifications', async () => {
+      (Notification.find as jest.Mock).mockReturnValue({
+        sort: jest.fn().mockReturnValue({
+          skip: jest.fn().mockReturnValue({
+            limit: jest.fn().mockReturnValue({
+              lean: jest.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
+      });
+      (Notification.countDocuments as jest.Mock).mockResolvedValue(0);
+
+      await NotificationService.getUserNotifications('user123', { page: 1, limit: 10 }, 'BloodCenterStaff');
+
+      expect(Notification.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          $nor: expect.arrayContaining([
+            { 'payload.audienceRole': 'Donor' },
+          ]),
+        })
+      );
+    });
+
+    it('should apply audience guard when activeRole is Donor to filter out management-specific notifications', async () => {
+      (Notification.find as jest.Mock).mockReturnValue({
+        sort: jest.fn().mockReturnValue({
+          skip: jest.fn().mockReturnValue({
+            limit: jest.fn().mockReturnValue({
+              lean: jest.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
+      });
+      (Notification.countDocuments as jest.Mock).mockResolvedValue(0);
+
+      await NotificationService.getUserNotifications('user123', { page: 1, limit: 10 }, 'Donor');
+
+      expect(Notification.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          $nor: expect.arrayContaining([
+            { 'payload.audienceRole': { $in: ['BloodCenterStaff', 'HospitalStaff', 'Administrator'] } },
+          ]),
+        })
+      );
+    });
   });
 
   describe('getUnreadCount', () => {

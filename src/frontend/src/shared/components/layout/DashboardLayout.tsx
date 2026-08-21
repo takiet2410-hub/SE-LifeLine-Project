@@ -109,12 +109,33 @@ export const DashboardLayout: React.FC = () => {
       return;
     }
 
+    // Direct deep link if available in payload
+    if (notif.payload?.deepLink) {
+      let targetLink = String(notif.payload.deepLink).trim();
+      try {
+        if (targetLink.startsWith('http://') || targetLink.startsWith('https://')) {
+          const url = new URL(targetLink);
+          targetLink = url.pathname + url.search;
+        }
+      } catch {}
+      if (targetLink && targetLink !== '/' && !targetLink.includes('/undefined')) {
+        navigate(targetLink);
+        return;
+      }
+    }
+
     if (notif.type === 'SOS' || notif.sourceRefType === 'SOSRequest') {
       navigate('/sos-alerts');
-    } else if ((notif.type as string) === 'Appointment' || notif.sourceRefType === 'Appointment') {
-      navigate('/my-appointments');
+    } else if (user?.role === 'donor' || user?.role === 'Donor' || !user?.role) {
+      navigate(`/notifications?id=${notif._id}`);
+    } else if (user?.role === 'staff' || user?.role === 'BloodCenterStaff') {
+      navigate(`/bc/notifications/${notif._id}`);
+    } else if (user?.role === 'hospital' || user?.role === 'HospitalStaff') {
+      navigate(`/hospital/notifications/${notif._id}`);
+    } else if (user?.role === 'admin' || user?.role === 'Administrator') {
+      navigate(`/admin/notifications/${notif._id}`);
     } else {
-      navigate('/news');
+      navigate(`/notifications?id=${notif._id}`);
     }
   };
 

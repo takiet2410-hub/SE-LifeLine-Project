@@ -141,6 +141,8 @@ function App() {
           <Route path="/profile" element={<MyProfilePage />} />
           <Route path="/notifications" element={<DonorNotificationPage />} />
           <Route path="/sos-alerts" element={gate('sos_emergency_alerts', <SOSAlertsPage />)} />
+          <Route path="/sos-alerts/:id" element={gate('sos_emergency_alerts', <DonorSOSDetailPage />)} />
+          <Route path="/donor/sos-requests/:id" element={gate('sos_emergency_alerts', <DonorSOSDetailPage />)} />
           <Route path="/news" element={gate('news_content_portal', <NewsFeedPage />)} />
           <Route path="/news/:articleId" element={gate('news_content_portal', <PublicArticleDetailPage />)} />
           {/* Booking Schedule Flow */}
@@ -188,9 +190,6 @@ function App() {
           <Route path="/hospital/sos-requests/create" element={gate('sos_emergency_alerts', <CreateSOSRequestPage />)} />
           <Route path="/hospital/sos-requests/:id" element={gate('sos_emergency_alerts', <SOSRequestDetailPage />)} />
           <Route path="/hospital/sos-reports" element={gate('sos_emergency_alerts', <SOSReportsPage />)} />
-
-          {/* Donor SOS detail — accessible from SOS email notifications */}
-          <Route path="/donor/sos-requests/:id" element={gate('sos_emergency_alerts', <DonorSOSDetailPage />)} />
 
           <Route path="/hospital/content" element={gate('news_content_portal', <ArticleListPage />)} />
           <Route path="/hospital/content/create" element={gate('news_content_portal', <CreateArticlePage />)} />

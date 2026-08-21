@@ -62,6 +62,8 @@ export class NotificationEventHandler {
       // Send notifications
       const channelMap: Record<string, any> = { 'in-app': 'InApp', 'email': 'Email', 'push': 'WebPush' };
       const mappedChannels = config.channels.map(c => channelMap[c]);
+      const audienceRole = event.payload?.audienceRole || this.getAudienceRole(event.eventType);
+      payload.audienceRole = audienceRole;
 
       await NotificationService.sendNotification({
         recipientIds,
@@ -70,6 +72,7 @@ export class NotificationEventHandler {
         body,
         payload,
         channels: mappedChannels,
+        allowedRecipientRoles: [audienceRole],
       });
 
       console.log(`[Notification] Dispatched ${event.eventType} to ${recipientIds.length} recipients`);
@@ -82,14 +85,36 @@ export class NotificationEventHandler {
    * Render template with payload data
    */
   private static renderTemplate(template: any, payload: any): { title: string; body: string; payload: any } {
+    const rawCampaignName = payload?.campaignName;
+    const campaignName = (rawCampaignName && typeof rawCampaignName === 'string' && rawCampaignName.trim())
+      ? rawCampaignName.trim()
+      : 'Trung tâm tiếp nhận máu LifeLine';
+
+    const rawLocationName = payload?.locationName;
+    const locationName = (rawLocationName && typeof rawLocationName === 'string' && rawLocationName.trim())
+      ? rawLocationName.trim()
+      : 'Điểm tiếp nhận máu LifeLine';
+
+    const rawDonorName = payload?.donorName;
+    const donorName = (rawDonorName && typeof rawDonorName === 'string' && rawDonorName.trim())
+      ? rawDonorName.trim()
+      : 'Người hiến máu';
+
+    const safePayload = {
+      ...payload,
+      campaignName,
+      locationName,
+      donorName,
+    };
+
     const render = (str: string) => str
-      .replace(/\{\{(\w+)\}\}/g, (_, key) => payload[key] ?? '')
-      .replace(/\{\{(\w+)\.(\w+)\}\}/g, (_, obj, key) => payload[obj]?.[key] ?? '');
+      .replace(/\{\{(\w+)\}\}/g, (_, key) => safePayload[key] ?? '')
+      .replace(/\{\{(\w+)\.(\w+)\}\}/g, (_, obj, key) => safePayload[obj]?.[key] ?? '');
 
     return {
       title: render(template.subject),
       body: render(template.bodyText),
-      payload: { ...payload, deepLink: payload.deepLink || this.generateDeepLink(payload) },
+      payload: { ...safePayload, deepLink: safePayload.deepLink || this.generateDeepLink(safePayload) },
     };
   }
 
@@ -97,15 +122,20 @@ export class NotificationEventHandler {
    * Generate deep link based on payload
    */
   private static generateDeepLink(payload: any): string {
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    
-    if (payload.appointmentId) return `${baseUrl}/my-appointments/${payload.appointmentId}`;
-    if (payload.campaignId) return `${baseUrl}/campaigns/${payload.campaignId}`;
-    if (payload.sosRequestId) return `${baseUrl}/sos-alerts/${payload.sosRequestId}`;
-    if (payload.hospitalId) return `${baseUrl}/hospital/sos-requests/${payload.sosRequestId}`;
-    if (payload.bloodBagId) return `${baseUrl}/bc/inventory/${payload.bloodBagId}`;
-    
-    return baseUrl;
+    if (payload.appointmentId) return `/my-appointments/${payload.appointmentId}`;
+    if (payload.campaignId) return `/campaigns/${payload.campaignId}`;
+    if (payload.sosRequestId) return `/sos-alerts/${payload.sosRequestId}`;
+    if (payload.hospitalId) return `/hospital/sos-requests/${payload.sosRequestId}`;
+    if (payload.bloodBagId) return `/bc/inventory/${payload.bloodBagId}`;
+    return '/';
+  }
+
+  /**
+   * Get target audience role for domain event
+   */
+  private static getAudienceRole(eventType: string): 'Donor' | 'BloodCenterStaff' | 'HospitalStaff' | 'Administrator' {
+    if (eventType === 'BloodBagStatusChanged') return 'BloodCenterStaff';
+    return 'Donor';
   }
 
   /**

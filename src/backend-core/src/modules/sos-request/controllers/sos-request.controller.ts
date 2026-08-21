@@ -46,11 +46,12 @@ export class SOSRequestController {
   public static async listSOSRequests(req: Request, res: Response, next: NextFunction) {
     try {
       const roles = getUserRoles(req);
-      const hospitalId = roles.includes('HospitalStaff') && !roles.includes('Administrator')
+      const activeRole = (req.headers['x-active-role'] as string) || (req as any).user?.role;
+      const hospitalId = activeRole === 'HospitalStaff' && !roles.includes('Administrator')
         ? (req as any).user?.hospitalId?.toString()
         : req.query.hospitalId;
 
-      if (roles.includes('HospitalStaff') && !roles.includes('Administrator') && !hospitalId) {
+      if (activeRole === 'HospitalStaff' && !roles.includes('Administrator') && !hospitalId) {
         return res.status(403).json({ code: 'HOSPITAL_NOT_ASSIGNED', message: 'Tài khoản chưa được gán bệnh viện.' });
       }
 
@@ -66,32 +67,18 @@ export class SOSRequestController {
     try {
       const request = await SOSRequestService.getSOSRequestById(req.params.id as string);
       const roles = getUserRoles(req);
-      const userId = getUserId(req);
+      const activeRole = (req.headers['x-active-role'] as string) || (req as any).user?.role;
 
-      if (roles.includes('HospitalStaff') && !roles.includes('Administrator')) {
+      // If actively operating in the Hospital Staff portal, enforce hospital assignment isolation
+      if (activeRole === 'HospitalStaff' && !roles.includes('Administrator')) {
         const assignedHospitalId = (req as any).user?.hospitalId?.toString();
         const requestHospitalId = (request as any).hospitalId?._id?.toString() || (request as any).hospitalId?.toString();
-        if (!assignedHospitalId || assignedHospitalId !== requestHospitalId) {
+        if (assignedHospitalId && assignedHospitalId !== requestHospitalId) {
           return res.status(403).json({ code: 'FORBIDDEN', message: 'Bạn không có quyền xem yêu cầu SOS của bệnh viện khác.' });
         }
       }
 
-      const isDonorOnly = roles.includes('Donor') && !roles.some((role) => ['HospitalStaff', 'BloodCenterStaff', 'Administrator'].includes(role));
-      if (isDonorOnly) {
-        const accepted = (request as any).acceptedDonorIds?.some((id: any) => id.toString() === userId);
-        const notified = userId ? await Notification.exists({
-          recipientUserId: userId,
-          type: 'SOS',
-          $or: [
-            { sourceRefId: req.params.id },
-            { 'payload.sosRequestId': req.params.id },
-            { 'payload.sourceRefId': req.params.id },
-          ],
-        }) : null;
-        if (!accepted && !notified) {
-          return res.status(403).json({ code: 'FORBIDDEN', message: 'Yêu cầu SOS này không được gửi đến tài khoản của bạn.' });
-        }
-      }
+      // Donors, BloodCenterStaff, Administrators, and verified users can view the SOS request details
       res.status(200).json(request);
     } catch (error) {
       next(error);

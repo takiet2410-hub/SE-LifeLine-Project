@@ -3,27 +3,28 @@ import { Campaign } from '../models/campaign.model';
 export const updateCampaignStatuses = async () => {
   try {
     const now = new Date();
+    const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
 
-    // 1. Transition to Upcoming: startDateTime in the future and status not in Draft/Cancled/Cancelled
+    // 1. Transition to Upcoming: start date is in the future (tomorrow or later) and status not in Draft/Cancelled
     await Campaign.updateMany(
       {
         status: { $nin: ['Draft', 'Cancelled'] },
-        startDateTime: { $gt: now }
+        startDateTime: { $gte: startOfTomorrow }
       },
       { $set: { status: 'Upcoming' } }
     );
 
-    // 2. Transition to Active: startDateTime <= now <= endDateTime and status not in Draft/Cancled/Cancelled
+    // 2. Transition to Active: start date has arrived (today or earlier) and endDateTime >= now and status not in Draft/Cancelled
     await Campaign.updateMany(
       {
         status: { $nin: ['Draft', 'Cancelled'] },
-        startDateTime: { $lte: now },
+        startDateTime: { $lt: startOfTomorrow },
         endDateTime: { $gte: now }
       },
       { $set: { status: 'Active' } }
     );
 
-    // 3. Transition to Completed: endDateTime < now and status not in Draft/Cancled/Cancelled
+    // 3. Transition to Completed: endDateTime < now and status not in Draft/Cancelled
     await Campaign.updateMany(
       {
         status: { $nin: ['Draft', 'Cancelled'] },

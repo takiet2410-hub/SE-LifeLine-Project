@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { AuthUser } from '../../modules/auth-account/types';
 
 interface AuthContextType {
@@ -34,6 +34,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     return null;
   });
+
+  // Lắng nghe thay đổi auth từ các tab khác trong cùng trình duyệt
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'accessToken' || e.key === 'user') {
+        const storedToken = localStorage.getItem('accessToken');
+        const storedUser = localStorage.getItem('user');
+        setToken(storedToken);
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser));
+          } catch {
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const login = useCallback((newToken: string, userData?: AuthUser) => {
     localStorage.setItem('accessToken', newToken);

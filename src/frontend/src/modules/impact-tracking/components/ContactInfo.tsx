@@ -12,6 +12,8 @@ interface ContactInfoProps {
 }
 
 export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onCancel, onSave, user }) => {
+  const navigate = useNavigate();
+
   const parseAddress = (addressStr: any) => {
     if (!addressStr) return { province: '', district: '', ward: '', street: '' };
     if (typeof addressStr === 'object') {
@@ -297,8 +299,6 @@ export const ContactInfo: React.FC<ContactInfoProps> = ({ isEditing, onEdit, onC
       </div>
     );
   }
-
-  const navigate = useNavigate();
 
   return (
     <div className="flex p-6 flex-col items-start gap-4 rounded-xl border border-[#F1F3F5] bg-[#F8F9FA] w-full">

@@ -141,6 +141,26 @@ export async function runDatabaseSelfHealing(): Promise<void> {
       await request.save();
     }
 
+    // 6b. Repair legacy fulfilled requests that have receivedQuantityMl missing or 0
+    const legacyFulfilled = await SOSRequest.find({
+      status: 'Fulfilled',
+      $or: [
+        { receivedQuantityMl: { $exists: false } },
+        { receivedQuantityMl: 0 },
+        { receivedQuantityMl: null },
+      ],
+    });
+    for (const req of legacyFulfilled) {
+      const directVolume = (req.directDonations || []).reduce((sum: number, d: any) => sum + (d.volumeMl || 0), 0);
+      const receivedShipmentVolume = (req.shipments || [])
+        .filter((s: any) => s.status === 'Received')
+        .reduce((sum: number, s: any) => sum + (s.volumeMl || 0), 0);
+      const calculated = directVolume + receivedShipmentVolume;
+      req.receivedQuantityMl = calculated > 0 ? calculated : req.requiredQuantityMl;
+      req.collectedQuantityMl = Math.max(req.collectedQuantityMl || 0, req.receivedQuantityMl);
+      await req.save();
+    }
+
     // 7. Repair BloodBags missing bloodCenterId or all marked Used
     const { BloodBag } = await import('../modules/blood-inventory/models/blood-bag.model');
     const { BloodCenter } = await import('../modules/auth-account/models/blood-center.model');

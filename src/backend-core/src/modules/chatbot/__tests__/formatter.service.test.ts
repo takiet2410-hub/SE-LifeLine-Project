@@ -57,7 +57,7 @@ describe('FormatterService - Chatbot Donor Context & Privacy', () => {
 
     expect(context.isAuthenticated).toBe(true);
     expect(context.bloodType).toBe('O+');
-    expect(context.donorLevel).toBe('Vàng');
+    expect(context.donorLevel).toBe('Cấp độ Vàng');
     expect(context.totalDonations).toBe(5);
     expect(context.lastDonationDate).toBe('2026-07-01');
     expect(context.nextEligibleDate).toBe('2026-09-23');

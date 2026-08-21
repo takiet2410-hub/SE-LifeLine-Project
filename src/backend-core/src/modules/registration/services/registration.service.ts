@@ -469,6 +469,25 @@ export class RegistrationService {
     const previousForm = await ScreeningForm.findOne({ appointmentId: registrationId }).lean();
     const previousVitals = previousForm ? (previousForm as any).vitals : null;
 
+    // Validate campaign status if transitioning to CheckedIn or later stages (Examining, Eligible, Completed)
+    const targetStatus = payload.status;
+    const isAdvancingToCheckInOrBeyond =
+      targetStatus === 'CheckedIn' ||
+      targetStatus === 'Examining' ||
+      targetStatus === 'Eligible' ||
+      targetStatus === 'Eligible for Donation' ||
+      targetStatus === 'Completed' ||
+      targetStatus === 'Donation Completed';
+
+    if (isAdvancingToCheckInOrBeyond && appointment.campaignId) {
+      const campaign = await Campaign.findById(appointment.campaignId);
+      if (campaign && campaign.status !== 'Active') {
+        const err: any = new Error('Chiến dịch chưa diễn ra (chưa mở).');
+        err.statusCode = 400;
+        throw err;
+      }
+    }
+
     // Helper for executing screening update
     const executeUpdate = async (session?: mongoose.ClientSession) => {
       const opts = session ? { session } : {};
@@ -849,16 +868,25 @@ export class RegistrationService {
 
     // Strict validation: Do NOT fallback to random appointments!
     if (!appointment) {
-      const err: any = new Error('Không tìm thấy phiếu đăng ký hoặc mã E-Ticket hợp lệ trong hệ thống.');
+      const err: any = new Error('Không tìm thấy phiếu đăng ký hoặc mã vé hợp lệ.');
       err.statusCode = 404;
       throw err;
     }
 
-    // 4. Validate Campaign Scoping
+    // 4. Validate Campaign Status & Scoping
+    if (appointment.campaignId) {
+      const campaign = await Campaign.findById(appointment.campaignId);
+      if (campaign && campaign.status !== 'Active') {
+        const err: any = new Error('Chiến dịch chưa diễn ra (chưa mở).');
+        err.statusCode = 400;
+        throw err;
+      }
+    }
+
     if (targetCampaignId && targetCampaignId !== 'all' && mongoose.Types.ObjectId.isValid(targetCampaignId)) {
       const campaignIdFromApp = appointment.campaignId ? appointment.campaignId.toString() : '';
       if (campaignIdFromApp !== targetCampaignId.toString()) {
-        const err: any = new Error('Phiếu đăng ký / E-Ticket này thuộc về một chiến dịch khác, không hợp lệ cho chiến dịch đang quét.');
+        const err: any = new Error('Vé thuộc chiến dịch khác.');
         err.statusCode = 400;
         throw err;
       }
@@ -866,7 +894,7 @@ export class RegistrationService {
 
     // 5. Check if ETicket is explicitly invalidated
     if (foundETicket && (foundETicket.qrPayloadSigned === 'INVALIDATED' || foundETicket.qrPayloadSigned === 'EXPIRED')) {
-      const err: any = new Error('Mã E-Ticket này đã bị hủy hoặc đã hết hạn sử dụng. Không thể điểm danh.');
+      const err: any = new Error('Mã vé đã bị hủy hoặc đã hết hạn.');
       err.statusCode = 400;
       throw err;
     }
@@ -882,7 +910,7 @@ export class RegistrationService {
       appointment.status === AppointmentStatus.Cancelled ||
       appointment.status === 'Cancelled'
     ) {
-      const err: any = new Error('Phiếu đăng ký / E-Ticket này đã bị hủy trước đó. Không thể điểm danh.');
+      const err: any = new Error('Phiếu đăng ký đã bị hủy.');
       err.statusCode = 400;
       throw err;
     }
@@ -893,7 +921,7 @@ export class RegistrationService {
       appointment.status === AppointmentStatus.Rejected ||
       appointment.status === 'Rejected'
     ) {
-      const err: any = new Error('Phiếu đăng ký này đã bị từ chối trước đó. Không thể điểm danh.');
+      const err: any = new Error('Phiếu đăng ký đã bị từ chối.');
       err.statusCode = 400;
       throw err;
     }
@@ -905,7 +933,7 @@ export class RegistrationService {
       appointment.status === AppointmentStatus.Completed ||
       appointment.status === 'Completed'
     ) {
-      const err: any = new Error('Người hiến máu này đã hoàn thành lượt hiến máu trong chiến dịch này.');
+      const err: any = new Error('Người hiến máu đã hoàn thành hiến máu.');
       err.statusCode = 400;
       throw err;
     }

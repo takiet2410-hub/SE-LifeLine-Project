@@ -26,7 +26,7 @@ export const QRScanPage: React.FC = () => {
   const handleProcessScan = async (codeToProcess?: string) => {
     const targetCode = (codeToProcess !== undefined ? codeToProcess : manualCode).trim();
     if (!targetCode) {
-      toast.error('Vui lòng nhập mã vé Ticket, Mã đơn hoặc tải lên ảnh QR!');
+      toast.error('Vui lòng nhập mã hoặc tải lên ảnh QR!');
       return;
     }
 
@@ -40,8 +40,7 @@ export const QRScanPage: React.FC = () => {
 
         if (currentStatus === 'Cancelled' || currentStatus === 'Rejected') {
           setScanState('error');
-          const statusText = currentStatus === 'Cancelled' ? 'đã bị hủy' : 'đã bị từ chối';
-          const msg = `Phiếu đăng ký của người hiến máu ${statusText} trước đó. Không thể điểm danh.`;
+          const msg = currentStatus === 'Cancelled' ? 'Phiếu đăng ký đã bị hủy' : 'Phiếu đăng ký đã bị từ chối';
           setErrorMessage(msg);
           toast.error(msg);
           return;
@@ -63,18 +62,18 @@ export const QRScanPage: React.FC = () => {
         });
         setScanState('success');
         if (currentStatus === 'CheckedIn') {
-          toast.success(`Đã điểm danh (CheckedIn) thành công cho ${donorName}!`);
+          toast.success(`Đã điểm danh cho ${donorName}!`);
         } else {
-          toast.info(`Phiếu của ${donorName} đang ở trạng thái ${currentStatus}`);
+          toast.info(`Trạng thái phiếu: ${currentStatus}`);
         }
       } else {
         setScanState('error');
-        setErrorMessage('Không tìm thấy phiếu đăng ký / E-Ticket phù hợp trong hệ thống.');
-        toast.error('Mã QR không hợp lệ hoặc không tìm thấy phiếu!');
+        setErrorMessage('Không tìm thấy phiếu đăng ký / vé.');
+        toast.error('Không tìm thấy phiếu đăng ký!');
       }
     } catch (err: any) {
       setScanState('error');
-      const msg = err?.response?.data?.message || err?.message || 'Không thể xác thực mã QR. Vui lòng kiểm tra lại.';
+      const msg = err?.response?.data?.message || err?.message || 'Mã QR không hợp lệ.';
       setErrorMessage(msg);
       toast.error(msg);
     }

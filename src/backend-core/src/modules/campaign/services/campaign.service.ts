@@ -103,6 +103,8 @@ export class CampaignService {
     let totalCapacity = 0;
     let activeCount = 0;
 
+    const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+
     statsData.forEach((c: any) => {
       totalRegistered += (c.registeredCount || 0);
       totalCapacity += (c.capacity || 1);
@@ -112,7 +114,11 @@ export class CampaignService {
         const start = c.startDateTime ? new Date(c.startDateTime) : null;
         const end = c.endDateTime ? new Date(c.endDateTime) : null;
         if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
-          if (now >= start && now <= end) {
+          if (now > end) {
+            computedStatus = 'Completed';
+          } else if (start >= startOfTomorrow) {
+            computedStatus = 'Upcoming';
+          } else {
             computedStatus = 'Active';
           }
         }
@@ -133,12 +139,12 @@ export class CampaignService {
         const start = c.startDateTime ? new Date(c.startDateTime) : null;
         const end = c.endDateTime ? new Date(c.endDateTime) : null;
         if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
-          if (now >= start && now <= end) {
-            computedStatus = 'Active';
-          } else if (now < start) {
-            computedStatus = 'Upcoming';
-          } else if (now > end) {
+          if (now > end) {
             computedStatus = 'Completed';
+          } else if (start >= startOfTomorrow) {
+            computedStatus = 'Upcoming';
+          } else {
+            computedStatus = 'Active';
           }
         }
       }
@@ -241,12 +247,13 @@ export class CampaignService {
     // Auto calculate status if not Draft or Cancelled
     if (status !== 'Draft' && status !== 'Cancelled') {
       const now = new Date();
-      if (now >= actualStartDateTime && now <= actualEndDateTime) {
-        status = 'Active';
-      } else if (now < actualStartDateTime) {
-        status = 'Upcoming';
-      } else if (now > actualEndDateTime) {
+      const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+      if (now > actualEndDateTime) {
         status = 'Completed';
+      } else if (actualStartDateTime >= startOfTomorrow) {
+        status = 'Upcoming';
+      } else {
+        status = 'Active';
       }
     }
 
@@ -408,12 +415,13 @@ export class CampaignService {
       const start = campaign.startDateTime ? new Date(campaign.startDateTime) : null;
       const end = campaign.endDateTime ? new Date(campaign.endDateTime) : null;
       if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
-        if (now >= start && now <= end) {
-          computedStatus = 'Active';
-        } else if (now < start) {
-          computedStatus = 'Upcoming';
-        } else if (now > end) {
+        const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+        if (now > end) {
           computedStatus = 'Completed';
+        } else if (start >= startOfTomorrow) {
+          computedStatus = 'Upcoming';
+        } else {
+          computedStatus = 'Active';
         }
       }
     }
@@ -543,14 +551,13 @@ export class CampaignService {
       finalStatus = 'Draft';
     } else if (updateData.status && updateData.status !== 'Draft') {
       const now = new Date();
-      if (now >= actualStartDateTime && now <= actualEndDateTime) {
-        finalStatus = 'Active';
-      } else if (now < actualStartDateTime) {
-        finalStatus = 'Upcoming';
-      } else if (now > actualEndDateTime) {
+      const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+      if (now > actualEndDateTime) {
         finalStatus = 'Completed';
+      } else if (actualStartDateTime >= startOfTomorrow) {
+        finalStatus = 'Upcoming';
       } else {
-        finalStatus = updateData.status;
+        finalStatus = 'Active';
       }
     }
 

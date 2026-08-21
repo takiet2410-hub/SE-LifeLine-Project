@@ -171,12 +171,13 @@ export const InteractiveMapPage: React.FC = () => {
           const end = raw?.endDateTime ? new Date(raw.endDateTime) : null;
           let computedStatusStr = isBookable ? 'Active Now' : raw?.entityType === 'Hospital' ? 'Bệnh viện' : 'Trung tâm máu';
           if (isBookable && start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
-            if (now >= start && now <= end) {
-              computedStatusStr = 'Active Now';
-            } else if (now < start) {
+            const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+            if (now > end) {
+              computedStatusStr = 'Completed';
+            } else if (start >= startOfTomorrow) {
               computedStatusStr = 'Starting Soon';
             } else {
-              computedStatusStr = 'Completed';
+              computedStatusStr = 'Active Now';
             }
           } else if (raw?.status === 'Upcoming') {
             computedStatusStr = 'Starting Soon';

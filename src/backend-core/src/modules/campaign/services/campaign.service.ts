@@ -241,8 +241,8 @@ export class CampaignService {
     // Start date at earliest time, end date at latest time
     const startDateStr = typeof data.startDate === 'string' ? data.startDate.split('T')[0] : startDate.toISOString().split('T')[0];
     const endDateStr = typeof data.endDate === 'string' ? data.endDate.split('T')[0] : endDate.toISOString().split('T')[0];
-    const actualStartDateTime = new Date(`${startDateStr}T${earliestTime}:00`);
-    const actualEndDateTime = new Date(`${endDateStr}T${latestTime}:00`);
+    const actualStartDateTime = new Date(`${startDateStr}T${earliestTime}:00+07:00`);
+    const actualEndDateTime = new Date(`${endDateStr}T${latestTime}:00+07:00`);
 
     // Auto calculate status if not Draft or Cancelled
     if (status !== 'Draft' && status !== 'Cancelled') {
@@ -502,8 +502,8 @@ export class CampaignService {
     if (earliestTime === '23:59') earliestTime = '07:30';
     if (latestTime === '00:00') latestTime = '16:30';
 
-    const actualStartDateTime = new Date(`${startDateStr}T${earliestTime}:00`);
-    const actualEndDateTime = new Date(`${endDateStr}T${latestTime}:00`);
+    const actualStartDateTime = new Date(`${startDateStr}T${earliestTime}:00+07:00`);
+    const actualEndDateTime = new Date(`${endDateStr}T${latestTime}:00+07:00`);
 
     // Generate or format daily timeslots (IDENTICAL TO createCampaign)
     const dailyTimeslots: any[] = [];

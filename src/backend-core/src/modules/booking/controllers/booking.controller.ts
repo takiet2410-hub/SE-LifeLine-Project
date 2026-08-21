@@ -20,8 +20,10 @@ export class BookingController {
     } catch (error: any) {
       if (error.message.includes('NOT_FOUND')) res.status(404).json({ message: error.message });
       else if (error.message.includes('CAMPAIGN_NOT_ACTIVE') || error.message.includes('FULL') || error.message.includes('DUPLICATE')) res.status(409).json({ message: error.message });
-      else if (error.message.includes('ELIGIBILITY')) res.status(403).json({
+      else if (error.message.includes('ELIGIBILITY') || error.code === 'ELIGIBILITY_FAILED_INTERVAL') res.status(403).json({
+        code: error.code || 'ELIGIBILITY_FAILED_INTERVAL',
         message: error.message,
+        donationIntervalDays: error.donationIntervalDays || 84,
         lastDonationDate: error.lastDonationDate,
         nextEligibleDate: error.nextEligibleDate,
       });

@@ -18,6 +18,7 @@ import {
   Building2,
   Phone,
   RefreshCw,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
@@ -42,6 +43,7 @@ export const CampaignListPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [selectedDate, setSelectedDate] = useState<string>('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [stats, setStats] = useState({ totalCount: 0, activeCount: 0, totalRegistered: 0, totalCapacity: 0 });
   const [totalPages, setTotalPages] = useState(1);
@@ -52,6 +54,7 @@ export const CampaignListPage: React.FC = () => {
   const [pendingLoading, setPendingLoading] = useState(false);
   const [pendingSearch, setPendingSearch] = useState('');
   const [pendingCampaignFilter, setPendingCampaignFilter] = useState('All');
+  const [pendingSelectedDate, setPendingSelectedDate] = useState<string>('All');
   const [pendingCurrentPage, setPendingCurrentPage] = useState(1);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [batchProcessing, setBatchProcessing] = useState(false);
@@ -97,6 +100,10 @@ export const CampaignListPage: React.FC = () => {
       const response: any = await apiService.getCampaigns({
         search: debouncedSearch,
         status: statusFilter,
+        startDate: selectedDate !== 'All' ? selectedDate : undefined,
+        endDate: selectedDate !== 'All' ? selectedDate : undefined,
+        sortBy: 'startDateTime',
+        sortOrder: 'desc',
         page: currentPage,
         limit: pageSize,
       });
@@ -129,7 +136,7 @@ export const CampaignListPage: React.FC = () => {
   // Fetch all campaigns for dropdown selection
   const fetchAllCampaignsList = async () => {
     try {
-      const response: any = await apiService.getCampaigns({ page: 1, limit: 100 });
+      const response: any = await apiService.getCampaigns({ page: 1, limit: 100, sortBy: 'startDateTime', sortOrder: 'desc' });
       const items = Array.isArray(response?.data) ? response.data : [];
       setAllCampaignList(items);
     } catch (err) {
@@ -153,7 +160,7 @@ export const CampaignListPage: React.FC = () => {
 
   useEffect(() => {
     fetchCampaigns();
-  }, [debouncedSearch, statusFilter, currentPage]);
+  }, [debouncedSearch, statusFilter, selectedDate, currentPage]);
 
   useEffect(() => {
     fetchAllCampaignsList();
@@ -162,7 +169,7 @@ export const CampaignListPage: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, statusFilter]);
+  }, [debouncedSearch, statusFilter, selectedDate]);
 
   // Handle Approve Single Registration
   const handleApproveRegistration = async (row: RegistrationData) => {
@@ -281,6 +288,17 @@ export const CampaignListPage: React.FC = () => {
       );
     }
 
+    if (pendingSelectedDate && pendingSelectedDate !== 'All') {
+      list = list.filter((r) => {
+        const dStr = r.appointmentDate
+          ? (typeof r.appointmentDate === 'string'
+              ? r.appointmentDate.split('T')[0].split(' ')[0]
+              : new Date(r.appointmentDate).toISOString().split('T')[0])
+          : '';
+        return dStr === pendingSelectedDate;
+      });
+    }
+
     if (pendingSearch.trim()) {
       const q = pendingSearch.trim().toLowerCase();
       list = list.filter(
@@ -295,7 +313,7 @@ export const CampaignListPage: React.FC = () => {
     }
 
     return list;
-  }, [pendingRegistrations, pendingCampaignFilter, pendingSearch, uniqueCampaignOptions]);
+  }, [pendingRegistrations, pendingCampaignFilter, pendingSelectedDate, pendingSearch, uniqueCampaignOptions]);
 
   const pendingTotalPages = Math.ceil(filteredPendingRegistrations.length / pendingPageSize) || 1;
   const paginatedPending = filteredPendingRegistrations.slice(
@@ -403,6 +421,10 @@ export const CampaignListPage: React.FC = () => {
       header: 'Thao tác',
       accessor: (row: CampaignData) => {
         const id = row._id || (row as any).id;
+        const isEnded =
+          row.status === 'Completed' ||
+          row.status === 'Cancelled' ||
+          (row.status !== 'Draft' && row.endDateTime && new Date(row.endDateTime).getTime() < new Date().getTime());
         return (
           <div className="flex items-center gap-1">
             <button
@@ -413,11 +435,16 @@ export const CampaignListPage: React.FC = () => {
               <Eye className="w-3.5 h-3.5 text-[#93000b]" />
             </button>
             <button
-              onClick={() => navigate(`/bc/campaigns/${id}/edit`)}
-              className="p-1.5 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-              title="Chỉnh sửa thông tin chiến dịch"
+              disabled={isEnded}
+              onClick={() => !isEnded && navigate(`/bc/campaigns/${id}/edit`)}
+              className={`p-1.5 border rounded-lg flex items-center justify-center transition-all shadow-2xs ${
+                isEnded
+                  ? 'bg-slate-100 border-[#f1f3f5] text-slate-300 cursor-not-allowed opacity-50'
+                  : 'bg-white border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 cursor-pointer text-blue-600'
+              }`}
+              title={isEnded ? 'Chiến dịch đã kết thúc hoặc đã bị hủy, không thể chỉnh sửa' : 'Chỉnh sửa thông tin chiến dịch'}
             >
-              <Edit className="w-3.5 h-3.5 text-blue-600" />
+              <Edit className={`w-3.5 h-3.5 ${isEnded ? 'text-slate-400' : 'text-blue-600'}`} />
             </button>
             <button
               onClick={() => navigate(`/bc/campaigns/${id}/registrations`)}
@@ -755,15 +782,53 @@ export const CampaignListPage: React.FC = () => {
         <div className="space-y-4">
           {/* Filter and Search Control Bar */}
           <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-col md:flex-row gap-3 items-center justify-between shadow-2xs">
-            <div className="relative w-full md:w-80">
-              <Search className="w-4 h-4 text-[#a3a3a3] absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm theo tên chiến dịch, địa điểm..."
-                className="w-full h-10 pl-10 pr-4 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[13px] text-[#271816] placeholder-[#a3a3a3] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10"
-              />
+            <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-[#a3a3a3] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Tìm theo tên chiến dịch, địa điểm..."
+                  className="w-full h-10 pl-10 pr-4 bg-white border border-[#f1f3f5] focus:border-[#93000b] rounded-xl text-[13px] text-[#271816] placeholder-[#a3a3a3] outline-none transition-all focus:ring-2 focus:ring-[#93000b]/10"
+                />
+              </div>
+
+              {/* Operational Calendar Date Picker Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] font-bold text-slate-600 flex items-center gap-1 shrink-0">
+                  <Calendar className="w-3.5 h-3.5 text-[#93000b]" /> Ngày tổ chức:
+                </span>
+                <div className="relative flex items-center">
+                  <input
+                    type="date"
+                    value={selectedDate === 'All' ? '' : selectedDate}
+                    onChange={(e) => {
+                      setSelectedDate(e.target.value || 'All');
+                      setCurrentPage(1);
+                    }}
+                    className="h-10 pl-3 pr-8 text-[12.5px] font-semibold bg-white border border-slate-200 focus:border-[#93000b] focus:ring-2 focus:ring-[#93000b]/10 rounded-xl text-[#271816] outline-none cursor-pointer shadow-2xs transition-all"
+                  />
+                  {selectedDate !== 'All' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedDate('All');
+                        setCurrentPage(1);
+                      }}
+                      className="absolute right-2.5 text-slate-400 hover:text-[#93000b] p-0.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                      title="Xóa bộ lọc ngày (Xem tất cả)"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                {selectedDate !== 'All' && (
+                  <span className="text-[11px] font-bold text-[#93000b] bg-red-50 border border-red-100 px-2 py-1 rounded-lg shrink-0">
+                    Đang lọc: {selectedDate.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1')}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto">
@@ -812,9 +877,9 @@ export const CampaignListPage: React.FC = () => {
         <div className="space-y-4 animate-in fade-in duration-300">
           {/* Controls Bar */}
           <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-col md:flex-row gap-3 items-center justify-between shadow-2xs">
-            <div className="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto flex-1">
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto flex-1 flex-wrap">
               {/* Search */}
-              <div className="relative flex-1 max-w-md">
+              <div className="relative w-full sm:w-64">
                 <Search className="w-4 h-4 text-[#a3a3a3] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -849,6 +914,42 @@ export const CampaignListPage: React.FC = () => {
                   );
                 })}
               </select>
+
+              {/* Operational Calendar Date Picker Filter for Pending */}
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] font-bold text-slate-600 flex items-center gap-1 shrink-0">
+                  <Calendar className="w-3.5 h-3.5 text-[#93000b]" /> Ngày hẹn:
+                </span>
+                <div className="relative flex items-center">
+                  <input
+                    type="date"
+                    value={pendingSelectedDate === 'All' ? '' : pendingSelectedDate}
+                    onChange={(e) => {
+                      setPendingSelectedDate(e.target.value || 'All');
+                      setPendingCurrentPage(1);
+                    }}
+                    className="h-10 pl-3 pr-8 text-[12.5px] font-semibold bg-white border border-slate-200 focus:border-[#93000b] focus:ring-2 focus:ring-[#93000b]/10 rounded-xl text-[#271816] outline-none cursor-pointer shadow-2xs transition-all"
+                  />
+                  {pendingSelectedDate !== 'All' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPendingSelectedDate('All');
+                        setPendingCurrentPage(1);
+                      }}
+                      className="absolute right-2.5 text-slate-400 hover:text-[#93000b] p-0.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                      title="Xóa bộ lọc ngày hẹn (Xem tất cả)"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                {pendingSelectedDate !== 'All' && (
+                  <span className="text-[11px] font-bold text-[#93000b] bg-red-50 border border-red-100 px-2 py-1 rounded-lg shrink-0">
+                    Đang lọc: {pendingSelectedDate.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1')}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Batch Approve Action Button */}

@@ -4,6 +4,12 @@ import { Appointment } from '../../booking/models/appointment.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
 import { User } from '../../auth-account/models/user.model';
 import { geocodeAddress } from '../../../shared/geocoding.util';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 
 const getMinsBetween = (sStr: string, eStr: string): number => {
@@ -103,7 +109,7 @@ export class CampaignService {
     let totalCapacity = 0;
     let activeCount = 0;
 
-    const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+    const startOfTomorrow = dayjs().tz('Asia/Ho_Chi_Minh').add(1, 'day').startOf('day').toDate();
 
     statsData.forEach((c: any) => {
       totalRegistered += (c.registeredCount || 0);
@@ -247,7 +253,7 @@ export class CampaignService {
     // Auto calculate status if not Draft or Cancelled
     if (status !== 'Draft' && status !== 'Cancelled') {
       const now = new Date();
-      const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+      const startOfTomorrow = dayjs().tz('Asia/Ho_Chi_Minh').add(1, 'day').startOf('day').toDate();
       if (now > actualEndDateTime) {
         status = 'Completed';
       } else if (actualStartDateTime >= startOfTomorrow) {
@@ -415,7 +421,7 @@ export class CampaignService {
       const start = campaign.startDateTime ? new Date(campaign.startDateTime) : null;
       const end = campaign.endDateTime ? new Date(campaign.endDateTime) : null;
       if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
-        const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+        const startOfTomorrow = dayjs().tz('Asia/Ho_Chi_Minh').add(1, 'day').startOf('day').toDate();
         if (now > end) {
           computedStatus = 'Completed';
         } else if (start >= startOfTomorrow) {
@@ -551,7 +557,7 @@ export class CampaignService {
       finalStatus = 'Draft';
     } else if (updateData.status && updateData.status !== 'Draft') {
       const now = new Date();
-      const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+      const startOfTomorrow = dayjs().tz('Asia/Ho_Chi_Minh').add(1, 'day').startOf('day').toDate();
       if (now > actualEndDateTime) {
         finalStatus = 'Completed';
       } else if (actualStartDateTime >= startOfTomorrow) {

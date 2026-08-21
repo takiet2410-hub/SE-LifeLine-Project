@@ -1,9 +1,15 @@
 import { Campaign } from '../models/campaign.model';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export const updateCampaignStatuses = async () => {
   try {
     const now = new Date();
-    const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+    const startOfTomorrow = dayjs().tz('Asia/Ho_Chi_Minh').add(1, 'day').startOf('day').toDate();
 
     // 1. Transition to Upcoming: start date is in the future (tomorrow or later) and status not in Draft/Cancelled
     await Campaign.updateMany(

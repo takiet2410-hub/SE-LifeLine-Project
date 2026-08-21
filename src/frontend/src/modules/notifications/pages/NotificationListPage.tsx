@@ -163,7 +163,7 @@ export const NotificationListPage: React.FC = () => {
   const hasFilters = typeFilter !== 'All' || statusFilter !== 'All';
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6">
       {/* Filter Controls & Action Bar */}
       <div className="bg-white p-4 border border-[#f1f3f5] rounded-2xl flex flex-wrap gap-3 items-center justify-between shadow-2xs">
         <div className="flex flex-wrap items-center gap-3">

@@ -309,7 +309,7 @@ export const RegistrationDetailPage: React.FC = () => {
   const codeId = registration._id ? `#REG-${registration._id.slice(-6).toUpperCase()}` : '#REG-8821';
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6">
       {/* Navigation & Header Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-4 sm:p-5 rounded-2xl shadow-2xs">
         <div className="flex items-center gap-3 min-w-0">

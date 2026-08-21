@@ -471,9 +471,9 @@ export const apiService = {
     }
   },
 
-  async checkInQRCode(qrPayload: string) {
+  async checkInQRCode(qrPayload: string, campaignId?: string) {
     try {
-      const res = await apiClient.post('/registrations/qr-checkin', { qrPayload });
+      const res = await apiClient.post('/registrations/qr-checkin', { qrPayload, campaignId });
       if (res.data) {
         return res.data;
       }

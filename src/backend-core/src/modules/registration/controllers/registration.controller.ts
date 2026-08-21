@@ -67,9 +67,9 @@ export class RegistrationController {
    */
   static async checkInByQRCode(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const { qrPayload } = req.body;
+      const { qrPayload, campaignId } = req.body;
       const actorUserId = String(req.user?._id || req.user?.id || '');
-      const result = await RegistrationService.checkInByQRCode(qrPayload || '', actorUserId);
+      const result = await RegistrationService.checkInByQRCode(qrPayload || '', actorUserId, campaignId);
       return res.status(200).json(result);
     } catch (error) {
       return next(error);

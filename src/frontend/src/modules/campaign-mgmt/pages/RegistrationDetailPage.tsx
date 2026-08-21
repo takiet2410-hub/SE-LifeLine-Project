@@ -25,7 +25,7 @@ import {
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
 import { formatDateToDDMMYYYY } from '../../booking-location/api/bookingApi';
-import type { RegistrationData } from '../../../services/mockData';
+import type { RegistrationData, CampaignData } from '../../../services/mockData';
 import { screeningSchema } from '../schemas/campaignSchema';
 import type { ScreeningInput } from '../schemas/campaignSchema';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -38,6 +38,7 @@ export const RegistrationDetailPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [registration, setRegistration] = useState<RegistrationData | null>(null);
+  const [campaign, setCampaign] = useState<CampaignData | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirmStatusModal, setConfirmStatusModal] = useState<{ isOpen: boolean; targetStatus: string | null }>({
     isOpen: false,
@@ -77,11 +78,15 @@ export const RegistrationDetailPage: React.FC = () => {
             screeningNotes: data.screeningNotes || '',
             status: (data.status as any) || 'Confirmed',
           });
+          const targetCId = data.campaignId || campaignId;
+          if (targetCId && targetCId !== 'all') {
+            apiService.getCampaignById(targetCId).then((c) => setCampaign(c)).catch(() => {});
+          }
         }
         setLoading(false);
       });
     }
-  }, [registrationId, reset]);
+  }, [registrationId, campaignId, reset]);
 
   const [editBloodType, setEditBloodType] = useState<string>('Unknown');
   const [donationVolume, setDonationVolume] = useState<number>(350);
@@ -151,6 +156,14 @@ export const RegistrationDetailPage: React.FC = () => {
   const handleUpdateStatus = async (newStatus: string, testResult?: 'Pass' | 'Rejected') => {
     if (!registrationId || !registration) return;
 
+    if (['CheckedIn', 'Examining', 'Eligible', 'Completed'].includes(newStatus)) {
+      if (campaign && campaign.status !== 'Active') {
+        toast.error('Chiến dịch chưa mở, chưa thể điểm danh.');
+        setConfirmStatusModal({ isOpen: false, targetStatus: null });
+        return;
+      }
+    }
+
     if (newStatus === 'Eligible') {
       if (!areVitalsComplete()) {
         setVitalsError('⚠️ Vui lòng điền đầy đủ 4 chỉ số sinh tồn (Huyết áp, Cân nặng, Thân nhiệt, Hemoglobin) trong khung bên dưới trước khi chuyển sang trạng thái Đủ Điều Kiện.');
@@ -214,8 +227,9 @@ export const RegistrationDetailPage: React.FC = () => {
             : `Đã cập nhật trạng thái phiếu sàng lọc: ${statusLabels[newStatus] || newStatus}`
         );
       }
-    } catch (err) {
-      toast.error('Cập nhật trạng thái thất bại. Vui lòng thử lại.');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Cập nhật trạng thái thất bại. Vui lòng thử lại.';
+      toast.error(msg);
     }
   };
 
@@ -327,8 +341,24 @@ export const RegistrationDetailPage: React.FC = () => {
           {registration.status === 'Confirmed' && (
             <button
               type="button"
-              onClick={() => setConfirmStatusModal({ isOpen: true, targetStatus: 'CheckedIn' })}
-              className="h-10 px-4 bg-amber-600 hover:bg-amber-700 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+              disabled={campaign ? campaign.status !== 'Active' : false}
+              onClick={() => {
+                if (campaign && campaign.status !== 'Active') {
+                  toast.error('Chiến dịch chưa mở, chưa thể điểm danh.');
+                  return;
+                }
+                setConfirmStatusModal({ isOpen: true, targetStatus: 'CheckedIn' });
+              }}
+              className={`h-10 px-4 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all whitespace-nowrap ${
+                campaign && campaign.status !== 'Active'
+                  ? 'bg-amber-600 opacity-40 cursor-not-allowed'
+                  : 'bg-amber-600 hover:bg-amber-700 cursor-pointer'
+              }`}
+              title={
+                campaign && campaign.status !== 'Active'
+                  ? 'Chiến dịch chưa mở'
+                  : 'Điểm Danh (CheckIn)'
+              }
             >
               <Clock className="w-4 h-4 text-white" />
               <span>Điểm Danh (CheckIn)</span>

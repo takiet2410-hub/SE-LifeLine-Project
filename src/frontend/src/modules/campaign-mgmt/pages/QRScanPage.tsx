@@ -26,7 +26,7 @@ export const QRScanPage: React.FC = () => {
   const handleProcessScan = async (codeToProcess?: string) => {
     const targetCode = (codeToProcess !== undefined ? codeToProcess : manualCode).trim();
     if (!targetCode) {
-      toast.error('Vui lòng nhập mã vé Ticket, Mã đơn hoặc tải lên ảnh QR!');
+      toast.error('Vui lòng nhập mã hoặc tải lên ảnh QR!');
       return;
     }
 
@@ -34,15 +34,23 @@ export const QRScanPage: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      const res = await apiService.checkInQRCode(targetCode);
+      const res = await apiService.checkInQRCode(targetCode, campaignId);
       if (res) {
+        const currentStatus = res.status || 'CheckedIn';
+
+        if (currentStatus === 'Cancelled' || currentStatus === 'Rejected') {
+          setScanState('error');
+          const msg = currentStatus === 'Cancelled' ? 'Phiếu đăng ký đã bị hủy' : 'Phiếu đăng ký đã bị từ chối';
+          setErrorMessage(msg);
+          toast.error(msg);
+          return;
+        }
+
         const regId = res.registrationId || res._id || targetCode;
         const donorName = res.donorName || (res.donor ? res.donor.fullName : 'Người hiến máu');
         const donorIdCard = res.donorIdCard || (res.donor ? res.donor.idDocumentNumber : '');
         const donorBloodType = res.donorBloodType || (res.donor ? res.donor.bloodType : '');
         const donorPhone = res.donorPhone || (res.donor ? res.donor.phoneNumber : '');
-
-        const currentStatus = res.status || 'CheckedIn';
 
         setScannedResult({
           id: regId,
@@ -54,19 +62,20 @@ export const QRScanPage: React.FC = () => {
         });
         setScanState('success');
         if (currentStatus === 'CheckedIn') {
-          toast.success(`Đã điểm danh (CheckedIn) thành công cho ${donorName}!`);
+          toast.success(`Đã điểm danh cho ${donorName}!`);
         } else {
-          toast.info(`Phiếu của ${donorName} đang ở trạng thái ${currentStatus}`);
+          toast.info(`Trạng thái phiếu: ${currentStatus}`);
         }
       } else {
         setScanState('error');
-        setErrorMessage('Không tìm thấy phiếu đăng ký / E-Ticket phù hợp trong hệ thống.');
-        toast.error('Mã QR không hợp lệ hoặc không tìm thấy phiếu!');
+        setErrorMessage('Không tìm thấy phiếu đăng ký / vé.');
+        toast.error('Không tìm thấy phiếu đăng ký!');
       }
     } catch (err: any) {
       setScanState('error');
-      setErrorMessage(err?.message || 'Không thể xác thực mã QR. Vui lòng kiểm tra lại.');
-      toast.error('Lỗi xác thực mã QR.');
+      const msg = err?.response?.data?.message || err?.message || 'Mã QR không hợp lệ.';
+      setErrorMessage(msg);
+      toast.error(msg);
     }
   };
 
@@ -211,25 +220,17 @@ export const QRScanPage: React.FC = () => {
 
             <label
               htmlFor="qr-file-input"
-              className="border-2 border-dashed border-red-200 hover:border-[#93000b] bg-[#fff8f7]/60 hover:bg-[#fff0ee] rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-all text-center group"
+              className="border-2 border-dashed border-red-200 hover:border-[#93000b] bg-[#fff8f7]/60 hover:bg-[#fff0ee] rounded-xl py-7 px-5 flex flex-col items-center justify-center cursor-pointer transition-all text-center group"
             >
-              <UploadCloud className="w-8 h-8 text-[#93000b] mb-2 group-hover:scale-110 transition-transform" />
+              <UploadCloud className="w-9 h-9 text-[#93000b] mb-2 group-hover:scale-110 transition-transform" />
               <span className="text-[13px] font-bold text-slate-800 group-hover:text-[#93000b]">
-                Bấm để chọn tệp ảnh QR
+                Bấm vào đây để tải lên ảnh mã QR
               </span>
-              <span className="text-[11px] text-slate-500 mt-0.5">
-                Hỗ trợ các định dạng PNG, JPG, JPEG, WebP
+              <span className="text-[11px] text-slate-500 mt-1">
+                Hỗ trợ định dạng PNG, JPG, JPEG, WebP
               </span>
             </label>
           </div>
-
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full py-3 border border-slate-300 text-slate-700 hover:bg-slate-100 text-[13px] font-bold rounded-xl transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <UploadCloud className="w-4 h-4 text-slate-600" />
-            <span>Chọn Ảnh Từ Thư Mục</span>
-          </button>
         </div>
       </div>
 

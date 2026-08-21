@@ -105,15 +105,11 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
     }
 
     if (isAdmin) {
-      navigate('/admin/logs');
+      navigate(`/admin/notifications?id=${notif._id}`);
     } else if (isHospital) {
-      if (notif.type === 'SOS') {
-        navigate('/hospital/sos-requests');
-      } else {
-        navigate(`/hospital/notifications/${notif._id}`);
-      }
+      navigate(`/hospital/notifications?id=${notif._id}`);
     } else {
-      navigate(`/bc/notifications/${notif._id}`);
+      navigate(`/bc/notifications?id=${notif._id}`);
     }
   };
 

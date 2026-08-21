@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Bell, Search, AlertTriangle, Calendar, Megaphone } from 'lucide-react';
 import { apiService } from '../../../services/apiClient';
 import type { NotificationData } from '../../../services/mockData';
 import { NotificationPreferences } from '../components/NotificationPreferences';
+import { NotificationDetailModal } from '../components/NotificationDetailModal';
 import { format } from 'date-fns';
-import { getArticleIdFromNotification } from '../../../utils/notificationHelpers';
 
 export const DonorNotificationPage: React.FC = () => {
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'All' | 'Alerts' | 'Updates'>('All');
   const [searchQuery, setSearchQuery] = useState('');
-
+  const [selectedNotification, setSelectedNotification] = useState<NotificationData | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -47,6 +47,21 @@ export const DonorNotificationPage: React.FC = () => {
     };
   }, [fetchNotifications]);
 
+  // Auto-open modal if ?id= query param is provided
+  useEffect(() => {
+    const notifId = searchParams.get('id');
+    if (notifId && notifications.length > 0) {
+      const target = notifications.find(n => n._id === notifId);
+      if (target) {
+        setSelectedNotification(target);
+        if (!target.readAt) {
+          void apiService.markNotificationAsRead(target._id);
+          setNotifications(prev => prev.map(n => n._id === target._id ? { ...n, readAt: new Date().toISOString() } : n));
+        }
+      }
+    }
+  }, [searchParams, notifications]);
+
   const handleNotificationClick = async (notif: NotificationData) => {
     if (!notif.readAt) {
       try {
@@ -57,20 +72,8 @@ export const DonorNotificationPage: React.FC = () => {
       setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, readAt: new Date().toISOString() } : n));
     }
 
-    // Direct redirect to specific article page if notification is for an article
-    const articleId = getArticleIdFromNotification(notif);
-    if (articleId) {
-      navigate(`/news/${articleId}`);
-      return;
-    }
-
-    if (notif.type === 'SOS' || notif.sourceRefType === 'SOSRequest') {
-      navigate('/sos-alerts');
-    } else if ((notif.type as string) === 'Appointment' || notif.sourceRefType === 'Appointment') {
-      navigate('/my-appointments');
-    } else {
-      navigate('/news');
-    }
+    // Open detail modal directly so user can read the full message content
+    setSelectedNotification(notif);
   };
 
   const filteredNotifications = notifications.filter(n => {
@@ -196,6 +199,13 @@ export const DonorNotificationPage: React.FC = () => {
           <NotificationPreferences />
         </div>
       </div>
+
+      {/* Notification Detail Modal for reading full message */}
+      <NotificationDetailModal
+        notification={selectedNotification}
+        isOpen={!!selectedNotification}
+        onClose={() => setSelectedNotification(null)}
+      />
     </div>
   );
 };

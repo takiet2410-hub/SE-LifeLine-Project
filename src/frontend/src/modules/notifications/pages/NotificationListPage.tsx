@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Bell, Trash2, Clock, Hospital, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
@@ -7,13 +7,14 @@ import type { NotificationData } from '../../../services/mockData';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
 import { EmptyState } from '../../../components/common/EmptyState';
+import { NotificationDetailModal } from '../components/NotificationDetailModal';
 import { format } from 'date-fns';
-import { getArticleIdFromNotification, getArticleRouteForRole } from '../../../utils/notificationHelpers';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 
 export const NotificationListPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
   const isHospitalPage = location.pathname.startsWith('/hospital') || user?.role === 'hospital' || user?.role === 'HospitalStaff';
@@ -21,6 +22,7 @@ export const NotificationListPage: React.FC = () => {
   const isBcPage = location.pathname.startsWith('/bc') || user?.role === 'staff' || user?.role === 'BloodCenterStaff' || (!isHospitalPage && !isAdminPage);
 
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const [selectedNotification, setSelectedNotification] = useState<NotificationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -123,32 +125,25 @@ export const NotificationListPage: React.FC = () => {
     return null;
   };
 
+  // Auto-open modal if ?id= query param is provided
+  useEffect(() => {
+    const notifId = searchParams.get('id');
+    if (notifId && notifications.length > 0) {
+      const target = notifications.find((n) => n._id === notifId);
+      if (target) {
+        setSelectedNotification(target);
+        if (target.readAt === null) {
+          void handleMarkAsRead(target._id);
+        }
+      }
+    }
+  }, [searchParams, notifications]);
+
   const handleNotificationClick = async (item: NotificationData) => {
     if (item.readAt === null) {
       await handleMarkAsRead(item._id);
     }
-    const articleId = getArticleIdFromNotification(item);
-    if (articleId) {
-      navigate(getArticleRouteForRole(articleId, location.pathname));
-      return;
-    }
-
-    if (item.type === 'SOS') {
-      const sosId = extractSOSId(item);
-      if (isBcPage) {
-        navigate(sosId ? `/bc/sos-requests/${sosId}` : `/bc/sos-requests`);
-        return;
-      }
-      if (isHospitalPage) {
-        navigate(sosId ? `/hospital/sos-requests/${sosId}` : `/hospital/sos-requests`);
-        return;
-      }
-    }
-
-    const isHospital = location.pathname.startsWith('/hospital');
-    const isAdmin = location.pathname.startsWith('/admin');
-    const basePath = isAdmin ? '/admin' : isHospital ? '/hospital' : '/bc';
-    navigate(`${basePath}/notifications/${item._id}`);
+    setSelectedNotification(item);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -240,6 +235,24 @@ export const NotificationListPage: React.FC = () => {
             {notifications.map((item) => {
               const isSOS = item.type === 'SOS';
               const isUnread = item.readAt === null;
+              const titleLower = (item.title || '').toLowerCase();
+              const bodyLower = (item.body || '').toLowerCase();
+              const statusLower = (item.payload?.status || '').toLowerCase();
+              const isSOSCompletionOrThankYou =
+                statusLower === 'fulfilled' ||
+                statusLower === 'expired' ||
+                statusLower === 'cancelled' ||
+                titleLower.includes('hoàn tất') ||
+                titleLower.includes('cảm ơn') ||
+                titleLower.includes('đã nhận máu') ||
+                titleLower.includes('đã nhận đợt máu') ||
+                titleLower.includes('tri ân') ||
+                titleLower.includes('tiếp nhận hiến máu') ||
+                titleLower.includes('tiếp nhận thành công') ||
+                bodyLower.includes('đã nhận đủ') ||
+                bodyLower.includes('nhận thành công') ||
+                bodyLower.includes('cảm ơn trung tâm máu') ||
+                bodyLower.includes('hoàn tất');
 
               return (
                 <div
@@ -324,7 +337,7 @@ export const NotificationListPage: React.FC = () => {
 
                     {/* Actions: SOS Button & Delete */}
                     <div className="flex items-center gap-2 shrink-0">
-                      {isSOS && isBcPage && (
+                      {isSOS && !isSOSCompletionOrThankYou && isBcPage && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -336,7 +349,7 @@ export const NotificationListPage: React.FC = () => {
                           Xử lý SOS →
                         </button>
                       )}
-                      {isSOS && isHospitalPage && (
+                      {isSOS && !isSOSCompletionOrThankYou && isHospitalPage && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -404,6 +417,13 @@ export const NotificationListPage: React.FC = () => {
         variant="danger"
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTargetId(null)}
+      />
+
+      {/* Detail Modal for reading full notification text directly */}
+      <NotificationDetailModal
+        notification={selectedNotification}
+        isOpen={!!selectedNotification}
+        onClose={() => setSelectedNotification(null)}
       />
     </div>
   );

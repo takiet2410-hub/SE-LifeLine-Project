@@ -26,14 +26,26 @@ export interface PaginatedResult<T> {
 
 export class NotificationService {
   private static applyAudienceGuard(activeRole: string | undefined, query: Record<string, any>): void {
-    if (!activeRole || activeRole === 'Donor') return;
+    if (!activeRole) return;
 
-    // Older donor SOS alerts may have been written to management accounts
-    // because every account carries the mandatory Donor base role.
-    query.$nor = [
-      { 'payload.audienceRole': 'Donor' },
-      { 'payload.deepLink': /^\/donor(?:\/|$)/ },
-    ];
+    if (activeRole === 'Donor') {
+      // In Donor portal: exclude management-specific notifications
+      query.$nor = [
+        { 'payload.audienceRole': { $in: ['BloodCenterStaff', 'HospitalStaff', 'Administrator'] } },
+        { 'payload.deepLink': /^(?:https?:\/\/[^\/]+)?(?:\/bc|\/hospital|\/admin)(?:\/|$)/ },
+      ];
+    } else {
+      // In Staff/Admin portals (BloodCenterStaff, HospitalStaff, Administrator):
+      // Exclude donor-specific notifications (personal donations, screening results, appointments, donor SOS alerts)
+      query.$nor = [
+        { 'payload.audienceRole': 'Donor' },
+        { 'payload.deepLink': /^(?:https?:\/\/[^\/]+)?(?:\/donor|\/my-appointments|\/profile|\/sos-alerts)(?:\/|$)/ },
+        { title: { $regex: /kết quả hiến máu|kết quả xét nghiệm|cảm ơn bạn đã hiến máu|lịch hẹn|đặt hẹn|đủ điều kiện hiến máu|hồ sơ cá nhân|huy hiệu/i } },
+        { body: { $regex: /xét nghiệm mẫu máu|tinh thần thiện nguyện của bạn|cảm ơn bạn đã hiến máu thành công/i } },
+        { 'payload.appointmentId': { $exists: true } },
+        { 'payload.nextEligibleDate': { $exists: true } },
+      ];
+    }
   }
 
   private static escapeHtml(value: unknown): string {
@@ -125,7 +137,7 @@ export class NotificationService {
     if (type) query.type = type;
     if (status === 'read') query.readAt = { $ne: null };
     else if (status === 'unread') query.readAt = null;
-    
+
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = new Date(startDate);
@@ -169,7 +181,7 @@ export class NotificationService {
   static async markAsRead(id: string, userId: string): Promise<INotification | null> {
     const userFilter = Types.ObjectId.isValid(userId) ? { $in: [userId, new Types.ObjectId(userId)] } : userId;
     const idFilter = Types.ObjectId.isValid(id) ? { $in: [id, new Types.ObjectId(id)] } : id;
-    
+
     const notif = await Notification.findOne({ _id: idFilter, recipientUserId: userFilter });
     if (!notif) return null;
 
@@ -195,11 +207,13 @@ export class NotificationService {
   static async markMultipleAsRead(
     userId: string,
     ids?: string[],
-    markAllAsRead = false
+    markAllAsRead = false,
+    activeRole?: string
   ): Promise<{ modifiedCount: number }> {
     const userFilter = Types.ObjectId.isValid(userId) ? { $in: [userId, new Types.ObjectId(userId)] } : userId;
     const query: any = { recipientUserId: userFilter, readAt: null };
-    
+    this.applyAudienceGuard(activeRole, query);
+
     if (!markAllAsRead && ids && ids.length > 0) {
       const idFilters = ids.flatMap(id => Types.ObjectId.isValid(id) ? [id, new Types.ObjectId(id)] : [id]);
       query._id = { $in: idFilters };
@@ -225,7 +239,7 @@ export class NotificationService {
           if (legacyJob && await legacyJob.isFailed()) await legacyJob.remove();
         }
       }
-      
+
       const jobs = channels.map(channel => ({
         name: `deliver-${channel}`,
         data: { notificationId, channel },
@@ -274,7 +288,7 @@ export class NotificationService {
           console.log('[NotificationService] Found legacy donorId_1 index causing E11000. Dropping it...');
           try {
             await mongoose.connection.db?.collection('notification_preferences').dropIndex('donorId_1');
-          } catch(e) {}
+          } catch (e) { }
           prefs = await NotificationPreference.create({ userId });
         } else if (error.code === 11000) {
           // If another worker created it concurrently, just fetch it
@@ -389,7 +403,7 @@ export class NotificationService {
           if (data.type === 'Appointment') return prefs.appointmentEnabled && prefs.emailEnabled;
           return prefs.emailEnabled;
         }
-        return true; 
+        return true;
       });
 
       if (allowedChannels.length === 0) continue;
@@ -401,14 +415,14 @@ export class NotificationService {
         const duplicateCutoff = new Date(Date.now() - 5 * 60 * 1000);
         const recentDuplicate = data.payload?.sourceRefId
           ? await Notification.findOne({
-              recipientUserId: new Types.ObjectId(recipientId),
-              channel,
-              sourceRefId,
-              sourceRefType,
-              title: data.title,
-              body: data.body,
-              createdAt: { $gte: duplicateCutoff },
-            }).lean()
+            recipientUserId: new Types.ObjectId(recipientId),
+            channel,
+            sourceRefId,
+            sourceRefType,
+            title: data.title,
+            body: data.body,
+            createdAt: { $gte: duplicateCutoff },
+          }).lean()
           : null;
         if (recentDuplicate) {
           results.push({ recipientUserId: recipientId, notificationId: recentDuplicate._id, channel, deduplicated: true });
@@ -449,13 +463,13 @@ export class NotificationService {
    */
   static async processDelivery(notificationId: string, channel: import('../models/Notification').NotificationChannel) {
     const notification = await Notification.findOneAndUpdate(
-      { 
-        _id: notificationId, 
-        channel: channel, 
-        deliveryStatus: { $in: ['Pending', 'Failed'] } 
+      {
+        _id: notificationId,
+        channel: channel,
+        deliveryStatus: { $in: ['Pending', 'Failed'] }
       },
-      { 
-        $set: { deliveryStatus: 'Sending' } 
+      {
+        $set: { deliveryStatus: 'Sending' }
       },
       { new: true }
     );

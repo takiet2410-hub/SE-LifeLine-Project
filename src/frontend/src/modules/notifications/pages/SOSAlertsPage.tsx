@@ -73,9 +73,10 @@ export const SOSAlertsPage: React.FC = () => {
         })
         .map((notif: any) => {
           const payload = notif.payload || notif.sosRequestInfo || {};
+          const sosReqId = notif.sourceRefId || payload.sosRequestId || notif.referenceId || payload.id || notif._id;
           return {
             id: notif._id,
-            sosRequestId: notif.sourceRefId || notif.referenceId || payload.id || notif._id,
+            sosRequestId: String(sosReqId),
             bloodType: payload.bloodType || 'Unknown',
             urgencyLevel: payload.urgencyLevel || 'High',
             status: payload.status || notif.status || 'NotificationsDispatched',

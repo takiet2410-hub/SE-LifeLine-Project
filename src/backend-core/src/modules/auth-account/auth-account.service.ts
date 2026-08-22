@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { Types } from 'mongoose';
 import { User } from './models/user.model';
 import { DonorProfile } from './models/donor-profile.model';
 import { env } from '../../config/env.config';

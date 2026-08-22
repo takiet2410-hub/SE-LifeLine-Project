@@ -26,12 +26,17 @@ export class GamificationService {
     const donorId = typeof donorUserId === 'string' ? new Types.ObjectId(donorUserId) : donorUserId;
 
     // 1. Find DonorProfile
-    let profile = await DonorProfile.findOne({ userId: donorId }, null, opts);
+    let profile = await DonorProfile.findOne(
+      { $or: [{ userId: donorId }, { _id: donorId }] },
+      null,
+      opts
+    );
     if (!profile) return;
 
     // 2. Count total completed appointments
+    const allDonorIds = [donorId, profile.userId, profile._id].filter(Boolean);
     const completedCount = await Appointment.countDocuments({
-      donorId,
+      donorId: { $in: allDonorIds },
       status: AppointmentStatus.Completed
     }).session(session || null);
 
@@ -146,7 +151,11 @@ export class GamificationService {
     const opts = session ? { session } : {};
     const donorId = typeof donorUserId === 'string' ? new Types.ObjectId(donorUserId) : donorUserId;
 
-    let profile = await DonorProfile.findOne({ userId: donorId }, null, opts);
+    let profile = await DonorProfile.findOne(
+      { $or: [{ userId: donorId }, { _id: donorId }] },
+      null,
+      opts
+    );
     if (!profile) return;
 
     const xpReward = 50;

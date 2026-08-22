@@ -448,19 +448,27 @@ export class AuthAccountService {
     }
 
     // 2. Query lịch sử hiến máu từ collection appointments & SOS direct donations
+    const donorUserIds = [
+      userId,
+      profile._id,
+      profile.userId,
+      typeof userId === 'string' && Types.ObjectId.isValid(userId) ? new Types.ObjectId(userId) : null
+    ].filter(Boolean);
+
     const completedAppointments = await Appointment.find({
-      donorId: userId, 
+      donorId: { $in: donorUserIds }, 
       status: AppointmentStatus.Completed
     }).sort({ appointmentDate: -1 }).populate('campaignId', 'name location address').lean();
 
+    const stringUserIds = donorUserIds.map(id => id?.toString());
     let sosDonations: any[] = [];
     try {
       const { SOSRequest } = await import('../sos-request/models/sos-request.model');
       const sosList = await SOSRequest.find({
-        'directDonations.donorId': userId
+        'directDonations.donorId': { $in: donorUserIds }
       }).populate('hospitalId', 'name address').lean();
       for (const sos of sosList) {
-        const matching = (sos.directDonations || []).filter((d: any) => d.donorId?.toString() === userId.toString());
+        const matching = (sos.directDonations || []).filter((d: any) => stringUserIds.includes(d.donorId?.toString()));
         for (const m of matching) {
           sosDonations.push({
             ...m,

@@ -13,7 +13,7 @@ export const AchievementsWidget: React.FC<AchievementsWidgetProps> = ({ profileD
   const badges = [
     {
       type: 'FirstDonation',
-      title: 'First Drop',
+      title: 'Giọt Đầu Tiên',
       description: 'Hoàn thành lần hiến máu đầu tiên',
       bg: 'bg-[#EF4444] text-white',
       icon: '🩸',
@@ -21,7 +21,7 @@ export const AchievementsWidget: React.FC<AchievementsWidgetProps> = ({ profileD
     },
     {
       type: 'SilverDonor',
-      title: 'Silver Donor',
+      title: 'Hạng Bạc',
       description: 'Đạt mốc 200 XP đóng góp cộng đồng',
       bg: 'bg-[#F59E0B] text-white',
       icon: '🏅',
@@ -29,7 +29,7 @@ export const AchievementsWidget: React.FC<AchievementsWidgetProps> = ({ profileD
     },
     {
       type: 'PromptDonor',
-      title: 'Prompt Donor',
+      title: 'Đúng Lịch Hẹn',
       description: 'Hoàn thành 3 lần hiến máu đúng lịch',
       bg: 'bg-[#3B82F6] text-white',
       icon: '🕒',
@@ -37,7 +37,7 @@ export const AchievementsWidget: React.FC<AchievementsWidgetProps> = ({ profileD
     },
     {
       type: 'FiveDonations',
-      title: 'Loyal Donor',
+      title: 'Người Hiến Kiên Trì',
       description: 'Hoàn thành 5 lần hiến máu tình nguyện',
       bg: 'bg-[#8B5CF6] text-white',
       icon: '🎖️',
@@ -45,7 +45,7 @@ export const AchievementsWidget: React.FC<AchievementsWidgetProps> = ({ profileD
     },
     {
       type: 'GallonClub',
-      title: 'Gallon Club',
+      title: 'CLB Gallon',
       description: 'Hoàn thành 8 lần hiến máu xuất sắc',
       bg: 'bg-[#10B981] text-white',
       icon: '🥛',
@@ -53,7 +53,7 @@ export const AchievementsWidget: React.FC<AchievementsWidgetProps> = ({ profileD
     },
     {
       type: 'EmergencyResponder',
-      title: 'Emergency Responder',
+      title: 'Hiệp Sĩ Cứu Hộ',
       description: 'Tham gia ứng cứu khẩn cấp hoặc đạt 10 lần hiến máu',
       bg: 'bg-[#EC4899] text-white',
       icon: '🛡️',
@@ -66,7 +66,7 @@ export const AchievementsWidget: React.FC<AchievementsWidgetProps> = ({ profileD
   return (
     <div className="flex p-6 flex-col items-start gap-6 rounded-xl border border-[#F1F3F5] bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full">
       <div className="flex justify-between items-center w-full">
-        <h3 className="text-[#271816] font-inter text-base font-bold leading-6">Achievements</h3>
+        <h3 className="text-[#271816] font-inter text-base font-bold leading-6">Huy Hiệu & Thành Tích</h3>
         <span className="text-[#6C757D] font-inter text-[10px] font-bold tracking-widest uppercase">{unlockedCount} / {badges.length}</span>
       </div>
       
@@ -96,7 +96,7 @@ export const AchievementsWidget: React.FC<AchievementsWidgetProps> = ({ profileD
       </div>
       
       <button className="flex py-2 justify-center items-center rounded-lg border border-[#DEE2E6] w-full mt-2 hover:bg-gray-50 transition-colors">
-        <span className="text-[#6C757D] font-inter text-sm font-medium">Discover More</span>
+        <span className="text-[#6C757D] font-inter text-sm font-medium">Xem tất cả huy hiệu</span>
       </button>
     </div>
   );

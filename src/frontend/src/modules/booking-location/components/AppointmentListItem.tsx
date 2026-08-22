@@ -53,7 +53,7 @@ export const AppointmentListItem: React.FC<AppointmentListItemProps> = ({
           )}
           {isRejected && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
-              Đã từ chối (Rejected)
+              Đã từ chối
             </span>
           )}
           {isCancelled && (
@@ -84,7 +84,7 @@ export const AppointmentListItem: React.FC<AppointmentListItemProps> = ({
         <div className="flex items-start gap-1.5 text-[#6c757d]">
           <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <p className="text-[12px] line-clamp-1">
-            {appointment.location.address || 'Blood center location'}
+            {appointment.location.address || 'Điểm tiếp nhận hiến máu'}
           </p>
         </div>
       </div>

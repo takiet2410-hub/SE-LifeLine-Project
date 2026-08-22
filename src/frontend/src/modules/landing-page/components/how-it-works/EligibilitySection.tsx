@@ -45,7 +45,7 @@ export const EligibilitySection: React.FC = () => {
             {t('howItWorks.eligibility.title')}
           </h2>
           <p className="text-[#5B403D] font-inter text-base md:text-lg leading-6">
-            Before scheduling your appointment, please check if you meet these basic health requirements for blood donation in Vietnam.
+            Trước khi đặt lịch hẹn, hãy kiểm tra xem bạn có đáp ứng các tiêu chuẩn sức khỏe cơ bản theo quy định của Bộ Y Tế để tham gia hiến máu hay không.
           </p>
         </div>
         

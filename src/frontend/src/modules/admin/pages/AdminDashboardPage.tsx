@@ -61,7 +61,7 @@ export const AdminDashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="bg-white p-5 rounded-2xl border border-[#f1f3f5] shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#6c757d] uppercase tracking-wider">Active Sessions</span>
+            <span className="text-xs font-bold text-[#6c757d] uppercase tracking-wider">Phiên hoạt động</span>
             <div className="p-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
               <Activity className="w-5 h-5" />
             </div>
@@ -76,7 +76,7 @@ export const AdminDashboardPage: React.FC = () => {
 
         <div className="bg-white p-5 rounded-2xl border border-[#f1f3f5] shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#6c757d] uppercase tracking-wider">Total User Accounts</span>
+            <span className="text-xs font-bold text-[#6c757d] uppercase tracking-wider">Tổng tài khoản</span>
             <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100">
               <Users className="w-5 h-5" />
             </div>
@@ -85,13 +85,13 @@ export const AdminDashboardPage: React.FC = () => {
             <h2 className="text-2xl font-extrabold text-[#271816]">
               {loading ? '...' : metrics?.totalUsers}
             </h2>
-            <span className="text-xs text-[#5b403d] font-medium">{metrics?.newRegistrationsToday} new today</span>
+            <span className="text-xs text-[#5b403d] font-medium">+{metrics?.newRegistrationsToday} đăng ký mới hôm nay</span>
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-[#f1f3f5] shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#6c757d] uppercase tracking-wider">System Uptime</span>
+            <span className="text-xs font-bold text-[#6c757d] uppercase tracking-wider">Thời gian hoạt động</span>
             <div className="p-2 bg-purple-50 text-purple-600 rounded-xl border border-purple-100">
               <ShieldCheck className="w-5 h-5" />
             </div>
@@ -106,7 +106,7 @@ export const AdminDashboardPage: React.FC = () => {
 
         <div className="bg-white p-5 rounded-2xl border border-[#f1f3f5] shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#6c757d] uppercase tracking-wider">API Error Rate</span>
+            <span className="text-xs font-bold text-[#6c757d] uppercase tracking-wider">Tỷ lệ lỗi API</span>
             <div className="p-2 bg-amber-50 text-amber-600 rounded-xl border border-amber-100">
               <AlertCircle className="w-5 h-5" />
             </div>
@@ -146,38 +146,62 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {diagnostics?.services.map((svc, idx) => (
-            <div
-              key={idx}
-              className="p-4 bg-[#fff8f7] rounded-xl border border-[#f1f3f5]"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-[#6c757d] uppercase tracking-wider">{svc.type}</span>
-                <span
-                  className={`flex items-center gap-1 text-xs font-bold ${
-                    svc.status === 'Operational'
-                      ? 'text-emerald-600'
-                      : svc.status === 'Degraded'
-                      ? 'text-amber-600'
-                      : 'text-red-600'
-                  }`}
-                >
-                  {svc.status === 'Operational' ? (
-                    <CheckCircle2 className="w-4 h-4" />
-                  ) : (
-                    <XCircle className="w-4 h-4" />
-                  )}
-                  {svc.status}
-                </span>
+          {diagnostics?.services.map((svc, idx) => {
+            const getServiceTypeLabel = (type: string) => {
+              switch (type) {
+                case 'DATABASE': return 'Cơ sở dữ liệu';
+                case 'AI SERVICE': return 'Dịch vụ AI';
+                case 'MESSAGE QUEUE': return 'Hàng đợi thông báo';
+                case 'EXTERNAL API': return 'Dịch vụ ngoài';
+                case 'SCHEDULED JOB': return 'Tác vụ tự động';
+                default: return type;
+              }
+            };
+
+            const getServiceStatusLabel = (status: string) => {
+              switch (status) {
+                case 'Operational': return 'Hoạt động tốt';
+                case 'Degraded': return 'Hiệu năng giảm';
+                case 'Down': return 'Gián đoạn';
+                default: return status;
+              }
+            };
+
+            return (
+              <div
+                key={idx}
+                className="p-4 bg-[#fff8f7] rounded-xl border border-[#f1f3f5]"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-[#6c757d] uppercase tracking-wider">
+                    {getServiceTypeLabel(svc.type)}
+                  </span>
+                  <span
+                    className={`flex items-center gap-1 text-xs font-bold ${
+                      svc.status === 'Operational'
+                        ? 'text-emerald-600'
+                        : svc.status === 'Degraded'
+                        ? 'text-amber-600'
+                        : 'text-red-600'
+                    }`}
+                  >
+                    {svc.status === 'Operational' ? (
+                      <CheckCircle2 className="w-4 h-4" />
+                    ) : (
+                      <XCircle className="w-4 h-4" />
+                    )}
+                    {getServiceStatusLabel(svc.status)}
+                  </span>
+                </div>
+                <h4 className="font-bold text-[#271816] text-sm">{svc.name}</h4>
+                <p className="text-xs text-[#5b403d] font-medium mt-1">{svc.details}</p>
+                <div className="mt-3 pt-2 border-t border-[#f1f3f5] flex justify-between text-xs text-[#6c757d] font-medium">
+                  <span>Độ trễ</span>
+                  <span className="font-mono font-bold text-[#271816]">{svc.latencyMs}</span>
+                </div>
               </div>
-              <h4 className="font-bold text-[#271816] text-sm">{svc.name}</h4>
-              <p className="text-xs text-[#5b403d] font-medium mt-1">{svc.details}</p>
-              <div className="mt-3 pt-2 border-t border-[#f1f3f5] flex justify-between text-xs text-[#6c757d] font-medium">
-                <span>Latency</span>
-                <span className="font-mono font-bold text-[#271816]">{svc.latencyMs}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

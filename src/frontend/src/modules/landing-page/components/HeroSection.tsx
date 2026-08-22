@@ -15,24 +15,24 @@ export const HeroSection: React.FC = () => {
           </div>
           
           <h1 className="text-5xl lg:text-6xl font-extrabold text-[#93000B] leading-tight">
-            Every Drop Saves a Life
+            Mỗi Giọt Máu Trao Đi — Một Cuộc Đời Ở Lại
           </h1>
           
           <p className="text-[#5B403D] text-lg leading-relaxed max-w-xl">
-            Join Vietnam's trusted blood donation network. Your contribution
-            ensures that no one has to wait for a life-saving transfusion.
-            Register today and help save lives in your community.
+            Tham gia mạng lưới hiến máu nhân đạo đáng tin cậy tại Việt Nam. Nghĩa cử cao đẹp của bạn
+            giúp người bệnh kịp thời được truyền máu cứu sống.
+            Đăng ký ngay hôm nay để chung tay vì sức khỏe cộng đồng.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
             <Link to="/register" className="w-full sm:w-auto bg-[#93000B] hover:bg-[#7F1D1D] text-white font-bold text-lg px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2">
-              Sign Up Now
+              Đăng Ký Hiến Máu
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12.175 9H0V7H12.175L6.575 1.4L8 0L16 8L8 16L6.575 14.6L12.175 9V9" fill="currentColor"/>
               </svg>
             </Link>
             <Link to="/about" className="w-full sm:w-auto border-2 border-[#455F87] text-[#455F87] hover:bg-gray-50 font-bold text-lg px-8 py-4 rounded-xl transition flex items-center justify-center">
-              Learn More
+              Tìm Hiểu Thêm
             </Link>
           </div>
 
@@ -43,7 +43,7 @@ export const HeroSection: React.FC = () => {
               <div className="w-10 h-10 rounded-full border-2 border-white bg-gray-400"></div>
             </div>
             <p className="text-sm font-medium text-gray-800">
-              Joined by 50,000+ active donors
+              Đồng hành cùng hơn 50.000+ tình nguyện viên tích cực
             </p>
           </div>
         </div>

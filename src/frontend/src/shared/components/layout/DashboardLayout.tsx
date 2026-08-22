@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { SideNavBar } from './SideNavBar';
-import { Bell, Menu, Globe, AlertTriangle, Calendar, Megaphone } from 'lucide-react';
+import { Bell, Menu, AlertTriangle, Calendar, Megaphone } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { ScheduleProvider } from '../../../modules/booking-location/context/ScheduleContext';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +14,7 @@ import { getArticleIdFromNotification, getArticleRouteForRole } from '../../../u
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -147,11 +147,6 @@ export const DashboardLayout: React.FC = () => {
       default: return <Bell className="w-4 h-4" />;
     }
   };
-
-  const toggleLanguage = () => {
-    const nextLang = i18n.language === 'vi' ? 'en' : 'vi';
-    i18n.changeLanguage(nextLang);
-  };
   
   // Hàm lấy Initials (2 chữ cái đầu)
   const words = userName.trim().split(/\s+/);
@@ -196,11 +191,11 @@ export const DashboardLayout: React.FC = () => {
             >
               <Menu className="w-5 h-5" />
             </button>
-            <span className="sm:hidden truncate text-sm font-bold text-[#271816]">
+            <span className="sm:hidden truncate text-sm font-bold text-[#271816] uppercase">
               {location.pathname.includes('/map') ? 'Bản đồ hiến máu' : location.pathname.includes('/profile') ? 'Hồ sơ của tôi' : 'LifeLine'}
             </span>
             <div className="hidden sm:flex flex-col">
-              <h1 className="text-[20px] font-bold text-[#271816] leading-tight">
+              <h1 className="text-[18px] sm:text-[20px] font-extrabold text-[#271816] leading-tight uppercase tracking-tight">
                 {location.pathname.includes('/map')
                   ? t('dashboardHeader.title.map')
                   : location.pathname.includes('/schedule') 
@@ -217,37 +212,10 @@ export const DashboardLayout: React.FC = () => {
                               ? t('dashboardHeader.title.sosAlerts')
                               : t('dashboardHeader.title.dashboard')}
               </h1>
-              <p className="text-[12px] font-medium text-[#6c757d] uppercase tracking-wide">
-                {location.pathname.includes('/map')
-                  ? t('dashboardHeader.subtitle.map')
-                  : location.pathname.includes('/schedule') 
-                    ? t('dashboardHeader.subtitle.schedule')
-                    : location.pathname.includes('/my-appointments') 
-                      ? t('dashboardHeader.subtitle.myAppointments') 
-                      : location.pathname.includes('/profile')
-                        ? t('dashboardHeader.subtitle.profile')
-                        : location.pathname.includes('/news')
-                          ? t('dashboardHeader.subtitle.news')
-                          : location.pathname.includes('/notifications')
-                            ? t('dashboardHeader.subtitle.notifications')
-                            : location.pathname.includes('/sos-alerts')
-                              ? t('dashboardHeader.subtitle.sosAlerts')
-                              : t('dashboardHeader.subtitle.dashboard')}
-              </p>
             </div>
           </div>
           
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-4">
-            {/* Language Switcher */}
-            <button
-              onClick={toggleLanguage}
-              className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg text-[12px] sm:text-[13px] font-semibold text-[#5b403d] border border-[#f1f3f5] hover:bg-[#fff8f7] transition-colors cursor-pointer"
-              title="Switch Language"
-            >
-              <Globe className="w-3.5 h-3.5 text-[#93000b]" />
-              <span>{i18n.language.toUpperCase()}</span>
-            </button>
-
             <div className="relative" ref={dropdownRef}>
               <button onClick={toggleDropdown} className="relative p-2 text-[#6c757d] hover:text-[#271816] hover:bg-[#f8f9fa] rounded-full transition-colors cursor-pointer">
                 <Bell className="w-5 h-5" />
@@ -261,19 +229,19 @@ export const DashboardLayout: React.FC = () => {
               {isDropdownOpen && (
                 <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
                   <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h3 className="font-bold text-gray-800 text-sm">Notifications</h3>
+                    <h3 className="font-bold text-gray-800 text-sm">Thông Báo</h3>
                     {unreadCount > 0 && (
                       <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">
-                        {unreadCount} unread
+                        {unreadCount} chưa đọc
                       </span>
                     )}
                   </div>
                   
                   <div className="max-h-[320px] overflow-y-auto">
                     {loadingNotifs ? (
-                      <div className="p-8 text-center text-gray-500 text-sm">Loading...</div>
+                      <div className="p-8 text-center text-gray-500 text-sm">Đang tải thông báo...</div>
                     ) : notifications.length === 0 ? (
-                      <div className="p-8 text-center text-gray-500 text-sm">No new notifications</div>
+                      <div className="p-8 text-center text-gray-500 text-sm">Không có thông báo mới</div>
                     ) : (
                       <div className="flex flex-col">
                         {notifications.map((notif) => {
@@ -319,7 +287,7 @@ export const DashboardLayout: React.FC = () => {
                       }}
                       className="w-full py-2 text-center text-sm font-semibold text-[#93000b] hover:bg-red-50 rounded-lg transition-colors"
                     >
-                      View all notifications
+                      Xem tất cả thông báo
                     </button>
                   </div>
                 </div>

@@ -9,19 +9,19 @@ const stats: ImpactStatProps[] = [
   {
     id: 'donors',
     value: '50,000+',
-    label: 'Active Donors',
+    label: 'Tình Nguyện Viên Tích Cực',
     icon: <IconDonors />
   },
   {
     id: 'hospitals',
     value: '120+',
-    label: 'Partner Hospitals',
+    label: 'Bệnh Viện & Cơ Sở Đối Tác',
     icon: <IconHospital />
   },
   {
     id: 'impacted',
     value: '150,000+',
-    label: 'Lives Impacted',
+    label: 'Bệnh Nhân Được Cứu Sống',
     icon: <IconImpact />
   }
 ];
@@ -31,7 +31,7 @@ export const ImpactStats: React.FC = () => {
     <section className="bg-white py-20 px-6 sm:px-12 lg:px-24">
       <div className="max-w-[1280px] mx-auto">
         <div className="text-center mb-12 flex flex-col items-center">
-          <h2 className="text-3xl font-extrabold text-[#2D3748] mb-4">The Difference We Make</h2>
+          <h2 className="text-3xl font-extrabold text-[#2D3748] mb-4">Tác Động Lan Tỏa Của Chúng Tôi</h2>
           <div className="w-16 h-1 bg-[#93000B]"></div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

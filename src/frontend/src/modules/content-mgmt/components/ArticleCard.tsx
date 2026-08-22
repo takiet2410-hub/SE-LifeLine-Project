@@ -52,6 +52,32 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     }
   };
 
+  const getCategoryLabel = (cat: Article['category']) => {
+    switch (cat) {
+      case 'Alert':
+        return 'Cảnh báo';
+      case 'Educational':
+        return 'Kiến thức';
+      case 'Campaign':
+        return 'Chiến dịch';
+      case 'News':
+      default:
+        return 'Tin tức';
+    }
+  };
+
+  const getStatusLabel = (status: Article['status']) => {
+    switch (status) {
+      case 'Published':
+        return 'Đã xuất bản';
+      case 'Scheduled':
+        return 'Đã lên lịch';
+      case 'Draft':
+      default:
+        return 'Bản nháp';
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col group relative">
       {/* Cover image or placeholder */}
@@ -72,16 +98,16 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         ) : (
           <div className="w-full h-full flex flex-col gap-2 items-center justify-center bg-gradient-to-tr from-gray-100 to-gray-200 text-gray-500 font-medium text-sm">
             <ImageOff className="h-6 w-6 text-gray-400" aria-hidden="true" />
-            {imageFailed ? 'Ảnh không khả dụng' : 'No Cover Image'}
+            {imageFailed ? 'Ảnh không khả dụng' : 'Chưa có ảnh bìa'}
           </div>
         )}
 
         <div className="absolute top-3 left-3 flex items-center space-x-2">
           <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getCategoryBadge(article.category)}`}>
-            {article.category}
+            {getCategoryLabel(article.category)}
           </span>
           <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusBadge(article.status)}`}>
-            {article.status}
+            {getStatusLabel(article.status)}
           </span>
         </div>
 
@@ -93,7 +119,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
-            className="p-1.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+            className="p-1.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors cursor-pointer"
           >
             <MoreVertical className="w-4 h-4" />
           </button>
@@ -108,20 +134,20 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
                   setShowMenu(false);
                   onEdit(article._id);
                 }}
-                className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center space-x-2 cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5 text-gray-500" />
-                <span>Edit Article</span>
+                <span>Chỉnh sửa bài viết</span>
               </button>
               <button
                 onClick={() => {
                   setShowMenu(false);
                   onDelete(article);
                 }}
-                className="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                className="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center space-x-2 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                <span>Delete</span>
+                <span>Xóa bài viết</span>
               </button>
             </div>
           )}
@@ -142,7 +168,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             {article.title}
           </h3>
           <p className="text-xs text-gray-500 line-clamp-2 mt-1.5">
-            {(article.bodyContent || '').replace(/<[^>]*>/g, '') || 'No content preview available'}
+            {(article.bodyContent || '').replace(/<[^>]*>/g, '') || 'Chưa có nội dung tóm tắt'}
           </p>
         </div>
 
@@ -154,7 +180,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             </span>
             <span className="flex items-center space-x-1">
               <Calendar className="w-3.5 h-3.5 text-gray-400" />
-              <span>{new Date(article.publishedAt || article.createdAt).toLocaleDateString()}</span>
+              <span>{new Date(article.publishedAt || article.createdAt).toLocaleDateString('vi-VN')}</span>
             </span>
           </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { sosApi, type SOSRequest, type SOSStatus, type SOSUrgency } from '../services/sosApi';
+import { sosApi, type SOSRequest } from '../services/sosApi';
 import { SOSStatusBadge } from '../components/SOSStatusBadge';
 import { ArrowLeft, Download, Calendar, Filter, BarChart2, RefreshCw, ArrowDown, Minus, Plus, AlertCircle } from 'lucide-react';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
@@ -177,8 +177,6 @@ export const SOSReportsPage: React.FC = () => {
   };
 
   const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
-  const statuses: SOSStatus[] = ['Pending', 'EvaluationInProgress', 'NotificationsDispatched', 'Fulfilled', 'Expired', 'Cancelled', 'EvaluationFailed'];
-  const urgencies: SOSUrgency[] = ['Critical', 'High', 'Medium'];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -197,7 +195,7 @@ export const SOSReportsPage: React.FC = () => {
           className="bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2 rounded-xl flex items-center gap-2 font-medium transition-colors shadow-sm disabled:opacity-50 cursor-pointer text-sm"
         >
           <Download className="w-4 h-4" />
-          Export CSV
+          Xuất CSV
         </button>
       </div>
 
@@ -205,64 +203,68 @@ export const SOSReportsPage: React.FC = () => {
       <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-5">
         <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-4">
           <Filter className="w-5 h-5 text-brand-primary" />
-          Filters
+          Bộ lọc
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-brand-text-secondary mb-1">Date Range</label>
+            <label className="block text-sm font-medium text-brand-text-secondary mb-1">Khoảng thời gian</label>
             <div className="flex gap-2">
               <input
                 type="date"
                 value={format(filters.dateRange.from, 'yyyy-MM-dd')}
                 onChange={(e) => handleFilterChange('dateRange', { ...filters.dateRange, from: new Date(e.target.value) })}
-                className="flex-1 px-3 py-2 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-brand-text-main"
+                className="flex-1 px-3 py-2 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-brand-text-main text-sm"
               />
-              <span className="flex items-center text-brand-text-muted">to</span>
+              <span className="flex items-center text-brand-text-muted text-sm">đến</span>
               <input
                 type="date"
                 value={format(filters.dateRange.to, 'yyyy-MM-dd')}
                 onChange={(e) => handleFilterChange('dateRange', { ...filters.dateRange, to: new Date(e.target.value) })}
-                className="flex-1 px-3 py-2 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-brand-text-main"
+                className="flex-1 px-3 py-2 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-brand-text-main text-sm"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-brand-text-secondary mb-1">Blood Type</label>
+            <label className="block text-sm font-medium text-brand-text-secondary mb-1">Nhóm máu</label>
             <select
               value={filters.bloodType}
               onChange={(e) => handleFilterChange('bloodType', e.target.value)}
-              className="w-full px-3 py-2 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-brand-text-main"
+              className="w-full px-3 py-2 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-brand-text-main text-sm"
             >
-              <option value="">All Types</option>
+              <option value="">Tất cả nhóm máu</option>
               {bloodTypes.map(type => (
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-brand-text-secondary mb-1">Status</label>
+            <label className="block text-sm font-medium text-brand-text-secondary mb-1">Trạng thái</label>
             <select
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="w-full px-3 py-2 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-brand-text-main"
+              className="w-full px-3 py-2 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-brand-text-main text-sm"
             >
-              <option value="">All Statuses</option>
-              {statuses.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
+              <option value="">Tất cả trạng thái</option>
+              <option value="Pending">Chờ tiếp nhận</option>
+              <option value="EvaluationInProgress">Đang đánh giá</option>
+              <option value="NotificationsDispatched">Đã phát thông báo</option>
+              <option value="Fulfilled">Đã đáp ứng</option>
+              <option value="Expired">Đã hết hạn</option>
+              <option value="Cancelled">Đã hủy</option>
+              <option value="EvaluationFailed">Đánh giá thất bại</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-brand-text-secondary mb-1">Urgency</label>
+            <label className="block text-sm font-medium text-brand-text-secondary mb-1">Mức độ khẩn cấp</label>
             <select
               value={filters.urgencyLevel}
               onChange={(e) => handleFilterChange('urgencyLevel', e.target.value)}
-              className="w-full px-3 py-2 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-brand-text-main"
+              className="w-full px-3 py-2 bg-brand-bg-muted border border-brand-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary text-brand-text-main text-sm"
             >
-              <option value="">All Levels</option>
-              {urgencies.map(u => (
-                <option key={u} value={u}>{u}</option>
-              ))}
+              <option value="">Tất cả mức độ</option>
+              <option value="Critical">Nguy kịch</option>
+              <option value="High">Khẩn cấp cao</option>
+              <option value="Medium">Trung bình</option>
             </select>
           </div>
           <div className="flex items-end">
@@ -276,10 +278,10 @@ export const SOSReportsPage: React.FC = () => {
                 });
                 setCurrentPage(1);
               }}
-              className="w-full px-4 py-2.5 border border-brand-border-dark rounded-lg text-brand-text-secondary font-medium hover:bg-brand-bg-muted transition-colors"
+              className="w-full px-4 py-2.5 border border-brand-border-dark rounded-lg text-brand-text-secondary font-medium hover:bg-brand-bg-muted transition-colors flex items-center justify-center text-sm cursor-pointer"
             >
-              <RefreshCw className="w-5 h-5 mr-2" />
-              Reset Filters
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Đặt lại bộ lọc
             </button>
           </div>
         </div>
@@ -293,7 +295,7 @@ export const SOSReportsPage: React.FC = () => {
               <Calendar className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-brand-text-muted">Total Requests</p>
+              <p className="text-sm font-medium text-brand-text-muted">Tổng yêu cầu</p>
               <h3 className="text-2xl font-bold text-brand-text-main mt-1">{stats.totalRequests}</h3>
             </div>
           </div>
@@ -302,7 +304,7 @@ export const SOSReportsPage: React.FC = () => {
               <Plus className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-brand-text-muted">Fulfilled</p>
+              <p className="text-sm font-medium text-brand-text-muted">Đã đáp ứng</p>
               <h3 className="text-2xl font-bold text-brand-text-main mt-1">{stats.fulfilledRequests}</h3>
             </div>
           </div>
@@ -311,7 +313,7 @@ export const SOSReportsPage: React.FC = () => {
               <Minus className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-brand-text-muted">Pending</p>
+              <p className="text-sm font-medium text-brand-text-muted">Chờ xử lý</p>
               <h3 className="text-2xl font-bold text-brand-text-main mt-1">{stats.pendingRequests}</h3>
             </div>
           </div>
@@ -320,7 +322,7 @@ export const SOSReportsPage: React.FC = () => {
               <ArrowDown className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-brand-text-muted">Fulfillment Rate</p>
+              <p className="text-sm font-medium text-brand-text-muted">Tỷ lệ đáp ứng</p>
               <h3 className="text-2xl font-bold text-brand-text-main mt-1">{stats.fulfillmentRate.toFixed(1)}%</h3>
             </div>
           </div>
@@ -332,14 +334,14 @@ export const SOSReportsPage: React.FC = () => {
         <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm p-5">
           <h2 className="text-lg font-bold text-brand-text-main flex items-center gap-2 mb-4">
             <BarChart2 className="w-5 h-5 text-brand-primary" />
-            Blood Type Breakdown
+            Phân bổ theo nhóm máu
           </h2>
           <div className="space-y-3">
             {bloodTypeStats.map((bt) => (
               <div key={bt.bloodType} className="p-3 bg-brand-bg-muted rounded-lg border border-brand-border">
                 <div className="flex justify-between items-center mb-1">
                   <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary font-bold text-xs">{bt.bloodType}</span>
-                  <span className="text-sm text-brand-text-muted">{bt.count} requests</span>
+                  <span className="text-sm text-brand-text-muted">{bt.count} yêu cầu</span>
                 </div>
                 <div className="w-full bg-brand-border rounded-full h-2 overflow-hidden">
                   <div 
@@ -348,8 +350,8 @@ export const SOSReportsPage: React.FC = () => {
                   ></div>
                 </div>
                 <div className="flex justify-between text-xs text-brand-text-muted mt-1">
-                  <span>Requested: {bt.unitsRequested} ml</span>
-                  <span>Fulfilled: {bt.unitsFulfilled} ml ({bt.unitsRequested > 0 ? ((bt.unitsFulfilled / bt.unitsRequested) * 100).toFixed(1) : 0}%)</span>
+                  <span>Yêu cầu: {bt.unitsRequested} ml</span>
+                  <span>Đã đáp ứng: {bt.unitsFulfilled} ml ({bt.unitsRequested > 0 ? ((bt.unitsFulfilled / bt.unitsRequested) * 100).toFixed(1) : 0}%)</span>
                 </div>
               </div>
             ))}
@@ -360,10 +362,10 @@ export const SOSReportsPage: React.FC = () => {
       {/* Reports Table */}
       <div className="bg-brand-bg-card rounded-xl border border-brand-border shadow-sm overflow-hidden">
         <div className="p-5 border-b border-brand-border flex flex-col sm:flex-row justify-between gap-4">
-          <h2 className="text-lg font-bold text-brand-text-main">SOS Requests</h2>
+          <h2 className="text-lg font-bold text-brand-text-main">Danh Sách Yêu Cầu SOS</h2>
           <div className="flex gap-2">
             <span className="flex items-center text-sm text-brand-text-muted">
-              Showing {requests.length} of {total} requests
+              Hiển thị {requests.length} / {total} yêu cầu
             </span>
           </div>
         </div>
@@ -374,7 +376,7 @@ export const SOSReportsPage: React.FC = () => {
             <div>
               <p className="font-semibold">Không tải được dữ liệu báo cáo</p>
               <p className="mt-1 text-sm">{loadError}</p>
-              <button type="button" onClick={fetchReports} className="mt-3 rounded-lg border border-brand-error/30 bg-white px-3 py-1.5 text-sm font-medium hover:bg-brand-error/10">
+              <button type="button" onClick={fetchReports} className="mt-3 rounded-lg border border-brand-error/30 bg-white px-3 py-1.5 text-sm font-medium hover:bg-brand-error/10 cursor-pointer">
                 Thử lại
               </button>
             </div>
@@ -384,7 +386,7 @@ export const SOSReportsPage: React.FC = () => {
         {isLoading && (
           <div className="p-8 text-center">
             <div className="w-8 h-8 border-4 border-brand-primary/20 border-t-brand-primary rounded-full animate-spin mx-auto"></div>
-            <p className="text-brand-text-muted mt-2">Loading report data...</p>
+            <p className="text-brand-text-muted mt-2">Đang tải dữ liệu báo cáo...</p>
           </div>
         )}
 
@@ -393,15 +395,15 @@ export const SOSReportsPage: React.FC = () => {
             <table className="w-full min-w-[820px] text-left text-sm whitespace-nowrap">
               <thead className="bg-brand-bg-muted/50 text-brand-text-muted border-b border-brand-border">
                 <tr>
-                  <th className="px-6 py-4 font-medium">Request ID</th>
-                  <th className="px-6 py-4 font-medium">Blood Type</th>
-                  <th className="px-6 py-4 font-medium">Quantity</th>
-                  <th className="px-6 py-4 font-medium">Urgency</th>
-                  <th className="px-6 py-4 font-medium">Status</th>
-                  <th className="px-6 py-4 font-medium">Request Date</th>
-                  <th className="px-6 py-4 font-medium">Patient Reference</th>
-                  <th className="px-6 py-4 font-medium">Hospital</th>
-                  <th className="px-6 py-4 font-medium">Deadline</th>
+                  <th className="px-6 py-4 font-medium">Mã Yêu Cầu</th>
+                  <th className="px-6 py-4 font-medium">Nhóm Máu</th>
+                  <th className="px-6 py-4 font-medium">Lượng Máu</th>
+                  <th className="px-6 py-4 font-medium">Mức Độ</th>
+                  <th className="px-6 py-4 font-medium">Trạng Thái</th>
+                  <th className="px-6 py-4 font-medium">Ngày Yêu Cầu</th>
+                  <th className="px-6 py-4 font-medium">Mã Bệnh Nhân</th>
+                  <th className="px-6 py-4 font-medium">Bệnh Viện</th>
+                  <th className="px-6 py-4 font-medium">Hạn Chót</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-border">
@@ -420,21 +422,21 @@ export const SOSReportsPage: React.FC = () => {
                       <td className="px-6 py-4 text-brand-text-secondary">{req.requiredQuantityMl} ml</td>
                       <td className="px-6 py-4"><SOSStatusBadge urgency={req.urgencyLevel} /></td>
                       <td className="px-6 py-4"><SOSStatusBadge status={req.status} /></td>
-                      <td className="px-6 py-4 text-brand-text-muted">{format(new Date(req.createdAt), 'MMM dd, yyyy HH:mm')}</td>
+                      <td className="px-6 py-4 text-brand-text-muted">{format(new Date(req.createdAt), 'dd/MM/yyyy HH:mm')}</td>
                       <td className="px-6 py-4 text-brand-text-secondary">{req.patientReference || 'N/A'}</td>
                       <td className="px-6 py-4 text-brand-text-secondary">{hospitalName}</td>
-                      <td className="px-6 py-4 text-brand-text-muted">{format(new Date(req.fulfillmentDeadline), 'MMM dd, yyyy HH:mm')}</td>
+                      <td className="px-6 py-4 text-brand-text-muted">{format(new Date(req.fulfillmentDeadline), 'dd/MM/yyyy HH:mm')}</td>
                     </tr>
                     );
                   })
                 ) : (
                   <tr>
                     <td colSpan={9} className="px-6 py-12 text-center text-brand-text-muted">
-                      No SOS requests found for the selected criteria.
+                      Không tìm thấy yêu cầu SOS nào phù hợp với tiêu chí đã chọn.
                     </td>
                   </tr>
                 )}
-</tbody>
+              </tbody>
             </table>
           </div>
         )}
@@ -442,22 +444,22 @@ export const SOSReportsPage: React.FC = () => {
         {!isLoading && totalPages > 1 && (
             <div className="p-4 border-t border-brand-border flex items-center justify-between">
               <p className="text-sm text-brand-text-muted">
-                Page {currentPage} of {totalPages} ({total} total)
+                Trang {currentPage} / {totalPages} (Tổng {total} yêu cầu)
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 border border-brand-border-dark rounded-lg text-brand-text-secondary hover:bg-brand-bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 border border-brand-border-dark rounded-lg text-brand-text-secondary hover:bg-brand-bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  Previous
+                  Trước
                 </button>
                 <button
                   onClick={() => setCurrentPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 border border-brand-border-dark rounded-lg text-brand-text-secondary hover:bg-brand-bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 border border-brand-border-dark rounded-lg text-brand-text-secondary hover:bg-brand-bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  Next
+                  Sau
                 </button>
               </div>
             </div>

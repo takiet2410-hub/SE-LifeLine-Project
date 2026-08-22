@@ -19,6 +19,15 @@ interface Props {
 const BLOOD_TYPES: (BloodType | 'All')[] = ['All', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const STATUSES: (BagStatus | 'All')[] = ['All', 'Available', 'Reserved', 'Used', 'Expired', 'Discarded'];
 
+const STATUS_LABELS: Record<string, string> = {
+  All: 'Tất cả trạng thái',
+  Available: 'Khả dụng',
+  Reserved: 'Đã đặt trước',
+  Used: 'Đã sử dụng',
+  Expired: 'Đã hết hạn',
+  Discarded: 'Đã hủy',
+};
+
 export const BloodBagSearchFilter: React.FC<Props> = ({
   searchQuery,
   onSearchChange,
@@ -41,7 +50,7 @@ export const BloodBagSearchFilter: React.FC<Props> = ({
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search by Bag ID (e.g. BB-2026)..."
+          placeholder="Tìm theo mã túi máu (VD: BB-2026)..."
           className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
         />
       </div>
@@ -54,7 +63,7 @@ export const BloodBagSearchFilter: React.FC<Props> = ({
             onChange={(e) => onBloodTypeChange(e.target.value)}
             className="h-9 px-3 border border-slate-300 rounded-lg text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
           >
-            <option value="All">All Blood Types</option>
+            <option value="All">Tất cả nhóm máu</option>
             {BLOOD_TYPES.filter((t) => t !== 'All').map((type) => (
               <option key={type} value={type}>
                 {type}
@@ -69,10 +78,10 @@ export const BloodBagSearchFilter: React.FC<Props> = ({
             onChange={(e) => onStatusChange(e.target.value)}
             className="h-9 px-3 border border-slate-300 rounded-lg text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
           >
-            <option value="All">All Statuses</option>
+            <option value="All">Tất cả trạng thái</option>
             {STATUSES.filter((s) => s !== 'All').map((st) => (
               <option key={st} value={st}>
-                {st}
+                {STATUS_LABELS[st] || st}
               </option>
             ))}
           </select>
@@ -100,10 +109,10 @@ export const BloodBagSearchFilter: React.FC<Props> = ({
           <button
             type="button"
             onClick={onClearFilters}
-            className="h-9 px-3 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-300 flex items-center gap-1.5 transition-colors"
+            className="h-9 px-3 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-300 flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Clear
+            Xóa bộ lọc
           </button>
         )}
       </div>

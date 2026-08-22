@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 export const SideNavBar: React.FC = () => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
-  const userName = user?.fullName || 'Unknown User';
+  const userName = user?.fullName || 'Người dùng LifeLine';
   
   const words = userName.trim().split(/\s+/);
   let initials = 'U';
@@ -76,12 +76,12 @@ export const SideNavBar: React.FC = () => {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[14px] font-semibold text-white truncate">{userName}</p>
-            <p className="text-[12px] text-[#a3a3a3] truncate">Donor</p>
+            <p className="text-[12px] text-[#a3a3a3] truncate">Người hiến máu</p>
           </div>
           <button
             onClick={logout}
             className="p-2 text-[#a3a3a3] hover:text-[#93000b] hover:bg-white/5 rounded-lg transition-colors"
-            title={t('donorNav.logout')}
+            title="Đăng xuất"
           >
             <LogOut className="w-4 h-4" />
           </button>

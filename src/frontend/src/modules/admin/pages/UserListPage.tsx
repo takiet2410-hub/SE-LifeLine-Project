@@ -118,23 +118,33 @@ export const UserListPage: React.FC = () => {
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 text-xs font-semibold rounded-full border border-emerald-200 dark:border-emerald-800">
             <UserCheck className="w-3.5 h-3.5" />
-            Active
+            Hoạt động
           </span>
         );
       case 'Suspended':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-400 text-xs font-semibold rounded-full border border-red-200 dark:border-red-800">
             <UserX className="w-3.5 h-3.5" />
-            Suspended
+            Tạm ngưng
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 text-xs font-semibold rounded-full border border-amber-200 dark:border-amber-800">
             <ShieldAlert className="w-3.5 h-3.5" />
-            Pending
+            Chờ duyệt
           </span>
         );
+    }
+  };
+
+  const getRoleBadgeLabel = (roleName: string) => {
+    switch (roleName) {
+      case 'Administrator': return 'Quản trị viên';
+      case 'BloodCenterStaff': return 'Cán bộ TT Máu';
+      case 'HospitalStaff': return 'Cán bộ Bệnh viện';
+      case 'Donor': return 'Người hiến máu';
+      default: return roleName;
     }
   };
 
@@ -147,14 +157,14 @@ export const UserListPage: React.FC = () => {
           className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#271816] text-sm font-semibold rounded-xl transition cursor-pointer"
         >
           <Download className="w-4 h-4" />
-          Export CSV
+          Xuất CSV
         </button>
         <button
           onClick={() => navigate('/admin/users/create')}
           className="flex items-center gap-2 px-4 py-2 bg-[#93000b] hover:bg-[#780009] text-white text-sm font-semibold rounded-xl shadow-md transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          Create Account
+          Tạo tài khoản mới
         </button>
       </div>
 
@@ -168,7 +178,7 @@ export const UserListPage: React.FC = () => {
           >
             <option value="all" className="bg-white text-[#271816]">Tất cả trường</option>
             <option value="name" className="bg-white text-[#271816]">Họ và tên</option>
-            <option value="email" className="bg-white text-[#271816]">Email Address</option>
+            <option value="email" className="bg-white text-[#271816]">Địa chỉ Email</option>
             <option value="cccd" className="bg-white text-[#271816]">Số CCCD</option>
             <option value="phone" className="bg-white text-[#271816]">Số điện thoại</option>
           </select>
@@ -185,7 +195,7 @@ export const UserListPage: React.FC = () => {
                   ? 'Tìm theo CCCD...'
                   : searchField === 'phone'
                   ? 'Tìm theo Số điện thoại...'
-                  : 'Search name, email or CCCD...'
+                  : 'Tìm kiếm tên, email hoặc CCCD...'
               }
               value={search}
               onChange={(e) => handleFilterChange(setSearch, e.target.value)}
@@ -201,11 +211,11 @@ export const UserListPage: React.FC = () => {
             onChange={(e) => handleFilterChange(setRole, e.target.value)}
             className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
-            <option value="All" className="bg-white text-[#271816]">All Roles</option>
-            <option value="Donor" className="bg-white text-[#271816]">Donor</option>
-            <option value="BloodCenterStaff" className="bg-white text-[#271816]">Blood Center Staff</option>
-            <option value="HospitalStaff" className="bg-white text-[#271816]">Hospital Staff</option>
-            <option value="Administrator" className="bg-white text-[#271816]">Administrator</option>
+            <option value="All" className="bg-white text-[#271816]">Tất cả vai trò</option>
+            <option value="Donor" className="bg-white text-[#271816]">Người hiến máu</option>
+            <option value="BloodCenterStaff" className="bg-white text-[#271816]">Cán bộ TT Máu</option>
+            <option value="HospitalStaff" className="bg-white text-[#271816]">Cán bộ Bệnh viện</option>
+            <option value="Administrator" className="bg-white text-[#271816]">Quản trị viên</option>
           </select>
 
           <select
@@ -213,10 +223,10 @@ export const UserListPage: React.FC = () => {
             onChange={(e) => handleFilterChange(setStatus, e.target.value)}
             className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
-            <option value="All" className="bg-white text-[#271816]">All Statuses</option>
-            <option value="Active" className="bg-white text-[#271816]">Active</option>
-            <option value="Suspended" className="bg-white text-[#271816]">Suspended</option>
-            <option value="PendingVerification" className="bg-white text-[#271816]">Pending Verification</option>
+            <option value="All" className="bg-white text-[#271816]">Tất cả trạng thái</option>
+            <option value="Active" className="bg-white text-[#271816]">Đang hoạt động</option>
+            <option value="Suspended" className="bg-white text-[#271816]">Tạm ngưng</option>
+            <option value="PendingVerification" className="bg-white text-[#271816]">Chờ xác minh</option>
           </select>
 
           {(search || role !== 'All' || status !== 'All' || searchField !== 'all') && (
@@ -230,7 +240,7 @@ export const UserListPage: React.FC = () => {
               }}
               className="text-xs font-bold text-[#93000b] hover:underline px-2 cursor-pointer whitespace-nowrap"
             >
-              Clear Filters
+              Xóa bộ lọc
             </button>
           )}
         </div>
@@ -239,15 +249,15 @@ export const UserListPage: React.FC = () => {
       {/* Users Data Table */}
       <div className="bg-white rounded-2xl border border-[#f1f3f5] shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-slate-400 text-sm">Loading user accounts...</div>
+          <div className="p-12 text-center text-slate-400 text-sm">Đang tải danh sách tài khoản...</div>
         ) : users.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center justify-center space-y-3">
             <div className="p-4 bg-[#fff8f7] rounded-full text-slate-400">
               <Inbox className="w-10 h-10 text-[#93000b]" />
             </div>
-            <h3 className="font-bold text-[#271816] text-base">No Matching User Accounts Found</h3>
+            <h3 className="font-bold text-[#271816] text-base">Không tìm thấy tài khoản người dùng phù hợp</h3>
             <p className="text-xs font-medium text-[#6c757d] max-w-md">
-              Try refining your search keyword or clearing the filter options to view available accounts.
+              Vui lòng thử lại với từ khóa tìm kiếm khác hoặc xóa bộ lọc để xem toàn bộ danh sách.
             </p>
           </div>
         ) : (
@@ -256,12 +266,12 @@ export const UserListPage: React.FC = () => {
               <table className="w-full min-w-[880px] text-left text-sm border-collapse">
                 <thead>
                   <tr className="bg-[#fff8f7] border-b border-[#f1f3f5] text-xs font-bold text-[#6c757d] uppercase tracking-wider">
-                    <th className="py-3.5 px-4">User Info</th>
-                    <th className="py-3.5 px-4">ID Document (CCCD)</th>
-                    <th className="py-3.5 px-4">Role</th>
-                    <th className="py-3.5 px-4">Status</th>
-                    <th className="py-3.5 px-4">Registered Date</th>
-                    <th className="py-3.5 px-4 text-right">Actions</th>
+                    <th className="py-3.5 px-4">Thông Tin Người Dùng</th>
+                    <th className="py-3.5 px-4">Số CCCD / Định Danh</th>
+                    <th className="py-3.5 px-4">Vai Trò</th>
+                    <th className="py-3.5 px-4">Trạng Thái</th>
+                    <th className="py-3.5 px-4">Ngày Đăng Ký</th>
+                    <th className="py-3.5 px-4 text-right">Thao Tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f1f3f5]">
@@ -291,7 +301,7 @@ export const UserListPage: React.FC = () => {
                                   : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               }`}
                             >
-                              {r}
+                              {getRoleBadgeLabel(r)}
                             </span>
                           ))}
                         </div>
@@ -299,7 +309,7 @@ export const UserListPage: React.FC = () => {
                       <td className="py-3.5 px-4">
                         {u.privacyPurgedAt ? (
                           <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                            <UserRoundX className="h-3.5 w-3.5" /> Data Purged
+                            <UserRoundX className="h-3.5 w-3.5" /> Đã xóa dữ liệu
                           </span>
                         ) : renderStatusBadge(u.accountStatus)}
                       </td>
@@ -313,7 +323,7 @@ export const UserListPage: React.FC = () => {
                               <button
                                 onClick={() => setLifecycleAction({ user: u, mode: 'restore' })}
                                 className="cursor-pointer rounded-lg p-1.5 text-emerald-700 transition hover:bg-emerald-50"
-                                title="Restore Account"
+                                title="Khôi phục tài khoản"
                               >
                                 <RotateCcw className="h-4 w-4" />
                               </button>
@@ -321,7 +331,7 @@ export const UserListPage: React.FC = () => {
                                 <button
                                   onClick={() => setLifecycleAction({ user: u, mode: 'purge' })}
                                   className="cursor-pointer rounded-lg p-1.5 text-red-700 transition hover:bg-red-50"
-                                  title="Purge Personal Data"
+                                  title="Xóa dữ liệu cá nhân"
                                 >
                                   <UserRoundX className="h-4 w-4" />
                                 </button>
@@ -332,14 +342,14 @@ export const UserListPage: React.FC = () => {
                               <button
                                 onClick={() => navigate(`/admin/users/${u.id}/edit`)}
                                 className="p-1.5 text-slate-600 hover:text-[#271816] hover:bg-slate-100 rounded-lg transition cursor-pointer"
-                                title="Edit User"
+                                title="Chỉnh sửa tài khoản"
                               >
                                 <Edit2 className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => setSelectedUserForDelete(u)}
                                 className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition cursor-pointer"
-                                title="Deactivate Account"
+                                title="Khóa / Vô hiệu hóa tài khoản"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>

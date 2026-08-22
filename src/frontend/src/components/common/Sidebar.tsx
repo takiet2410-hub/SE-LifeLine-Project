@@ -14,7 +14,6 @@ import {
   ToggleLeft,
   HeartPulse,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { LifeLineLogo } from '../../modules/auth-account/components/LifeLineLogo';
 import { apiService } from '../../services/apiClient';
@@ -25,7 +24,6 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnreadCount }) => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const userName = user?.fullName || 'Administrator';
@@ -73,40 +71,40 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnrea
 
   const navItems = isAdmin
     ? [
-        { to: '/admin/dashboard', label: 'Admin Dashboard', icon: LayoutDashboard },
-        { to: '/admin/users', label: 'User Accounts', icon: Users },
-        { to: '/admin/roles', label: 'Roles & Permissions', icon: Shield },
-        { to: '/admin/logs', label: 'Activity Logs', icon: FileText },
-        { to: '/admin/content', label: 'Content & News Feed', icon: FileText },
+        { to: '/admin/dashboard', label: 'Bảng Điều Khiển Admin', icon: LayoutDashboard },
+        { to: '/admin/users', label: 'Quản Lý Người Dùng', icon: Users },
+        { to: '/admin/roles', label: 'Vai Trò & Phân Quyền', icon: Shield },
+        { to: '/admin/logs', label: 'Nhật Ký Hoạt Động', icon: FileText },
+        { to: '/admin/content', label: 'Quản Lý Bài Viết', icon: FileText },
         {
           to: '/admin/notifications',
-          label: 'Notifications & SOS',
+          label: 'Thông Báo & Cấp Cứu',
           icon: Bell,
           badge: unreadCount > 0 ? unreadCount : undefined,
         },
-        { to: '/admin/config', label: 'System Configuration', icon: Sliders },
-        { to: '/admin/toggles', label: 'Feature Toggles', icon: ToggleLeft },
+        { to: '/admin/config', label: 'Cấu Hình Hệ Thống', icon: Sliders },
+        { to: '/admin/toggles', label: 'Tính Năng Mở Rộng', icon: ToggleLeft },
       ]
     : isHospital
     ? [
-        { to: '/hospital/sos-requests', label: 'SOS Requests', icon: Bell },
-        { to: '/hospital/sos-reports', label: 'SOS Reports', icon: FileText },
-        { to: '/hospital/content', label: t('common.content') || 'Content & News', icon: FileText },
+        { to: '/hospital/sos-requests', label: 'Yêu Cầu SOS', icon: Bell },
+        { to: '/hospital/sos-reports', label: 'Báo Cáo Thống Kê', icon: FileText },
+        { to: '/hospital/content', label: 'Tin Tức & Bài Viết', icon: FileText },
         {
           to: '/hospital/notifications',
-          label: t('common.notifications') || 'Notifications & SOS',
+          label: 'Thông Báo & SOS',
           icon: Bell,
           badge: unreadCount > 0 ? unreadCount : undefined,
         },
       ]
     : [
-        { to: '/bc/campaigns', label: t('common.campaigns') || 'Campaign Management', icon: Calendar },
-        { to: '/bc/inventory', label: t('common.inventory') || 'Inventory Management', icon: Package },
-        { to: '/bc/sos-requests', label: 'SOS Requests', icon: HeartPulse },
-        { to: '/bc/content', label: t('common.content') || 'Content Management', icon: FileText },
+        { to: '/bc/campaigns', label: 'Quản Lý Chiến Dịch', icon: Calendar },
+        { to: '/bc/inventory', label: 'Quản Lý Kho Máu', icon: Package },
+        { to: '/bc/sos-requests', label: 'Yêu Cầu Cấp Cứu SOS', icon: HeartPulse },
+        { to: '/bc/content', label: 'Quản Lý Nội Dung', icon: FileText },
         {
           to: '/bc/notifications',
-          label: t('common.notifications') || 'Notifications & SOS',
+          label: 'Thông Báo & Cảnh Báo',
           icon: Bell,
           badge: unreadCount > 0 ? unreadCount : undefined,
         },
@@ -129,7 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnrea
             <span className={`text-[9px] font-bold uppercase tracking-widest block mt-0.5 ${
               isAdmin ? 'text-purple-400' : isHospital ? 'text-emerald-400' : 'text-red-400'
             }`}>
-              {isAdmin ? 'System Admin' : isHospital ? 'Hospital' : 'Blood Center'}
+              {isAdmin ? 'Quản Trị Hệ Thống' : isHospital ? 'Cổng Bệnh Viện' : 'Trung Tâm Máu'}
             </span>
           </div>
         </Link>
@@ -139,7 +137,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnrea
       <nav className="flex-1 px-4 py-6 flex flex-col gap-1.5 overflow-y-auto">
         {(isAdmin || isHospital) && (
           <div className="px-3 pb-2 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
-            {isAdmin ? 'Admin Portal' : 'Hospital Portal'}
+            {isAdmin ? 'Cổng Quản Trị' : 'Cổng Bệnh Viện'}
           </div>
         )}
         {navItems.map((item) => {
@@ -184,13 +182,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ unreadNotifCount: initialUnrea
               isAdmin ? 'text-purple-300' : isHospital ? 'text-emerald-300' : 'text-red-400'
             }`}>
               {isAdmin ? <Shield className="w-3 h-3 shrink-0" /> : <Building2 className="w-3 h-3 shrink-0" />}
-              {user?.role || (isAdmin ? 'Administrator' : isHospital ? 'HospitalStaff' : 'BloodCenterStaff')}
+              {isAdmin ? 'Quản Trị Viên' : isHospital ? 'Bác Sĩ Bệnh Viện' : 'Nhân Viên Trung Tâm Máu'}
             </p>
           </div>
           <button
             onClick={handleLogout}
             className="p-2 text-[#a3a3a3] hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
-            title="Log out"
+            title="Đăng xuất"
           >
             <LogOut className="w-4 h-4" />
           </button>

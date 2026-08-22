@@ -11,7 +11,7 @@ import { FormField } from '../../../components/common/FormField';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { apiService } from '../../../services/apiClient';
 
-const BLOOD_GROUPS = ['All Types', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+const BLOOD_GROUPS = ['Tất cả', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 interface DailySlot {
   startTime: string;

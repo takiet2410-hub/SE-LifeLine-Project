@@ -7,13 +7,13 @@ export const MissionSection: React.FC = () => {
       <div className="max-w-[1280px] mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
         <div className="flex-1 flex flex-col items-start text-left">
           <span className="inline-block py-1.5 px-4 rounded-full bg-[#FEE2E2] text-[#93000B] text-xs font-bold mb-6 tracking-widest uppercase">
-            OUR MISSION
+            SỨ MỆNH CỦA CHÚNG TÔI
           </span>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#2D3748] mb-6 leading-tight">
-            Every Drop Counts
+            Mỗi Giọt Máu — Một Niềm Tin
           </h1>
           <p className="text-lg sm:text-xl text-gray-600 mb-10 leading-relaxed max-w-xl">
-            LifeLine is Vietnam's leading digital platform for blood donation management, bridging the gap between donors and hospitals to ensure no one has to wait for life-saving treatment.
+            LifeLine là nền tảng số tiên phong tại Việt Nam trong quản lý hiến máu và điều phối cấp cứu, thu hẹp khoảng cách giữa người hiến máu tình nguyện và các bệnh viện để không một bệnh nhân nào phải chờ đợi máu trong tuyệt vọng.
           </p>
           <a 
             href="https://www.facebook.com/profile.php?id=61592481823429"
@@ -21,7 +21,7 @@ export const MissionSection: React.FC = () => {
             rel="noopener noreferrer"
             className="inline-block bg-[#93000B] hover:bg-[#7F1D1D] text-white font-bold py-3.5 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer text-center"
           >
-            Join Our Network
+            Tham Gia Mạng Lưới Cùng Chúng Tôi
           </a>
         </div>
         <div className="flex-1 w-full">

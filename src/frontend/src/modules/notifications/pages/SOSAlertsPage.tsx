@@ -186,7 +186,14 @@ export const SOSAlertsPage: React.FC = () => {
     }
   };
 
-
+  const getUrgencyLabel = (urgency: SOSUrgency) => {
+    switch (urgency) {
+      case 'Critical': return 'Khẩn cấp tối đa';
+      case 'High': return 'Mức độ cao';
+      case 'Medium': return 'Trung bình';
+      default: return urgency;
+    }
+  };
 
   const unreadCount = alerts.filter(a => !a.readAt).length;
 
@@ -263,7 +270,7 @@ export const SOSAlertsPage: React.FC = () => {
                   const query = coords ? `${coords[1]},${coords[0]}` : encodeURIComponent(selectedAlert.hospitalAddress || selectedAlert.hospitalName);
                   window.open(`https://www.google.com/maps/dir/?api=1&destination=${query}`, '_blank');
                 }}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition-colors shadow-xs"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition-colors shadow-xs cursor-pointer"
               >
                 <MapPinIcon className="w-4 h-4" />
                 Chỉ đường Google Maps
@@ -273,7 +280,7 @@ export const SOSAlertsPage: React.FC = () => {
                   const phone = selectedAlert.hospitalPhone || '02838554137';
                   window.location.href = `tel:${phone}`;
                 }}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 border border-green-300 text-green-800 rounded-lg font-bold text-xs transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 border border-green-300 text-green-800 rounded-lg font-bold text-xs transition-colors cursor-pointer"
               >
                 <PhoneIcon className="w-4 h-4 text-green-600" />
                 Gọi Bệnh viện
@@ -288,13 +295,13 @@ export const SOSAlertsPage: React.FC = () => {
             <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
               <X className="w-8 h-8 text-gray-500" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-700">Response Recorded</h3>
-            <p className="text-gray-500 mt-2">Your response has been recorded. Thank you for your time.</p>
+            <h3 className="text-xl font-semibold text-gray-700">Đã ghi nhận phản hồi</h3>
+            <p className="text-gray-500 mt-2">Phản hồi của bạn đã được ghi nhận vào hệ thống. Xin cảm ơn bạn!</p>
             <button 
               onClick={() => { setShowDetail(false); setResponseStatus('idle'); }}
-              className="mt-6 px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+              className="mt-6 px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors cursor-pointer"
             >
-              Back to Alerts
+              Quay lại danh sách
             </button>
           </div>
         );
@@ -323,7 +330,7 @@ export const SOSAlertsPage: React.FC = () => {
             </div>
             <button
               onClick={() => { setShowDetail(false); setResponseStatus('idle'); }}
-              className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+              className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors cursor-pointer"
             >
               Quay lại danh sách
             </button>
@@ -336,20 +343,13 @@ export const SOSAlertsPage: React.FC = () => {
             <div className="w-16 h-16 mx-auto mb-4 bg-yellow-100 rounded-full flex items-center justify-center">
               <AlertTriangle className="w-8 h-8 text-yellow-600" />
             </div>
-            <h3 className="text-xl font-semibold text-yellow-700">Not Eligible to Donate</h3>
-            <p className="text-yellow-600 mt-2">You need to wait 36 more days since your last donation.</p>
-            <p className="text-yellow-600 mt-1"><strong>Next eligible: 12/08/2026</strong></p>
-            <div className="w-full bg-yellow-50 rounded-lg p-4 mt-6 border border-yellow-200">
-              <div className="h-3 bg-yellow-100 rounded-full overflow-hidden">
-                <div className="bg-yellow-500 h-full rounded-full" style={{ width: '57%' }}></div>
-              </div>
-              <p className="text-xs text-yellow-600 mt-1 text-center">48/84 days since last donation</p>
-            </div>
+            <h3 className="text-xl font-semibold text-yellow-700">Chưa đủ điều kiện hiến máu</h3>
+            <p className="text-yellow-600 mt-2">Bạn cần thêm thời gian phục hồi sau lần hiến máu gần nhất.</p>
             <button 
               onClick={() => { setShowDetail(false); setResponseStatus('idle'); }}
-              className="mt-6 px-6 py-2.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg font-medium transition-colors"
+              className="mt-6 px-6 py-2.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg font-medium transition-colors cursor-pointer"
             >
-              Understood
+              Đã hiểu
             </button>
           </div>
         );
@@ -360,14 +360,14 @@ export const SOSAlertsPage: React.FC = () => {
             <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
               <Check className="w-8 h-8 text-green-600" />
             </div>
-            <h3 className="text-xl font-semibold text-green-700">Emergency Request Fulfilled</h3>
-            <p className="text-green-600 mt-2">Thank you! This emergency blood request has collected enough blood bags from other volunteers.</p>
-            <p className="text-gray-500 mt-1">Your readiness is a great motivation for the medical team.</p>
+            <h3 className="text-xl font-semibold text-green-700">Yêu cầu SOS đã hoàn tất</h3>
+            <p className="text-green-600 mt-2">Cảm ơn bạn! Yêu cầu hiến máu khẩn cấp này đã tiếp nhận đủ lượng máu cần thiết từ các tình nguyện viên.</p>
+            <p className="text-gray-500 mt-1">Sự sẵn sàng của bạn là nguồn động viên rất lớn cho đội ngũ y bác sĩ.</p>
             <button 
               onClick={() => { setShowDetail(false); setResponseStatus('idle'); }}
-              className="mt-6 px-6 py-2.5 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg font-medium transition-colors"
+              className="mt-6 px-6 py-2.5 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg font-medium transition-colors cursor-pointer"
             >
-              Back to Alerts
+              Quay lại danh sách
             </button>
           </div>
         );
@@ -378,8 +378,8 @@ export const SOSAlertsPage: React.FC = () => {
             <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
               <ShieldAlert className="w-8 h-8 text-red-600" />
             </div>
-            <h3 className="text-xl font-semibold text-red-700">Critical SOS Alert</h3>
-            <p className="text-red-600 mt-2">Urgent blood donation needed</p>
+            <h3 className="text-xl font-semibold text-red-700">Cảnh báo SOS khẩn cấp</h3>
+            <p className="text-red-600 mt-2">Đang cần máu gấp phục vụ cấp cứu</p>
           </div>
         );
     }
@@ -392,17 +392,16 @@ export const SOSAlertsPage: React.FC = () => {
       <div className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 rounded-full">
+            <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 rounded-full cursor-pointer">
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">SOS Emergency Alerts</h1>
-              <p className="hidden sm:block text-sm text-gray-500">Critical blood donation requests from hospitals</p>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 uppercase tracking-tight">Cảnh báo khẩn cấp SOS</h1>
             </div>
           </div>
           {unreadCount > 0 && (
             <span className="px-3 py-1 bg-red-600 text-white text-sm font-bold rounded-full">
-              {unreadCount} New
+              {unreadCount} mới
             </span>
           )}
         </div>
@@ -414,10 +413,10 @@ export const SOSAlertsPage: React.FC = () => {
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
             <div className="bg-white rounded-t-2xl sm:rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-xl w-full max-w-lg max-h-[92dvh] overflow-y-auto animate-in fade-in zoom-in duration-200">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Response Detail</h2>
+                <h2 className="text-xl font-bold text-gray-900">Chi tiết phản hồi</h2>
                 <button 
                   onClick={() => { setShowDetail(false); setResponseStatus('idle'); }}
-                  className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -444,10 +443,10 @@ export const SOSAlertsPage: React.FC = () => {
         {/* Alerts List */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Emergency Alerts</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Danh sách cảnh báo khẩn cấp</h2>
             {unreadCount > 0 && (
               <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">
-                {unreadCount} unread
+                {unreadCount} chưa đọc
               </span>
             )}
           </div>
@@ -472,8 +471,8 @@ export const SOSAlertsPage: React.FC = () => {
               <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                 <ShieldAlert className="w-8 h-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-600">No SOS Alerts</h3>
-              <p className="text-gray-500 mt-1">You'll receive emergency alerts here when hospitals need your blood type.</p>
+              <h3 className="text-lg font-medium text-gray-600">Không có cảnh báo SOS</h3>
+              <p className="text-gray-500 mt-1">Bạn sẽ nhận được thông báo khẩn cấp tại đây khi các bệnh viện cần nhóm máu của bạn.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -498,22 +497,22 @@ export const SOSAlertsPage: React.FC = () => {
                         {/* Urgency Badge */}
                         <div className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 ${getUrgencyColor(alert.urgencyLevel)}`}>
                           {getUrgencyIcon(alert.urgencyLevel)}
-                          {alert.urgencyLevel}
+                          {getUrgencyLabel(alert.urgencyLevel)}
                         </div>
 
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h3 className={`text-base font-semibold ${!isRead ? 'text-red-700' : 'text-gray-900'}`}>
-                              Critical SOS Alert
+                              Cảnh báo khẩn cấp SOS
                             </h3>
                             <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700">
-                              🚨 SOS EMERGENCY
+                              🚨 YÊU CẦU SOS KHẨN CẤP
                             </span>
                           </div>
 
                           <p className="text-gray-600 leading-relaxed">
-                            <strong>{alert.bloodType}</strong> blood needed urgently at <strong>{alert.hospitalName}</strong>.
-                            Patient: {alert.patientReference}. Required: {alert.requiredQuantityMl} ml.
+                            Cần gấp nhóm máu <strong>{alert.bloodType}</strong> tại <strong>{alert.hospitalName}</strong>.
+                            Mã bệnh nhân: {alert.patientReference}. Lượng máu cần: {alert.requiredQuantityMl} ml.
                           </p>
 
                           <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-xs text-gray-500 pt-1">
@@ -523,11 +522,11 @@ export const SOSAlertsPage: React.FC = () => {
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5" />
-                              Deadline: {format(new Date(alert.fulfillmentDeadline), 'MMM dd, HH:mm')}
+                              Hạn chót: {format(new Date(alert.fulfillmentDeadline), 'dd/MM/yyyy HH:mm')}
                             </span>
                             <span className="flex items-center gap-1">
                               <Heart className="w-3.5 h-3.5 text-red-500" />
-                              {alert.requiredQuantityMl} ml needed
+                              Cần {alert.requiredQuantityMl} ml
                             </span>
                           </div>
                         </div>
@@ -559,24 +558,24 @@ export const SOSAlertsPage: React.FC = () => {
                           <>
                             <button
                               onClick={(e) => { e.stopPropagation(); setPendingResponse({ alert, response: 'accepted' }); }}
-                              className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors shadow-xs flex items-center gap-1.5"
+                              className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
                             >
                               <Heart className="w-3.5 h-3.5" />
-                              I Can Help
+                              Tôi có thể hỗ trợ
                             </button>
                             <button
                               onClick={(e) => { e.stopPropagation(); setPendingResponse({ alert, response: 'declined' }); }}
-                              className="px-3 py-1.5 border border-gray-300 hover:bg-gray-50 text-gray-600 text-xs font-medium rounded-lg transition-colors"
+                              className="px-3.5 py-1.5 border border-gray-300 hover:bg-gray-50 text-gray-600 text-xs font-medium rounded-lg transition-colors cursor-pointer"
                             >
-                              Not Now
+                              Chưa thể hỗ trợ
                             </button>
                           </>
                         )}
                         {!isRead && !hasResponded && !isInactive && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDismiss(alert); }}
-                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Dismiss"
+                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            title="Bỏ qua"
                           >
                             <X className="w-4 h-4" />
                           </button>

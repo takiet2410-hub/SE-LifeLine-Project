@@ -92,7 +92,7 @@ export const VerifyOTPPage: React.FC = () => {
               className="flex items-center gap-2 text-[14px] font-medium text-[#5b403d] hover:text-[#93000b] transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Login
+              Quay lại Đăng nhập
             </Link>
           </div>
 

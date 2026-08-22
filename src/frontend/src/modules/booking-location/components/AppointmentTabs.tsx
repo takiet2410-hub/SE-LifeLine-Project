@@ -8,12 +8,12 @@ interface AppointmentTabsProps {
 
 export const AppointmentTabs: React.FC<AppointmentTabsProps> = ({ activeTab, onChangeTab }) => {
   const tabs: { id: AppointmentStatus; label: string }[] = [
-    { id: 'all', label: 'All Appointments' },
-    { id: 'upcoming', label: 'Upcoming' },
-    { id: 'completed', label: 'Completed' },
-    { id: 'rejected', label: 'Rejected' },
-    { id: 'cancelled', label: 'Cancelled' },
-    { id: 'no-show', label: 'No Show' },
+    { id: 'all', label: 'Tất cả lịch hẹn' },
+    { id: 'upcoming', label: 'Sắp diễn ra' },
+    { id: 'completed', label: 'Đã hoàn thành' },
+    { id: 'rejected', label: 'Đã từ chối' },
+    { id: 'cancelled', label: 'Đã hủy' },
+    { id: 'no-show', label: 'Vắng mặt' },
   ];
 
   return (

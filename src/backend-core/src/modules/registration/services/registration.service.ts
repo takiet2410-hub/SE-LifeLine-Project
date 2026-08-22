@@ -217,12 +217,13 @@ export class RegistrationService {
         const screeningForm = await ScreeningForm.findOne({ appointmentId: app._id }).lean();
         const campaignDoc = app.campaignId ? await Campaign.findById(app.campaignId) : null;
 
-        const displayStatus: string = digitalRecord?.donationStatus || app.status;
+        const testResult = (screeningForm as any)?.testResult || (digitalRecord as any)?.testResult || (screeningForm?.outcome === 'REJECT' ? 'Rejected' : (screeningForm?.outcome === 'PASS' && displayStatus === 'Completed' ? 'Pass' : undefined));
 
         const screeningData = screeningForm ? {
           screeningFormId: screeningForm._id.toString(),
           responses: screeningForm.responses || [],
           outcome: screeningForm.outcome || 'PASS',
+          testResult: (screeningForm as any)?.testResult || testResult,
           submittedAt: (screeningForm as any).submittedAt,
           vitals: (screeningForm as any).vitals || (digitalRecord?.screeningSummary as any)?.staffVitals || null,
           screeningNotes: (screeningForm as any).screeningNotes || digitalRecord?.clinicalNotes || '',
@@ -247,6 +248,7 @@ export class RegistrationService {
           donorIdCard: idDocumentNumber,
           donorBloodType: bloodType,
           donorDob,
+          testResult: (screeningForm as any)?.testResult || testResult,
           donor: {
             donorId: app.donorId ? app.donorId.toString() : '',
             fullName,
@@ -397,6 +399,8 @@ export class RegistrationService {
       };
     });
 
+    const testResult = (screeningForm as any)?.testResult || (digitalRecord as any)?.testResult || (screeningForm?.outcome === 'REJECT' ? 'Rejected' : (screeningForm?.outcome === 'PASS' && displayStatus === 'Completed' ? 'Pass' : undefined));
+
     return {
       registrationId: appointment._id.toString(),
       campaignId: appointment.campaignId.toString(),
@@ -408,6 +412,7 @@ export class RegistrationService {
       donorIdCard: idDocumentNumber,
       donorBloodType: bloodType,
       donorDob: donorProfile?.dateOfBirth || '',
+      testResult: (screeningForm as any)?.testResult || testResult,
       donor: {
         donorId: appointment.donorId.toString(),
         fullName,

@@ -257,7 +257,7 @@ export const RegistrationListPage: React.FC = () => {
           );
         }
 
-        if (savedResult === 'Pass' || savedResult === 'Passed') {
+        if (savedResult === 'Pass' || savedResult === 'Passed' || (row.status === 'Completed' && savedResult !== 'Rejected')) {
           return (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
               <CheckCircle2 className="w-3 h-3 text-emerald-600" />
@@ -265,7 +265,7 @@ export const RegistrationListPage: React.FC = () => {
             </span>
           );
         }
-        if (savedResult === 'Rejected' || row.status === 'Ineligible' || (row.status as string) === 'Ineligible for Donation') {
+        if (savedResult === 'Rejected' || row.status === 'Ineligible' || (row.status as string) === 'Ineligible for Donation' || row.status === 'Rejected') {
           return (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-extrabold bg-red-50 text-red-700 border border-red-200 rounded-full">
               <XCircle className="w-3 h-3 text-red-600" />

@@ -31,6 +31,7 @@ export class BloodInventoryController {
         summary: result.summary
       });
     } catch (error: any) {
+      console.error('[BloodInventoryController.getInventoryList Error]', error);
       return res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });
     }
   }

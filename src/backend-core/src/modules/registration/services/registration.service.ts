@@ -413,6 +413,7 @@ export class RegistrationService {
       donorIdCard: idDocumentNumber,
       donorBloodType: bloodType,
       donorDob: donorProfile?.dateOfBirth || '',
+      donationVolume: appointment.donationVolume || 350,
       testResult: (screeningForm as any)?.testResult || testResult,
       donor: {
         donorId: appointment.donorId.toString(),
@@ -488,10 +489,20 @@ export class RegistrationService {
 
     if (isAdvancingToCheckInOrBeyond && appointment.campaignId) {
       const campaign = await Campaign.findById(appointment.campaignId);
-      if (campaign && campaign.status !== 'Active' && campaign.status !== 'Completed') {
-        const err: any = new Error('Chiến dịch chưa diễn ra (chưa mở).');
-        err.statusCode = 400;
-        throw err;
+      if (campaign) {
+        let isCampaignActiveOrCompleted = campaign.status === 'Active' || campaign.status === 'Completed';
+        if (!isCampaignActiveOrCompleted && campaign.status !== 'Cancelled' && campaign.status !== 'Draft') {
+          const now = new Date();
+          const start = campaign.startDateTime ? new Date(campaign.startDateTime) : ((campaign as any).startDate ? new Date((campaign as any).startDate) : null);
+          if (start && start <= now) {
+            isCampaignActiveOrCompleted = true;
+          }
+        }
+        if (!isCampaignActiveOrCompleted) {
+          const err: any = new Error('Chiến dịch chưa diễn ra (chưa mở).');
+          err.statusCode = 400;
+          throw err;
+        }
       }
     }
 
@@ -598,8 +609,16 @@ export class RegistrationService {
       (screeningForm as any).reviewedByStaffId = toObjectId(actorUserId);
       await screeningForm.save(opts);
 
-      // Auto-set status to Completed if testResult (Pass/Rejected) is submitted without explicit status
-      if (payload.testResult && !payload.status) {
+      if (payload.donationVolume !== undefined) {
+        (appointment as any).donationVolume = Number(payload.donationVolume) || 350;
+      }
+
+      // Auto-set status to Completed if testResult (Pass) is submitted
+      if (payload.testResult === 'Pass') {
+        payload.status = 'Completed';
+      } else if (payload.testResult === 'Rejected') {
+        payload.status = 'Rejected';
+      } else if (payload.testResult && !payload.status) {
         payload.status = 'Completed';
       }
 
@@ -666,7 +685,7 @@ export class RegistrationService {
           await User.findByIdAndUpdate(appointment.donorId, { $set: { bloodType: bTypeToUpdate } }, opts);
         }
 
-        const isTestPassed = payload.testResult === 'Pass' || (screeningForm as any)?.testResult === 'Pass' || (!payload.testResult && targetAppointmentStatus === AppointmentStatus.Completed);
+        const isTestPassed = payload.testResult === 'Pass' || (screeningForm as any)?.testResult === 'Pass';
         const isTestRejected = payload.testResult === 'Rejected' || (screeningForm as any)?.testResult === 'Rejected';
 
         // 1. Process Gamification (+250 XP & E-Certificate & Badges & lastDonationDate) for ALL Completed appointments (Both Pass and Rejected)
@@ -686,7 +705,7 @@ export class RegistrationService {
         }
 
         // 2. Dispatch Email & Stock-In depending on Pass vs Rejected
-        if (targetAppointmentStatus === AppointmentStatus.Completed) {
+        if (targetAppointmentStatus === AppointmentStatus.Completed || isTestPassed || isTestRejected) {
           try {
             const donorProfile = await DonorProfile.findOne({
               $or: [{ userId: appointment.donorId }, { _id: appointment.donorId }]
@@ -715,14 +734,14 @@ export class RegistrationService {
               : new Date(appointment.appointmentDate).toLocaleDateString('vi-VN');
             const recipientUserId = (donorUser?._id || donorProfile?.userId || appointment.donorId).toString();
 
-            if (isTestPassed && !isTestRejected) {
+            if (isTestPassed) {
               // Send DonationCompleted thank you email
               await emitDonationCompleted({
                 donorId: recipientUserId,
                 donorName,
                 campaignName,
                 volume: payload.donationVolume || (appointment as any).donationVolume || 350,
-                bloodType: payload.bloodType || donorProfile?.bloodType || 'Chưa xác định',
+                bloodType: payload.bloodType || payload.donorBloodType || donorProfile?.bloodType || (donorUser as any)?.bloodType || 'Chưa xác định',
                 donationDate: new Date().toLocaleDateString('vi-VN'),
                 donationIntervalDays,
                 nextEligibleDate: nextEligibleDate.toLocaleDateString('vi-VN'),
@@ -731,30 +750,61 @@ export class RegistrationService {
               });
 
               // Auto stock-in blood bag if testResult is 'Pass'
-              const expiryDate = new Date(appointment.appointmentDate);
+              const collectionDate = new Date();
+              const expiryDate = new Date(collectionDate);
               expiryDate.setDate(expiryDate.getDate() + 35);
-              const bType = payload.bloodType || donorProfile?.bloodType || 'Unknown';
-              if (bType && bType !== 'Unknown' && bType !== 'Chưa biết' && bType !== '?') {
-                const bagCode = `BB-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
-                const newBag = new BloodBag({
-                  bagCode,
-                  bloodType: bType,
-                  volumeMl: payload.donationVolume || (appointment as any).donationVolume || 350,
-                  collectionDate: appointment.appointmentDate,
-                  expiryDate,
-                  storageLocation: 'Kho chính - Khu vực chờ phân loại',
-                  status: 'Available',
-                  donorSourceId: appointment.donorId,
-                  campaignSourceId: appointment.campaignId,
-                  testResult: 'Pass',
-                  statusHistory: [{
-                    previousStatus: 'None',
-                    newStatus: 'Available',
-                    changedBy: actorUserId,
-                    reason: 'Hệ thống tự động nhập kho từ lượt hiến máu hoàn tất'
-                  }]
-                });
-                await newBag.save(opts);
+              let bType = payload.bloodType || payload.donorBloodType || donorProfile?.bloodType || (donorUser as any)?.bloodType;
+              const validBloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+              if (!bType || !validBloodTypes.includes(bType)) {
+                bType = 'O+';
+              }
+              const bagCode = `BB-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+              const resolvedCampaignId = (campaign as any)?._id || (typeof appointment.campaignId === 'object' ? (appointment.campaignId as any)._id : appointment.campaignId);
+              const actorUser = actorUserId ? await User.findById(actorUserId).lean() : null;
+              const resolvedBloodCenterId = (campaign as any)?.bloodCenterId || (actorUser as any)?.bloodCenterId || 'bc-01';
+              const resolvedDonorId = donorUser?._id || appointment.donorId;
+
+              try {
+                // Check if bag for this appointment was already created
+                let existingBag = await BloodBag.findOne({
+                  donorSourceId: resolvedDonorId,
+                  campaignSourceId: resolvedCampaignId,
+                  createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+                }, null, opts);
+
+                if (existingBag) {
+                  existingBag.bloodType = bType as any;
+                  existingBag.volumeMl = payload.donationVolume || (appointment as any).donationVolume || existingBag.volumeMl || 350;
+                  existingBag.testResult = 'Pass';
+                  existingBag.status = 'Available';
+                  if (resolvedBloodCenterId) {
+                    existingBag.bloodCenterId = resolvedBloodCenterId;
+                  }
+                  await existingBag.save(opts);
+                } else {
+                  const newBag = new BloodBag({
+                    bagCode,
+                    bloodType: bType,
+                    volumeMl: payload.donationVolume || (appointment as any).donationVolume || 350,
+                    collectionDate,
+                    expiryDate,
+                    storageLocation: 'Kho chính - Khu vực chờ phân loại',
+                    status: 'Available',
+                    bloodCenterId: resolvedBloodCenterId,
+                    donorSourceId: resolvedDonorId,
+                    campaignSourceId: resolvedCampaignId,
+                    testResult: 'Pass',
+                    statusHistory: [{
+                      previousStatus: 'None',
+                      newStatus: 'Available',
+                      changedBy: actorUserId || 'Staff',
+                      reason: 'Hệ thống tự động nhập kho từ lượt hiến máu hoàn tất'
+                    }]
+                  });
+                  await newBag.save(opts);
+                }
+              } catch (stockInErr) {
+                console.error('[AutoStockIn] Error stocking in blood bag:', stockInErr);
               }
             } else if (isTestRejected) {
               // Send EligibilityCheckFailed notification email for rejected test

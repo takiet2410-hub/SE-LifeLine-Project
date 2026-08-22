@@ -19,21 +19,21 @@ export const AppointmentTabs: React.FC<AppointmentTabsProps> = ({ activeTab, onC
   ];
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#dee2e6] mb-4 sm:mb-6 gap-3 sm:gap-4">
-      <div className="flex items-center gap-5 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full sm:w-auto">
+    <div className="border-b border-[#dee2e6] mb-4 sm:mb-5 shrink-0 w-full">
+      <div className="flex items-center gap-4 sm:gap-6 md:gap-7 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full -mb-px">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => onChangeTab(tab.id)}
-              className={`relative shrink-0 whitespace-nowrap pb-3 text-[14px] font-medium transition-colors ${
-                isActive ? 'text-[#93000b]' : 'text-[#6c757d] hover:text-[#271816]'
+              className={`relative shrink-0 whitespace-nowrap pb-2.5 sm:pb-3 text-[13px] sm:text-[14px] font-medium transition-colors cursor-pointer ${
+                isActive ? 'text-[#93000b] font-bold' : 'text-[#6c757d] hover:text-[#271816]'
               }`}
             >
               {tab.label}
               {isActive && (
-                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#93000b] rounded-t-full" />
+                <div className="absolute bottom-0 left-0 w-full h-[2.5px] bg-[#93000b] rounded-t-full shadow-xs" />
               )}
             </button>
           );
@@ -41,7 +41,7 @@ export const AppointmentTabs: React.FC<AppointmentTabsProps> = ({ activeTab, onC
       </div>
       
       {rightContent && (
-        <div className="pb-3 sm:pb-2 shrink-0 self-start sm:self-auto">
+        <div className="pt-2 pb-1 shrink-0">
           {rightContent}
         </div>
       )}

@@ -12,6 +12,7 @@ export interface Appointment {
   time: string; // e.g. "09:00 - 10:00"
   location: Location;
   bloodType?: string;
+  donationVolume?: number;
   status: AppointmentStatus;
   healthSummary?: {
     bloodPressure?: string;
@@ -22,6 +23,7 @@ export interface Appointment {
   qrCodeUrl?: string;
   rejectionReason?: string;
   screeningNotes?: string;
+  _raw?: any;
 }
 
 export interface ApiResponse<T = any> {

@@ -1,6 +1,7 @@
 import mongoose, { PipelineStage, Types } from 'mongoose';
 import { BloodBag, IBloodBag, BagStatus, BloodType } from '../models/blood-bag.model';
 import { DonorProfile } from '../../auth-account/models/donor-profile.model';
+import { User } from '../../auth-account/models/user.model';
 import { Campaign } from '../../campaign/models/campaign.model';
 import { Appointment } from '../../booking/models/appointment.model';
 import { StockInEntryInput, StockOutInput } from '../schemas/blood-inventory.schema';
@@ -22,16 +23,29 @@ export class BloodInventoryService {
     const skip = (page - 1) * limit;
 
     const query: any = {};
+    const andConditions: any[] = [];
 
-    if (params?.bloodCenterId) {
-      query.bloodCenterId = params.bloodCenterId;
+    if (params?.bloodCenterId && Types.ObjectId.isValid(params.bloodCenterId)) {
+      andConditions.push({
+        $or: [
+          { bloodCenterId: new Types.ObjectId(params.bloodCenterId) },
+          { bloodCenterId: { $exists: false } },
+          { bloodCenterId: null }
+        ]
+      });
     }
 
     if (params?.search) {
-      query.$or = [
-        { bagCode: { $regex: params.search, $options: 'i' } },
-        { storageLocation: { $regex: params.search, $options: 'i' } }
-      ];
+      andConditions.push({
+        $or: [
+          { bagCode: { $regex: params.search, $options: 'i' } },
+          { storageLocation: { $regex: params.search, $options: 'i' } }
+        ]
+      });
+    }
+
+    if (andConditions.length > 0) {
+      query.$and = andConditions;
     }
 
     if (params?.bloodType && params.bloodType !== 'All') {
@@ -60,7 +74,13 @@ export class BloodInventoryService {
       BloodBag.countDocuments(query)
     ]);
 
-    const summaryQuery: any = params?.bloodCenterId ? { bloodCenterId: params.bloodCenterId } : {};
+    const summaryQuery: any = params?.bloodCenterId && Types.ObjectId.isValid(params.bloodCenterId) ? {
+      $or: [
+        { bloodCenterId: new Types.ObjectId(params.bloodCenterId) },
+        { bloodCenterId: { $exists: false } },
+        { bloodCenterId: null }
+      ]
+    } : {};
     const allBags = await BloodBag.find(summaryQuery).lean();
     const totalBags = allBags.length;
     const availableBags = allBags.filter((b) => b.status === 'Available').length;
@@ -104,59 +124,100 @@ export class BloodInventoryService {
 
   static async getBloodBagById(bagId: string) {
     const bag = await BloodBag.findById(bagId)
-      .populate('donorSourceId', 'idDocumentNumber phone email')
-      .populate('campaignSourceId', 'campaignCode name venue fullAddress status startDateTime endDateTime')
+      .populate('donorSourceId', 'fullName idDocumentNumber phone email')
+      .populate('campaignSourceId', 'campaignCode name venue fullAddress status startDateTime endDateTime bloodCenterId')
       .lean();
     if (!bag) {
       throw new Error('Blood bag not found');
     }
 
-    // Populate DonorProfile to get fullName and phoneNumber
-    if (bag.donorSourceId && (bag.donorSourceId as any)._id) {
-      const donorProf = await DonorProfile.findOne({
-        $or: [
-          { userId: (bag.donorSourceId as any)._id },
-          { _id: (bag.donorSourceId as any)._id }
-        ]
-      }).lean();
-      if (donorProf) {
-        (bag.donorSourceId as any).fullName = donorProf.fullName;
-        (bag.donorSourceId as any).phoneNumber = donorProf.phoneNumber || (bag.donorSourceId as any).phone;
+    // Populate Donor & DonorProfile to ensure fullName, phone, CCCD and email are always available
+    const donorRawId = (bag.donorSourceId as any)?._id || bag.donorSourceId;
+    if (donorRawId) {
+      let donorProf: any = null;
+      let userObj: any = null;
+
+      try {
+        donorProf = await DonorProfile.findOne({
+          $or: [
+            { userId: donorRawId },
+            { _id: donorRawId }
+          ]
+        }).lean();
+      } catch (e) {}
+
+      try {
+        userObj = await User.findById(donorRawId).lean();
+        if (!userObj && donorProf?.userId) {
+          userObj = await User.findById(donorProf.userId).lean();
+        }
+      } catch (e) {}
+
+      if (!donorProf && userObj) {
+        try {
+          const orConds: any[] = [{ userId: userObj._id }];
+          if (userObj.idDocumentNumber) orConds.push({ idDocumentNumber: userObj.idDocumentNumber });
+          if (userObj.phone) orConds.push({ phoneNumber: userObj.phone });
+          if (userObj.email) orConds.push({ email: userObj.email });
+          donorProf = await DonorProfile.findOne({ $or: orConds }).lean();
+        } catch (e) {}
       }
+
+      const fullName = donorProf?.fullName || userObj?.fullName || (bag.donorSourceId as any)?.fullName || 'Người hiến máu';
+      const phoneNumber = donorProf?.phoneNumber || userObj?.phone || (bag.donorSourceId as any)?.phone || (bag.donorSourceId as any)?.phoneNumber || 'Chưa cập nhật';
+      const idDocumentNumber = donorProf?.idDocumentNumber || userObj?.idDocumentNumber || (bag.donorSourceId as any)?.idDocumentNumber || 'Chưa cập nhật';
+      const email = donorProf?.email || userObj?.email || (bag.donorSourceId as any)?.email || '';
+
+      bag.donorSourceId = {
+        _id: donorRawId.toString(),
+        fullName,
+        phoneNumber,
+        phone: phoneNumber,
+        idDocumentNumber,
+        email
+      } as any;
     }
 
-    // Populate Campaign if campaignSourceId is not populated or fallback to active campaign
+    // Populate Campaign correctly
     let campaignObj: any = bag.campaignSourceId;
-    if (!campaignObj || typeof campaignObj !== 'object' || !campaignObj.name) {
-      let campId = campaignObj?._id || campaignObj;
-      let camp = campId ? await Campaign.findById(campId).lean() : null;
+    let camp: any = null;
 
-      // Fallback 1: Try finding campaign from Donor's appointment
+    if (campaignObj && typeof campaignObj === 'object' && campaignObj.name) {
+      camp = campaignObj;
+    } else {
+      const campId = campaignObj?._id || campaignObj;
+      if (campId && mongoose.Types.ObjectId.isValid(campId)) {
+        camp = await Campaign.findById(campId).lean();
+      }
+
+      // Fallback: Try finding campaign from Donor's appointment if donorId exists
       if (!camp && bag.donorSourceId) {
         const donorId = (bag.donorSourceId as any)._id || bag.donorSourceId;
-        const appt = await Appointment.findOne({ donorId }).sort({ appointmentDate: -1 }).lean();
+        const appt = await Appointment.findOne({ donorId }).sort({ appointmentDate: -1, createdAt: -1 }).lean();
         if (appt && appt.campaignId) {
           camp = await Campaign.findById(appt.campaignId).lean();
         }
       }
+    }
 
-      // Fallback 2: Try finding any active/recent campaign
-      if (!camp) {
-        camp = await Campaign.findOne({ status: { $in: ['Active', 'Upcoming', 'Completed'] } })
-          .sort({ startDateTime: -1, createdAt: -1 })
-          .lean();
-      }
-
-      if (camp) {
-        bag.campaignSourceId = {
-          _id: camp._id.toString(),
-          campaignCode: camp.campaignCode || 'CP-2026-001',
-          name: camp.name,
-          venue: camp.venue || camp.fullAddress,
-          fullAddress: camp.fullAddress || camp.venue,
-          status: camp.status
-        } as any;
-      }
+    if (camp) {
+      bag.campaignSourceId = {
+        _id: camp._id ? camp._id.toString() : '',
+        campaignCode: camp.campaignCode || 'CP-2026-001',
+        name: camp.name,
+        venue: camp.venue || camp.fullAddress || 'TT Tiếp nhận máu LifeLine',
+        fullAddress: camp.fullAddress || camp.venue || 'TP. Hồ Chí Minh',
+        status: camp.status || 'Active'
+      } as any;
+    } else {
+      bag.campaignSourceId = {
+        _id: '',
+        campaignCode: 'N/A',
+        name: 'Tiếp nhận trực tiếp tại Trung tâm',
+        venue: 'Kho máu LifeLine',
+        fullAddress: 'TP. Hồ Chí Minh',
+        status: 'Active'
+      } as any;
     }
 
     return bag;
@@ -254,7 +315,13 @@ export class BloodInventoryService {
   }
 
   static async getInventoryStatistics(bloodCenterId?: string) {
-    const query: any = bloodCenterId ? { bloodCenterId } : {};
+    const query: any = bloodCenterId && Types.ObjectId.isValid(bloodCenterId) ? {
+      $or: [
+        { bloodCenterId: new Types.ObjectId(bloodCenterId) },
+        { bloodCenterId: { $exists: false } },
+        { bloodCenterId: null }
+      ]
+    } : {};
     const bags = await BloodBag.find(query).lean();
     const totalUnits = bags.length;
     const availableUnits = bags.filter((b) => b.status === 'Available').length;

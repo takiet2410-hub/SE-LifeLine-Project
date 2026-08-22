@@ -533,7 +533,7 @@ export class AuthAccountService {
         date: a.appointmentDate,
         locationName: (a.campaignId as any)?.name || 'Chiến dịch Hiến máu LifeLine',
         bloodType: profile.bloodType || 'O+',
-        volume: '350 ml',
+        volume: `${a.donationVolume || 350} ml`,
         status: 'completed',
         certificateNo: `CERT-${new Date(a.appointmentDate).getFullYear()}-LL${a._id.toString().slice(-6).toUpperCase()}`
       })),

@@ -63,7 +63,7 @@ export const ActivityLogsPage: React.FC = () => {
           className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#271816] text-sm font-semibold rounded-xl transition cursor-pointer"
         >
           <Download className="w-4 h-4" />
-          Export CSV
+          Xuất CSV
         </button>
       </div>
 
@@ -72,7 +72,7 @@ export const ActivityLogsPage: React.FC = () => {
         <div className="relative w-full md:w-80">
           <input
             type="text"
-            placeholder="Search actor, action or resource..."
+            placeholder="Tìm kiếm tác nhân, hành động hoặc tài nguyên..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-9 pr-4 py-2 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-medium text-[#271816] focus:ring-2 focus:ring-[#93000b] outline-hidden"
@@ -86,15 +86,15 @@ export const ActivityLogsPage: React.FC = () => {
             onChange={(e) => { setCategory(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
-            <option value="All" className="bg-white text-[#271816]">All Categories</option>
-            <option value="Authentication" className="bg-white text-[#271816]">Authentication</option>
-            <option value="User Management" className="bg-white text-[#271816]">User Management</option>
-            <option value="Role Management" className="bg-white text-[#271816]">Role Management</option>
-            <option value="System Configuration" className="bg-white text-[#271816]">System Configuration</option>
-            <option value="Feature Toggle" className="bg-white text-[#271816]">Feature Toggle</option>
-            <option value="SOS Request" className="bg-white text-[#271816]">SOS Request</option>
-            <option value="Content Management" className="bg-white text-[#271816]">Content Management</option>
-            <option value="Registration" className="bg-white text-[#271816]">Registration</option>
+            <option value="All" className="bg-white text-[#271816]">Tất cả danh mục</option>
+            <option value="Authentication" className="bg-white text-[#271816]">Xác thực & Đăng nhập</option>
+            <option value="User Management" className="bg-white text-[#271816]">Quản lý người dùng</option>
+            <option value="Role Management" className="bg-white text-[#271816]">Vai trò & Phân quyền</option>
+            <option value="System Configuration" className="bg-white text-[#271816]">Cấu hình hệ thống</option>
+            <option value="Feature Toggle" className="bg-white text-[#271816]">Tính năng mở rộng</option>
+            <option value="SOS Request" className="bg-white text-[#271816]">Yêu cầu SOS</option>
+            <option value="Content Management" className="bg-white text-[#271816]">Quản lý bài viết</option>
+            <option value="Registration" className="bg-white text-[#271816]">Đăng ký hiến máu</option>
           </select>
 
           <select
@@ -102,9 +102,9 @@ export const ActivityLogsPage: React.FC = () => {
             onChange={(e) => { setStatus(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-[#fff8f7] border border-slate-200 text-sm font-semibold text-[#271816] rounded-xl focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
           >
-            <option value="All" className="bg-white text-[#271816]">All Statuses</option>
-            <option value="Success" className="bg-white text-[#271816]">Success</option>
-            <option value="Failure" className="bg-white text-[#271816]">Failure</option>
+            <option value="All" className="bg-white text-[#271816]">Tất cả trạng thái</option>
+            <option value="Success" className="bg-white text-[#271816]">Thành công</option>
+            <option value="Failure" className="bg-white text-[#271816]">Thất bại</option>
           </select>
         </div>
       </div>
@@ -112,21 +112,21 @@ export const ActivityLogsPage: React.FC = () => {
       {/* Logs Table */}
       <div className="bg-white rounded-2xl border border-[#f1f3f5] shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-slate-400 text-sm">Loading activity logs...</div>
+          <div className="p-12 text-center text-slate-400 text-sm">Đang tải nhật ký hoạt động...</div>
         ) : logs.length === 0 ? (
-          <div className="p-12 text-center text-[#6c757d] text-sm font-medium">No activity logs found.</div>
+          <div className="p-12 text-center text-[#6c757d] text-sm font-medium">Không tìm thấy nhật ký hoạt động nào.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[820px] text-left text-sm border-collapse">
               <thead>
                 <tr className="bg-[#fff8f7] border-b border-[#f1f3f5] text-xs font-bold text-[#6c757d] uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Timestamp</th>
-                  <th className="py-3.5 px-4">Actor</th>
-                  <th className="py-3.5 px-4">Action</th>
-                  <th className="py-3.5 px-4">Category</th>
-                  <th className="py-3.5 px-4">IP Address</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Details</th>
+                  <th className="py-3.5 px-4">Thời Gian</th>
+                  <th className="py-3.5 px-4">Tác Nhân</th>
+                  <th className="py-3.5 px-4">Hành Động</th>
+                  <th className="py-3.5 px-4">Danh Mục</th>
+                  <th className="py-3.5 px-4">Địa Chỉ IP</th>
+                  <th className="py-3.5 px-4">Trạng Thái</th>
+                  <th className="py-3.5 px-4 text-right">Chi Tiết</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f1f3f5]">
@@ -136,7 +136,7 @@ export const ActivityLogsPage: React.FC = () => {
                       {new Date(l.timestamp).toLocaleString('vi-VN')}
                     </td>
                     <td className="py-3.5 px-4 font-bold text-[#271816] text-xs">
-                      {l.actorName}
+                      {l.actorName === 'System' ? 'Hệ thống' : l.actorName}
                     </td>
                     <td className="py-3.5 px-4 text-xs font-semibold text-[#271816]">
                       {l.action}
@@ -152,14 +152,14 @@ export const ActivityLogsPage: React.FC = () => {
                         }`}
                       >
                         {l.status === 'Success' ? <CheckCircle className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
-                        {l.status}
+                        {l.status === 'Success' ? 'Thành công' : 'Thất bại'}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <button
                         onClick={() => setSelectedLog(l)}
                         className="p-1.5 text-slate-500 hover:text-[#271816] hover:bg-slate-100 rounded-lg transition cursor-pointer"
-                        title="View Full Metadata"
+                        title="Xem chi tiết nhật ký"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -174,24 +174,24 @@ export const ActivityLogsPage: React.FC = () => {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-xs text-[#6c757d]">
-          <span>{total} audit entries</span>
+          <span>Tổng {total} bản ghi nhật ký</span>
           <div className="flex items-center gap-2">
             <button
               type="button"
               disabled={page <= 1}
               onClick={() => setPage((current) => Math.max(1, current - 1))}
-              className="p-2 border rounded-lg disabled:opacity-40"
-              aria-label="Previous page"
+              className="p-2 border rounded-lg disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed hover:bg-slate-50 transition"
+              aria-label="Trang trước"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span>Page {page} / {totalPages}</span>
+            <span>Trang {page} / {totalPages}</span>
             <button
               type="button"
               disabled={page >= totalPages}
               onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-              className="p-2 border rounded-lg disabled:opacity-40"
-              aria-label="Next page"
+              className="p-2 border rounded-lg disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed hover:bg-slate-50 transition"
+              aria-label="Trang sau"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -209,8 +209,8 @@ export const ActivityLogsPage: React.FC = () => {
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-[#271816]">Chi tiết Nhật ký Audit</h3>
-                  <p className="text-xs font-medium text-[#6c757d]">Log Metadata & State Comparison</p>
+                  <h3 className="font-bold text-lg text-[#271816]">Chi tiết Nhật ký Kiểm toán</h3>
+                  <p className="text-xs font-medium text-[#6c757d]">Thông tin Metadata & So sánh trạng thái dữ liệu</p>
                 </div>
               </div>
               <button
@@ -225,7 +225,9 @@ export const ActivityLogsPage: React.FC = () => {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#fff8f7] p-4 rounded-xl border border-slate-100">
                 <div>
                   <span className="text-[#6c757d] block font-medium mb-0.5">Người thực hiện</span>
-                  <span className="font-bold text-[#271816]">{selectedLog.actorName}</span>
+                  <span className="font-bold text-[#271816]">
+                    {selectedLog.actorName === 'System' ? 'Hệ thống' : selectedLog.actorName}
+                  </span>
                 </div>
                 <div>
                   <span className="text-[#6c757d] block font-medium mb-0.5">Địa chỉ IP</span>
@@ -245,7 +247,7 @@ export const ActivityLogsPage: React.FC = () => {
                     }`}
                   >
                     {selectedLog.status === 'Success' ? <CheckCircle className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
-                    {selectedLog.status}
+                    {selectedLog.status === 'Success' ? 'Thành công' : 'Thất bại'}
                   </span>
                 </div>
               </div>
@@ -289,7 +291,7 @@ export const ActivityLogsPage: React.FC = () => {
                 onClick={() => setSelectedLog(null)}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#271816] font-semibold text-xs rounded-xl transition cursor-pointer"
               >
-                Đóng (Close)
+                Đóng
               </button>
             </div>
           </div>

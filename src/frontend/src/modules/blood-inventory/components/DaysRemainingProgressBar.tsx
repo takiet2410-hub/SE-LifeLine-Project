@@ -37,7 +37,7 @@ export const DaysRemainingProgressBar: React.FC<Props> = ({ expiryDate, collecti
     <div className={`flex flex-col gap-1 w-full max-w-[140px] ${className}`}>
       <div className="flex justify-between items-center text-[11px] font-medium">
         <span className={textColor}>
-          {daysLeft <= 0 ? 'Expired' : `${daysLeft} days left`}
+          {daysLeft <= 0 ? 'Đã hết hạn' : `Còn ${daysLeft} ngày`}
         </span>
         <span className="text-slate-400 font-mono text-[10px]">{Math.round(percentage)}%</span>
       </div>

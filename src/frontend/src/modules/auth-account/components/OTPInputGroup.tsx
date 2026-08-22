@@ -92,10 +92,10 @@ export const OTPInputGroup: React.FC<OTPInputGroupProps> = ({
     <div className="w-full max-w-[440px] bg-white border border-[#f1f3f5] rounded-xl p-5 sm:p-8 shadow-sm transition-all">
       <div className="mb-6 text-left">
         <h2 className="text-[22px] font-bold text-[#271816] tracking-tight">
-          Enter Verification Code
+          Nhập Mã Xác Thực OTP
         </h2>
         <p className="text-[14px] font-normal text-[#6c757d] mt-1">
-          We've sent a 6-digit code to your email. Please enter it below.
+          Chúng tôi đã gửi mã xác thực 6 chữ số đến email của bạn. Vui lòng nhập mã bên dưới.
         </p>
       </div>
 
@@ -104,7 +104,7 @@ export const OTPInputGroup: React.FC<OTPInputGroupProps> = ({
         <div className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3 animate-in fade-in duration-200">
           <AlertCircle className="w-5 h-5 text-[#93000b] shrink-0 mt-0.5" />
           <p className="text-[13px] font-medium text-[#93000b] leading-tight">
-            {errorMessage || 'Invalid OTP code. Please check and try again.'}
+            {errorMessage || 'Mã OTP không hợp lệ. Vui lòng kiểm tra và thử lại.'}
           </p>
         </div>
       )}
@@ -113,7 +113,7 @@ export const OTPInputGroup: React.FC<OTPInputGroupProps> = ({
         <div className="mb-5 p-3.5 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3 animate-in fade-in duration-200">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-[13px] font-medium text-amber-700 leading-tight">
-            {isExpired ? 'Your code has expired. Please request a new one.' : 'Having trouble? Check your spam folder or request a new code.'}
+            {isExpired ? 'Mã OTP đã hết hạn. Vui lòng yêu cầu gửi lại mã mới.' : 'Không nhận được mã? Hãy kiểm tra hộp thư rác (Spam) hoặc yêu cầu gửi lại.'}
           </p>
         </div>
       )}
@@ -149,23 +149,23 @@ export const OTPInputGroup: React.FC<OTPInputGroupProps> = ({
         {isLoading ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Verifying...</span>
+            <span>Đang xác thực...</span>
           </>
         ) : (
-          <span>Verify Code</span>
+          <span>Xác Nhận Mã OTP</span>
         )}
       </button>
 
       <div className="pt-5 border-t border-[#f1f3f5] text-center">
         <p className="text-[13px] text-[#6c757d]">
-          Didn't receive the code?{' '}
+          Chưa nhận được mã?{' '}
           <button
             type="button"
             onClick={onResend}
             disabled={isLoading}
             className="font-semibold text-[#93000b] hover:text-[#7a0009] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Resend Code
+            Gửi Lại Mã
           </button>
         </p>
       </div>

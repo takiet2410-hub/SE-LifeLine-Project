@@ -54,34 +54,59 @@ export const RoleManagementPage: React.FC = () => {
     try {
       setSaving(true);
       await adminApi.updateRolePermissions(selectedRole.id, selectedPermissions);
-      toast.success(`Updated permission matrix for ${selectedRole.name}`);
+      toast.success(`Đã cập nhật thiết lập quyền hạn cho ${translateRoleName(selectedRole.name)}`);
       fetchRoles();
     } catch {
-      toast.error('Failed to update role permissions');
+      toast.error('Không thể cập nhật thiết lập quyền hạn');
     } finally {
       setSaving(false);
     }
   };
 
   const permissionCategories = [
-    { name: 'Campaign Management', prefix: 'campaign:' },
-    { name: 'Blood Inventory', prefix: 'inventory:' },
-    { name: 'SOS Emergency System', prefix: 'sos:' },
-    { name: 'Content & Articles', prefix: 'content:' },
-    { name: 'Notification Administration', prefix: 'notifications:' },
-    { name: 'System & Security', prefix: 'system:' },
-    { name: 'User Management', prefix: 'users:' },
-    { name: 'Role Management', prefix: 'roles:' },
+    { name: 'Quản Lý Chiến Dịch', prefix: 'campaign:' },
+    { name: 'Quản Lý Kho Máu', prefix: 'inventory:' },
+    { name: 'Hệ Thống Cấp Cứu SOS', prefix: 'sos:' },
+    { name: 'Bài Viết & Tin Tức', prefix: 'content:' },
+    { name: 'Quản Trị Thông Báo', prefix: 'notifications:' },
+    { name: 'Hệ Thống & Bảo Mật', prefix: 'system:' },
+    { name: 'Quản Lý Người Dùng', prefix: 'users:' },
+    { name: 'Vai Trò & Phân Quyền', prefix: 'roles:' },
   ];
+
+  const translateRoleName = (roleName: string) => {
+    switch (roleName) {
+      case 'Administrator': return 'Quản trị viên Hệ thống (Administrator)';
+      case 'BloodCenterStaff': return 'Cán bộ Trung tâm Máu (Blood Center Staff)';
+      case 'HospitalStaff': return 'Cán bộ Bệnh viện (Hospital Staff)';
+      case 'Donor': return 'Người hiến máu tình nguyện (Donor)';
+      default: return roleName;
+    }
+  };
+
+  const translateRoleDescription = (roleName: string, defaultDesc: string) => {
+    switch (roleName) {
+      case 'Administrator':
+        return 'Toàn quyền quản trị tài khoản người dùng, thiết lập phân quyền vai trò, cấu hình hệ thống và giám sát nhật ký kiểm toán.';
+      case 'BloodCenterStaff':
+        return 'Quản lý các chiến dịch hiến máu, tiếp nhận người hiến và giám sát kho lưu trữ bảo quản túi máu.';
+      case 'HospitalStaff':
+        return 'Tạo và theo dõi các yêu cầu cung cấp máu khẩn cấp SOS phục vụ công tác điều trị và cấp cứu.';
+      case 'Donor':
+        return 'Tài khoản tiêu chuẩn phục vụ tra cứu điểm hiến, đăng ký lịch hẹn và tiếp nhận thông báo khẩn cấp SOS.';
+      default:
+        return defaultDesc;
+    }
+  };
 
   return (
     <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side: System Roles List */}
         <div className="bg-white p-5 rounded-2xl border border-[#f1f3f5] shadow-xs space-y-3">
-          <h2 className="font-bold text-[#271816] text-base mb-2">System Roles</h2>
+          <h2 className="font-bold text-[#271816] text-base mb-2">Vai Trò Hệ Thống</h2>
           {loading ? (
-            <div className="text-xs text-slate-400 p-4">Loading system roles...</div>
+            <div className="text-xs text-slate-400 p-4">Đang tải danh sách vai trò...</div>
           ) : (
             roles.map((r) => {
               const isSelected = selectedRole?.id === r.id;
@@ -98,13 +123,12 @@ export const RoleManagementPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Shield className={`w-4 h-4 ${isSelected ? 'text-[#93000b]' : 'text-slate-400'}`} />
-                      <span className="font-bold text-sm text-[#271816]">{r.name}</span>
+                      <span className="font-bold text-sm text-[#271816]">{translateRoleName(r.name)}</span>
                     </div>
                     <span className="text-xs font-bold px-2 py-0.5 bg-slate-100 text-[#271816] rounded-full">
-                      {r.userCount} users
+                      {r.userCount} người dùng
                     </span>
                   </div>
-                  <p className="text-xs text-[#5b403d] font-medium mt-1 leading-snug">{r.description}</p>
                 </div>
               );
             })
@@ -119,15 +143,17 @@ export const RoleManagementPage: React.FC = () => {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-lg font-bold text-[#271816]">
-                      Permissions for: {selectedRole.name}
+                      Thiết lập quyền hạn: {translateRoleName(selectedRole.name)}
                     </h2>
                     {selectedRole.isSystemProtected && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 text-xs font-bold rounded-full border border-purple-200">
-                        <Lock className="w-3 h-3" /> System Protected
+                        <Lock className="w-3 h-3" /> Vai trò lõi hệ thống
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-[#5b403d] font-medium mt-0.5">{selectedRole.description}</p>
+                  <p className="text-xs text-[#5b403d] font-medium mt-0.5">
+                    {translateRoleDescription(selectedRole.name, selectedRole.description)}
+                  </p>
                 </div>
                 <button
                   onClick={handleSavePermissions}
@@ -135,7 +161,7 @@ export const RoleManagementPage: React.FC = () => {
                   className="flex w-full sm:w-auto shrink-0 items-center justify-center gap-2 px-4 py-2 bg-[#93000b] hover:bg-[#780009] text-white font-semibold text-sm rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
-                  {saving ? 'Saving...' : 'Save Matrix'}
+                  {saving ? 'Đang lưu...' : 'Lưu thiết lập quyền'}
                 </button>
               </div>
 
@@ -182,7 +208,7 @@ export const RoleManagementPage: React.FC = () => {
               </div>
             </>
           ) : (
-            <div className="text-center py-12 text-slate-400">Select a role to view permission matrix</div>
+            <div className="text-center py-12 text-slate-400">Chọn một vai trò để xem và thiết lập danh sách quyền hạn chi tiết</div>
           )}
         </div>
       </div>

@@ -250,7 +250,7 @@ export const Step2_HealthForm: React.FC = () => {
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="radio" checked={answers.s3 === 'other'} onChange={() => setRadio('s3', 'other')} className="w-5 h-5 accent-[#3B82F6]" />
-              <span className="text-[#271816] font-inter text-base font-medium leading-6">Bệnh khác (Other)</span>
+              <span className="text-[#271816] font-inter text-base font-medium leading-6">Bệnh khác</span>
             </label>
           </div>
           {answers.s3 === 'other' && (
@@ -283,7 +283,7 @@ export const Step2_HealthForm: React.FC = () => {
             </label>
             <label className="flex p-3 items-center gap-3 rounded-lg border border-[#F1F3F5] w-full cursor-pointer hover:bg-blue-50/50">
               <input type="checkbox" checked={answers.s4?.includes('none')} onChange={() => toggleCheckbox('s4', 'none', true)} className="w-5 h-5 accent-[#3B82F6]" />
-              <span className="text-[#271816] font-inter text-sm font-bold leading-5">Không có yếu tố nào ở trên (None)</span>
+              <span className="text-[#271816] font-inter text-sm font-bold leading-5">Không có yếu tố nào ở trên</span>
             </label>
           </div>
           <div className="flex flex-col items-start gap-1 w-full mt-2">
@@ -321,7 +321,7 @@ export const Step2_HealthForm: React.FC = () => {
           ))}
           <label className="flex items-center gap-3 cursor-pointer mt-2 col-span-full">
             <input type="checkbox" checked={answers.s5?.includes('none')} onChange={() => toggleCheckbox('s5', 'none', true)} className="w-5 h-5 accent-[#3B82F6]" />
-            <span className="text-[#271816] font-inter text-sm font-bold leading-5">Không có yếu tố nào ở trên (None)</span>
+            <span className="text-[#271816] font-inter text-sm font-bold leading-5">Không có yếu tố nào ở trên</span>
           </label>
         </div>
       </div>
@@ -345,7 +345,7 @@ export const Step2_HealthForm: React.FC = () => {
           </label>
           <label className="flex items-center gap-3 cursor-pointer mt-2 col-span-full">
             <input type="checkbox" checked={answers.s6?.includes('none')} onChange={() => toggleCheckbox('s6', 'none', true)} className="w-5 h-5 accent-[#3B82F6]" />
-            <span className="text-[#271816] font-inter text-sm font-bold leading-5">Không có yếu tố nào ở trên (None)</span>
+            <span className="text-[#271816] font-inter text-sm font-bold leading-5">Không có yếu tố nào ở trên</span>
           </label>
         </div>
       </div>
@@ -362,11 +362,11 @@ export const Step2_HealthForm: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={answers.s7?.includes('flu')} onChange={() => toggleCheckbox('s7', 'flu')} className="w-5 h-5 accent-[#3B82F6]" />
-              <span className="text-[#271816] font-inter text-sm leading-5">Had flu, cold, cough, headache, fever, sore throat?</span>
+              <span className="text-[#271816] font-inter text-sm leading-5">Có triệu chứng cảm cúm, sốt, ho, đau đầu, đau họng, chảy mũi</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={answers.s7?.includes('none')} onChange={() => toggleCheckbox('s7', 'none', true)} className="w-5 h-5 accent-[#3B82F6]" />
-              <span className="text-[#271816] font-inter text-sm font-bold leading-5">Không có triệu chứng trên (None)</span>
+              <span className="text-[#271816] font-inter text-sm font-bold leading-5">Không có triệu chứng trên</span>
             </label>
           </div>
           <div className="flex flex-col items-start gap-2 w-full mt-2">
@@ -397,7 +397,7 @@ export const Step2_HealthForm: React.FC = () => {
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={answers.s8?.includes('none')} onChange={() => toggleCheckbox('s8', 'none', true)} className="w-5 h-5 accent-[#3B82F6]" />
-              <span className="text-[#271816] font-inter text-sm font-bold leading-5">Không dùng thuốc nào (None)</span>
+              <span className="text-[#271816] font-inter text-sm font-bold leading-5">Không dùng thuốc nào</span>
             </label>
           </div>
           <div className="flex flex-col items-start gap-2 w-full mt-2">

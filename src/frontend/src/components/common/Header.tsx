@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Globe, Menu, ShieldCheck, AlertTriangle, Calendar, Megaphone } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { Bell, Menu, ShieldCheck, AlertTriangle, Calendar, Megaphone } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiService } from '../../services/apiClient';
@@ -13,7 +12,6 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
-  const { i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -122,30 +120,25 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
     }
   };
 
-  const toggleLanguage = () => {
-    const nextLang = i18n.language === 'vi' ? 'en' : 'vi';
-    i18n.changeLanguage(nextLang);
-  };
-
   const getPageMeta = () => {
     const path = location.pathname;
     if (path.includes('/admin/dashboard')) {
-      return { title: 'Admin Dashboard', subtitle: 'MONITOR SYSTEM METRICS, ACTIVE SESSIONS & DIAGNOSTICS' };
+      return { title: 'Tổng Quan Quản Trị', subtitle: 'THEO DÕI CHỈ SỐ HỆ THỐNG, PHIÊN HOẠT ĐỘNG & CHẨN ĐOÁN' };
     }
     if (path.includes('/admin/users')) {
-      return { title: 'User Account Management', subtitle: 'MANAGE ACCOUNTS, ROLES & DEACTIVATIONS' };
+      return { title: 'Quản Lý Người Dùng', subtitle: 'QUẢN LÝ TÀI KHOẢN, PHÂN QUYỀN & TRẠNG THÁI HOẠT ĐỘNG' };
     }
     if (path.includes('/admin/roles')) {
-      return { title: 'Roles & Permissions', subtitle: 'CONFIGURE RBAC PERMISSIONS AND SYSTEM ACCESS' };
+      return { title: 'Vai Trò & Phân Quyền', subtitle: 'CẤU HÌNH QUYỀN TRUY CẬP RBAC VÀ HỆ THỐNG' };
     }
     if (path.includes('/admin/logs')) {
-      return { title: 'Activity Logs & Audit', subtitle: 'MONITOR AUDIT TRAIL, SECURITY EVENTS & EXPORTS' };
+      return { title: 'Nhật Ký Hoạt Động & Kiểm Toán', subtitle: 'GIÁM SÁT NHẬT KÝ KIỂM TOÁN, SỰ KIỆN BẢO MẬT & XUẤT DỮ LIỆU' };
     }
     if (path.includes('/admin/config')) {
-      return { title: 'System Configuration', subtitle: 'MANAGE GLOBAL ELIGIBILITY RULES & OPERATIONAL CONSTANTS' };
+      return { title: 'Cấu Hình Hệ Thống', subtitle: 'QUẢN LÝ QUY TẮC ĐỦ ĐIỀU KIỆN & THAM SỐ VẬN HÀNH' };
     }
     if (path.includes('/admin/toggles')) {
-      return { title: 'Feature Toggles', subtitle: 'CONTROL SYSTEM FEATURE FLAGS & EXPERIMENTAL MODULES' };
+      return { title: 'Tính Năng Mở Rộng', subtitle: 'BẬT TẮT CÁC TÍNH NĂNG HỆ THỐNG VÀ MODULE THỬ NGHIỆM' };
     }
     // Blood Center Staff Routes (Tiếng Việt)
     if (path.includes('/campaigns/create')) {
@@ -196,10 +189,10 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
         >
           <Menu className="w-5 h-5" />
         </button>
-        <span className="sm:hidden truncate text-sm font-bold text-[#271816]">{pageMeta.title}</span>
+        <span className="sm:hidden truncate text-sm font-bold text-[#271816] uppercase">{pageMeta.title}</span>
         <div className="hidden sm:flex flex-col">
           <div className="flex items-center gap-2">
-            <h1 className="text-[20px] font-bold text-[#271816] leading-tight">
+            <h1 className="text-[18px] sm:text-[20px] font-extrabold text-[#271816] leading-tight uppercase tracking-tight">
               {pageMeta.title}
             </h1>
             <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border flex items-center gap-1 ${
@@ -210,27 +203,14 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
                 : 'text-[#93000b] bg-red-50 border-red-100'
             }`}>
               <ShieldCheck className={`w-3 h-3 ${isAdmin ? 'text-purple-700' : isHospital ? 'text-emerald-700' : 'text-[#93000b]'}`} />
-              {isAdmin ? 'System Admin' : isHospital ? 'Hospital Portal' : 'Cổng Nhân Viên'}
+              {isAdmin ? 'Quản Trị Hệ Thống' : isHospital ? 'Cổng Bệnh Viện' : 'Cổng Nhân Viên'}
             </span>
           </div>
-          <p className="text-[11px] font-semibold text-[#6c757d] uppercase tracking-wider mt-0.5">
-            {pageMeta.subtitle}
-          </p>
         </div>
       </div>
 
       {/* Right Header Actions */}
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-3.5">
-        {/* Language Switcher */}
-        <button
-          onClick={toggleLanguage}
-          className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg text-[12px] sm:text-[13px] font-semibold text-[#5b403d] border border-[#f1f3f5] hover:bg-[#fff8f7] transition-colors cursor-pointer"
-          title="Switch Language"
-        >
-          <Globe className="w-3.5 h-3.5 text-[#93000b]" />
-          <span>{i18n.language.toUpperCase()}</span>
-        </button>
-
         {/* SOS Alert Bell & Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
@@ -249,19 +229,19 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
           {isDropdownOpen && (
             <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
               <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 className="font-bold text-gray-800 text-sm">Notifications</h3>
+                <h3 className="font-bold text-gray-800 text-sm">Thông Báo</h3>
                 {unreadCount > 0 && (
                   <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">
-                    {unreadCount} unread
+                    {unreadCount} chưa đọc
                   </span>
                 )}
               </div>
               
               <div className="max-h-[320px] overflow-y-auto">
                 {loadingNotifs ? (
-                  <div className="p-8 text-center text-gray-500 text-sm">Loading...</div>
+                  <div className="p-8 text-center text-gray-500 text-sm">Đang tải thông báo...</div>
                 ) : notifications.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500 text-sm">No new notifications</div>
+                  <div className="p-8 text-center text-gray-500 text-sm">Không có thông báo mới</div>
                 ) : (
                   <div className="flex flex-col">
                     {notifications.map((notif) => {
@@ -307,7 +287,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
                   }}
                   className="w-full py-2 text-center text-sm font-semibold text-[#93000b] hover:bg-red-50 rounded-lg transition-colors"
                 >
-                  View all notifications
+                  Xem tất cả thông báo
                 </button>
               </div>
             </div>
@@ -324,7 +304,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
               {userName}
             </span>
             <span className={`text-[10px] font-semibold uppercase tracking-wider ${isAdmin ? 'text-purple-600' : isHospital ? 'text-emerald-600' : 'text-[#93000b]'}`}>
-              {user?.role || (isAdmin ? 'Administrator' : isHospital ? 'HospitalStaff' : 'BloodCenterStaff')}
+              {isAdmin ? 'Quản Trị Viên' : isHospital ? 'Bác Sĩ Bệnh Viện' : 'Nhân Viên Trung Tâm Máu'}
             </span>
           </div>
         </div>

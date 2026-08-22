@@ -38,7 +38,7 @@ export const XPActivityLog: React.FC<XPActivityLogProps> = ({ userId, profileDat
   return (
     <div className="flex flex-col items-start rounded-xl border border-[#F1F3F5] bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full overflow-hidden min-h-[150px]">
       <div className="flex p-6 flex-col border-b border-[#F1F3F5] w-full">
-        <h2 className="text-[#271816] font-inter text-lg font-semibold leading-[25.2px]">XP Activity Log</h2>
+        <h2 className="text-[#271816] font-inter text-lg font-semibold leading-[25.2px]">Nhật Ký Tích Lũy Điểm Thưởng (XP)</h2>
       </div>
       
       <div className="flex flex-col items-start w-full">

@@ -15,7 +15,7 @@ export function VerifyEmailPage() {
   useEffect(() => {
     if (!token) {
       setState('error');
-      setMessage('Verification token is missing from the link.');
+      setMessage('Liên kết xác thực thiếu mã token.');
       return;
     }
 
@@ -26,15 +26,15 @@ export function VerifyEmailPage() {
 
     async function runVerification() {
       setState('verifying');
-      setMessage('Verifying your email address...');
+      setMessage('Đang xác thực địa chỉ email của bạn...');
 
       try {
         const response = await verifyEmail(token);
         setState('success');
-        setMessage(response.message ?? 'Your account has been activated. You can now sign in.');
+        setMessage(response.message ?? 'Tài khoản của bạn đã được kích hoạt thành công. Bây giờ bạn có thể đăng nhập.');
       } catch (error: any) {
         setState('error');
-        const backendMsg = error?.response?.data?.message || 'The verification link is invalid or has expired.';
+        const backendMsg = error?.response?.data?.message || 'Liên kết xác thực không hợp lệ hoặc đã hết hạn.';
         setMessage(backendMsg);
       }
     }
@@ -58,20 +58,20 @@ export function VerifyEmailPage() {
             <p className="text-[28px] font-bold leading-[36.4px] tracking-[-0.025em] text-[#93000B]">LifeLine</p>
           </div>
           <div className="flex flex-col items-center">
-            <p className="text-sm leading-[21px] tracking-[0.1em] text-[#6C757D]">EVERY DROP COUNTS</p>
+            <p className="text-sm leading-[21px] tracking-[0.1em] text-[#6C757D]">MỖI GIỌT MÁU TRIỆU TẤM LÒNG</p>
           </div>
         </div>
 
         <div className="flex w-full flex-col overflow-hidden rounded-xl border border-[#F1F3F5] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
           <div className="flex w-full flex-col items-start gap-6 p-5 sm:p-8">
             <div className="flex w-full flex-col items-center gap-2 text-center">
-              <p className="text-[22px] font-semibold leading-[28.6px] text-[#271816]">Verify your email</p>
-              <p className="text-sm leading-6 text-[#6C757D]">We are checking the activation link from your inbox.</p>
+              <p className="text-[22px] font-semibold leading-[28.6px] text-[#271816]">Xác thực tài khoản Email</p>
+              <p className="text-sm leading-6 text-[#6C757D]">Hệ thống đang kiểm tra liên kết kích hoạt từ hộp thư của bạn.</p>
             </div>
 
             <div className="w-full rounded-lg border border-[#DEE2E6] bg-[#F8F9FA] px-4 py-3">
               <p className={`text-sm leading-6 ${state === 'error' ? 'text-[#BA1A1A]' : state === 'success' ? 'text-[#1F7A3D]' : 'text-[#343A40]'}`}>
-                {message || 'Waiting for verification token...'}
+                {message || 'Đang chờ mã xác thực...'}
               </p>
             </div>
 
@@ -80,7 +80,7 @@ export function VerifyEmailPage() {
                 to={state === 'success' ? '/login' : '/register'}
                 className="flex h-12 w-full items-center justify-center rounded-lg bg-[#93000B] text-sm font-semibold leading-[14px] text-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10),0_2px_4px_-2px_rgba(0,0,0,0.10)]"
               >
-                {state === 'success' ? 'Continue to sign in' : 'Back to registration'}
+                {state === 'success' ? 'Tiếp tục đăng nhập' : 'Quay lại đăng ký'}
               </Link>
             </div>
           </div>

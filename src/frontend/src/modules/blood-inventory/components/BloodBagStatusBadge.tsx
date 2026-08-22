@@ -24,6 +24,23 @@ export const BloodBagStatusBadge: React.FC<Props> = ({ status, className = '' })
     }
   };
 
+  const getStatusLabel = (st: BagStatus) => {
+    switch (st) {
+      case 'Available':
+        return 'Khả dụng';
+      case 'Reserved':
+        return 'Đã đặt trước';
+      case 'Used':
+        return 'Đã sử dụng';
+      case 'Expired':
+        return 'Đã hết hạn';
+      case 'Discarded':
+        return 'Đã hủy';
+      default:
+        return st;
+    }
+  };
+
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border ring-1 ring-inset ${getBadgeStyle(
@@ -41,7 +58,7 @@ export const BloodBagStatusBadge: React.FC<Props> = ({ status, className = '' })
             : 'bg-slate-400'
         }`}
       />
-      {status}
+      {getStatusLabel(status)}
     </span>
   );
 };

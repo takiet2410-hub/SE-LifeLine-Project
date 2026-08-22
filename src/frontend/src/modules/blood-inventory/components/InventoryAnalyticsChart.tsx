@@ -48,33 +48,33 @@ export const InventoryAnalyticsChart: React.FC<Props> = ({ data }) => {
       <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div>
-            <h3 className="font-semibold text-slate-900 text-base">Inventory Analytics</h3>
-            <p className="text-xs text-slate-500">Distribution by blood group</p>
+            <h3 className="font-semibold text-slate-900 text-base">Phân Tích Kho Máu</h3>
+            <p className="text-xs text-slate-500">Phân bổ theo nhóm máu</p>
           </div>
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg self-start sm:self-auto">
             <button
               onClick={() => setChartMode('units')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                chartMode === 'units' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
+                chartMode === 'units' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Units
+              Số túi
             </button>
             <button
               onClick={() => setChartMode('volume')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                chartMode === 'volume' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
+                chartMode === 'volume' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Volume (ml)
+              Thể tích (ml)
             </button>
             <button
               onClick={() => setChartMode('nearExpiry')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                chartMode === 'nearExpiry' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
+                chartMode === 'nearExpiry' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Near Expiry
+              Cận hạn
             </button>
           </div>
         </div>
@@ -97,8 +97,8 @@ export const InventoryAnalyticsChart: React.FC<Props> = ({ data }) => {
       {/* Donut Chart Section */}
       <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col justify-between">
         <div>
-          <h3 className="font-semibold text-slate-900 text-base mb-1">Type Ratio</h3>
-          <p className="text-xs text-slate-500">Blood group percentage</p>
+          <h3 className="font-semibold text-slate-900 text-base mb-1">Tỷ Lệ Nhóm Máu</h3>
+          <p className="text-xs text-slate-500">Tỷ lệ phần trăm theo nhóm máu</p>
         </div>
 
         <div className="h-56 w-full relative my-2">

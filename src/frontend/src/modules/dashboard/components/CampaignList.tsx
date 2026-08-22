@@ -74,7 +74,7 @@ export const CampaignList: React.FC = () => {
                   {camp.name}
                 </h3>
                 <span className="px-2 py-0.5 bg-[#f1f3f5] text-[#495057] text-[11px] font-bold rounded">
-                  Còn {Math.max(0, (camp.capacity || 0) - (camp.registeredCount || 0))} slots
+                  Còn {Math.max(0, (camp.capacity || 0) - (camp.registeredCount || 0))} chỗ
                 </span>
               </div>
               

@@ -33,7 +33,7 @@ export const ScheduleLayout: React.FC = () => {
                 <span className={`text-[12px] font-semibold ${
                   isActive || isCompleted ? 'text-[#271816]' : 'text-[#a3a3a3]'
                 }`}>
-                  {step === 1 ? 'Location & Time' : step === 2 ? 'Health Screen' : 'Summary'}
+                  {step === 1 ? 'Địa điểm & Thời gian' : step === 2 ? 'Khảo sát sức khỏe' : 'Xác nhận thông tin'}
                 </span>
               </div>
             );

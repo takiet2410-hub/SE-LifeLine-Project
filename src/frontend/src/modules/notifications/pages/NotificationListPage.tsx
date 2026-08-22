@@ -169,19 +169,25 @@ export const NotificationListPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5 overflow-x-auto">
             <span className="text-[12px] font-semibold text-[#6c757d] shrink-0 mr-1">Loại:</span>
-            {['All', 'SOS', 'Campaign', 'Routine', 'Appointment'].map((type) => (
+            {[
+              { id: 'All', label: 'Tất cả' },
+              { id: 'SOS', label: '🚨 Cấp cứu (SOS)' },
+              { id: 'Campaign', label: 'Chiến dịch' },
+              { id: 'Routine', label: 'Định kỳ' },
+              { id: 'Appointment', label: 'Lịch hẹn' },
+            ].map(({ id, label }) => (
               <button
-                key={type}
-                onClick={() => { setTypeFilter(type); setPage(1); }}
+                key={id}
+                onClick={() => { setTypeFilter(id); setPage(1); }}
                 className={`h-9 px-3.5 text-[12px] font-bold rounded-xl transition-all shrink-0 cursor-pointer flex items-center justify-center ${
-                  typeFilter === type
-                    ? type === 'SOS'
+                  typeFilter === id
+                    ? id === 'SOS'
                       ? 'bg-[#93000b] text-white shadow-2xs'
                       : 'bg-[#1a1a2e] text-white shadow-2xs'
                     : 'bg-white text-[#5b403d] border border-[#f1f3f5] hover:bg-slate-50'
                 }`}
               >
-                {type === 'All' ? 'Tất cả' : type === 'SOS' ? '🚨 Cấp cứu (SOS)' : type}
+                {label}
               </button>
             ))}
           </div>
@@ -254,6 +260,16 @@ export const NotificationListPage: React.FC = () => {
                 bodyLower.includes('cảm ơn trung tâm máu') ||
                 bodyLower.includes('hoàn tất');
 
+              const getTypeBadgeLabel = (type: string) => {
+                switch (type) {
+                  case 'SOS': return '🚨 SOS';
+                  case 'Campaign': return 'Chiến dịch';
+                  case 'Routine': return 'Định kỳ';
+                  case 'Appointment': return 'Lịch hẹn';
+                  default: return type;
+                }
+              };
+
               return (
                 <div
                   key={item._id}
@@ -309,7 +325,7 @@ export const NotificationListPage: React.FC = () => {
                                 : 'bg-blue-50 text-blue-700 border border-blue-100'
                             }`}
                           >
-                            {isSOS ? '🚨 SOS' : item.type}
+                            {getTypeBadgeLabel(item.type)}
                           </span>
                         </div>
 
@@ -323,9 +339,9 @@ export const NotificationListPage: React.FC = () => {
                         </p>
 
                         <div className="flex items-center gap-4 text-[11px] text-[#6c757d] pt-0.5">
-                          <span className="flex items-center gap-1 font-semibold text-[#271816] truncate max-w-[200px]" title={item.senderName || 'System'}>
+                          <span className="flex items-center gap-1 font-semibold text-[#271816] truncate max-w-[200px]" title={item.senderName || 'Hệ thống'}>
                             <Hospital className="w-3.5 h-3.5 text-[#93000b] shrink-0" />
-                            <span className="truncate">{item.senderName || 'System'}</span>
+                            <span className="truncate">{item.senderName || 'Hệ thống'}</span>
                           </span>
                           <span className="flex items-center gap-1 shrink-0">
                             <Clock className="w-3.5 h-3.5 text-[#6c757d]" />

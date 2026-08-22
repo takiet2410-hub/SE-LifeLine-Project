@@ -263,18 +263,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 type="button"
                 key={opt.id}
                 onClick={() => handleRoleSelect(opt.id)}
-                className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1 cursor-pointer select-none ${isSelected
+                className={`py-3 px-3 rounded-xl border text-left transition-all flex items-center gap-2 cursor-pointer select-none ${isSelected
                   ? `${opt.activeBg} shadow-xs scale-[1.01]`
                   : 'bg-[#fafafa] border-[#f1f3f5] text-[#271816] hover:bg-slate-50 hover:border-slate-200'
                   }`}
               >
-                <div className="flex items-center gap-2">
-                  <IconComponent className={`w-4 h-4 shrink-0 ${isSelected ? 'text-white' : 'text-[#93000b]'}`} />
-                  <span className="text-[13px] font-bold truncate">{opt.label}</span>
-                </div>
-                <span className={`text-[10px] truncate ${isSelected ? 'text-white/80' : 'text-[#6c757d]'}`}>
-                  {opt.description}
-                </span>
+                <IconComponent className={`w-4 h-4 shrink-0 ${isSelected ? 'text-white' : 'text-[#93000b]'}`} />
+                <span className="text-[13px] font-bold truncate">{opt.label}</span>
               </button>
             );
           })}

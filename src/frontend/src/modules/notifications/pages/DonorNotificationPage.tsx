@@ -99,14 +99,14 @@ export const DonorNotificationPage: React.FC = () => {
         <div className="p-4 border-b border-[#f1f3f5]">
           <h2 className="text-[20px] font-bold text-[#271816] flex items-center gap-2">
             <Bell className="w-5 h-5 text-[#93000b]" />
-            Notification Center
+            Trung tâm thông báo
           </h2>
           <div className="mt-4 flex gap-2">
             <div className="relative flex-1">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6c757d]" />
               <input
                 type="text"
-                placeholder="Search notifications..."
+                placeholder="Tìm kiếm thông báo..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-[#f8f9fa] border border-[#f1f3f5] rounded-xl text-[13px] focus:outline-none focus:border-[#93000b]"
@@ -114,15 +114,19 @@ export const DonorNotificationPage: React.FC = () => {
             </div>
 
           <div className="flex bg-[#f8f9fa] p-1 rounded-xl border border-[#f1f3f5]">
-              {['All', 'Alerts', 'Updates'].map((f) => (
+              {[
+                { id: 'All', label: 'Tất cả' },
+                { id: 'Alerts', label: 'Cảnh báo' },
+                { id: 'Updates', label: 'Cập nhật' },
+              ].map(({ id, label }) => (
                 <button
-                  key={f}
-                  onClick={() => setFilter(f as any)}
-                  className={`px-4 py-1.5 text-[13px] font-medium rounded-lg transition-colors ${
-                    filter === f ? 'bg-white text-[#271816] shadow-sm' : 'text-[#6c757d] hover:text-[#271816]'
+                  key={id}
+                  onClick={() => setFilter(id as any)}
+                  className={`px-4 py-1.5 text-[13px] font-medium rounded-lg transition-colors cursor-pointer ${
+                    filter === id ? 'bg-white text-[#271816] shadow-sm font-semibold' : 'text-[#6c757d] hover:text-[#271816]'
                   }`}
                 >
-                  {f}
+                  {label}
                 </button>
               ))}
             </div>
@@ -131,9 +135,9 @@ export const DonorNotificationPage: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {loading ? (
-            <div className="text-center py-10 text-[#6c757d]">Loading notifications...</div>
+            <div className="text-center py-10 text-[#6c757d]">Đang tải thông báo...</div>
           ) : filteredNotifications.length === 0 ? (
-            <div className="text-center py-10 text-[#6c757d]">No notifications found.</div>
+            <div className="text-center py-10 text-[#6c757d]">Không tìm thấy thông báo nào.</div>
           ) : (
             filteredNotifications.map((notif) => {
               const isSOS = notif.type === 'SOS';

@@ -10,30 +10,30 @@ interface Props {
 export const InventorySummaryCards: React.FC<Props> = ({ summary, isLoading = false }) => {
   const cards = [
     {
-      title: 'Total Blood Bags',
+      title: 'Tổng số túi máu',
       value: summary ? summary.totalBags : 0,
-      subText: summary ? `${summary.totalVolumeMl.toLocaleString()} ml total volume` : '0 ml',
+      subText: summary ? `Tổng ${summary.totalVolumeMl.toLocaleString()} ml thể tích` : '0 ml',
       icon: Database,
       bgColor: 'bg-red-50 text-red-600',
     },
     {
-      title: 'Available Stock',
+      title: 'Tồn kho khả dụng',
       value: summary ? summary.availableBags : 0,
-      subText: 'Ready for allocation',
+      subText: 'Sẵn sàng cấp phát',
       icon: Activity,
       bgColor: 'bg-emerald-50 text-emerald-600',
     },
     {
-      title: 'Near Expiry (≤7 days)',
+      title: 'Sắp hết hạn (≤7 ngày)',
       value: summary ? summary.nearExpiryCount : 0,
-      subText: summary && summary.nearExpiryCount > 0 ? 'Requires FEFO dispatch' : 'No urgent expiry',
+      subText: summary && summary.nearExpiryCount > 0 ? 'Cần ưu tiên xuất kho FEFO' : 'Không có túi cận hạn',
       icon: AlertTriangle,
       bgColor: summary && summary.nearExpiryCount > 0 ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-500',
     },
     {
-      title: 'Low Stock Types',
+      title: 'Nhóm máu thiếu hụt',
       value: summary ? summary.lowStockTypesCount : 0,
-      subText: summary && summary.lowStockTypesCount > 0 ? 'Below minimum threshold' : 'Stock level normal',
+      subText: summary && summary.lowStockTypesCount > 0 ? 'Dưới ngưỡng dự trữ an toàn' : 'Mức dự trữ ổn định',
       icon: ShieldAlert,
       bgColor: summary && summary.lowStockTypesCount > 0 ? 'bg-rose-50 text-rose-600' : 'bg-slate-50 text-slate-500',
     },

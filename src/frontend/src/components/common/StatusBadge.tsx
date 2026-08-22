@@ -43,7 +43,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label }) => {
     Registered: 'Đã đăng ký',
     CheckedIn: 'Đã check-in',
     Eligible: 'Đủ điều kiện',
-    Examining: 'Đang xét nghiệm',
+    Examining: 'Đang xét nghiệm máu',
     Ineligible: 'Không đủ điều kiện',
     Published: 'Đã xuất bản',
     Unpublished: 'Chưa xuất bản',

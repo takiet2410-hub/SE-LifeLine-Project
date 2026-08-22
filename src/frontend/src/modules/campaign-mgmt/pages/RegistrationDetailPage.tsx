@@ -164,8 +164,8 @@ export const RegistrationDetailPage: React.FC = () => {
     if (!registrationId || !registration) return;
 
     if (['CheckedIn', 'Examining', 'Eligible', 'Completed'].includes(newStatus)) {
-      if (campaign && campaign.status !== 'Active') {
-        toast.error('Chiến dịch chưa mở, chưa thể điểm danh.');
+      if (campaign && campaign.status !== 'Active' && campaign.status !== 'Completed') {
+        toast.error('Chiến dịch chưa diễn ra (chưa mở).');
         setConfirmStatusModal({ isOpen: false, targetStatus: null });
         return;
       }
@@ -313,7 +313,7 @@ export const RegistrationDetailPage: React.FC = () => {
   const codeId = registration._id ? `#REG-${registration._id.slice(-6).toUpperCase()}` : '#REG-8821';
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6">
       {/* Navigation & Header Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-4 sm:p-5 rounded-2xl shadow-2xs">
         <div className="flex items-center gap-3 min-w-0">
@@ -365,16 +365,16 @@ export const RegistrationDetailPage: React.FC = () => {
           {registration.status === 'Confirmed' && (
             <button
               type="button"
-              disabled={campaign ? campaign.status !== 'Active' : false}
+              disabled={campaign ? (campaign.status !== 'Active' && campaign.status !== 'Completed') : false}
               onClick={() => {
-                if (campaign && campaign.status !== 'Active') {
-                  toast.error('Chiến dịch chưa mở, chưa thể điểm danh.');
+                if (campaign && campaign.status !== 'Active' && campaign.status !== 'Completed') {
+                  toast.error('Chiến dịch chưa diễn ra (chưa mở).');
                   return;
                 }
                 setConfirmStatusModal({ isOpen: true, targetStatus: 'CheckedIn' });
               }}
               className={`h-10 px-4 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all whitespace-nowrap ${
-                campaign && campaign.status !== 'Active'
+                campaign && campaign.status !== 'Active' && campaign.status !== 'Completed'
                   ? 'bg-amber-600 opacity-40 cursor-not-allowed'
                   : 'bg-amber-600 hover:bg-amber-700 cursor-pointer'
               }`}

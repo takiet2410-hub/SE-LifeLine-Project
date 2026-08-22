@@ -51,16 +51,22 @@ export const MyAppointmentPage: React.FC = () => {
     try {
       const res = await fetchAppointments();
       if (res.success && res.data) {
-        setAppointments(res.data);
-        // Default select first item if not set
-        if (!selectedId) {
-          const upcomings = res.data.filter(a => a.status === 'upcoming' || a.status === 'pending');
-          if (upcomings.length > 0) {
-            setSelectedId(upcomings[0].id);
-          } else if (res.data.length > 0) {
-            setSelectedId(res.data[0].id);
+        const appointmentList: Appointment[] = res.data;
+        setAppointments(appointmentList);
+        // Preserve current selectedId if it still exists in the refreshed data;
+        // only select default item if nothing was selected or the selected item is no longer available
+        setSelectedId(prev => {
+          if (prev && appointmentList.some((a: Appointment) => a.id === prev)) {
+            return prev;
           }
-        }
+          const upcomings = appointmentList.filter((a: Appointment) => a.status === 'upcoming' || a.status === 'pending');
+          if (upcomings.length > 0) {
+            return upcomings[0].id;
+          } else if (appointmentList.length > 0) {
+            return appointmentList[0].id;
+          }
+          return null;
+        });
       } else {
         if (showLoading) setError(res.message || 'Failed to load appointments');
       }
@@ -76,16 +82,20 @@ export const MyAppointmentPage: React.FC = () => {
     : appointments.filter(apt => apt.status === activeTab);
   const selectedAppointment = appointments.find(apt => apt.id === selectedId);
 
-  // When tab changes, try to auto-select the first item in the new tab
-  useEffect(() => {
-    if (filteredAppointments.length > 0) {
-      if (!filteredAppointments.some(a => a.id === selectedId)) {
-        setSelectedId(filteredAppointments[0].id);
+  // When tab changes, auto-select the first item in the new tab if current selection is not in this tab
+  const handleTabChange = (newTab: AppointmentStatus) => {
+    setActiveTab(newTab);
+    const newFiltered = newTab === 'all' 
+      ? appointments 
+      : appointments.filter(apt => apt.status === newTab);
+    if (newFiltered.length > 0) {
+      if (!newFiltered.some(a => a.id === selectedId)) {
+        setSelectedId(newFiltered[0].id);
       }
     } else {
       setSelectedId(null);
     }
-  }, [activeTab, filteredAppointments, selectedId]);
+  };
 
   // Cancel Flow
   const handleOpenCancelModal = (id: string) => {
@@ -226,7 +236,7 @@ export const MyAppointmentPage: React.FC = () => {
 
   return (
     <div className="flex min-h-full flex-col relative p-3 sm:p-5 md:p-8 max-w-[1400px] mx-auto w-full">
-      <AppointmentTabs activeTab={activeTab} onChangeTab={setActiveTab} />
+      <AppointmentTabs activeTab={activeTab} onChangeTab={handleTabChange} />
 
       {/* Main Content: Master-Detail Layout or Full Schedule Empty State */}
       {!isLoading && appointments.length === 0 ? (

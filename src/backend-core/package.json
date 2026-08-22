@@ -25,6 +25,7 @@
     "bullmq": "^6.0.9",
     "cloudinary": "^2.10.0",
     "cookie-parser": "^1.4.7",
+    "dayjs": "^1.11.23",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "firebase-admin": "^14.2.0",

@@ -23,14 +23,14 @@ export const AppointmentListItem: React.FC<AppointmentListItemProps> = ({
   return (
     <div 
       onClick={() => onClick(appointment.id)}
-      className={`cursor-pointer border rounded-xl p-4 transition-all shadow-sm flex flex-col gap-3 ${
+      className={`cursor-pointer border rounded-xl p-3 sm:p-3.5 lg:p-4 transition-all shadow-2xs flex flex-col gap-2.5 ${
         isSelected 
-          ? 'bg-[#fff8f7] border-[#93000b] ring-1 ring-[#93000b]' 
-          : 'bg-white border-[#f1f3f5] hover:border-[#dee2e6] hover:shadow-md'
-      } ${isCancelled || isRejected || isNoShow ? 'opacity-75' : ''}`}
+          ? 'bg-[#fff8f7] border-[#93000b] ring-1.5 ring-[#93000b]/40 shadow-xs' 
+          : 'bg-white border-[#f1f3f5] hover:border-[#dee2e6] hover:shadow-xs'
+      } ${isCancelled || isRejected || isNoShow ? 'opacity-80 bg-gray-50/50' : ''}`}
     >
       <div className="flex justify-between items-start gap-2">
-        <h3 className={`text-[15px] font-bold line-clamp-1 flex-1 ${isSelected ? 'text-[#93000b]' : 'text-[#271816]'}`}>
+        <h3 className={`text-[13.5px] sm:text-[14.5px] font-bold line-clamp-1 flex-1 leading-snug ${isSelected ? 'text-[#93000b]' : 'text-[#271816]'}`}>
           {appointment.location.name}
         </h3>
         
@@ -63,27 +63,27 @@ export const AppointmentListItem: React.FC<AppointmentListItemProps> = ({
           )}
           {isNoShow && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 border border-red-200">
-              Vắng mặt / Quá hạn
+              Vắng mặt
             </span>
           )}
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
           <div className="flex items-center gap-1.5 text-[#271816]">
-            <CalendarDays className="w-3.5 h-3.5 text-[#93000b]" />
-            <span className="font-semibold text-[13px]">{appointment.date}</span>
+            <CalendarDays className="w-3.5 h-3.5 text-[#93000b] shrink-0" />
+            <span className="font-semibold text-[12.5px] sm:text-[13px]">{appointment.date}</span>
           </div>
           <div className="flex items-center gap-1.5 text-[#6c757d]">
-            <Clock className="w-3.5 h-3.5" />
-            <span className="text-[12px]">{appointment.time}</span>
+            <Clock className="w-3.5 h-3.5 shrink-0" />
+            <span className="text-[11.5px] sm:text-[12px]">{appointment.time}</span>
           </div>
         </div>
         
         <div className="flex items-start gap-1.5 text-[#6c757d]">
           <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-          <p className="text-[12px] line-clamp-1">
+          <p className="text-[11.5px] sm:text-[12px] line-clamp-1">
             {appointment.location.address || 'Điểm tiếp nhận hiến máu'}
           </p>
         </div>

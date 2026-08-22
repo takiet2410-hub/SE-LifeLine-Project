@@ -235,32 +235,44 @@ export const MyAppointmentPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-full flex-col relative p-3 sm:p-5 md:p-8 max-w-[1400px] mx-auto w-full">
+    <div className="flex min-h-full flex-col relative p-3 sm:p-5 lg:p-6 xl:p-8 max-w-[1400px] mx-auto w-full">
+      {/* Top Action & Subtitle Banner */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4 shrink-0">
+        <div>
+          <h2 className="text-[19px] sm:text-[22px] font-bold text-[#271816] tracking-tight">
+            Quản Lý Lịch Hẹn Hiến Máu
+          </h2>
+          <p className="text-[12px] sm:text-[13px] text-[#6c757d] mt-0.5">
+            Theo dõi trạng thái duyệt, xem thẻ hẹn E-Ticket QR và chứng nhận hiến máu của bạn
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center items-start gap-1.5 sm:gap-3 shrink-0">
+          <span className="text-[12.5px] sm:text-[13px] font-medium text-[#5b403d]">
+            Muốn đăng ký thêm đợt hiến mới hoặc địa điểm khác?
+          </span>
+          <button
+            onClick={() => navigate('/my-appointments/schedule')}
+            className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-semibold rounded-xl transition-all shadow-2xs active:scale-[0.98] cursor-pointer shrink-0 w-full sm:w-auto"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Đặt lịch hẹn mới</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Full-Width Dedicated Tabs Bar */}
       <AppointmentTabs 
         activeTab={activeTab} 
         onChangeTab={handleTabChange}
-        rightContent={
-          <div className="flex items-center gap-3">
-            <span className="text-[13px] font-medium text-[#5b403d] hidden xl:inline-block">
-              Muốn đăng ký thêm đợt hiến mới hoặc địa điểm khác?
-            </span>
-            <button
-              onClick={() => navigate('/my-appointments/schedule')}
-              className="flex items-center gap-2 px-5 py-2 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-semibold rounded-lg transition-all shadow-sm active:scale-[0.98] cursor-pointer shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Đặt lịch hẹn mới</span>
-            </button>
-          </div>
-        }
       />
 
       {/* Main Content: Master-Detail Layout or Full Schedule Empty State */}
       {!isLoading && appointments.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center py-12 px-6 bg-gradient-to-b from-[#fff8f7] via-white to-[#fdfbfb] border border-[#f1f3f5] rounded-3xl shadow-xs my-auto text-center">
-          <div className="w-20 h-20 bg-red-100/80 rounded-3xl flex items-center justify-center mb-6 shadow-inner relative group">
+        <div className="flex-1 flex flex-col items-center justify-center py-8 sm:py-12 px-4 sm:px-6 bg-gradient-to-b from-[#fff8f7] via-white to-[#fdfbfb] border border-[#f1f3f5] rounded-3xl shadow-xs my-auto text-center">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-100/80 rounded-3xl flex items-center justify-center mb-5 sm:mb-6 shadow-inner relative group">
             <div className="absolute inset-0 bg-red-400/20 rounded-3xl animate-ping opacity-60" />
-            <HeartHandshake className="w-10 h-10 text-[#93000b] relative z-10" />
+            <HeartHandshake className="w-8 h-8 sm:w-10 sm:h-10 text-[#93000b] relative z-10" />
           </div>
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-[#93000b] rounded-full text-[12px] font-bold mb-3 border border-red-100 shadow-2xs">
@@ -268,17 +280,17 @@ export const MyAppointmentPage: React.FC = () => {
             <span>Hành Trình Trao Giọt Máu Hồng</span>
           </div>
 
-          <h2 className="text-[26px] md:text-[30px] font-extrabold text-[#271816] tracking-tight max-w-xl mb-3">
+          <h2 className="text-[22px] sm:text-[26px] md:text-[30px] font-extrabold text-[#271816] tracking-tight max-w-xl mb-3">
             Bạn Chưa Có Lịch Hẹn Hiến Máu Nào
           </h2>
 
-          <p className="text-[14px] md:text-[15px] text-[#6c757d] text-center max-w-lg mb-8 leading-relaxed">
+          <p className="text-[13.5px] sm:text-[14px] md:text-[15px] text-[#6c757d] text-center max-w-lg mb-6 sm:mb-8 leading-relaxed">
             Mỗi giọt máu cho đi trao thêm cơ hội sống cho 3 người bệnh. Hãy đặt lịch hẹn ngay hôm nay để nhận thẻ E-Ticket QR đón tiếp ưu tiên và tích lũy huy hiệu người hiến máu!
           </p>
 
           <button
             onClick={() => navigate('/my-appointments/schedule')}
-            className="px-8 py-3.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[15px] font-bold rounded-2xl flex items-center gap-3 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+            className="px-6 sm:px-8 py-3 sm:py-3.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[14px] sm:text-[15px] font-bold rounded-2xl flex items-center gap-3 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
           >
             <CalendarPlus className="w-5 h-5 text-white" />
             <span>Đặt Lịch Hiến Máu Ngay</span>
@@ -286,43 +298,43 @@ export const MyAppointmentPage: React.FC = () => {
           </button>
 
           {/* Feature Highlights Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12 w-full max-w-3xl">
-            <div className="p-5 bg-white border border-[#f1f3f5] rounded-2xl flex flex-col items-center text-center shadow-2xs hover:shadow-xs transition-all">
-              <div className="p-3 bg-red-50 text-[#93000b] rounded-xl mb-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mt-8 sm:mt-10 lg:mt-12 w-full max-w-3xl">
+            <div className="p-4 sm:p-5 bg-white border border-[#f1f3f5] rounded-2xl flex flex-col items-center text-center shadow-2xs hover:shadow-xs transition-all">
+              <div className="p-2.5 sm:p-3 bg-red-50 text-[#93000b] rounded-xl mb-2.5 sm:mb-3">
                 <Clock className="w-5 h-5" />
               </div>
-              <h4 className="text-[14px] font-bold text-[#271816] mb-1">Đón Tiếp Ưu Tiên</h4>
-              <p className="text-[12px] text-[#6c757d] leading-relaxed">Điểm danh & sàng lọc nhanh bằng Thẻ Hẹn E-Ticket QR, tiết kiệm thời gian chờ đợi.</p>
+              <h4 className="text-[13.5px] sm:text-[14px] font-bold text-[#271816] mb-1">Đón Tiếp Ưu Tiên</h4>
+              <p className="text-[11.5px] sm:text-[12px] text-[#6c757d] leading-relaxed">Điểm danh & sàng lọc nhanh bằng Thẻ Hẹn E-Ticket QR, tiết kiệm thời gian chờ đợi.</p>
             </div>
 
-            <div className="p-5 bg-white border border-[#f1f3f5] rounded-2xl flex flex-col items-center text-center shadow-2xs hover:shadow-xs transition-all">
-              <div className="p-3 bg-red-50 text-[#93000b] rounded-xl mb-3">
+            <div className="p-4 sm:p-5 bg-white border border-[#f1f3f5] rounded-2xl flex flex-col items-center text-center shadow-2xs hover:shadow-xs transition-all">
+              <div className="p-2.5 sm:p-3 bg-red-50 text-[#93000b] rounded-xl mb-2.5 sm:mb-3">
                 <MapPin className="w-5 h-5" />
               </div>
-              <h4 className="text-[14px] font-bold text-[#271816] mb-1">Điểm Hiến Linh Hoạt</h4>
-              <p className="text-[12px] text-[#6c757d] leading-relaxed">Lựa chọn Bệnh viện Chợ Rẫy, Truyền Máu Huyết Học, Từ Dũ hoặc đợt lưu động gần bạn.</p>
+              <h4 className="text-[13.5px] sm:text-[14px] font-bold text-[#271816] mb-1">Điểm Hiến Linh Hoạt</h4>
+              <p className="text-[11.5px] sm:text-[12px] text-[#6c757d] leading-relaxed">Lựa chọn Bệnh viện Chợ Rẫy, Truyền Máu Huyết Học, Từ Dũ hoặc đợt lưu động gần bạn.</p>
             </div>
 
-            <div className="p-5 bg-white border border-[#f1f3f5] rounded-2xl flex flex-col items-center text-center shadow-2xs hover:shadow-xs transition-all">
-              <div className="p-3 bg-red-50 text-[#93000b] rounded-xl mb-3">
+            <div className="p-4 sm:p-5 bg-white border border-[#f1f3f5] rounded-2xl flex flex-col items-center text-center shadow-2xs hover:shadow-xs transition-all">
+              <div className="p-2.5 sm:p-3 bg-red-50 text-[#93000b] rounded-xl mb-2.5 sm:mb-3">
                 <Award className="w-5 h-5" />
               </div>
-              <h4 className="text-[14px] font-bold text-[#271816] mb-1">Tích Lũy Điểm & XP</h4>
-              <p className="text-[12px] text-[#6c757d] leading-relaxed">Theo dõi nhật ký hiến máu, nâng hạng level người hiến máu và mở khóa huy hiệu tôn vinh.</p>
+              <h4 className="text-[13.5px] sm:text-[14px] font-bold text-[#271816] mb-1">Tích Lũy Điểm & XP</h4>
+              <p className="text-[11.5px] sm:text-[12px] text-[#6c757d] leading-relaxed">Theo dõi nhật ký hiến máu, nâng hạng level người hiến máu và mở khóa huy hiệu tôn vinh.</p>
             </div>
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col md:flex-row gap-4 md:gap-6 md:overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row gap-4 lg:gap-6 min-h-0">
           {/* Left Column: List View */}
-          <div className="w-full md:w-[380px] shrink-0 flex flex-col gap-3 pb-6 md:pb-0 h-[calc(100vh-250px)] min-h-[500px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-300">
+          <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0 flex flex-col gap-3 pb-4 lg:pb-0 h-[400px] lg:h-[calc(100vh-210px)] overflow-y-auto pr-1 sm:pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-300">
             {isLoading ? (
               <div className="flex justify-center py-10">
                 <Loader2 className="w-8 h-8 text-[#93000b] animate-spin" />
               </div>
             ) : error ? (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <span className="text-[14px] font-medium text-[#93000b]">{error}</span>
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+                <span className="text-[13.5px] font-medium text-[#93000b]">{error}</span>
               </div>
             ) : filteredAppointments.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-white border border-[#f1f3f5] rounded-2xl shadow-2xs h-full">
@@ -338,7 +350,7 @@ export const MyAppointmentPage: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5 sm:space-y-3">
                 {filteredAppointments.map(apt => (
                   <AppointmentListItem
                     key={apt.id}
@@ -352,7 +364,7 @@ export const MyAppointmentPage: React.FC = () => {
           </div>
 
           {/* Right Column: Detail View */}
-          <div className="flex-1 min-w-0 bg-transparent flex flex-col pb-6 md:pb-0 h-[calc(100vh-250px)] min-h-[500px]">
+          <div className="flex-1 min-w-0 bg-transparent flex flex-col pb-4 lg:pb-0 h-auto lg:h-[calc(100vh-210px)] min-h-[460px]">
             {!isLoading && selectedAppointment ? (
               <AppointmentDetails 
                 appointment={selectedAppointment}
@@ -364,7 +376,7 @@ export const MyAppointmentPage: React.FC = () => {
                 isSyncing={isSyncing[selectedAppointment.id]}
               />
             ) : (
-              <div className="h-full border border-dashed border-[#dee2e6] rounded-xl flex flex-col items-center justify-center bg-white/50 text-[#a3a3a3] p-6 text-center">
+              <div className="h-full border border-dashed border-[#dee2e6] rounded-2xl flex flex-col items-center justify-center bg-white/50 text-[#a3a3a3] p-6 text-center">
                 <FileText className="w-12 h-12 mb-3 opacity-50 text-[#93000b]" />
                 <p className="text-[14px] font-semibold text-[#271816] mb-1">Chọn một lịch hẹn để xem chi tiết</p>
                 <p className="text-[12px] text-[#6c757d]">Thông tin địa điểm, mã vé E-Ticket và trạng thái xác nhận sẽ hiển thị tại đây.</p>

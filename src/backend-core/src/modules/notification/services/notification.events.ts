@@ -110,13 +110,13 @@ export class NotificationEventHandler {
       donorName,
     };
 
-    const render = (str: string) => str
+    const render = (str?: string) => String(str ?? '')
       .replace(/\{\{(\w+)\}\}/g, (_, key) => safePayload[key] ?? '')
       .replace(/\{\{(\w+)\.(\w+)\}\}/g, (_, obj, key) => safePayload[obj]?.[key] ?? '');
 
     return {
-      title: render(template.subject),
-      body: render(template.bodyText),
+      title: render(template?.subject),
+      body: render(template?.bodyText),
       payload: { ...safePayload, deepLink: safePayload.deepLink || this.generateDeepLink(safePayload) },
     };
   }

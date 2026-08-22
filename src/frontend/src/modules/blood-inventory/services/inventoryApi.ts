@@ -1,6 +1,5 @@
+import { apiClient } from '../../../shared/api/apiClient';
 import type { BloodBagItem, InventoryListResponse, InventoryStatisticsData, BagStatus } from '../types/inventory.types';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
 
 export const inventoryApi = {
   async getInventory(params?: {
@@ -12,53 +11,18 @@ export const inventoryApi = {
     startDate?: string;
     endDate?: string;
   }): Promise<InventoryListResponse> {
-    const query = new URLSearchParams();
-    if (params?.page) query.append('page', params.page.toString());
-    if (params?.limit) query.append('limit', params.limit.toString());
-    if (params?.search) query.append('search', params.search);
-    if (params?.bloodType) query.append('bloodType', params.bloodType);
-    if (params?.status) query.append('status', params.status);
-    if (params?.startDate) query.append('startDate', params.startDate);
-    if (params?.endDate) query.append('endDate', params.endDate);
-
-    const token = localStorage.getItem('accessToken');
-    const res = await fetch(`${API_BASE_URL}/bc/inventory?${query.toString()}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
-    });
-    if (!res.ok) throw new Error('Failed to fetch inventory');
-    const json = await res.json();
-    return json;
+    const res = await apiClient.get('/bc/inventory', { params });
+    return res.data;
   },
 
   async getBloodBagById(id: string): Promise<BloodBagItem | null> {
-    const token = localStorage.getItem('accessToken');
-    const res = await fetch(`${API_BASE_URL}/bc/inventory/${id}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
-    });
-    if (!res.ok) throw new Error('Failed to fetch blood bag details');
-    const json = await res.json();
-    return json.data;
+    const res = await apiClient.get(`/bc/inventory/${id}`);
+    return res.data?.data || res.data;
   },
 
   async updateStatus(id: string, status: BagStatus, reason?: string): Promise<BloodBagItem | null> {
-    const token = localStorage.getItem('accessToken');
-    const res = await fetch(`${API_BASE_URL}/bc/inventory/${id}/status`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({ status, reason })
-    });
-    if (!res.ok) throw new Error('Failed to update blood bag status');
-    const json = await res.json();
-    return json.data;
+    const res = await apiClient.put(`/bc/inventory/${id}/status`, { status, reason });
+    return res.data?.data || res.data;
   },
 
   async stockIn(entries: Array<{
@@ -68,47 +32,17 @@ export const inventoryApi = {
     expiryDate: string;
     storageLocation: string;
   }>): Promise<BloodBagItem[]> {
-    const token = localStorage.getItem('accessToken');
-    const res = await fetch(`${API_BASE_URL}/bc/inventory/stock-in`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({ entries })
-    });
-    if (!res.ok) throw new Error('Failed to stock in blood bags');
-    const json = await res.json();
-    return json.data;
+    const res = await apiClient.post('/bc/inventory/stock-in', { entries });
+    return res.data?.data || res.data;
   },
 
   async stockOut(bagIds: string[], reason: string, notes?: string): Promise<boolean> {
-    const token = localStorage.getItem('accessToken');
-    const res = await fetch(`${API_BASE_URL}/bc/inventory/stock-out`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({ bagIds, reason, notes })
-    });
-    if (!res.ok) throw new Error('Failed to stock out blood bags');
+    await apiClient.post('/bc/inventory/stock-out', { bagIds, reason, notes });
     return true;
   },
 
   async getStatistics(params?: { bloodCenterId?: string }): Promise<InventoryStatisticsData> {
-    const query = new URLSearchParams();
-    if (params?.bloodCenterId) query.append('bloodCenterId', params.bloodCenterId);
-
-    const token = localStorage.getItem('accessToken');
-    const res = await fetch(`${API_BASE_URL}/bc/inventory/statistics${query.toString() ? `?${query.toString()}` : ''}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
-    });
-    if (!res.ok) throw new Error('Failed to fetch inventory statistics');
-    const json = await res.json();
-    return json.data;
+    const res = await apiClient.get('/bc/inventory/statistics', { params });
+    return res.data?.data || res.data;
   }
 };

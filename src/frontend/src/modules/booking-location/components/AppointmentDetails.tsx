@@ -327,7 +327,7 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
           idDocumentNumber: donorProfileData?.personalInfo?.idDocumentNumber || (user as any)?.idDocumentNumber || '079099xxxxxx',
           dateOfBirth: donorProfileData?.personalInfo?.dateOfBirth || (user as any)?.dateOfBirth,
           bloodType: appointment.bloodType || donorProfileData?.personalInfo?.bloodType || donorProfileData?.profileInfo?.bloodType || 'O+',
-          volume: '350 ml',
+          volume: (appointment.donationVolume || (appointment as any)._raw?.donationVolume) ? `${appointment.donationVolume || (appointment as any)._raw?.donationVolume} ml` : '350 ml',
           donationDate: (appointment as any)._raw?.appointmentDate || appointment.date,
           locationName: appointment.location?.name || 'Trung tâm Hiến máu LifeLine',
           certificateNo: `CERT-${new Date().getFullYear()}-LL${(appointment.id || '').slice(-6).toUpperCase()}`

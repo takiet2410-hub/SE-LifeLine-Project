@@ -46,6 +46,7 @@ export interface BackendAppointment {
   campaignId: BackendCampaign | string;
   appointmentDate: string;
   timeSlot: string;
+  donationVolume?: number;
   status: BackendAppointmentStatus;
   screeningFormId?: string | { responses: Array<{ response: any }> };
   eTicketId?: BackendETicket | string;
@@ -66,6 +67,7 @@ export interface Appointment {
     address: string;
   };
   bloodType?: string;
+  donationVolume?: number;
   status: AppointmentStatus;
   healthSummary?: {
     bloodPressure?: string;
@@ -165,6 +167,8 @@ export const mapBackendAppointment = (raw: BackendAppointment): Appointment => {
       name: campaign?.name || 'Chiến dịch Hiến máu LifeLine',
       address: rawAny.address || (campaign as any)?.fullAddress || (campaign as any)?.venue || 'TP. Hồ Chí Minh',
     },
+    bloodType: rawAny.bloodType || rawAny.donorBloodType,
+    donationVolume: raw.donationVolume || rawAny.donationVolume || (rawAny.screeningFormId?.donationVolume),
     status: mapStatus(raw.status),
     qrCodeUrl,
     rejectionReason: notes,

@@ -218,11 +218,13 @@ export class RegistrationService {
         const campaignDoc = app.campaignId ? await Campaign.findById(app.campaignId) : null;
 
         const displayStatus: string = digitalRecord?.donationStatus || app.status;
+        const testResult = (app as any)?.testResult || (screeningForm as any)?.testResult || (digitalRecord as any)?.testResult || (displayStatus === 'Completed' ? 'Pass' : undefined);
 
         const screeningData = screeningForm ? {
           screeningFormId: screeningForm._id.toString(),
           responses: screeningForm.responses || [],
           outcome: screeningForm.outcome || 'PASS',
+          testResult: (screeningForm as any)?.testResult || testResult,
           submittedAt: (screeningForm as any).submittedAt,
           vitals: (screeningForm as any).vitals || (digitalRecord?.screeningSummary as any)?.staffVitals || null,
           screeningNotes: (screeningForm as any).screeningNotes || digitalRecord?.clinicalNotes || '',
@@ -247,6 +249,7 @@ export class RegistrationService {
           donorIdCard: idDocumentNumber,
           donorBloodType: bloodType,
           donorDob,
+          testResult: (screeningForm as any)?.testResult || testResult,
           donor: {
             donorId: app.donorId ? app.donorId.toString() : '',
             fullName,
@@ -397,6 +400,8 @@ export class RegistrationService {
       };
     });
 
+    const testResult = (appointment as any)?.testResult || (screeningForm as any)?.testResult || (digitalRecord as any)?.testResult || (displayStatus === 'Completed' ? 'Pass' : undefined);
+
     return {
       registrationId: appointment._id.toString(),
       campaignId: appointment.campaignId.toString(),
@@ -408,6 +413,7 @@ export class RegistrationService {
       donorIdCard: idDocumentNumber,
       donorBloodType: bloodType,
       donorDob: donorProfile?.dateOfBirth || '',
+      testResult: (screeningForm as any)?.testResult || testResult,
       donor: {
         donorId: appointment.donorId.toString(),
         fullName,
@@ -435,6 +441,7 @@ export class RegistrationService {
     registrationIdStr: string,
     payload: {
       bloodType?: string;
+      donorBloodType?: string;
       vitals?: {
         bloodPressure: string;
         weight: number;
@@ -586,6 +593,7 @@ export class RegistrationService {
       }
       if (payload.testResult !== undefined) {
         (screeningForm as any).testResult = payload.testResult;
+        (appointment as any).testResult = payload.testResult;
       }
       (screeningForm as any).reviewedByStaffId = toObjectId(actorUserId);
       await screeningForm.save(opts);
@@ -636,9 +644,10 @@ export class RegistrationService {
 
         appointment.status = targetAppointmentStatus;
 
-        // If appointment transitions to Rejected from an active status, replenish the slots
-        const activeStatuses = [AppointmentStatus.Pending, AppointmentStatus.Confirmed, AppointmentStatus.Scheduled, AppointmentStatus.CheckedIn, AppointmentStatus.Eligible];
-        if (targetAppointmentStatus === AppointmentStatus.Rejected && activeStatuses.includes(previousStatus)) {
+        // If appointment transitions to Rejected from a pre-blood-draw status (Pending, Confirmed, Scheduled, CheckedIn), replenish the slots.
+        // Once donor has reached Examining or Completed, blood was already drawn, so the campaign slot MUST NOT be decremented.
+        const preBloodDrawStatuses = [AppointmentStatus.Pending, AppointmentStatus.Confirmed, AppointmentStatus.Scheduled, AppointmentStatus.CheckedIn];
+        if (targetAppointmentStatus === AppointmentStatus.Rejected && preBloodDrawStatuses.includes(previousStatus)) {
           const appDateStr = appointment.appointmentDate instanceof Date 
             ? appointment.appointmentDate.toISOString().split('T')[0] 
             : String(appointment.appointmentDate).split('T')[0];
@@ -646,42 +655,126 @@ export class RegistrationService {
           await BookingService.decrementCampaignSlot(appointment.campaignId, appDateStr, appointment.timeSlot, session);
         }
 
-        // Process Gamification (+250 XP & Achievement unlocking) when donation is completed
+        // Update DonorProfile bloodType and User bloodType if provided
+        const bTypeToUpdate = payload.donorBloodType || payload.bloodType;
+        if (bTypeToUpdate && bTypeToUpdate !== 'Unknown' && bTypeToUpdate !== 'Chưa biết' && bTypeToUpdate !== '?') {
+          await DonorProfile.findOneAndUpdate(
+            { $or: [{ userId: appointment.donorId }, { _id: appointment.donorId }] },
+            { $set: { bloodType: bTypeToUpdate } },
+            opts
+          );
+          await User.findByIdAndUpdate(appointment.donorId, { $set: { bloodType: bTypeToUpdate } }, opts);
+        }
+
+        const isTestPassed = payload.testResult === 'Pass' || (screeningForm as any)?.testResult === 'Pass' || (!payload.testResult && targetAppointmentStatus === AppointmentStatus.Completed);
+        const isTestRejected = payload.testResult === 'Rejected' || (screeningForm as any)?.testResult === 'Rejected';
+
+        // 1. Process Gamification (+250 XP & E-Certificate & Badges & lastDonationDate) for ALL Completed appointments (Both Pass and Rejected)
         if (targetAppointmentStatus === AppointmentStatus.Completed && !appointment.xpRewardedForCompletion) {
           try {
-            await GamificationService.processDonationCompletion(appointment.donorId, appointment.appointmentDate);
+            await GamificationService.processDonationCompletion(appointment.donorId, appointment.appointmentDate, session);
             
-            // Fire DonationCompleted event to notify user
-            const donorProfile = await DonorProfile.findOne({ userId: appointment.donorId }).lean() as any;
-            const donorUser = await User.findById(appointment.donorId).lean() as any;
-            if (donorUser || donorProfile) {
-              const nextEligibleDate = new Date();
-              nextEligibleDate.setDate(nextEligibleDate.getDate() + 84); // 84 days wait time for whole blood
-              const campaign = typeof appointment.campaignId === 'object' ? appointment.campaignId : await Campaign.findById(appointment.campaignId).lean();
-              const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
-              const rawCampaignName = (campaign as any)?.name;
-              const campaignName = (rawCampaignName && typeof rawCampaignName === 'string' && rawCampaignName.trim())
-                ? rawCampaignName.trim()
-                : 'Trung tâm tiếp nhận máu LifeLine';
-              
+            // Ensure lastDonationDate is definitely updated in DonorProfile
+            await DonorProfile.findOneAndUpdate(
+              { $or: [{ userId: appointment.donorId }, { _id: appointment.donorId }] },
+              { $set: { lastDonationDate: appointment.appointmentDate || new Date() } },
+              opts
+            );
+          } catch (gErr) {
+            console.error('Error processing gamification/completion logic:', gErr);
+          }
+        }
+
+        // 2. Dispatch Email & Stock-In depending on Pass vs Rejected
+        if (targetAppointmentStatus === AppointmentStatus.Completed) {
+          try {
+            const donorProfile = await DonorProfile.findOne({
+              $or: [{ userId: appointment.donorId }, { _id: appointment.donorId }]
+            }).lean() as any;
+            const donorUser = await User.findById(donorProfile?.userId || appointment.donorId).lean() as any;
+            
+            let donationIntervalDays = 84;
+            try {
+              const { SystemConfig } = await import('../../admin/models/system-config.model');
+              const config = await SystemConfig.findOne({ key: 'donationIntervalDays' }).lean();
+              if (config && typeof config.value === 'number') {
+                donationIntervalDays = config.value;
+              }
+            } catch (e) {}
+
+            const nextEligibleDate = new Date(appointment.appointmentDate || Date.now());
+            nextEligibleDate.setDate(nextEligibleDate.getDate() + donationIntervalDays);
+            const campaign = typeof appointment.campaignId === 'object' ? appointment.campaignId : await Campaign.findById(appointment.campaignId).lean();
+            const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
+            const rawCampaignName = (campaign as any)?.name;
+            const campaignName = (rawCampaignName && typeof rawCampaignName === 'string' && rawCampaignName.trim())
+              ? rawCampaignName.trim()
+              : 'Trung tâm tiếp nhận máu LifeLine';
+            const appDateStr = appointment.appointmentDate instanceof Date
+              ? appointment.appointmentDate.toLocaleDateString('vi-VN')
+              : new Date(appointment.appointmentDate).toLocaleDateString('vi-VN');
+            const recipientUserId = (donorUser?._id || donorProfile?.userId || appointment.donorId).toString();
+
+            if (isTestPassed && !isTestRejected) {
+              // Send DonationCompleted thank you email
               await emitDonationCompleted({
-                donorId: appointment.donorId.toString(),
+                donorId: recipientUserId,
                 donorName,
                 campaignName,
                 volume: payload.donationVolume || (appointment as any).donationVolume || 350,
                 bloodType: payload.bloodType || donorProfile?.bloodType || 'Chưa xác định',
                 donationDate: new Date().toLocaleDateString('vi-VN'),
+                donationIntervalDays,
                 nextEligibleDate: nextEligibleDate.toLocaleDateString('vi-VN'),
                 deepLink: '/profile',
                 audienceRole: 'Donor',
               });
+
+              // Auto stock-in blood bag if testResult is 'Pass'
+              const expiryDate = new Date(appointment.appointmentDate);
+              expiryDate.setDate(expiryDate.getDate() + 35);
+              const bType = payload.bloodType || donorProfile?.bloodType || 'Unknown';
+              if (bType && bType !== 'Unknown' && bType !== 'Chưa biết' && bType !== '?') {
+                const bagCode = `BB-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+                const newBag = new BloodBag({
+                  bagCode,
+                  bloodType: bType,
+                  volumeMl: payload.donationVolume || (appointment as any).donationVolume || 350,
+                  collectionDate: appointment.appointmentDate,
+                  expiryDate,
+                  storageLocation: 'Kho chính - Khu vực chờ phân loại',
+                  status: 'Available',
+                  donorSourceId: appointment.donorId,
+                  campaignSourceId: appointment.campaignId,
+                  testResult: 'Pass',
+                  statusHistory: [{
+                    previousStatus: 'None',
+                    newStatus: 'Available',
+                    changedBy: actorUserId,
+                    reason: 'Hệ thống tự động nhập kho từ lượt hiến máu hoàn tất'
+                  }]
+                });
+                await newBag.save(opts);
+              }
+            } else if (isTestRejected) {
+              // Send EligibilityCheckFailed notification email for rejected test
+              const reason = payload.screeningNotes || (screeningForm as any)?.screeningNotes || 'Mẫu máu ghi nhận có chỉ số bất thường sau khi xét nghiệm sinh hoá, không đủ điều kiện đưa vào lưu trữ và truyền máu.';
+              await emitEligibilityCheckFailed({
+                donorId: recipientUserId,
+                donorName,
+                campaignName,
+                appointmentDate: appDateStr,
+                reason,
+                deepLink: '/profile',
+                audienceRole: 'Donor',
+              });
             }
-          } catch (gErr) {
-            console.error('Error processing gamification/notification logic:', gErr);
+          } catch (notifErr) {
+            console.error('Error dispatching completion notification/stock-in:', notifErr);
           }
         }
         
-        // Process Eligibility Check Failed notification when rejected during screening/examining
+        // 3. Process Eligibility Check Failed notification when rejected during pre-screening (not completed)
         if (targetAppointmentStatus === AppointmentStatus.Rejected && previousStatus !== AppointmentStatus.Rejected) {
           try {
             const donorProfile = await DonorProfile.findOne({
@@ -715,41 +808,6 @@ export class RegistrationService {
             }
           } catch (nErr) {
             console.error('Error processing rejected notification logic:', nErr);
-          }
-        }
-
-        // Auto stock-in blood bag if testResult is 'Pass'
-        if (targetAppointmentStatus === AppointmentStatus.Completed && payload.testResult === 'Pass') {
-          const expiryDate = new Date(appointment.appointmentDate);
-          expiryDate.setDate(expiryDate.getDate() + 35); // 35 days shelf life for whole blood
-          
-          const donorProf = await DonorProfile.findOne({
-            $or: [{ userId: appointment.donorId }, { _id: appointment.donorId }]
-          }, null, opts).lean();
-
-          const bType = payload.bloodType || donorProf?.bloodType || 'Unknown';
-          
-          if (bType && bType !== 'Unknown' && bType !== 'Chưa biết' && bType !== '?') {
-            const bagCode = `BB-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
-            const newBag = new BloodBag({
-              bagCode,
-              bloodType: bType,
-              volumeMl: payload.donationVolume || (appointment as any).donationVolume || 350,
-              collectionDate: appointment.appointmentDate,
-              expiryDate,
-              storageLocation: 'Kho chính - Khu vực chờ phân loại',
-              status: 'Available',
-              donorSourceId: appointment.donorId,
-              campaignSourceId: appointment.campaignId,
-              testResult: 'Pass',
-              statusHistory: [{
-                previousStatus: 'None',
-                newStatus: 'Available',
-                changedBy: actorUserId,
-                reason: 'Hệ thống tự động nhập kho từ lượt hiến máu hoàn tất'
-              }]
-            });
-            await newBag.save(opts);
           }
         }
 
@@ -788,6 +846,7 @@ export class RegistrationService {
           donorId: appointment.donorId,
           screeningSummary: { staffVitals: payload.vitals || null, ...(payload.donationVolume ? { donationVolume: payload.donationVolume } : {}) },
           donationStatus: mongoDonationStatus,
+          ...(payload.testResult !== undefined ? { testResult: payload.testResult } : {}),
           clinicalNotes: payload.screeningNotes || '',
           lastUpdatedAt: new Date()
         });
@@ -800,6 +859,9 @@ export class RegistrationService {
         };
         if (payload.status) {
           digitalRecord.donationStatus = mongoDonationStatus;
+        }
+        if (payload.testResult !== undefined) {
+          (digitalRecord as any).testResult = payload.testResult;
         }
         if (payload.screeningNotes !== undefined) {
           digitalRecord.clinicalNotes = payload.screeningNotes;
@@ -829,7 +891,10 @@ export class RegistrationService {
       if (payload.status === 'Confirmed') {
         await BookingService.confirmAppointmentByBloodCenter(registrationIdStr);
       } else if (payload.status === 'Ineligible' || payload.status === 'Rejected' || payload.status === 'Ineligible for Donation') {
-        await BookingService.rejectAppointmentByBloodCenter(registrationIdStr, payload.screeningNotes);
+        const preAttendance = [AppointmentStatus.Pending, AppointmentStatus.Confirmed, AppointmentStatus.Scheduled];
+        if (preAttendance.includes(previousStatus)) {
+          await BookingService.rejectAppointmentByBloodCenter(registrationIdStr, payload.screeningNotes);
+        }
       }
     } catch (bookingErr) {
       console.error('Error running BookingService confirm/reject logic:', bookingErr);

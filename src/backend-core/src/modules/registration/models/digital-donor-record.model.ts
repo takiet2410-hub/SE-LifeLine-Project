@@ -7,6 +7,7 @@ export interface IDigitalDonorRecord extends Document {
   donorId: mongoose.Types.ObjectId;
   screeningSummary?: Record<string, any>;
   donationStatus: DonationStatusType;
+  testResult?: 'Pass' | 'Rejected';
   clinicalNotes?: string;
   lastUpdatedAt: Date;
 }
@@ -21,6 +22,7 @@ const DigitalDonorRecordSchema: Schema = new Schema({
     default: 'Pending',
     required: true,
   },
+  testResult: { type: String, enum: ['Pass', 'Rejected'] },
   clinicalNotes: { type: String, default: '' },
   lastUpdatedAt: { type: Date, default: Date.now }
 }, {

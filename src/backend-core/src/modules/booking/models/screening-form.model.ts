@@ -17,6 +17,16 @@ export interface IScreeningForm extends Document {
   templateId?: mongoose.Types.ObjectId;
   responses: IQuestionAnswer[];
   outcome: ScreeningOutcome;
+  testResult?: 'Pass' | 'Rejected';
+  vitals?: {
+    bloodPressure?: string;
+    weight?: number;
+    bodyTemperature?: number;
+    hemoglobinLevel?: number;
+  };
+  screeningNotes?: string;
+  eligibilityFlag?: string;
+  reviewedByStaffId?: mongoose.Types.ObjectId;
   submittedAt: Date;
 }
 
@@ -31,6 +41,11 @@ const ScreeningFormSchema: Schema = new Schema({
   templateId: { type: Schema.Types.ObjectId },
   responses: { type: [QuestionAnswerSchema], required: true },
   outcome: { type: String, enum: Object.values(ScreeningOutcome), required: true },
+  testResult: { type: String, enum: ['Pass', 'Rejected'] },
+  vitals: { type: Schema.Types.Mixed },
+  screeningNotes: { type: String, default: '' },
+  eligibilityFlag: { type: String, default: 'Eligible' },
+  reviewedByStaffId: { type: Schema.Types.ObjectId, ref: 'User' },
   submittedAt: { type: Date, default: Date.now }
 }, {
   collection: 'screening_forms'

@@ -224,9 +224,13 @@ export const RegistrationDetailPage: React.FC = () => {
       };
 
       if (newStatus === 'Completed') {
-        toast.success(`✨ Đã xác nhận mẫu máu ĐẠT TIÊU CHUẨN & gửi thông báo cảm ơn (hẹn 84 ngày hiến lại) tới người hiến!`);
+        if (testResult === 'Rejected') {
+          toast.error(`🔴 Đã ghi nhận MẪU MÁU BẤT THƯỜNG & gửi thông báo hướng dẫn sức khỏe tới người hiến!`);
+        } else {
+          toast.success(`✨ Đã xác nhận mẫu máu ĐẠT TIÊU CHUẨN & gửi thông báo cảm ơn (hẹn 84 ngày hiến lại) tới người hiến!`);
+        }
       } else if (newStatus === 'Ineligible for Donation' || newStatus === 'Ineligible') {
-        toast.error(`🔴 Đã ghi nhận MẪU MÁU BẤT THƯỜNG & gửi thông báo hướng dẫn sức khỏe tới người hiến!`);
+        toast.error(`🔴 Đã ghi nhận KHÔNG ĐỦ ĐIỀU KIỆN & gửi thông báo hướng dẫn sức khỏe tới người hiến!`);
       } else {
         toast.success(
           shouldUpdateBloodType
@@ -437,10 +441,17 @@ export const RegistrationDetailPage: React.FC = () => {
           )}
 
           {registration.status === 'Completed' && (
-            <span className="px-3.5 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[12px] font-bold rounded-xl flex items-center gap-1.5 whitespace-nowrap">
-              <Sparkles className="w-4 h-4 text-emerald-600" />
-              <span>Đã hoàn thành hiến máu</span>
-            </span>
+            (registration as any).testResult === 'Rejected' || (registration as any).screeningForm?.testResult === 'Rejected' ? (
+              <span className="px-3.5 py-2 bg-rose-50 text-rose-700 border border-rose-200 text-[12px] font-bold rounded-xl flex items-center gap-1.5 whitespace-nowrap">
+                <XCircle className="w-4 h-4 text-rose-600" />
+                <span>Đã khám xong (Máu không đạt)</span>
+              </span>
+            ) : (
+              <span className="px-3.5 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[12px] font-bold rounded-xl flex items-center gap-1.5 whitespace-nowrap">
+                <Sparkles className="w-4 h-4 text-emerald-600" />
+                <span>Đã hoàn thành hiến máu</span>
+              </span>
+            )
           )}
 
           {(registration.status as string) === 'Rejected' && (

@@ -60,16 +60,16 @@ export const ETicketModal: React.FC<ETicketModalProps> = ({
         {/* Success Header Banner */}
         <div className="bg-[#16A34A]/10 border-b border-[#16A34A]/20 py-3 pl-4 pr-14 sm:px-6 flex items-center justify-center gap-2 text-center">
           <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />
-          <span className="text-[#16A34A] text-[14px] font-bold">Booking Confirmed! E-Ticket Ready</span>
+          <span className="text-[#16A34A] text-[14px] font-bold">Đặt Lịch Thành Công! Thẻ E-Ticket Sẵn Sàng</span>
         </div>
 
         {/* E-Ticket Card Header */}
         <div className="bg-[#fff0ee] px-4 sm:px-6 py-4 sm:py-5 text-center border-b border-[#e4beb9]">
           <h2 className="text-[20px] font-extrabold text-[#152a43] uppercase tracking-wide">
-            Your E-Ticket
+            Thẻ Hẹn E-Ticket Của Bạn
           </h2>
           <p className="text-[13px] text-[#5b403d] font-medium mt-0.5">
-            Please present this at the check-in desk / Xuất trình tại quầy tiếp đón
+            Vui lòng xuất trình mã này tại quầy tiếp đón
           </p>
         </div>
 
@@ -87,21 +87,21 @@ export const ETicketModal: React.FC<ETicketModalProps> = ({
           {/* 2x2 Details Grid */}
           <div className="grid grid-cols-2 gap-4 border-y border-[#e4beb9] py-4 bg-[#fff8f7] rounded-xl px-4">
             <div className="text-left">
-              <p className="text-[11px] font-bold text-[#6c757d] uppercase tracking-wider">DATE</p>
+              <p className="text-[11px] font-bold text-[#6c757d] uppercase tracking-wider">NGÀY HẸN</p>
               <p className="text-[15px] font-bold text-[#271816]">{appointment.date}</p>
             </div>
             <div className="text-right">
-              <p className="text-[11px] font-bold text-[#6c757d] uppercase tracking-wider">TIME</p>
+              <p className="text-[11px] font-bold text-[#6c757d] uppercase tracking-wider">GIỜ HẸN</p>
               <p className="text-[15px] font-bold text-[#271816]">{appointment.time}</p>
             </div>
             <div className="text-left">
-              <p className="text-[11px] font-bold text-[#6c757d] uppercase tracking-wider">BLOOD TYPE</p>
+              <p className="text-[11px] font-bold text-[#6c757d] uppercase tracking-wider">NHÓM MÁU</p>
               <p className="text-[15px] font-bold text-[#93000b]">
                 {appointment.bloodType || 'Chưa cập nhật'}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[11px] font-bold text-[#6c757d] uppercase tracking-wider">TICKET CODE</p>
+              <p className="text-[11px] font-bold text-[#6c757d] uppercase tracking-wider">MÃ VÉ E-TICKET</p>
               <p className="text-[12px] sm:text-[14px] font-mono font-bold text-[#271816] break-all">{ticketCode}</p>
             </div>
           </div>
@@ -138,7 +138,7 @@ export const ETicketModal: React.FC<ETicketModalProps> = ({
               className="w-full bg-[#93000b] hover:bg-[#7a0009] text-white font-bold py-3 rounded-xl shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-[14px]"
             >
               <Download className="w-4 h-4" />
-              Tải Thẻ E-Ticket (Download)
+              Tải Thẻ E-Ticket (PDF)
             </button>
           )}
 

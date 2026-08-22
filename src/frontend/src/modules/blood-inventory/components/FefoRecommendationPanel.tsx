@@ -24,20 +24,20 @@ export const FefoRecommendationPanel: React.FC<Props> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-amber-900 font-semibold text-sm">
           <ClipboardList className="w-5 h-5 text-amber-600" />
-          <span>FEFO Recommendation (First Expired, First Out)</span>
+          <span>Khuyến Nghị Xuất Kho FEFO (Hạn Gần Nhất, Xuất Trước)</span>
         </div>
         <button
           type="button"
           onClick={onSkip}
-          className="text-xs text-amber-700 hover:text-amber-900 underline font-medium"
+          className="text-xs text-amber-700 hover:text-amber-900 underline font-medium cursor-pointer"
         >
-          Skip FEFO Panel
+          Ẩn Bảng Khuyến Nghị
         </button>
       </div>
 
       <p className="text-xs text-amber-800 mt-1">
         <AlertCircle className="w-3.5 h-3.5 inline mr-1 text-amber-600" />
-        <strong>{nearExpiryBags.length}</strong> blood bag(s) expire within 7 days. Consider dispatching these first to prevent waste.
+        <strong>{nearExpiryBags.length}</strong> túi máu sắp hết hạn trong vòng 7 ngày tới. Khuyến nghị ưu tiên xuất kho các túi này trước để tránh lãng phí.
       </p>
 
       <div className="mt-3 bg-white/90 rounded-lg border border-amber-200/60 p-3 divide-y divide-amber-100 max-h-48 overflow-y-auto">
@@ -54,13 +54,13 @@ export const FefoRecommendationPanel: React.FC<Props> = ({
                 <span className="text-slate-500">{bag.volumeMl} ml</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-amber-700 font-medium">Expires in {daysLeft}d ({exp.toLocaleDateString('en-GB')})</span>
+                <span className="text-amber-700 font-medium">Hạn còn {daysLeft} ngày ({exp.toLocaleDateString('vi-VN')})</span>
                 {isSelected ? (
                   <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold text-[11px]">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Selected
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Đã chọn
                   </span>
                 ) : (
-                  <span className="text-slate-400 text-[11px]">Recommended</span>
+                  <span className="text-slate-400 text-[11px]">Khuyến nghị</span>
                 )}
               </div>
             </div>
@@ -73,9 +73,9 @@ export const FefoRecommendationPanel: React.FC<Props> = ({
           type="button"
           onClick={onSelectAllRecommended}
           disabled={allSelected}
-          className="px-3.5 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-2xs transition-colors disabled:opacity-50"
+          className="px-3.5 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
         >
-          {allSelected ? '✓ All Recommended Selected' : 'Select All Recommended'}
+          {allSelected ? '✓ Đã chọn tất cả khuyến nghị' : 'Chọn tất cả túi máu khuyến nghị'}
         </button>
       </div>
     </div>

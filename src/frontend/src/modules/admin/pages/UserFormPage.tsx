@@ -167,9 +167,9 @@ export const UserFormPage: React.FC = () => {
         </button>
         <div>
           <h1 className="text-2xl font-bold text-[#271816]">
-            {isEdit ? 'Edit Account Details' : 'Create New Account'}
+            {isEdit ? 'Chỉnh Sửa Thông Tin Tài Khoản' : 'Tạo Tài Khoản Người Dùng Mới'}
           </h1>
-          <p className="text-sm font-medium text-[#6c757d]">Configure credentials & assign system roles (AD-UC-02)</p>
+          <p className="text-sm font-medium text-[#6c757d]">Cấu hình thông tin xác thực & phân quyền vai trò hệ thống</p>
         </div>
       </div>
 
@@ -181,37 +181,37 @@ export const UserFormPage: React.FC = () => {
         {/* Role Checkbox Cards */}
         <div>
           <label className="block text-sm font-bold text-[#271816] mb-1">
-            Select Account Roles & Permissions (Có thể chọn nhiều role)
+            Chọn vai trò & quyền hạn tài khoản (Có thể chọn nhiều role)
           </label>
           <p className="text-xs text-[#6c757d] mb-3">
             {isEdit
               ? 'Donor là vai trò nền tảng bắt buộc. Admin chỉ có thể cấp thêm tối đa 1 vai trò công tác.'
-              : 'Tài khoản mới luôn bắt đầu là Donor. Hãy lưu tài khoản trước, sau đó mở Edit để xét cấp vai trò công tác.'}
+              : 'Tài khoản mới luôn bắt đầu là Donor. Hãy lưu tài khoản trước, sau đó mở Chỉnh sửa để xét cấp vai trò công tác.'}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
               {
                 id: 'Donor',
-                label: 'Donor (Voluntary)',
-                desc: 'Access donor app, map, appointment booking & emergency SOS alerts.',
+                label: 'Người hiến máu (Donor)',
+                desc: 'Truy cập cổng hiến máu, bản đồ, đặt lịch hẹn và nhận cảnh báo SOS khẩn cấp.',
                 icon: User,
               },
               {
                 id: 'BloodCenterStaff',
-                label: 'Blood Center Staff',
-                desc: 'Manage donation campaigns, donor registrations, and blood bag inventory.',
+                label: 'Cán bộ TT Máu (Blood Center Staff)',
+                desc: 'Quản lý chiến dịch hiến máu, tiếp nhận người hiến và quản lý kho túi máu.',
                 icon: Building2,
               },
               {
                 id: 'HospitalStaff',
-                label: 'Hospital Staff',
-                desc: 'Create emergency SOS blood requests and monitor fulfillment tracking.',
+                label: 'Cán bộ Bệnh viện (Hospital Staff)',
+                desc: 'Tạo yêu cầu máu khẩn cấp SOS và theo dõi tiến độ tiếp nhận điều phối.',
                 icon: Hospital,
               },
               {
                 id: 'Administrator',
-                label: 'Administrator',
-                desc: 'Full access to user management, system configs, feature toggles & activity logs.',
+                label: 'Quản trị viên (Administrator)',
+                desc: 'Toàn quyền quản trị tài khoản, cấu hình hệ thống, tính năng mở rộng và nhật ký kiểm toán.',
                 icon: Shield,
               },
             ].map((r) => {
@@ -319,7 +319,7 @@ export const UserFormPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-[#271816] mb-1">
-              Full Name {isEdit ? <span className="text-[#6c757d] font-normal">(Fixed theo CCCD)</span> : '*'}
+              Họ và tên {isEdit ? <span className="text-[#6c757d] font-normal">(Cố định theo CCCD)</span> : '*'}
             </label>
             <input
               type="text"
@@ -327,7 +327,7 @@ export const UserFormPage: React.FC = () => {
               disabled={isEdit}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="e.g. Nguyễn Văn A"
+              placeholder="VD: Nguyễn Văn A"
               className="w-full px-3.5 py-2.5 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-semibold text-[#271816] placeholder:text-slate-400 focus:ring-2 focus:ring-[#93000b] outline-hidden disabled:cursor-not-allowed disabled:opacity-60"
             />
             {isEdit && <p className="mt-1 text-[11px] text-slate-500">Dữ liệu định danh được giữ theo hồ sơ CCCD và không thể sửa tại trang phân quyền.</p>}
@@ -335,7 +335,7 @@ export const UserFormPage: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-[#271816] mb-1">
-              Email Address {isEdit ? <span className="text-[#6c757d] font-normal">(Optional)</span> : '*'}
+              Địa chỉ Email {isEdit ? <span className="text-[#6c757d] font-normal">(Tùy chọn)</span> : '*'}
             </label>
             <input
               type="email"
@@ -349,7 +349,7 @@ export const UserFormPage: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-[#271816] mb-1">
-              ID Document Number (CCCD) {isEdit ? <span className="text-[#6c757d] font-normal">(Fixed)</span> : '*'}
+              Số CCCD / Định danh {isEdit ? <span className="text-[#6c757d] font-normal">(Cố định)</span> : '*'}
             </label>
             <input
               type="text"
@@ -364,7 +364,7 @@ export const UserFormPage: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-[#271816] mb-1">
-              Phone Number <span className="text-[#6c757d] font-normal">(Optional)</span>
+              Số điện thoại <span className="text-[#6c757d] font-normal">(Tùy chọn)</span>
             </label>
             <input
               type="text"
@@ -377,28 +377,28 @@ export const UserFormPage: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-[#271816] mb-1">
-              Permanent Address (Thường trú theo CCCD) {isEdit ? <span className="text-[#6c757d] font-normal">(Fixed theo CCCD)</span> : ''}
+              Địa chỉ thường trú (theo CCCD) {isEdit ? <span className="text-[#6c757d] font-normal">(Cố định theo CCCD)</span> : ''}
             </label>
             <input
               type="text"
               disabled={isEdit}
               value={permanentAddress}
               onChange={(e) => setPermanentAddress(e.target.value)}
-              placeholder="e.g. 123 Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM"
+              placeholder="VD: 123 Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM"
               className="w-full px-3.5 py-2.5 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-semibold text-[#271816] placeholder:text-slate-400 focus:ring-2 focus:ring-[#93000b] outline-hidden disabled:opacity-60"
             />
           </div>
 
           <div>
             <label className="block text-xs font-bold text-[#271816] mb-1 flex items-center justify-between">
-              <span>Current Residential Address (Nơi ở hiện tại)</span>
+              <span>Địa chỉ nơi ở hiện tại</span>
               <span className="text-[10px] text-emerald-700 font-medium font-mono">📍 Quét toạ độ SOS</span>
             </label>
             <input
               type="text"
               value={currentAddress}
               onChange={(e) => setCurrentAddress(e.target.value)}
-              placeholder="e.g. 45 Hoàng Hoa Thám, Phường 13, Tân Bình, TP.HCM"
+              placeholder="VD: 45 Hoàng Hoa Thám, Phường 13, Tân Bình, TP.HCM"
               className="w-full px-3.5 py-2.5 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-semibold text-[#271816] placeholder:text-slate-400 focus:ring-2 focus:ring-[#93000b] outline-hidden"
             />
           </div>
@@ -406,7 +406,7 @@ export const UserFormPage: React.FC = () => {
           {!isEdit && (
             <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-[#271816] mb-1">
-                Initial Password *
+                Mật khẩu khởi tạo *
               </label>
               <input
                 type="password"
@@ -422,16 +422,16 @@ export const UserFormPage: React.FC = () => {
           {isEdit && (
             <div>
               <label className="block text-xs font-bold text-[#271816] mb-1">
-                Account Status
+                Trạng thái tài khoản
               </label>
               <select
                 value={accountStatus}
                 onChange={(e) => setAccountStatus(e.target.value as 'PendingVerification' | 'Active' | 'Suspended')}
                 className="w-full px-3.5 py-2.5 bg-[#fff8f7] border border-slate-200 rounded-xl text-sm font-semibold text-[#271816] focus:ring-2 focus:ring-[#93000b] outline-hidden cursor-pointer"
               >
-                <option value="Active" className="bg-white text-[#271816]">Active</option>
-                <option value="Suspended" className="bg-white text-[#271816]">Suspended</option>
-                <option value="PendingVerification" className="bg-white text-[#271816]">Pending Verification</option>
+                <option value="Active" className="bg-white text-[#271816]">Đang hoạt động</option>
+                <option value="Suspended" className="bg-white text-[#271816]">Tạm ngưng</option>
+                <option value="PendingVerification" className="bg-white text-[#271816]">Chờ xác minh</option>
               </select>
             </div>
           )}
@@ -443,7 +443,7 @@ export const UserFormPage: React.FC = () => {
             onClick={() => navigate('/admin/users')}
             className="px-4 py-2 text-sm font-semibold text-[#6c757d] hover:bg-slate-100 rounded-xl transition cursor-pointer"
           >
-            Cancel
+            Hủy bỏ
           </button>
           <button
             type="submit"
@@ -451,7 +451,7 @@ export const UserFormPage: React.FC = () => {
             className="flex items-center gap-2 px-6 py-2.5 bg-[#93000b] hover:bg-[#780009] text-white font-semibold text-sm rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer"
           >
             <Save className="w-4 h-4" />
-            {submitting ? 'Saving...' : 'Save Account'}
+            {submitting ? 'Đang lưu...' : 'Lưu tài khoản'}
           </button>
         </div>
       </form>}

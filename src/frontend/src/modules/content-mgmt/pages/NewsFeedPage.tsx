@@ -78,8 +78,7 @@ export const NewsFeedPage: React.FC = () => {
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Tin tức & Thông tin</h1>
-                <p className="text-sm text-gray-500">Cập nhật mới nhất về hiến máu, sức khỏe và chiến dịch</p>
+                <h1 className="text-xl font-extrabold text-gray-900 uppercase tracking-tight">Tin tức & Thông tin</h1>
               </div>
             </div>
           </div>
@@ -102,17 +101,23 @@ export const NewsFeedPage: React.FC = () => {
             </div>
             
             <div className="flex flex-wrap gap-2 md:flex-nowrap">
-              {['All', 'News', 'Alert', 'Educational', 'Campaign'].map((cat) => (
+              {[
+                { id: 'All', label: 'Tất cả' },
+                { id: 'News', label: 'Tin tức' },
+                { id: 'Alert', label: 'Cảnh báo' },
+                { id: 'Educational', label: 'Kiến thức' },
+                { id: 'Campaign', label: 'Chiến dịch' },
+              ].map(({ id, label }) => (
                 <button
-                  key={cat}
-                  onClick={() => handleCategoryChange(cat as any)}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    categoryFilter === cat
-                      ? 'bg-red-600 text-white shadow-sm'
+                  key={id}
+                  onClick={() => handleCategoryChange(id as any)}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                    categoryFilter === id
+                      ? 'bg-red-600 text-white shadow-sm font-semibold'
                       : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
                   }`}
                 >
-                  {cat === 'All' ? 'Tất cả' : cat}
+                  {label}
                 </button>
               ))}
             </div>

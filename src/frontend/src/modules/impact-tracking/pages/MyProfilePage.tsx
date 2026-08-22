@@ -14,14 +14,14 @@ import { toast } from 'sonner';
 import { useFeatureFlags } from '../../../shared/contexts/FeatureFlagsContext';
 
 export const MyProfilePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('Profile Info');
+  const [activeTab, setActiveTab] = useState('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const { user } = useAuth();
   const { isEnabled } = useFeatureFlags();
   const gamificationEnabled = isEnabled('gamification_badges');
-  const visibleActiveTab = !gamificationEnabled && (activeTab === 'Achievements' || activeTab === 'Donor Level')
-    ? 'Profile Info'
+  const visibleActiveTab = !gamificationEnabled && (activeTab === 'achievements' || activeTab === 'donor-level' || activeTab === 'Achievements' || activeTab === 'Donor Level')
+    ? 'profile'
     : activeTab;
 
   // GAP-06 FIX: Gọi đúng endpoint /api/v1/users/profile (GET, cần JWT)
@@ -54,7 +54,7 @@ export const MyProfilePage: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-b-[#93000b]"></div>
-        <p className="mt-2 text-[14px] text-[#6c757d]">Loading profile...</p>
+        <p className="mt-2 text-[14px] text-[#6c757d]">Đang tải hồ sơ...</p>
       </div>
     );
   }
@@ -111,7 +111,7 @@ export const MyProfilePage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] gap-5 lg:gap-8 w-full min-w-0 relative items-start">
         {/* Left Column - Main Content */}
         <div className="flex min-w-0 flex-col gap-5 lg:gap-8 w-full">
-          {visibleActiveTab === 'Profile Info' && (
+          {(visibleActiveTab === 'profile' || visibleActiveTab === 'Profile Info') && (
             <ProfileInfoTab 
               onSaveProfile={handleSaveProfile}
               user={
@@ -126,17 +126,17 @@ export const MyProfilePage: React.FC = () => {
             } />
           )}
           
-          {(visibleActiveTab === 'Profile Info' || visibleActiveTab === 'Donation Timeline') && (
+          {(visibleActiveTab === 'profile' || visibleActiveTab === 'Profile Info' || visibleActiveTab === 'timeline' || visibleActiveTab === 'Donation Timeline') && (
             <DonationTimeline userId={user?.id} profileData={profileData} />
           )}
 
-          {gamificationEnabled && (visibleActiveTab === 'Profile Info' || visibleActiveTab === 'Achievements') && (
+          {gamificationEnabled && (visibleActiveTab === 'profile' || visibleActiveTab === 'Profile Info' || visibleActiveTab === 'achievements' || visibleActiveTab === 'Achievements') && (
             <XPActivityLog userId={user?.id} profileData={profileData} />
           )}
           
-          {gamificationEnabled && visibleActiveTab === 'Donor Level' && (
+          {gamificationEnabled && (visibleActiveTab === 'donor-level' || visibleActiveTab === 'Donor Level') && (
             <div className="p-6 bg-white rounded-xl border border-[#f1f3f5] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]">
-              <h2 className="text-lg font-semibold text-[#271816]">Donor Level Details Coming Soon</h2>
+              <h2 className="text-lg font-semibold text-[#271816]">Chi tiết Cấp bậc Người hiến máu</h2>
             </div>
           )}
         </div>

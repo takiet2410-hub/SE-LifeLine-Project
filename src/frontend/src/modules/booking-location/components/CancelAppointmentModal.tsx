@@ -42,11 +42,11 @@ export const CancelAppointmentModal: React.FC<CancelAppointmentModalProps> = ({
           </div>
 
           <h3 className="text-[20px] font-bold text-[#271816] mb-2 tracking-tight">
-            Cancel Appointment?
+            Hủy Lịch Hẹn?
           </h3>
           
           <p className="text-[14px] text-[#6c757d] mb-6">
-            Are you sure you want to cancel this appointment? This action cannot be undone and your slot will be given to someone else.
+            Bạn có chắc chắn muốn hủy lịch hẹn hiến máu này không? Hành động này không thể hoàn tác và khung giờ của bạn sẽ được mở lại cho người khác.
           </p>
 
           {/* Error Message Display */}
@@ -66,14 +66,14 @@ export const CancelAppointmentModal: React.FC<CancelAppointmentModalProps> = ({
               disabled={isProcessing}
               className="flex-1 py-2.5 px-4 bg-white border border-[#dee2e6] text-[#271816] text-[14px] font-semibold rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
-              Keep It
+              Giữ lại
             </button>
             <button
               onClick={onConfirm}
               disabled={isProcessing}
               className="flex-1 py-2.5 px-4 bg-[#93000b] text-white text-[14px] font-semibold rounded-lg hover:bg-[#7a0009] transition-all shadow-sm active:scale-[0.98] disabled:opacity-70 flex items-center justify-center"
             >
-              {isProcessing ? 'Cancelling...' : 'Yes, Cancel'}
+              {isProcessing ? 'Đang hủy...' : 'Xác nhận hủy'}
             </button>
           </div>
         </div>

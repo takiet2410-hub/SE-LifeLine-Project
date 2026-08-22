@@ -8,26 +8,26 @@ export const FeaturesSection: React.FC = () => {
   const features = [
     {
       id: '1',
-      titleKey: 'Find Nearby Points',
-      descriptionKey: 'Browse active donation campaigns on an interactive map and book your preferred time slots in just a few seconds.',
+      titleKey: 'Tìm Điểm Hiến Gần Nhất',
+      descriptionKey: 'Khám phá các chiến dịch hiến máu đang diễn ra trên bản đồ tương tác và chọn khung giờ thuận tiện chỉ trong vài giây.',
       icon: <IconMapPin />
     },
     {
       id: '2',
-      titleKey: 'Instant E-Tickets',
-      descriptionKey: 'Get your personalized appointment ticket with a secure QR code for instant check-in at any donation center.',
+      titleKey: 'Thẻ Hẹn E-Ticket QR',
+      descriptionKey: 'Nhận thẻ hẹn điện tử cá nhân hóa kèm mã QR bảo mật để check-in và khám sàng lọc đón tiếp ưu tiên tại điểm tiếp nhận.',
       icon: <IconTicket />
     },
     {
       id: '3',
-      titleKey: 'Track Your Impact',
-      descriptionKey: 'View your donation timeline, earn achievements, and track your donor level progression as you help save more lives.',
+      titleKey: 'Theo Dõi Hành Trình',
+      descriptionKey: 'Xem nhật ký hiến máu, mở khóa huy hiệu vinh danh và tích lũy cấp độ người hiến khi bạn trao thêm nhiều cơ hội sống.',
       icon: <IconImpact />
     },
     {
       id: '4',
-      titleKey: 'AI-Powered Guidance',
-      descriptionKey: 'Chat with our intelligent assistant for personalized donation prep, health advice, and post-donation recovery tips.',
+      titleKey: 'Trợ Lý AI Đồng Hành',
+      descriptionKey: 'Trò chuyện cùng trợ lý AI thông minh để được tư vấn điều kiện sức khỏe, chuẩn bị trước hiến và bí quyết phục hồi tốt nhất.',
       icon: <IconRobot />
     }
   ];
@@ -36,10 +36,10 @@ export const FeaturesSection: React.FC = () => {
     <section className="w-full bg-white py-24 px-6 lg:px-12">
       <div className="max-w-[1280px] mx-auto flex flex-col items-center gap-16">
         <div className="text-center max-w-2xl flex flex-col gap-4">
-          <h2 className="text-4xl font-bold text-gray-900">Why Donate with LifeLine?</h2>
+          <h2 className="text-4xl font-bold text-gray-900">Tại Sao Nên Đồng Hành Cùng LifeLine?</h2>
           <p className="text-[#5B403D] text-base leading-relaxed">
-            We use advanced technology to make the life-saving process of blood
-            donation seamless, transparent, and rewarding for everyone.
+            Chúng tôi ứng dụng công nghệ hiện đại giúp hành trình hiến máu cứu người trở nên
+            nhanh chóng, minh bạch và mang lại nhiều giá trị ý nghĩa cho cộng đồng.
           </p>
         </div>
 

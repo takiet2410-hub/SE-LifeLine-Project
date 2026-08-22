@@ -140,33 +140,33 @@
       "sectionTitle": "Hướng Dẫn Sức Khỏe Thiết Yếu",
       "sectionDesc": "Duyệt qua các lời khuyên được chọn lọc của chúng tôi để chuẩn bị cho cơ thể trước khi hiến máu và phục hồi tối ưu sau đó.",
       "nutrition": {
-        "title": "What to Eat Before and After",
-        "desc": "Focus on complex carbs and lean proteins 3 hours prior.",
+        "title": "Chế Độ Dinh Dưỡng Trước & Sau Hiến Máu",
+        "desc": "Bổ sung tinh bột hấp thu chậm và đạm nạc 3 giờ trước khi hiến.",
         "readMoreContent": "Trước khi hiến máu, hãy ăn một bữa ăn lành mạnh, ít chất béo. Tránh thức ăn nhiều dầu mỡ (như khoai tây chiên, gà rán) vì lượng chất béo cao trong máu có thể ảnh hưởng đến kết quả các xét nghiệm máu định kỳ. Sau khi hiến, hãy nghỉ ngơi và bổ sung năng lượng bằng các món ăn nhẹ và nước trái cây được cung cấp tại điểm hiến máu để giúp cơ thể nhanh chóng phục hồi."
       },
       "hydration": {
-        "title": "The Importance of Fluids",
-        "desc": "Why water is the most critical component of recovery.",
+        "title": "Tầm Quan Trọng Của Việc Bổ Sung Nước",
+        "desc": "Tại sao nước là yếu tố quan trọng nhất cho quá trình phục hồi.",
         "readMoreContent": "Một nửa lượng máu của bạn là nước. Việc uống nhiều nước (khoảng 500ml) trước khi hiến máu giúp duy trì thể tích máu, giúp tìm ven dễ hơn và ngăn ngừa chóng mặt, tụt huyết áp. Sau khi hiến máu, tiếp tục uống nhiều nước hơn bình thường (thêm khoảng 4 ly nước) trong 24 giờ tiếp theo. Hạn chế tối đa các đồ uống có chứa caffein như trà, cà phê hay cồn trong thời gian này vì chúng có tác dụng lợi tiểu."
       },
       "recovery": {
-        "title": "Rest and Recovery Tips",
-        "desc": "How to care for the donation site and avoid dizziness.",
+        "title": "Bí Quyết Nghỉ Ngơi & Phục Hồi Thể Lực",
+        "desc": "Cách chăm sóc vị trí lấy máu và phòng tránh chóng mặt.",
         "readMoreContent": "Sau khi hiến máu, hãy giữ nguyên băng cá nhân trên tay ít nhất 4 giờ. Nếu vết kim tiêm bị chảy máu lại, hãy ấn chặt tay lên vùng tiêm và giơ tay lên cao trong 5-10 phút cho đến khi máu ngừng chảy. Tránh đứng quá lâu, tắm nước quá nóng hoặc thay đổi tư thế đột ngột. Hãy ưu tiên nghỉ ngơi, thư giãn nhẹ nhàng trong phần còn lại của ngày."
       },
       "iron": {
-        "title": "Iron-Rich Foods (Thực phẩm giàu sắt)",
-        "desc": "Rau muống, thịt bò, và các loại đậu giúp bổ sung huyết sắc tố.",
+        "title": "Thực Phẩm Giàu Chất Sắt",
+        "desc": "Rau muống, thịt bò, và các loại đậu giúp bổ sung huyết sắc tố nhanh chóng.",
         "readMoreContent": "Sắt là khoáng chất thiết yếu cần thiết để cơ thể tái tạo hồng cầu sau khi hiến máu. Hãy tăng cường bổ sung các thực phẩm giàu sắt vào chế độ ăn hàng ngày trong vài tuần tiếp theo. Các nguồn thực phẩm dồi dào sắt bao gồm: thịt bò, gan, rau bina (cải bó xôi), bông cải xanh, các loại đậu, và ngũ cốc nguyên hạt. Để tối ưu hóa việc hấp thu sắt, hãy kết hợp ăn cùng thực phẩm giàu vitamin C (cam, chanh, ổi, dâu tây)."
       },
       "sleep": {
-        "title": "Sleep and Rest Before Donation",
-        "desc": "Ensure 7-9 hours of quality sleep to prepare your body.",
+        "title": "Giấc Ngủ & Nghỉ Ngơi Trước Khi Hiến Máu",
+        "desc": "Đảm bảo ngủ đủ 7-9 tiếng để cơ thể ở trạng thái tốt nhất.",
         "readMoreContent": "Một giấc ngủ sâu và đủ giấc đóng vai trò cực kỳ quan trọng trong việc phục hồi năng lượng và chuẩn bị cho cơ thể trước khi hiến máu. Việc thiếu ngủ có thể làm tăng nguy cơ hạ huyết áp và cảm giác mệt mỏi, chóng mặt sau khi rút máu. Hãy duy trì thói quen ngủ sớm, đảm bảo ngủ đủ 7-9 tiếng và tránh sử dụng các thiết bị điện tử ngay sát giờ đi ngủ vào đêm trước ngày hiến máu."
       },
       "exercise": {
-        "title": "Managing Exercise Routine",
-        "desc": "Avoid strenuous physical activity immediately after donating.",
+        "title": "Điều Chỉnh Chế Độ Vận Động & Thể Thao",
+        "desc": "Tránh các hoạt động thể lực nặng ngay sau khi hiến máu.",
         "readMoreContent": "Bạn cần tuyệt đối tránh các hoạt động thể chất nặng, tập gym cường độ cao, nâng tạ hoặc các môn thể thao đòi hỏi sức bền trong ít nhất 24 đến 48 giờ sau khi hiến máu. Việc gắng sức quá sớm có thể gây bục vết tiêm, làm tăng nhịp tim và dẫn đến tình trạng hoa mắt, chóng mặt hoặc ngất xỉu. Nếu muốn vận động, hãy ưu tiên các bài tập thư giãn nhẹ nhàng như đi bộ chậm."
       }
     },

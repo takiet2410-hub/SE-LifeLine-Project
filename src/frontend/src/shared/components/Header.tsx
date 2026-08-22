@@ -7,11 +7,10 @@ export const Header: React.FC = () => {
   const location = useLocation();
 
   const navLinks = [
-    { labelKey: 'About Us', href: '/about' },
-    { labelKey: 'How it Works', href: '/how-it-works' },
-    { labelKey: 'Find Locations', href: '/find-locations' },
-    { labelKey: 'Educational', href: '/health-tips' },
-
+    { labelKey: 'Về Chúng Tôi', href: '/about' },
+    { labelKey: 'Quy Trình Hiến Máu', href: '/how-it-works' },
+    { labelKey: 'Điểm Hiến Máu', href: '/find-locations' },
+    { labelKey: 'Cẩm Nang Sức Khỏe', href: '/health-tips' },
   ];
 
   return (
@@ -44,15 +43,11 @@ export const Header: React.FC = () => {
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center space-x-4">
-            <button className="text-sm font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1">
-              <span>EN</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
             <Link to="/login" className="text-[#455F87] font-bold text-sm px-4 py-2 rounded-lg border border-transparent hover:bg-gray-50 transition-colors">
-              Login
+              Đăng Nhập
             </Link>
             <Link to="/register" className="bg-[#93000B] text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:bg-[#7F1D1D] shadow-sm transition-colors">
-              Sign Up
+              Đăng Ký
             </Link>
           </div>
 
@@ -94,16 +89,12 @@ export const Header: React.FC = () => {
               );
             })}
             <div className="h-px bg-gray-100 my-4"></div>
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-gray-600 font-medium">Language</span>
-              <button className="text-sm font-bold text-[#93000B]">EN / VI</button>
-            </div>
-            <div className="flex flex-col gap-3 px-3 mt-4">
+            <div className="flex flex-col gap-3 px-3 mt-2">
               <Link to="/login" className="w-full text-center text-[#455F87] font-bold py-3 border border-[#455F87] rounded-xl">
-                Login
+                Đăng Nhập
               </Link>
               <Link to="/register" className="w-full text-center bg-[#93000B] text-white font-bold py-3 rounded-xl shadow-sm">
-                Sign Up
+                Đăng Ký
               </Link>
             </div>
           </div>

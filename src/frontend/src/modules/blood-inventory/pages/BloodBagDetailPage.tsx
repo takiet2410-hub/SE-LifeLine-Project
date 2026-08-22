@@ -262,11 +262,20 @@ export const BloodBagDetailPage: React.FC = () => {
                   onChange={(e) => setNewStatus(e.target.value as any)}
                   className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none bg-white font-medium"
                 >
-                  {validTransitions.map((st) => (
-                    <option key={st} value={st}>
-                      {st}
-                    </option>
-                  ))}
+                  {validTransitions.map((st) => {
+                    const stLabelMap: Record<string, string> = {
+                      Available: 'Khả dụng (Available)',
+                      Reserved: 'Đã đặt trước (Reserved)',
+                      Used: 'Đã sử dụng (Used)',
+                      Expired: 'Đã hết hạn (Expired)',
+                      Discarded: 'Đã hủy (Discarded)',
+                    };
+                    return (
+                      <option key={st} value={st}>
+                        {stLabelMap[st] || st}
+                      </option>
+                    );
+                  })}
                 </select>
               </FormField>
 

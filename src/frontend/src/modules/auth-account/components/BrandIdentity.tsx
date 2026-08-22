@@ -16,7 +16,7 @@ export const BrandIdentity: React.FC = () => {
 
       {/* Slogan */}
       <p className="mt-1 text-[12px] font-medium leading-[16.8px] text-[#6c757d] uppercase tracking-wider">
-        EVERY DROP COUNTS
+        MỖI GIỌT MÁU TRIỆU TẤM LÒNG
       </p>
     </div>
   );

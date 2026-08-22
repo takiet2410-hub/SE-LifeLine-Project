@@ -6,22 +6,22 @@ export const TestimonialSection: React.FC = () => {
     {
       id: '1',
       authorName: 'Hoàng Minh',
-      donorRoleKey: 'Regular Donor',
-      quoteKey: '"The app made finding a donation center so easy. I was in and out in 30 minutes, and I love seeing how many people my blood helped!"',
+      donorRoleKey: 'Người hiến máu thường xuyên',
+      quoteKey: '"Nền tảng giúp tôi tìm điểm hiến máu gần nhà cực kỳ nhanh. Toàn bộ quy trình chỉ mất 30 phút, và tôi rất vui khi thấy giọt máu của mình đã cứu sống nhiều bệnh nhân!"',
       avatarUrl: 'https://i.pravatar.cc/150?u=1'
     },
     {
       id: '2',
       authorName: 'Trần Linh',
-      donorRoleKey: 'Student Volunteer',
-      quoteKey: '"Using the AI chatbot to check if I was eligible saved me a trip when I was on medication. It\'s truly a modern way to save lives."',
+      donorRoleKey: 'Tình nguyện viên sinh viên',
+      quoteKey: '"Nhờ có Trợ lý AI kiểm tra điều kiện sức khỏe, tôi biết được cần chờ hết đợt thuốc trước khi đi hiến. Rất tiện lợi và khoa học!"',
       avatarUrl: 'https://i.pravatar.cc/150?u=2'
     },
     {
       id: '3',
       authorName: 'Nguyễn Khánh',
-      donorRoleKey: 'Corporate Donor',
-      quoteKey: '"The E-ticket feature is a game changer. No more paperwork at the hospital. I just show my QR code and I\'m ready to donate."',
+      donorRoleKey: 'Người hiến máu định kỳ',
+      quoteKey: '"Tính năng vé điện tử E-Ticket QR thực sự tuyệt vời. Không cần phải điền giấy tờ rườm rà tại bệnh viện, chỉ cần quét mã là được tiếp nhận ngay."',
       avatarUrl: 'https://i.pravatar.cc/150?u=3'
     }
   ];
@@ -29,7 +29,7 @@ export const TestimonialSection: React.FC = () => {
   return (
     <section className="w-full bg-[#FFF8F7] py-24 px-6 lg:px-12">
       <div className="max-w-[1280px] mx-auto flex flex-col items-center gap-16">
-        <h2 className="text-4xl font-bold text-gray-900 text-center">What Our Donors Say</h2>
+        <h2 className="text-4xl font-bold text-gray-900 text-center">Cảm Nhận Từ Những Người Trao Sự Sống</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
           {testimonials.map(testimonial => (

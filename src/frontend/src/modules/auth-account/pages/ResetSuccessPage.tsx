@@ -16,18 +16,18 @@ export const ResetSuccessPage: React.FC = () => {
           </div>
           
           <h2 className="text-[24px] font-bold text-[#271816] tracking-tight mb-2">
-            Password Reset Successfully
+            Đặt Lại Mật Khẩu Thành Công
           </h2>
           
           <p className="text-[14px] font-normal text-[#6c757d] mb-8">
-            Your password has been successfully updated. You can now login with your new credentials.
+            Mật khẩu tài khoản của bạn đã được cập nhật thành công. Bây giờ bạn có thể đăng nhập bằng mật khẩu mới.
           </p>
 
           <Link 
             to="/login"
             className="flex h-12 w-full max-w-[200px] items-center justify-center gap-2 rounded-lg bg-[#93000B] text-sm font-semibold leading-[14px] text-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10),0_2px_4px_-2px_rgba(0,0,0,0.10)]"
           >
-            Back to Login
+            Quay Lại Đăng Nhập
           </Link>
         </div>
       </main>

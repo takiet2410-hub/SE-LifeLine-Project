@@ -21,11 +21,11 @@ export const HowItWorksHero: React.FC = () => {
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#93000B] leading-tight tracking-tight">
-              How Blood Donation Saves Lives
+              Hiến Máu Cứu Người — Quy Trình & Tiêu Chuẩn
             </h1>
 
             <p className="text-[#5B403D] text-base md:text-lg leading-relaxed max-w-2xl font-normal">
-              Discover the simple blood donation process and how LifeLine makes it a safer, more convenient experience for everyone in Vietnam. Every drop counts.
+              Tìm hiểu quy trình hiến máu an toàn, chuẩn y khoa và cách LifeLine đồng hành giúp hành trình trao giọt máu của bạn trở nên thuận tiện, nhanh chóng và tràn đầy ý nghĩa.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-3.5 pt-3 w-full sm:w-auto">

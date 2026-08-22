@@ -88,11 +88,11 @@ export function RegisterCitizenIdPage() {
               permanentAddress: parts[5] || '',
             });
             setStatusTone('success');
-            setStatusMessage('QR Code scanned successfully!');
+            setStatusMessage('Quét mã QR thẻ CCCD thành công!');
           }
         } else {
           setStatusTone('error');
-          setStatusMessage('Could not find a valid QR code in the image. Please try again.');
+          setStatusMessage('Không tìm thấy mã QR CCCD hợp lệ trong ảnh. Vui lòng thử lại.');
         }
       };
       img.src = e.target?.result as string;
@@ -105,19 +105,19 @@ export function RegisterCitizenIdPage() {
 
     if (!selectedFile || !qrPayload) {
       setStatusTone('error');
-      setStatusMessage('Please upload a valid CCCD QR image first.');
+      setStatusMessage('Vui lòng tải lên ảnh chụp mã QR trên CCCD trước.');
       return;
     }
 
     if (!email.trim() || !phoneNumber.trim() || !password.trim()) {
       setStatusTone('error');
-      setStatusMessage('Please fill in all required fields (Email, Phone number, Password).');
+      setStatusMessage('Vui lòng điền đầy đủ các thông tin bắt buộc (Email, Số điện thoại, Mật khẩu).');
       return;
     }
 
     if (isPasswordTooShort(password) || isPasswordMissingDigitOrLetter(password)) {
       setStatusTone('error');
-      setStatusMessage('Please enter a valid password meeting all security requirements.');
+      setStatusMessage('Vui lòng nhập mật khẩu hợp lệ đáp ứng đầy đủ yêu cầu bảo mật.');
       return;
     }
 
@@ -142,11 +142,11 @@ export function RegisterCitizenIdPage() {
       });
 
       setStatusTone('success');
-      setStatusMessage(response.message ?? 'Verification email sent. Check your inbox to activate your account.');
+      setStatusMessage(response.message ?? 'Đã gửi email xác thực. Vui lòng kiểm tra hộp thư để kích hoạt tài khoản.');
     } catch (error: any) {
       setStatusTone('error');
       const errMsgs = error?.response?.data?.errors;
-      const backendMsg = errMsgs && errMsgs.length > 0 ? errMsgs[0].message : (error?.response?.data?.message || 'Registration could not be completed. Please try again.');
+      const backendMsg = errMsgs && errMsgs.length > 0 ? errMsgs[0].message : (error?.response?.data?.message || 'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.');
       setStatusMessage(backendMsg);
     } finally {
       setIsSubmitting(false);
@@ -197,7 +197,7 @@ export function RegisterCitizenIdPage() {
             <p className="text-[28px] font-bold leading-[36.4px] tracking-[-0.025em] text-[#93000B]">LifeLine</p>
           </div>
           <div className="flex flex-col items-center">
-            <p className="text-sm leading-[21px] tracking-[0.1em] text-[#6C757D]">EVERY DROP COUNTS</p>
+            <p className="text-sm leading-[21px] tracking-[0.1em] text-[#6C757D]">MỖI GIỌT MÁU TRIỆU TẤM LÒNG</p>
           </div>
         </div>
 
@@ -207,7 +207,7 @@ export function RegisterCitizenIdPage() {
         >
           <div className="flex w-full flex-col items-start gap-6 sm:gap-8 p-4 sm:p-8">
             <div className="flex w-full flex-col items-center">
-              <p className="text-[22px] font-semibold leading-[28.6px] text-[#271816]">Create Your Account</p>
+              <p className="text-[22px] font-semibold leading-[28.6px] text-[#271816]">Đăng Ký Tài Khoản</p>
             </div>
 
             <div className="flex w-full flex-col items-end gap-6 sm:gap-8">
@@ -220,7 +220,7 @@ export function RegisterCitizenIdPage() {
                     1
                   </button>
                   <div>
-                    <p className="text-lg font-semibold leading-[25.2px] text-[#271816]">Scan CCCD QR Code</p>
+                    <p className="text-lg font-semibold leading-[25.2px] text-[#271816]">Quét Mã QR Thẻ Căn Cước (CCCD)</p>
                   </div>
                 </div>
 
@@ -240,10 +240,10 @@ export function RegisterCitizenIdPage() {
                   </svg>
 
                   <div className="flex flex-col items-center pt-2">
-                    <p className="text-base font-medium leading-6 text-[#343A40]">Capture or Upload CCCD</p>
+                    <p className="text-base font-medium leading-6 text-[#343A40]">Tải ảnh CCCD chứa mã QR</p>
                   </div>
                   <div className="flex flex-col items-center">
-                    <p className="text-sm leading-5 text-[#6C757D]">Scan the QR code on your national ID card</p>
+                    <p className="text-sm leading-5 text-[#6C757D]">Hệ thống tự động trích xuất thông tin người hiến</p>
                     <p className="mt-1 max-w-full truncate text-xs font-medium text-[#93000B]">
                       {selectedFile?.name ?? 'Chạm để chọn ảnh CCCD'}
                     </p>
@@ -251,9 +251,9 @@ export function RegisterCitizenIdPage() {
 
                   <label className="absolute inset-0 cursor-pointer rounded-lg">
                     <span className="sr-only">
-                      Choose File
+                      Chọn tệp
                     </span>
-                    <span className="sr-only">{selectedFile?.name ?? 'No file chosen'}</span>
+                    <span className="sr-only">{selectedFile?.name ?? 'Chưa chọn tệp nào'}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -275,14 +275,14 @@ export function RegisterCitizenIdPage() {
                     2
                   </button>
                   <div>
-                    <p className="text-lg font-semibold leading-[25.2px] text-[#271816]">Verify Identity Details</p>
+                    <p className="text-lg font-semibold leading-[25.2px] text-[#271816]">Xác Nhận Thông Tin Định Danh</p>
                   </div>
                 </div>
 
                 <div className="flex w-full flex-col gap-4">
                   <div className="flex w-full flex-col gap-1">
                     <div className="flex flex-col pb-px">
-                      <p className="text-xs font-medium leading-[16.8px] text-[#6C757D]">Full Name</p>
+                      <p className="text-xs font-medium leading-[16.8px] text-[#6C757D]">Họ và tên</p>
                     </div>
                     <div className="relative flex h-11 w-full items-start overflow-hidden rounded-lg border border-[#DEE2E6] bg-[#F1F3F5] px-4 py-[11px]">
                       <input
@@ -310,7 +310,7 @@ export function RegisterCitizenIdPage() {
                   <div className="flex w-full flex-col sm:flex-row items-start justify-center gap-4">
                     <div className="flex w-full sm:w-1/2 flex-col gap-1">
                       <div className="flex flex-col pb-px">
-                        <p className="text-xs font-medium leading-[16.8px] text-[#6C757D]">Date of Birth</p>
+                        <p className="text-xs font-medium leading-[16.8px] text-[#6C757D]">Ngày sinh</p>
                       </div>
                       <div className="relative flex h-11 w-full items-start overflow-hidden rounded-lg border border-[#DEE2E6] bg-[#F1F3F5] px-4 py-[11px]">
                         <input
@@ -337,7 +337,7 @@ export function RegisterCitizenIdPage() {
 
                     <div className="flex w-full sm:w-1/2 flex-col gap-1">
                       <div className="flex flex-col pb-px">
-                        <p className="text-xs font-medium leading-[16.8px] text-[#6C757D]">ID Number</p>
+                        <p className="text-xs font-medium leading-[16.8px] text-[#6C757D]">Số CCCD</p>
                       </div>
                       <div className="relative flex h-11 w-full items-start overflow-hidden rounded-lg border border-[#DEE2E6] bg-[#F1F3F5] px-4 py-[11px]">
                         <input
@@ -366,13 +366,13 @@ export function RegisterCitizenIdPage() {
                   {/* Permanent Address from CCCD */}
                   <div className="flex w-full flex-col gap-1">
                     <div className="flex flex-col pb-px">
-                      <p className="text-xs font-medium leading-[16.8px] text-[#6C757D]">Permanent Address (Theo CCCD)</p>
+                      <p className="text-xs font-medium leading-[16.8px] text-[#6C757D]">Địa chỉ thường trú (Theo CCCD)</p>
                     </div>
                     <div className="relative flex min-h-11 w-full items-start overflow-hidden rounded-lg border border-[#DEE2E6] bg-[#F1F3F5] px-4 py-[11px]">
                       <input
                         value={extractedIdentity.permanentAddress}
                         readOnly
-                        placeholder="Trích xuất từ mã QR CCCD"
+                        placeholder="Trích xuất tự động từ mã QR CCCD"
                         className="w-full border-0 bg-transparent p-0 text-xs sm:text-sm font-medium text-[#343A40] placeholder:text-[#9CA3AF] outline-none"
                       />
                     </div>
@@ -481,14 +481,14 @@ export function RegisterCitizenIdPage() {
                     3
                   </button>
                   <div>
-                    <p className="text-lg font-semibold leading-[25.2px] text-[#271816]">Set Account Credentials</p>
+                    <p className="text-lg font-semibold leading-[25.2px] text-[#271816]">Thiết Lập Thông Tin Đăng Nhập</p>
                   </div>
                 </div>
 
                 <div className="flex w-full flex-col gap-[19px]">
                   <div className="flex w-full flex-col gap-1">
                     <div className="flex flex-col pb-px">
-                      <p className="text-xs font-medium leading-[16.8px] text-[#343A40]">Email Address</p>
+                      <p className="text-xs font-medium leading-[16.8px] text-[#343A40]">Địa chỉ Email</p>
                     </div>
                     <div className="flex h-11 w-full items-start overflow-hidden rounded-lg border border-[#DEE2E6] bg-white px-4 py-[11px]">
                       <input
@@ -504,7 +504,7 @@ export function RegisterCitizenIdPage() {
 
                   <div className="flex w-full flex-col gap-1">
                     <div className="flex flex-col pb-px">
-                      <p className="text-xs font-medium leading-[16.8px] text-[#343A40]">Phone Number</p>
+                      <p className="text-xs font-medium leading-[16.8px] text-[#343A40]">Số điện thoại</p>
                     </div>
                     <div className="relative flex h-11 w-full items-start overflow-hidden rounded-lg border border-[#DEE2E6] bg-white pl-16 pr-4 pt-[11px] pb-[11px]">
                       <div className="absolute left-4 top-2.5 flex w-fit border-r border-r-[#DEE2E6] pr-3">
@@ -523,7 +523,7 @@ export function RegisterCitizenIdPage() {
 
                   <div className="flex w-full flex-col gap-1">
                     <div className="flex flex-col pb-px">
-                      <p className="text-xs font-medium leading-[16.8px] text-[#343A40]">Password</p>
+                      <p className="text-xs font-medium leading-[16.8px] text-[#343A40]">Mật khẩu</p>
                     </div>
                     <div className={`relative flex h-11 w-full items-start overflow-hidden rounded-lg border ${passwordError ? 'border-[#BA1A1A] shadow-[0_0_0_2px_rgba(186,26,26,0.10)]' : 'border-[#DEE2E6]'} bg-white px-4 py-[11px]`}>
                       <input
@@ -551,7 +551,7 @@ export function RegisterCitizenIdPage() {
                     </div>
                     {passwordError && (
                       <div className="flex items-center gap-1 pt-1">
-                        <p className="text-[11.5px] font-medium leading-[16px] text-[#BA1A1A]">Password must be ≥8 chars, include uppercase, lowercase, number, and special char (@$!%*?&).</p>
+                        <p className="text-[11.5px] font-medium leading-[16px] text-[#BA1A1A]">Mật khẩu phải từ 8 ký tự trở lên, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt (@$!%*?&).</p>
                       </div>
                     )}
                   </div>
@@ -565,7 +565,7 @@ export function RegisterCitizenIdPage() {
                   className={`relative flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#93000B] text-sm font-semibold leading-[14px] text-white ${actionButtonShadow}`}
                 >
                   <div className="absolute inset-0 rounded-lg bg-transparent shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10),0_2px_4px_-2px_rgba(0,0,0,0.10)]" />
-                  <span className="relative">{isSubmitting ? 'Registering...' : 'Register'}</span>
+                  <span className="relative">{isSubmitting ? 'Đang xử lý đăng ký...' : 'Đăng Ký Tài Khoản'}</span>
                   <svg
                     width="16"
                     height="16"
@@ -590,9 +590,9 @@ export function RegisterCitizenIdPage() {
                 ) : null}
 
                 <div className="flex w-full flex-wrap items-center justify-center gap-2 pb-0.5 pt-[3px] text-center">
-                  <p className="text-sm leading-5 text-[#6C757D]">Already have an account?</p>
+                  <p className="text-sm leading-5 text-[#6C757D]">Đã có tài khoản?</p>
                   <Link to="/auth/login" className="text-sm font-semibold leading-5 text-[#93000B] hover:text-[#7a0009] transition-colors">
-                    Login now
+                    Đăng nhập ngay
                   </Link>
                 </div>
               </div>
@@ -607,7 +607,7 @@ export function RegisterCitizenIdPage() {
                   fill="#271816"
                 />
               </svg>
-              <p className="text-[10px] font-bold leading-[15px] tracking-[0.05em] text-[#271816]">SECURED ENCRYPTION</p>
+              <p className="text-[10px] font-bold leading-[15px] tracking-[0.05em] text-[#271816]">BẢO MẬT MÃ HÓA SSL</p>
             </div>
 
             <div className="flex w-fit items-center gap-1.5 bg-white opacity-60">
@@ -617,7 +617,7 @@ export function RegisterCitizenIdPage() {
                   fill="#271816"
                 />
               </svg>
-              <p className="text-[10px] font-bold leading-[15px] tracking-[0.05em] text-[#271816]">GDPR COMPLIANT</p>
+              <p className="text-[10px] font-bold leading-[15px] tracking-[0.05em] text-[#271816]">CHUẨN BẢO VỆ DỮ LIỆU</p>
             </div>
           </div>
         </form>

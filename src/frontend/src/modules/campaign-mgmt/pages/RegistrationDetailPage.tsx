@@ -421,7 +421,7 @@ export const RegistrationDetailPage: React.FC = () => {
               className="h-10 px-4 bg-purple-600 hover:bg-purple-700 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
             >
               <Activity className="w-4 h-4 text-white" />
-              <span>Examining</span>
+              <span>Khám & Xét Nghiệm</span>
             </button>
           )}
 
@@ -432,7 +432,7 @@ export const RegistrationDetailPage: React.FC = () => {
               className="h-10 px-4 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[13px] font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
             >
               <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>Completed</span>
+              <span>Hoàn Tất Hiến Máu</span>
             </button>
           )}
 
@@ -534,7 +534,7 @@ export const RegistrationDetailPage: React.FC = () => {
             <div className="flex items-center justify-between gap-2 border-b border-[#f1f3f5] pb-4 flex-nowrap">
               <h4 className="text-[15px] md:text-[16px] font-bold text-[#271816] flex items-center gap-2 min-w-0">
                 <FileText className="w-5 h-5 text-[#93000b] shrink-0" />
-                <span>Đơn khảo sát sàng lọc (Screening Survey Form)</span>
+                <span>Phiếu khảo sát sàng lọc sức khỏe</span>
               </h4>
               {(() => {
                 const sf = (registration as any)?.screeningForm || (registration as any)?.screening;
@@ -750,7 +750,7 @@ export const RegistrationDetailPage: React.FC = () => {
                   <span className="text-[#6c757d] font-medium flex items-center gap-1.5">
                     <Calendar className="w-4 h-4 text-[#6c757d]" /> Ngày sinh
                   </span>
-                  <span className="text-[#271816] font-semibold">
+                    <span className="text-[#271816] font-semibold">
                     {registration.donorDob
                       ? String(registration.donorDob).split('T')[0].split(' ')[0].replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1')
                       : '15/08/1995'}
@@ -780,7 +780,7 @@ export const RegistrationDetailPage: React.FC = () => {
               <div className="flex items-center justify-between gap-2 border-b border-[#f1f3f5] pb-3 flex-nowrap">
                 <h4 className="text-[13px] md:text-[14px] font-bold text-[#271816] flex items-center gap-2 min-w-0 whitespace-nowrap truncate">
                   <FileText className="w-4 h-4 text-[#93000b] shrink-0" />
-                  <span className="truncate">Đơn khảo sát sàng lọc (Screening Survey Form)</span>
+                  <span className="truncate">Phiếu khảo sát sàng lọc sức khỏe</span>
                 </h4>
                 {(() => {
                   const sf = (registration as any)?.screeningForm || (registration as any)?.screening;
@@ -808,7 +808,7 @@ export const RegistrationDetailPage: React.FC = () => {
                   }
                   return (
                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
-                      CẦN XEM XÉT
+                      CẦN BÁC SĨ KHÁM
                     </span>
                   );
                 })()}
@@ -902,7 +902,7 @@ export const RegistrationDetailPage: React.FC = () => {
               <div className="flex items-center justify-between border-b border-[#f1f3f5] pb-4">
                 <h3 className="text-[17px] font-bold text-[#271816] flex items-center gap-2">
                   <Activity className="w-5 h-5 text-[#93000b]" />
-                  <span>Kết Quả Khám Lâm Sàng & Chỉ Số Sinh Tồn (Clinical Vitals)</span>
+                  <span>Kết Quả Khám Lâm Sàng & Chỉ Số Sinh Tồn</span>
                 </h3>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#93000b] bg-red-50 px-3 py-1 rounded-full border border-red-100">
                   Bác sĩ kiểm tra
@@ -1367,7 +1367,7 @@ export const RegistrationDetailPage: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
                   <div>
-                    <p className="font-extrabold text-[14px]">1. Passed (Đạt tiêu chuẩn)</p>
+                    <p className="font-extrabold text-[14px]">1. Đạt tiêu chuẩn an toàn (Passed)</p>
                     <p className="text-[11.5px] text-emerald-700 mt-0.5">Mẫu máu đạt yêu cầu an toàn, hệ thống sẽ tự động nhập kho (Stock In).</p>
                   </div>
                 </div>
@@ -1385,7 +1385,7 @@ export const RegistrationDetailPage: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <XCircle className="w-6 h-6 text-red-600 shrink-0" />
                   <div>
-                    <p className="font-extrabold text-[14px]">2. Máu có vấn đề (Rejected)</p>
+                    <p className="font-extrabold text-[14px]">2. Không đạt tiêu chuẩn (Từ chối)</p>
                     <p className="text-[11.5px] text-red-700 mt-0.5">Ghi nhận mẫu máu có bất thường. Hệ thống sẽ KHÔNG nhập kho túi máu này.</p>
                   </div>
                 </div>

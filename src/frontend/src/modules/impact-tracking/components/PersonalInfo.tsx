@@ -52,7 +52,7 @@ export const PersonalInfo: React.FC<PersonalInfoProps> = ({ isEditing, user }) =
         
         <span className="text-[#6C757D] flex items-center h-full">Nhóm máu:</span>
         <span className="text-[#271816] font-medium flex items-center gap-1 h-full">
-          {user?.bloodType || 'Unknown'} {isEditing && <LockIcon />}
+          {(!user?.bloodType || user.bloodType === 'Unknown' || user.bloodType === 'unknown' || user.bloodType === '—') ? 'Chưa cập nhật' : user.bloodType} {isEditing && <LockIcon />}
         </span>
       </div>
     </div>

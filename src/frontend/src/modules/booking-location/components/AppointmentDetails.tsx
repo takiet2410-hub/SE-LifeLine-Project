@@ -59,12 +59,12 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
             <div className="flex items-center gap-2 flex-wrap">
               {isPending && (
                 <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
-                  <Clock className="w-3.5 h-3.5" /> CHỜ BLOODCENTER XÁC NHẬN
+                  <Clock className="w-3.5 h-3.5" /> CHỜ TRUNG TÂM XÁC NHẬN
                 </span>
               )}
               {isUpcoming && (
                 <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" /> ĐÃ XÁC NHẬN & E-TICKET READY
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" /> ĐÃ XÁC NHẬN & CÓ THẺ HẸN
                 </span>
               )}
               {isCompleted && (
@@ -74,7 +74,7 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
               )}
               {isRejected && (
                 <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
-                  <XCircle className="w-3.5 h-3.5 text-rose-700" /> ĐÃ TỪ CHỐI (REJECTED)
+                  <XCircle className="w-3.5 h-3.5 text-rose-700" /> ĐÃ TỪ CHỐI
                 </span>
               )}
               {isCancelled && (
@@ -250,7 +250,7 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
               </div>
               <div>
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#93000b] bg-red-100/80 px-2 py-0.5 rounded-full mb-1">
-                  <QrCode className="w-3 h-3" /> E-TICKET READY
+                  <QrCode className="w-3 h-3" /> THẺ E-TICKET SẴN SÀNG
                 </span>
                 <p className="text-[12px] font-bold text-[#271816] group-hover:text-[#93000b] transition-colors">
                   Xem Thẻ E-Ticket →
@@ -285,7 +285,7 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                     className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-[#152a43] hover:bg-[#0f1d2e] text-white text-[14px] font-semibold rounded-lg transition-all shadow-sm active:scale-[0.98]"
                   >
                     <QrCode className="w-4 h-4" />
-                    Xem E-Ticket
+                    Xem Thẻ E-Ticket
                   </button>
                 )}
                 <button
@@ -293,7 +293,7 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[14px] font-semibold rounded-lg transition-all shadow-sm active:scale-[0.98]"
                 >
                   <Download className="w-4 h-4" />
-                  Download E-Ticket
+                  Tải Thẻ E-Ticket
                 </button>
                 <button
                   onClick={() => onCancel(appointment.id)}
@@ -301,7 +301,7 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 border border-[#dee2e6] text-[#271816] hover:bg-red-50 hover:text-[#93000b] hover:border-[#93000b]/30 text-[14px] font-semibold rounded-lg transition-all disabled:opacity-50"
                 >
                   <XCircle className="w-4 h-4" />
-                  Cancel Appointment
+                  Hủy Lịch Hẹn
                 </button>
               </>
             )}

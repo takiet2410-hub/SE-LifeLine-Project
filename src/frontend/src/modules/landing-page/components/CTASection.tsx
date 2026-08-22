@@ -9,17 +9,17 @@ export const CTASection: React.FC = () => {
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
         
         <h2 className="text-4xl lg:text-5xl font-bold text-white z-10">
-          Ready to Make a Difference?
+          Sẵn Sàng Trao Cơ Hội Sống?
         </h2>
         
         <p className="text-[#FEE2E2] text-lg max-w-2xl leading-relaxed z-10">
-          Join 50,000+ active donors across Vietnam. Your single donation
-          can save up to 3 lives. Be the hero someone is waiting for today.
+          Gia nhập mạng lưới hơn 50.000+ tình nguyện viên trên khắp Việt Nam. Mỗi lần hiến máu của bạn
+          có thể cứu sống tới 3 sinh mạng. Hãy trở thành người hùng thầm lặng ngay hôm nay.
         </p>
         
         <div className="z-10 mt-4">
           <Link to="/register" className="inline-block bg-white text-[#7F1D1D] font-extrabold text-xl lg:text-[22px] px-10 py-5 rounded-xl shadow-lg hover:shadow-xl hover:bg-gray-50 transition transform hover:-translate-y-1">
-            Sign Up Now
+            Đăng Ký Ngay
           </Link>
         </div>
       </div>

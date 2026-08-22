@@ -5,6 +5,7 @@ import { EmergencyBanner } from '../components/EmergencyBanner';
 import { LocationPromptBanner } from '../components/LocationPromptBanner';
 import { UpcomingAppointment } from '../components/UpcomingAppointment';
 import { CampaignList } from '../components/CampaignList';
+import { DonationProcessSection } from '../components/DonationProcessSection';
 import { NewsTipsGrid } from '../components/NewsTipsGrid';
 
 export const DashboardPage: React.FC = () => {
@@ -24,7 +25,8 @@ export const DashboardPage: React.FC = () => {
           <LocationPromptBanner />
           <EmergencyBanner />
           <UpcomingAppointment />
-          <div className="mt-auto pt-6">
+          <div className="mt-auto pt-6 space-y-6">
+            <DonationProcessSection />
             <NewsTipsGrid />
           </div>
         </div>

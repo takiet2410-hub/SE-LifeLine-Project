@@ -8,16 +8,16 @@ export const CallToAction: React.FC = () => {
         
         <div className="z-10 mb-8 md:mb-0">
           <h2 className="text-3xl lg:text-4xl font-extrabold text-white mb-3">
-            Ready to save a life?
+            Sẵn sàng cứu sống một sinh mạng?
           </h2>
           <p className="text-[#FEE2E2] text-lg font-medium">
-            Join 50,000+ donors making an impact every day.
+            Đồng hành cùng hơn 50.000+ tình nguyện viên tạo nên điều kỳ diệu mỗi ngày.
           </p>
         </div>
         
         <div className="z-10 shrink-0">
           <Link to="/register" className="inline-block bg-white text-[#B91C1C] font-bold text-lg px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-gray-50 transition transform hover:-translate-y-1">
-            Sign Up Now
+            Đăng Ký Ngay
           </Link>
         </div>
       </div>

@@ -10,21 +10,21 @@ interface ContentStatsCardsProps {
 export const ContentStatsCards: React.FC<ContentStatsCardsProps> = ({ summary, loading }) => {
   const stats = [
     {
-      title: 'Total Articles',
+      title: 'Tổng bài viết',
       value: summary?.totalArticles ?? 0,
       icon: FileText,
       color: 'bg-blue-50 text-blue-600',
       border: 'border-blue-100'
     },
     {
-      title: 'Public Reach',
+      title: 'Lượt xem cộng đồng',
       value: (summary?.publicReach ?? 0).toLocaleString(),
       icon: Eye,
       color: 'bg-green-50 text-green-600',
       border: 'border-green-100'
     },
     {
-      title: 'Active Alerts',
+      title: 'Cảnh báo đang chạy',
       value: summary?.activeAlerts ?? 0,
       icon: AlertTriangle,
       color: 'bg-amber-50 text-amber-600',

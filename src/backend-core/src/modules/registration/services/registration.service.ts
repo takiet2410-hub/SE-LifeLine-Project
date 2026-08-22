@@ -218,7 +218,7 @@ export class RegistrationService {
         const campaignDoc = app.campaignId ? await Campaign.findById(app.campaignId) : null;
 
         const displayStatus: string = digitalRecord?.donationStatus || app.status;
-        const testResult = (app as any)?.testResult || (screeningForm as any)?.testResult || (digitalRecord as any)?.testResult || (screeningForm?.outcome === 'REJECT' ? 'Rejected' : (screeningForm?.outcome === 'PASS' && displayStatus === 'Completed' ? 'Pass' : undefined));
+        const testResult = (app as any)?.testResult || (screeningForm as any)?.testResult || (digitalRecord as any)?.testResult || (displayStatus === 'Completed' ? 'Pass' : undefined);
 
         const screeningData = screeningForm ? {
           screeningFormId: screeningForm._id.toString(),
@@ -400,7 +400,7 @@ export class RegistrationService {
       };
     });
 
-    const testResult = (appointment as any)?.testResult || (screeningForm as any)?.testResult || (digitalRecord as any)?.testResult || (screeningForm?.outcome === 'REJECT' ? 'Rejected' : (screeningForm?.outcome === 'PASS' && displayStatus === 'Completed' ? 'Pass' : undefined));
+    const testResult = (appointment as any)?.testResult || (screeningForm as any)?.testResult || (digitalRecord as any)?.testResult || (displayStatus === 'Completed' ? 'Pass' : undefined);
 
     return {
       registrationId: appointment._id.toString(),

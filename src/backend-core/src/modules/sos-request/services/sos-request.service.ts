@@ -485,19 +485,27 @@ export class SOSRequestService {
         throw new Error(`Blood type mismatch: SOS requires ${sosRequest.bloodType} (Compatible: ${compatibleTypes.join(', ')}), but ${wrongTypeBags.length} bag(s) are ${wrongTypeBags.map(b => b.bloodType).join(', ')}`);
       }
 
-      // 3. Calculate total volume and verify against remaining needed (prevent over-fulfillment)
+      // 3. Calculate total volume and verify against remaining needed
       const totalVolumeMl = bags.reduce((sum, bag) => sum + (bag.volumeMl || 0), 0);
 
       if (totalVolumeMl <= 0) {
-        throw new Error('Total volume of selected bags is 0');
+        throw new Error('Vui lòng chọn ít nhất một túi máu hợp lệ để xuất kho.');
       }
 
       const currentReceived = sosRequest.receivedQuantityMl ?? 0;
       const currentInTransit = sosRequest.inTransitQuantityMl || 0;
       const remainingNeeded = Math.max(0, sosRequest.requiredQuantityMl - currentReceived - currentInTransit);
 
-      if (totalVolumeMl > remainingNeeded) {
-        throw new Error(`Không thể xuất kho vượt quá lượng máu cần bổ sung (${remainingNeeded}ml). Hiện tại Bệnh viện đã nhận ${currentReceived}ml và có ${currentInTransit}ml đang trên đường vận chuyển.`);
+      if (remainingNeeded <= 0) {
+        throw new Error(`Yêu cầu SOS đã được đáp ứng đủ lượng máu cần thiết (${sosRequest.requiredQuantityMl}ml).`);
+      }
+
+      // Check if there are redundant bags selected (e.g. if removing the smallest bag still covers remainingNeeded)
+      if (bags.length > 1) {
+        const smallestBagVolume = Math.min(...bags.map(b => b.volumeMl || 0));
+        if (totalVolumeMl - smallestBagVolume >= remainingNeeded) {
+          throw new Error(`Danh sách túi máu đã chọn vượt quá nhu cầu cần thiết. Vui lòng bỏ bớt túi máu dư thừa để tối ưu kho máu.`);
+        }
       }
 
       // 4. Update blood bags to "Used" status
@@ -786,8 +794,8 @@ export class SOSRequestService {
     const currentReceived = sosRequest.receivedQuantityMl || 0;
     const currentInTransit = sosRequest.inTransitQuantityMl || 0;
     const remainingNeeded = Math.max(0, sosRequest.requiredQuantityMl - currentReceived - currentInTransit);
-    if (payload.volumeMl > remainingNeeded) {
-      const error = new Error(`Thể tích ghi nhận vượt quá lượng còn thiếu (${remainingNeeded}ml, đã nhận ${currentReceived}ml và đang vận chuyển ${currentInTransit}ml).`);
+    if (remainingNeeded <= 0) {
+      const error = new Error(`Yêu cầu SOS đã được đáp ứng đủ lượng máu cần thiết (${sosRequest.requiredQuantityMl}ml).`);
       (error as any).statusCode = 400;
       throw error;
     }

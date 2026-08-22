@@ -212,9 +212,10 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
             </div>
           </div>
         )}
+      </div>
 
-        {/* QR Code & Actions Section */}
-        <div className="mt-auto border-t border-[#f1f3f5] pt-6 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+      {/* FIXED BOTTOM: QR Code & Actions Section */}
+      <div className="bg-white p-6 md:px-8 border-t border-[#dee2e6] flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6 shrink-0 rounded-b-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
           {/* QR Code Card */}
           {isPending ? (
             <div className="flex items-center gap-4 bg-gray-50 p-3.5 rounded-xl border border-gray-200 opacity-85">
@@ -317,8 +318,6 @@ export const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
             )}
           </div>
         </div>
-
-      </div>
 
       <DonationCertificateModal
         isOpen={isCertOpen}

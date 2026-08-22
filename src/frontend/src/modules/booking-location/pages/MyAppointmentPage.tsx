@@ -236,7 +236,24 @@ export const MyAppointmentPage: React.FC = () => {
 
   return (
     <div className="flex min-h-full flex-col relative p-3 sm:p-5 md:p-8 max-w-[1400px] mx-auto w-full">
-      <AppointmentTabs activeTab={activeTab} onChangeTab={handleTabChange} />
+      <AppointmentTabs 
+        activeTab={activeTab} 
+        onChangeTab={handleTabChange}
+        rightContent={
+          <div className="flex items-center gap-3">
+            <span className="text-[13px] font-medium text-[#5b403d] hidden xl:inline-block">
+              Muốn đăng ký thêm đợt hiến mới hoặc địa điểm khác?
+            </span>
+            <button
+              onClick={() => navigate('/my-appointments/schedule')}
+              className="flex items-center gap-2 px-5 py-2 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-semibold rounded-lg transition-all shadow-sm active:scale-[0.98] cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Đặt lịch hẹn mới</span>
+            </button>
+          </div>
+        }
+      />
 
       {/* Main Content: Master-Detail Layout or Full Schedule Empty State */}
       {!isLoading && appointments.length === 0 ? (
@@ -298,7 +315,7 @@ export const MyAppointmentPage: React.FC = () => {
       ) : (
         <div className="flex-1 flex flex-col md:flex-row gap-4 md:gap-6 md:overflow-hidden">
           {/* Left Column: List View */}
-          <div className="w-full md:w-[380px] shrink-0 flex flex-col md:overflow-y-auto md:pr-2 gap-3 pb-6 md:pb-0">
+          <div className="w-full md:w-[380px] shrink-0 flex flex-col gap-3 pb-6 md:pb-0 h-[calc(100vh-250px)] min-h-[500px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-300">
             {isLoading ? (
               <div className="flex justify-center py-10">
                 <Loader2 className="w-8 h-8 text-[#93000b] animate-spin" />
@@ -308,7 +325,7 @@ export const MyAppointmentPage: React.FC = () => {
                 <span className="text-[14px] font-medium text-[#93000b]">{error}</span>
               </div>
             ) : filteredAppointments.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-white border border-[#f1f3f5] rounded-2xl shadow-2xs">
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-white border border-[#f1f3f5] rounded-2xl shadow-2xs h-full">
                 <CalendarX2 className="w-10 h-10 text-[#a3a3a3] mb-3" />
                 <p className="text-[14px] font-bold text-[#271816] mb-1">Không có lịch hẹn nào</p>
                 <p className="text-[12px] text-[#6c757d] mb-4">Không tìm thấy lịch hẹn cho mục {activeTab}.</p>
@@ -321,7 +338,7 @@ export const MyAppointmentPage: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <>
+              <div className="space-y-3">
                 {filteredAppointments.map(apt => (
                   <AppointmentListItem
                     key={apt.id}
@@ -330,26 +347,12 @@ export const MyAppointmentPage: React.FC = () => {
                     onClick={setSelectedId}
                   />
                 ))}
-                
-                {/* Schedule Another Button Box */}
-                <div className="mt-4 p-5 bg-[#fff8f7] border border-[#f1f3f5] rounded-xl flex flex-col items-center justify-center text-center shadow-sm">
-                  <p className="text-[13px] font-medium text-[#5b403d] mb-3">
-                    Muốn đăng ký thêm đợt hiến mới hoặc địa điểm khác?
-                  </p>
-                  <button
-                    onClick={() => navigate('/my-appointments/schedule')}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-semibold rounded-lg transition-all shadow-sm active:scale-[0.98] cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Đặt lịch hẹn mới</span>
-                  </button>
-                </div>
-              </>
+              </div>
             )}
           </div>
 
           {/* Right Column: Detail View */}
-          <div className="flex-1 min-w-0 bg-transparent flex flex-col pb-6 md:pb-0">
+          <div className="flex-1 min-w-0 bg-transparent flex flex-col pb-6 md:pb-0 h-[calc(100vh-250px)] min-h-[500px]">
             {!isLoading && selectedAppointment ? (
               <AppointmentDetails 
                 appointment={selectedAppointment}

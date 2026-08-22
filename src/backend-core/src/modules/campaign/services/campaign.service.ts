@@ -235,35 +235,10 @@ export class CampaignService {
     // Validate minimum 30 min duration for timeslots
     validateTimeslotsMinDuration(timeslotsPattern);
 
-    let earliestTime = '23:59';
-    let latestTime = '00:00';
-    timeslotsPattern.forEach((slot: any) => {
-      const sTime = typeof slot.startTime === 'string' && slot.startTime.includes('T') ? slot.startTime.split('T')[1].substring(0, 5) : slot.startTime;
-      const eTime = typeof slot.endTime === 'string' && slot.endTime.includes('T') ? slot.endTime.split('T')[1].substring(0, 5) : slot.endTime;
-      if (sTime < earliestTime) earliestTime = sTime;
-      if (eTime > latestTime) latestTime = eTime;
-    });
-
-    // Start date at earliest time, end date at latest time
+    // Generate or format daily timeslots FIRST
     const startDateStr = typeof data.startDate === 'string' ? data.startDate.split('T')[0] : startDate.toISOString().split('T')[0];
     const endDateStr = typeof data.endDate === 'string' ? data.endDate.split('T')[0] : endDate.toISOString().split('T')[0];
-    const actualStartDateTime = new Date(`${startDateStr}T${earliestTime}:00+07:00`);
-    const actualEndDateTime = new Date(`${endDateStr}T${latestTime}:00+07:00`);
-
-    // Auto calculate status if not Draft or Cancelled
-    if (status !== 'Draft' && status !== 'Cancelled') {
-      const now = new Date();
-      const startOfTomorrow = dayjs().tz('Asia/Ho_Chi_Minh').add(1, 'day').startOf('day').toDate();
-      if (now > actualEndDateTime) {
-        status = 'Completed';
-      } else if (actualStartDateTime >= startOfTomorrow) {
-        status = 'Upcoming';
-      } else {
-        status = 'Active';
-      }
-    }
-
-    // Generate or format daily timeslots
+    
     const dailyTimeslots: any[] = [];
     let computedTotalCap = 0;
     if (data.dailyTimeslots && Array.isArray(data.dailyTimeslots) && data.dailyTimeslots.length > 0) {
@@ -300,6 +275,40 @@ export class CampaignService {
           });
         }
         currentDay.setDate(currentDay.getDate() + 1);
+      }
+    }
+
+    // Now calculate absolute start and end times from dailyTimeslots
+    let actualStartDateTime: Date | null = null;
+    let actualEndDateTime: Date | null = null;
+
+    if (dailyTimeslots.length > 0) {
+      dailyTimeslots.forEach(slot => {
+        const slotStart = new Date(`${slot.dateStr}T${slot.startTime}:00+07:00`);
+        const slotEnd = new Date(`${slot.dateStr}T${slot.endTime}:00+07:00`);
+        if (!actualStartDateTime || slotStart < actualStartDateTime) {
+          actualStartDateTime = slotStart;
+        }
+        if (!actualEndDateTime || slotEnd > actualEndDateTime) {
+          actualEndDateTime = slotEnd;
+        }
+      });
+    }
+
+    // Fallback just in case
+    if (!actualStartDateTime) actualStartDateTime = new Date(`${startDateStr}T07:30:00+07:00`);
+    if (!actualEndDateTime) actualEndDateTime = new Date(`${endDateStr}T16:30:00+07:00`);
+
+    // Auto calculate status if not Draft or Cancelled
+    if (status !== 'Draft' && status !== 'Cancelled') {
+      const now = new Date();
+      const startOfTomorrow = dayjs().tz('Asia/Ho_Chi_Minh').add(1, 'day').startOf('day').toDate();
+      if (now > actualEndDateTime) {
+        status = 'Completed';
+      } else if (actualStartDateTime >= startOfTomorrow) {
+        status = 'Upcoming';
+      } else {
+        status = 'Active';
       }
     }
 
@@ -492,25 +501,6 @@ export class CampaignService {
       validateTimeslotsMinDuration(updateData.dailyTimeslots);
     }
 
-    let earliestTime = '23:59';
-    let latestTime = '00:00';
-    const slotsForBounds = (updateData.dailyTimeslots && updateData.dailyTimeslots.length > 0)
-      ? updateData.dailyTimeslots
-      : timeslotsPattern;
-
-    (slotsForBounds || []).forEach((slot: any) => {
-      const sTime = typeof slot.startTime === 'string' && slot.startTime.includes('T') ? slot.startTime.split('T')[1].substring(0, 5) : slot.startTime;
-      const eTime = typeof slot.endTime === 'string' && slot.endTime.includes('T') ? slot.endTime.split('T')[1].substring(0, 5) : slot.endTime;
-      if (sTime && sTime < earliestTime) earliestTime = sTime;
-      if (eTime && eTime > latestTime) latestTime = eTime;
-    });
-
-    if (earliestTime === '23:59') earliestTime = '07:30';
-    if (latestTime === '00:00') latestTime = '16:30';
-
-    const actualStartDateTime = new Date(`${startDateStr}T${earliestTime}:00+07:00`);
-    const actualEndDateTime = new Date(`${endDateStr}T${latestTime}:00+07:00`);
-
     // Generate or format daily timeslots (IDENTICAL TO createCampaign)
     const dailyTimeslots: any[] = [];
     let computedTotalCap = 0;
@@ -551,6 +541,27 @@ export class CampaignService {
         currentDay.setDate(currentDay.getDate() + 1);
       }
     }
+
+    // Now calculate absolute start and end times from dailyTimeslots
+    let actualStartDateTime: Date | null = null;
+    let actualEndDateTime: Date | null = null;
+
+    if (dailyTimeslots.length > 0) {
+      dailyTimeslots.forEach(slot => {
+        const slotStart = new Date(`${slot.dateStr}T${slot.startTime}:00+07:00`);
+        const slotEnd = new Date(`${slot.dateStr}T${slot.endTime}:00+07:00`);
+        if (!actualStartDateTime || slotStart < actualStartDateTime) {
+          actualStartDateTime = slotStart;
+        }
+        if (!actualEndDateTime || slotEnd > actualEndDateTime) {
+          actualEndDateTime = slotEnd;
+        }
+      });
+    }
+
+    // Fallback just in case
+    if (!actualStartDateTime) actualStartDateTime = new Date(`${startDateStr}T07:30:00+07:00`);
+    if (!actualEndDateTime) actualEndDateTime = new Date(`${endDateStr}T16:30:00+07:00`);
 
     let finalStatus = campaign.status;
     if (updateData.isDraft || updateData.status === 'Draft') {

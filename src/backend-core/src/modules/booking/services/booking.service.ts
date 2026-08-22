@@ -13,7 +13,12 @@ import { Campaign } from '../../campaign/models/campaign.model';
 import { notificationEvents, emitAppointmentConfirmed, emitEligibilityCheckFailed } from '../../notification/services/notification.events';
 import { Hospital } from '../../auth-account/models/hospital.model';
 import { BloodCenter } from '../../auth-account/models/blood-center.model';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
 export class BookingService {
   public static async searchLocations(filters: any) {
     // Query both Active & Upcoming campaigns (exclude Cancelled and Draft)
@@ -59,7 +64,9 @@ export class BookingService {
     let campaigns: any[] = await Campaign.find(query).lean();
 
     // Dynamically calculate real-time status (Active, Upcoming, Completed)
-    const now = new Date();
+    const nowVietnam = dayjs().tz('Asia/Ho_Chi_Minh');
+    const now = nowVietnam.toDate();
+    
     campaigns = campaigns.map(c => {
       if (c.status === 'Cancelled' || c.status === 'Draft') return c;
       const start = new Date(c.startDateTime);
@@ -81,10 +88,8 @@ export class BookingService {
     }).filter(c => c.status === 'Active' || c.status === 'Upcoming');
 
     // Exclude campaigns whose working hours on today have already ended (and have no future dates)
-    const currentHours = String(now.getHours()).padStart(2, '0');
-    const currentMinutes = String(now.getMinutes()).padStart(2, '0');
-    const currentTimeStr = `${currentHours}:${currentMinutes}`;
-    const todayYMD = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const currentTimeStr = nowVietnam.format('HH:mm');
+    const todayYMD = nowVietnam.format('YYYY-MM-DD');
 
     campaigns = campaigns.filter(c => {
       const end = new Date(c.endDateTime);
@@ -92,7 +97,7 @@ export class BookingService {
       if (end < now) return false;
 
       // If campaign ends today, check if timeslots / working hours today have all passed
-      const endYMD = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
+      const endYMD = dayjs(c.endDateTime).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD');
       if (endYMD === todayYMD) {
         // If timeslots exist, check the latest endTime
         const slots = (c.dailyTimeslots && c.dailyTimeslots.length > 0)

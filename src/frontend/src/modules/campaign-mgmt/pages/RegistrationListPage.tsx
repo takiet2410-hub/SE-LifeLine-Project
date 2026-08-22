@@ -227,7 +227,7 @@ export const RegistrationListPage: React.FC = () => {
       accessor: (row: RegistrationData) => {
         const isExamining = row.status === 'Examining';
         const screeningObj = (row as any).screening || (row as any).screeningForm || {};
-        const savedResult = (row as any).testResult || (row as any).examiningResult || screeningObj.testResult;
+        const savedResult = (row as any).testResult || (row as any).examiningResult || screeningObj.testResult || (screeningObj.outcome === 'REJECT' ? 'Rejected' : undefined);
         const isSubmitting = submittingId === row._id;
 
         if (isExamining) {
@@ -265,11 +265,11 @@ export const RegistrationListPage: React.FC = () => {
             </span>
           );
         }
-        if (savedResult === 'Rejected') {
+        if (savedResult === 'Rejected' || row.status === 'Ineligible' || (row.status as string) === 'Ineligible for Donation') {
           return (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-extrabold bg-red-50 text-red-700 border border-red-200 rounded-full">
               <XCircle className="w-3 h-3 text-red-600" />
-              <span>Rejected</span>
+              <span>Rejected (Không đạt)</span>
             </span>
           );
         }

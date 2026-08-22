@@ -305,7 +305,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
     eventType: 'DonationCompleted',
     locale: 'vi',
     subject: 'Cảm ơn bạn đã hiến máu thành công!',
-    bodyText: 'Chào {{donorName}},\n\nCảm ơn bạn đã hiến máu thành công tại {{campaignName}}!\n\n- Lượng máu: {{volume}} ml\n- Nhóm máu: {{bloodType}}\n- Thời gian: {{donationDate}}\n\nLần hiến máu này có thể cứu sống đến 3 người. Cảm ơn bạn đã làm điều thiện!\n\nLần hiến máu tiếp theo bạn có thể thực hiện sau 84 ngày ({{nextEligibleDate}}).\n\nTrân trọng,\nĐội ngũ LifeLine',
+    bodyText: 'Chào {{donorName}},\n\nCảm ơn bạn đã hiến máu thành công tại {{campaignName}}!\n\n- Lượng máu: {{volume}} ml\n- Nhóm máu: {{bloodType}}\n- Thời gian: {{donationDate}}\n\nLần hiến máu này có thể cứu sống đến 3 người. Cảm ơn bạn đã làm điều thiện!\n\nLần hiến máu tiếp theo bạn có thể thực hiện từ ngày {{nextEligibleDate}} (sau {{donationIntervalDays}} ngày).\n\nTrân trọng,\nĐội ngũ LifeLine',
     bodyHtml: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px; padding: 20px; text-align: center;">
@@ -323,13 +323,13 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
         </div>
         
         <p>Lần hiến máu này có thể cứu sống đến <strong>3 người</strong>. Cảm ơn bạn đã làm điều thiện!</p>
-        <p>Lần hiến máu tiếp theo bạn có thể thực hiện sau 84 ngày (<strong>{{nextEligibleDate}}</strong>).</p>
+        <p>Lần hiến máu tiếp theo bạn có thể thực hiện từ ngày <strong>{{nextEligibleDate}}</strong> (sau <strong>{{donationIntervalDays}}</strong> ngày).</p>
         
         <p><a href="{{deepLink}}" style="display: inline-block; background: #93000b; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">Xem thành tích</a></p>
       </div>
     `,
     channels: ['InApp', 'Email'],
-    variables: ['donorName', 'campaignName', 'volume', 'bloodType', 'donationDate', 'nextEligibleDate', 'deepLink'],
+    variables: ['donorName', 'campaignName', 'volume', 'bloodType', 'donationDate', 'donationIntervalDays', 'nextEligibleDate', 'deepLink'],
   },
 ];
 

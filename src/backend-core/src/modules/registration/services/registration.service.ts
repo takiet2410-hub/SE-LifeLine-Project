@@ -646,43 +646,56 @@ export class RegistrationService {
           await BookingService.decrementCampaignSlot(appointment.campaignId, appDateStr, appointment.timeSlot, session);
         }
 
-        // Process Gamification (+250 XP & Achievement unlocking) when donation is completed
-        if (targetAppointmentStatus === AppointmentStatus.Completed && !appointment.xpRewardedForCompletion) {
+        // 1. Process Gamification (+250 XP & Achievement unlocking) & Successful Email ONLY when donation is completed AND testResult is 'Pass'
+        const isTestPassed = payload.testResult === 'Pass' || (screeningForm as any)?.testResult === 'Pass' || (!payload.testResult && targetAppointmentStatus === AppointmentStatus.Completed);
+        const isTestRejected = payload.testResult === 'Rejected' || (screeningForm as any)?.testResult === 'Rejected' || targetAppointmentStatus === AppointmentStatus.Rejected;
+
+        if (targetAppointmentStatus === AppointmentStatus.Completed && isTestPassed && !isTestRejected && !appointment.xpRewardedForCompletion) {
           try {
             await GamificationService.processDonationCompletion(appointment.donorId, appointment.appointmentDate);
             
             // Fire DonationCompleted event to notify user
             const donorProfile = await DonorProfile.findOne({ userId: appointment.donorId }).lean() as any;
             const donorUser = await User.findById(appointment.donorId).lean() as any;
-            if (donorUser || donorProfile) {
-              const nextEligibleDate = new Date();
-              nextEligibleDate.setDate(nextEligibleDate.getDate() + 84); // 84 days wait time for whole blood
-              const campaign = typeof appointment.campaignId === 'object' ? appointment.campaignId : await Campaign.findById(appointment.campaignId).lean();
-              const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
-              const rawCampaignName = (campaign as any)?.name;
-              const campaignName = (rawCampaignName && typeof rawCampaignName === 'string' && rawCampaignName.trim())
-                ? rawCampaignName.trim()
-                : 'Trung tâm tiếp nhận máu LifeLine';
-              
-              await emitDonationCompleted({
-                donorId: appointment.donorId.toString(),
-                donorName,
-                campaignName,
-                volume: payload.donationVolume || (appointment as any).donationVolume || 350,
-                bloodType: payload.bloodType || donorProfile?.bloodType || 'Chưa xác định',
-                donationDate: new Date().toLocaleDateString('vi-VN'),
-                nextEligibleDate: nextEligibleDate.toLocaleDateString('vi-VN'),
-                deepLink: '/profile',
-                audienceRole: 'Donor',
-              });
-            }
+            // Fetch donationIntervalDays dynamically from Admin SystemConfig (fallback to 84 days)
+            let donationIntervalDays = 84;
+            try {
+              const { SystemConfig } = await import('../../admin/models/system-config.model');
+              const config = await SystemConfig.findOne({ key: 'donationIntervalDays' }).lean();
+              if (config && typeof config.value === 'number') {
+                donationIntervalDays = config.value;
+              }
+            } catch (e) {}
+
+            const nextEligibleDate = new Date();
+            nextEligibleDate.setDate(nextEligibleDate.getDate() + donationIntervalDays);
+            const campaign = typeof appointment.campaignId === 'object' ? appointment.campaignId : await Campaign.findById(appointment.campaignId).lean();
+            const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
+            const rawCampaignName = (campaign as any)?.name;
+            const campaignName = (rawCampaignName && typeof rawCampaignName === 'string' && rawCampaignName.trim())
+              ? rawCampaignName.trim()
+              : 'Trung tâm tiếp nhận máu LifeLine';
+            
+            await emitDonationCompleted({
+              donorId: appointment.donorId.toString(),
+              donorName,
+              campaignName,
+              volume: payload.donationVolume || (appointment as any).donationVolume || 350,
+              bloodType: payload.bloodType || donorProfile?.bloodType || 'Chưa xác định',
+              donationDate: new Date().toLocaleDateString('vi-VN'),
+              donationIntervalDays,
+              nextEligibleDate: nextEligibleDate.toLocaleDateString('vi-VN'),
+              deepLink: '/profile',
+              audienceRole: 'Donor',
+            });
           } catch (gErr) {
             console.error('Error processing gamification/notification logic:', gErr);
           }
         }
         
-        // Process Eligibility Check Failed notification when rejected during screening/examining
-        if (targetAppointmentStatus === AppointmentStatus.Rejected && previousStatus !== AppointmentStatus.Rejected) {
+        // 2. Process Eligibility Check Failed notification when rejected during screening OR when biochemical testResult is 'Rejected'
+        if ((targetAppointmentStatus === AppointmentStatus.Rejected && previousStatus !== AppointmentStatus.Rejected) || 
+            (targetAppointmentStatus === AppointmentStatus.Completed && isTestRejected)) {
           try {
             const donorProfile = await DonorProfile.findOne({
               $or: [{ userId: appointment.donorId }, { _id: appointment.donorId }]
@@ -700,7 +713,7 @@ export class RegistrationService {
                 ? appointment.appointmentDate.toLocaleDateString('vi-VN')
                 : new Date(appointment.appointmentDate).toLocaleDateString('vi-VN');
 
-              const reason = payload.screeningNotes || (screeningForm as any)?.screeningNotes || 'Chưa đủ điều kiện sức khỏe hoặc thuộc trường hợp tạm hoãn hiến máu đợt này.';
+              const reason = payload.screeningNotes || (screeningForm as any)?.screeningNotes || 'Mẫu máu ghi nhận có chỉ số bất thường sau khi xét nghiệm sinh hoá, không đủ điều kiện đưa vào truyền máu.';
               const recipientUserId = (donorUser?._id || donorProfile?.userId || appointment.donorId).toString();
 
               await emitEligibilityCheckFailed({

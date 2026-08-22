@@ -640,9 +640,8 @@ export class BookingService {
       throw new Error('APPOINTMENT_NOT_FOUND');
     }
 
-    if (appointment.status !== AppointmentStatus.Rejected && 
-        appointment.status !== AppointmentStatus.Cancelled && 
-        appointment.status !== AppointmentStatus.Examining) {
+    const preAttendance = [AppointmentStatus.Pending, AppointmentStatus.Confirmed, AppointmentStatus.Scheduled];
+    if (preAttendance.includes(appointment.status)) {
       if (appointment.campaignId && appointment.appointmentDate) {
         const cId = typeof appointment.campaignId === 'object' ? (appointment.campaignId as any)._id : appointment.campaignId;
         await BookingService.decrementCampaignSlot(cId, appointment.appointmentDate.toISOString(), appointment.timeSlot || '');

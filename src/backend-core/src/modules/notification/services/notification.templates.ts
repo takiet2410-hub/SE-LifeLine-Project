@@ -267,28 +267,37 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
   {
     eventType: 'EligibilityCheckFailed',
     locale: 'vi',
-    subject: 'Thông báo quan trọng về kết quả hiến máu',
-    bodyText: 'Chào {{donorName}},\n\nChúng tôi vô cùng trân trọng tinh thần thiện nguyện của bạn.\n\nTuy nhiên, sau khi xét nghiệm mẫu máu, chúng tôi ghi nhận có một số bất thường. Để đảm bảo sức khỏe cho bạn và an toàn truyền máu, mẫu máu này không thể sử dụng.\n\nVui lòng đến ngay cơ sở y tế gần nhất hoặc liên hệ lại với trung tâm hiến máu để được tư vấn và thăm khám chi tiết.\n\nTrân trọng,\nĐội ngũ LifeLine',
+    subject: '[LifeLine] Thông báo về kết quả rà soát hồ sơ hiến máu - {{campaignName}}',
+    bodyText: 'Xin chào {{donorName}},\n\nTrung tâm Truyền máu LifeLine xin chân thành cảm ơn sự đăng ký tham gia hiến máu của bạn.\n\nKẾT QUẢ RÀ SOÁT HỒ SƠ / KHÁM SÀNG LỌC:\n- Chiến dịch: {{campaignName}}\n- Ngày đăng ký: {{appointmentDate}}\n- Ghi chú từ Bác sĩ: {{reason}}\n\nBạn có thể đăng ký lại vào các đợt hiến máu tiếp theo sau khi thể trạng đã sẵn sàng hoặc liên hệ cơ sở y tế để được tư vấn thêm.\n\nTrân trọng,\nĐội ngũ Trợ lý Y tế LifeLine',
     bodyHtml: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 12px; padding: 20px; text-align: center;">
-          <h1 style="color: #721c24; margin: 0 0 10px;">🩺 Thông báo kết quả xét nghiệm</h1>
+      <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: #1e293b; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+          <h1 style="margin: 0; font-size: 24px;">LifeLine - Đợt Tiếp Nhận Máu</h1>
         </div>
-        
-        <p>Chào <strong>{{donorName}}</strong>,</p>
-        <p>Chúng tôi vô cùng trân trọng tinh thần thiện nguyện của bạn.</p>
-        
-        <div style="background: #fff3cd; border-radius: 8px; padding: 15px; margin: 15px 0;">
-          <p style="margin: 5px 0; color: #856404;">Sau khi xét nghiệm mẫu máu, chúng tôi ghi nhận có một số bất thường. Để đảm bảo sức khỏe cho bạn và an toàn truyền máu, mẫu máu này không thể sử dụng.</p>
+        <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; padding: 24px;">
+          <h2 style="color: #be123c; margin-top: 0;">Xin chào {{donorName}},</h2>
+          <p>Trung tâm Truyền máu xin chân thành cảm ơn sự đăng ký tham gia hiến máu của bạn.</p>
+          
+          <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 16px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #9f1239; border-bottom: 1px solid #fecdd3; padding-bottom: 8px;">Kết Quả Rà Soát Hồ Sơ</h3>
+            <p style="margin: 8px 0;"><strong>Chiến dịch:</strong> {{campaignName}}</p>
+            <p style="margin: 8px 0;"><strong>Ngày đăng ký:</strong> {{appointmentDate}}</p>
+            <p style="margin: 8px 0; color: #be123c;"><strong>Ghi chú từ Bác sĩ:</strong> {{reason}}</p>
+          </div>
+
+          <p style="color: #475569; font-size: 14px;">Bạn có thể đăng ký lại vào các đợt hiến máu tiếp theo sau khi thể trạng đã sẵn sàng hoặc thăm khám tại cơ sở y tế gần nhất để được tư vấn chi tiết.</p>
+          
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="{{deepLink}}" style="display: inline-block; background: #93000b; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;">Xem chi tiết hồ sơ</a>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+          <p style="margin: 0; text-align: center; color: #94a3b8; font-size: 13px;">Trân trọng,<br/><strong>Đội ngũ Trợ lý Y tế LifeLine</strong></p>
         </div>
-        
-        <p style="font-weight: bold; color: #dc3545;">Vui lòng đến ngay cơ sở y tế gần nhất hoặc liên hệ lại với trung tâm hiến máu để được tư vấn và thăm khám chi tiết.</p>
-        
-        <p><a href="{{deepLink}}" style="display: inline-block; background: #dc3545; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">Xem chi tiết hồ sơ</a></p>
       </div>
     `,
     channels: ['InApp', 'Email'],
-    variables: ['donorName', 'deepLink'],
+    variables: ['donorName', 'campaignName', 'appointmentDate', 'reason', 'deepLink'],
   },
 
   // Donation Completed

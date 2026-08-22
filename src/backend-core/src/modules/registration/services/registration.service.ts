@@ -684,13 +684,31 @@ export class RegistrationService {
         // Process Eligibility Check Failed notification when rejected during screening/examining
         if (targetAppointmentStatus === AppointmentStatus.Rejected && previousStatus !== AppointmentStatus.Rejected) {
           try {
-            const donorProfile = await DonorProfile.findOne({ userId: appointment.donorId }).lean() as any;
-            const donorUser = await User.findById(appointment.donorId).lean() as any;
+            const donorProfile = await DonorProfile.findOne({
+              $or: [{ userId: appointment.donorId }, { _id: appointment.donorId }]
+            }).lean() as any;
+            const donorUser = await User.findById(donorProfile?.userId || appointment.donorId).lean() as any;
             if (donorUser || donorProfile) {
               const donorName = donorProfile?.fullName || donorUser?.fullName || 'Người hiến máu';
+              const campaign = typeof appointment.campaignId === 'object' ? appointment.campaignId : await Campaign.findById(appointment.campaignId).lean();
+              const rawCampaignName = (campaign as any)?.name;
+              const campaignName = (rawCampaignName && typeof rawCampaignName === 'string' && rawCampaignName.trim())
+                ? rawCampaignName.trim()
+                : 'Trung tâm tiếp nhận máu LifeLine';
+
+              const appDateStr = appointment.appointmentDate instanceof Date
+                ? appointment.appointmentDate.toLocaleDateString('vi-VN')
+                : new Date(appointment.appointmentDate).toLocaleDateString('vi-VN');
+
+              const reason = payload.screeningNotes || (screeningForm as any)?.screeningNotes || 'Chưa đủ điều kiện sức khỏe hoặc thuộc trường hợp tạm hoãn hiến máu đợt này.';
+              const recipientUserId = (donorUser?._id || donorProfile?.userId || appointment.donorId).toString();
+
               await emitEligibilityCheckFailed({
-                donorId: appointment.donorId.toString(),
+                donorId: recipientUserId,
                 donorName,
+                campaignName,
+                appointmentDate: appDateStr,
+                reason,
                 deepLink: '/profile',
                 audienceRole: 'Donor',
               });

@@ -72,7 +72,7 @@ export const InteractiveMapPage: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [mapError, setMapError] = useState(false);
-  const [locationType, setLocationType] = useState<'campaign' | 'hospital' | 'blood-center'>('hospital');
+  const [locationType, setLocationType] = useState<'campaign' | 'hospital' | 'blood-center'>('campaign');
 
   // Geolocation state
   const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
@@ -643,7 +643,7 @@ export const InteractiveMapPage: React.FC = () => {
     setSelectedDate('');
     setCrowdingLevels({ Low: true, Moderate: true, High: true });
     setSearchQuery('');
-    setLocationType('hospital');
+    setLocationType('campaign');
     toast.info('Đã đặt lại bộ lọc');
   };
 
@@ -747,8 +747,8 @@ export const InteractiveMapPage: React.FC = () => {
             className="max-w-full overflow-x-auto bg-[#f8f9fa] border border-[#dee2e6] rounded-xl p-1 flex items-center shrink-0"
           >
             {([
-              ['hospital', 'Bệnh viện'],
               ['campaign', 'Chiến dịch'],
+              ['hospital', 'Bệnh viện'],
               ['blood-center', 'Trung tâm máu'],
             ] as const).map(([value, label]) => (
               <button

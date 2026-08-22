@@ -38,10 +38,13 @@ export class NotificationEventHandler {
 
     try {
       // Get template
-      const template = await NotificationTemplate.findOne({ 
+      const templateQuery: any = NotificationTemplate.findOne({ 
         eventType: config.eventType as any, 
         isActive: true 
-      }).lean();
+      });
+      const template = templateQuery && typeof templateQuery.lean === 'function'
+        ? await templateQuery.lean()
+        : await templateQuery;
 
       if (!template) {
         console.warn(`[Notification] No template found for event: ${event.eventType}`);

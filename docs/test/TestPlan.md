@@ -197,15 +197,21 @@ Manual test execution can begin when the following conditions are satisfied:
 
 ### 5.2 Exit Criteria
 
-The testing phase will be considered complete when:
+The testing phase will be considered complete when all of the following exit and acceptance criteria are satisfied:
 
-* All planned functional test cases for the five selected features have been executed.
-* The final test case set contains at least 50 executed functional test cases across the selected features.
-* Each executed test case contains its Test Case ID, Execution Date, Pass/Fail status, and Actual Result.
-* Every failed test case is linked to at least one corresponding bug report.
-* Each reported bug contains the required information, including Bug ID, description, steps to reproduce, expected result, actual result, severity, and status.
-* Defects that have been fixed during the testing period have been re-tested where applicable.
-* The final test summary records the number of features tested, total test cases, passed test cases, and failed test cases for each tested feature.
-* The complete testing documentation is reviewed and finalized.
-
->A 100% pass rate is not required as an exit condition. The completion of testing is determined by the execution and documentation of the planned test cases and the proper reporting and tracking of identified defects.
+* **Test Execution Completeness**:
+  * 100% of planned functional test cases across the five selected features are executed (with a minimum of 50 test cases; 73 test cases executed in total).
+  * Each executed test case contains its Test Case ID, Execution Date, Pass/Fail/Warning status, and documented Actual Result.
+* **Defect Resolution & Re-testing Requirements**:
+  * **100% of Critical (Severity 1) and High (Severity 2) defects** must be resolved by the development team and **formally re-tested and verified** by the QA team (Zero open Critical or High defects allowed upon completion).
+  * All fixed defects must undergo regression testing on affected modules to ensure fixes do not introduce secondary issues.
+  * Medium and Low severity defects must be resolved or have documented workarounds accepted by the team.
+* **Defect Traceability**:
+  * Every failed test case is explicitly linked to at least one corresponding bug report.
+  * Each reported bug contains complete details: Bug ID, description, steps to reproduce, expected result, actual result, severity, and resolution/retest status.
+* **Explicit Acceptance Criteria**:
+  * **Overall Pass Rate**: The final test pass rate reaches at least **90%** across all executed test cases after re-testing.
+  * **Core Workflow Validation**: All critical business workflows (Account Authentication, Appointment Booking & Cancellation Rules, Campaign Creation & QR Verification, SOS Request Lifecycle, AI Chatbot Assistance) operate reliably without blocking issues.
+* **Test Documentation & Reporting**:
+  * The final test summary records the number of features tested, total test cases, passed/failed test cases, and defect metrics for each tested feature.
+  * Complete testing documentation (Test Plan, Test Cases, and Test Execution & Bug Reports) is reviewed, finalized, and signed off.

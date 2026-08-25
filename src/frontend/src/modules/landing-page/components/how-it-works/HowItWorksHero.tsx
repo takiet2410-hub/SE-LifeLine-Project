@@ -35,10 +35,11 @@ export const HowItWorksHero: React.FC = () => {
                   e.preventDefault();
                   document.getElementById('process-steps')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="w-full sm:w-auto px-8 py-3.5 bg-[#93000B] hover:bg-[#7a0009] text-white text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                className="w-full sm:w-auto px-8 py-3.5 bg-[#93000b] hover:bg-[#7a0009] !text-white text-white text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                style={{ color: '#ffffff' }}
               >
-                <span>Tìm hiểu quy trình</span>
-                <ArrowRight className="w-4 h-4" />
+                <span className="text-white !text-white" style={{ color: '#ffffff' }}>Tìm hiểu quy trình</span>
+                <ArrowRight className="w-4 h-4 text-white" style={{ color: '#ffffff' }} />
               </a>
             </div>
 

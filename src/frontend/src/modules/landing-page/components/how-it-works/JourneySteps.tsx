@@ -265,9 +265,10 @@ export const JourneySteps: React.FC = () => {
               <div className="pt-4 border-t border-gray-100 flex justify-end">
                 <button
                   onClick={() => setSelectedStepModal(null)}
-                  className="px-6 py-2.5 bg-[#93000B] hover:bg-[#7a0009] text-white text-[14px] font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                  className="px-6 py-2.5 bg-[#93000b] hover:bg-[#7a0009] text-white !text-white text-[14px] font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                  style={{ color: '#ffffff' }}
                 >
-                  Đã hiểu
+                  <span className="text-white !text-white" style={{ color: '#ffffff' }}>Đã hiểu</span>
                 </button>
               </div>
             </div>
@@ -297,12 +298,13 @@ export const JourneySteps: React.FC = () => {
                 onClick={() => setActivePrepTab(tab.id as any)}
                 className={`px-5 py-2.5 rounded-full text-[13px] font-bold flex items-center gap-2 transition-all cursor-pointer ${
                   activePrepTab === tab.id
-                    ? 'bg-[#93000B] text-white shadow-sm'
+                    ? 'bg-[#93000b] hover:bg-[#7a0009] text-white !text-white shadow-sm'
                     : 'bg-white text-[#5B403D] border border-red-100 hover:bg-red-50/50'
                 }`}
+                style={activePrepTab === tab.id ? { color: '#ffffff' } : undefined}
               >
                 {tab.icon}
-                <span>{tab.label}</span>
+                <span style={activePrepTab === tab.id ? { color: '#ffffff' } : undefined}>{tab.label}</span>
               </button>
             ))}
           </div>

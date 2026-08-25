@@ -46,8 +46,12 @@ export const Header: React.FC = () => {
             <Link to="/login" className="text-[#455F87] font-bold text-sm px-4 py-2 rounded-lg border border-transparent hover:bg-gray-50 transition-colors">
               Đăng Nhập
             </Link>
-            <Link to="/register" className="bg-[#93000B] text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:bg-[#7F1D1D] shadow-sm transition-colors">
-              Đăng Ký
+            <Link 
+              to="/register" 
+              className="bg-[#93000b] hover:bg-[#7a0009] !text-white text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-sm transition-all flex items-center justify-center"
+              style={{ color: '#ffffff' }}
+            >
+              <span className="text-white !text-white" style={{ color: '#ffffff' }}>Đăng Ký</span>
             </Link>
           </div>
 
@@ -93,8 +97,12 @@ export const Header: React.FC = () => {
               <Link to="/login" className="w-full text-center text-[#455F87] font-bold py-3 border border-[#455F87] rounded-xl">
                 Đăng Nhập
               </Link>
-              <Link to="/register" className="w-full text-center bg-[#93000B] text-white font-bold py-3 rounded-xl shadow-sm">
-                Đăng Ký
+              <Link 
+                to="/register" 
+                className="w-full text-center bg-[#93000b] hover:bg-[#7a0009] !text-white text-white font-bold py-3 rounded-xl shadow-sm transition-all"
+                style={{ color: '#ffffff' }}
+              >
+                <span className="text-white !text-white" style={{ color: '#ffffff' }}>Đăng Ký</span>
               </Link>
             </div>
           </div>

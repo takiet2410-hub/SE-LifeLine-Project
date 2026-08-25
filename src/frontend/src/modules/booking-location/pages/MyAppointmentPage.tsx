@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AppointmentTabs } from '../components/AppointmentTabs';
 import { AppointmentListItem } from '../components/AppointmentListItem';
 import { AppointmentDetails } from '../components/AppointmentDetails';
@@ -8,12 +8,38 @@ import { ETicketModal } from '../components/ETicketModal';
 import { fetchAppointments, cancelAppointment, downloadETicket } from '../api/bookingApi';
 import type { Appointment, AppointmentStatus } from '../types';
 import { CalendarX2, Loader2, FileText, Plus, HeartHandshake, Sparkles, CalendarPlus, ArrowRight, Clock, MapPin, Award } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export const MyAppointmentPage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<AppointmentStatus>('all');
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<AppointmentStatus>(
+    (searchParams.get('status') as AppointmentStatus) || 'all'
+  );
+
+  // Synchronize URL Search Params into State whenever location.search changes
+  useEffect(() => {
+    const urlStatus = (searchParams.get('status') as AppointmentStatus) || 'all';
+    setActiveTab(urlStatus);
+  }, [location.search]);
+
+  // Compute current search query string from active state
+  const currentSearchQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (activeTab && activeTab !== 'all') params.set('status', activeTab);
+    const str = params.toString();
+    return str ? `?${str}` : '';
+  }, [activeTab]);
+
+  // Synchronize state changes to URL Search Params when query string differs
+  useEffect(() => {
+    if (location.search !== currentSearchQuery) {
+      const params = new URLSearchParams(currentSearchQuery.replace(/^\?/, ''));
+      setSearchParams(params, { replace: true });
+    }
+  }, [currentSearchQuery, location.search, setSearchParams]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);

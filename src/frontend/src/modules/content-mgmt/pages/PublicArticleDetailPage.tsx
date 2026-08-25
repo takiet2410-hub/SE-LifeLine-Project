@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Calendar, User, Clock, Eye, Download, Tag, Share2 } from 'lucide-react';
 import { articleApi } from '../services/articleApi';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
@@ -10,6 +10,21 @@ import { getApiErrorMessage } from '../../../shared/api/apiError';
 export const PublicArticleDetailPage: React.FC = () => {
   const { articleId } = useParams<{ articleId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBackToNews = () => {
+    if (location.state?.returnUrl) {
+      navigate(location.state.returnUrl);
+      return;
+    }
+    if (location.state?.fromNotification) {
+      const notifSearch = location.state?.fromNotifSearch || '';
+      navigate(`/notifications${notifSearch}`);
+      return;
+    }
+    const newsSearch = location.state?.fromNewsSearch || location.state?.fromSearch || '';
+    navigate(`/news${newsSearch}`);
+  };
 
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +91,7 @@ export const PublicArticleDetailPage: React.FC = () => {
         <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
           <div className="max-w-3xl mx-auto px-4 py-4">
             <div className="flex items-center gap-3">
-              <button onClick={() => navigate('/news')} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100">
+              <button onClick={handleBackToNews} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100">
                 <ArrowLeft className="w-5 h-5" />
               </button>
             </div>
@@ -118,7 +133,7 @@ export const PublicArticleDetailPage: React.FC = () => {
               This article has been removed or is no longer published.
             </p>
             <button
-              onClick={() => navigate('/news')}
+              onClick={handleBackToNews}
               className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-sm"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -137,7 +152,7 @@ export const PublicArticleDetailPage: React.FC = () => {
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <button 
-              onClick={() => navigate('/news')}
+              onClick={handleBackToNews}
               className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />

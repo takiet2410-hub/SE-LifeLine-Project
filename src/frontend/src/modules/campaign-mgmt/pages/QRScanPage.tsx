@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Camera, CheckCircle2, XCircle, RefreshCw, QrCode, Search, UploadCloud, FileImage, ShieldCheck, User, CreditCard, Droplet } from 'lucide-react';
 import { toast } from 'sonner';
 import jsQR from 'jsqr';
@@ -8,6 +8,7 @@ import { apiService } from '../../../services/apiClient';
 export const QRScanPage: React.FC = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [scanState, setScanState] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle');
   const [manualCode, setManualCode] = useState('');
@@ -155,7 +156,11 @@ export const QRScanPage: React.FC = () => {
       {/* Top Action Bar */}
       <div className="flex items-center justify-between gap-4">
         <button
-          onClick={() => navigate(`/bc/campaigns/${campaignId || 'all'}/registrations`)}
+          onClick={() =>
+            navigate(`/bc/campaigns/${campaignId || 'all'}/registrations`, {
+              state: { fromSearch: location.state?.fromSearch },
+            })
+          }
           className="h-10 px-3.5 rounded-xl bg-white border border-[#f1f3f5] text-[#6c757d] hover:text-[#271816] hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-2 text-sm font-semibold shadow-2xs"
           title="Quay lại danh sách đăng ký"
         >
@@ -331,7 +336,12 @@ export const QRScanPage: React.FC = () => {
           <div className="pt-2 flex justify-center">
             <button
               onClick={() =>
-                navigate(`/bc/campaigns/${campaignId || 'all'}/registrations/${scannedResult.id}`)
+                navigate(`/bc/campaigns/${campaignId || 'all'}/registrations/${scannedResult.id}`, {
+                  state: {
+                    fromRegSearch: location.state?.fromRegSearch,
+                    fromCampaignSearch: location.state?.fromCampaignSearch || location.state?.fromSearch,
+                  },
+                })
               }
               className="px-6 py-3 bg-[#93000b] hover:bg-[#7a0009] text-white text-[14px] font-bold rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-2 active:scale-98"
             >

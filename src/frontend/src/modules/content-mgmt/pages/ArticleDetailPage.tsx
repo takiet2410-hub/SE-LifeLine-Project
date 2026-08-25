@@ -22,6 +22,20 @@ export const ArticleDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(searchParams.get('edit') === 'true');
 
+  const handleBackToList = () => {
+    if (location.state?.returnUrl) {
+      navigate(location.state.returnUrl);
+      return;
+    }
+    if (location.state?.fromNotification) {
+      const notifSearch = location.state?.fromNotifSearch || '';
+      navigate(`${basePath}/notifications${notifSearch}`);
+      return;
+    }
+    const contentSearch = location.state?.fromContentSearch || location.state?.fromSearch || '';
+    navigate(`${basePath}/content${contentSearch}`);
+  };
+
   // Form edit state
   const [title, setTitle] = useState('');
   const [bodyContent, setBodyContent] = useState('');
@@ -120,7 +134,7 @@ export const ArticleDetailPage: React.FC = () => {
     try {
       const res = await articleApi.deleteArticle(articleId);
       if (res.success) {
-        navigate(`${basePath}/content`);
+        handleBackToList();
       }
     } catch (e: any) {
       alert(e.message || 'Failed to delete article');
@@ -145,7 +159,7 @@ export const ArticleDetailPage: React.FC = () => {
           {error || 'Article not found or has been deleted'}
         </div>
         <button
-          onClick={() => navigate(`${basePath}/content`)}
+          onClick={handleBackToList}
           className="px-4 py-2 bg-gray-900 text-white text-xs font-semibold rounded-lg"
         >
           Return to Article List
@@ -160,7 +174,7 @@ export const ArticleDetailPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <button
-            onClick={() => navigate(`${basePath}/content`)}
+            onClick={handleBackToList}
             className="p-2 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

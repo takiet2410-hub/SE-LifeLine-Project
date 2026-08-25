@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -36,6 +36,27 @@ import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 export const RegistrationDetailPage: React.FC = () => {
   const { campaignId, registrationId } = useParams<{ campaignId: string; registrationId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBackToList = () => {
+    const regSearch = location.state?.fromRegSearch || '';
+    const campaignSearch = location.state?.fromCampaignSearch || location.state?.fromSearch;
+    if (campaignId && campaignId !== 'all') {
+      navigate(`/bc/campaigns/${campaignId}/registrations${regSearch}`, {
+        state: { fromSearch: campaignSearch, fromCampaignSearch: campaignSearch },
+      });
+    } else if (location.state?.fromRegSearch !== undefined) {
+      navigate(`/bc/campaigns/all/registrations${regSearch}`, {
+        state: { fromSearch: campaignSearch, fromCampaignSearch: campaignSearch },
+      });
+    } else if (campaignSearch !== undefined) {
+      navigate(`/bc/campaigns${campaignSearch}`);
+    } else if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/bc/campaigns');
+    }
+  };
 
   const [registration, setRegistration] = useState<RegistrationData | null>(null);
   const [campaign, setCampaign] = useState<CampaignData | null>(null);
@@ -301,7 +322,7 @@ export const RegistrationDetailPage: React.FC = () => {
       <div className="text-center py-16 bg-white border border-[#f1f3f5] rounded-2xl p-8">
         <p className="text-[14px] text-[#6c757d]">Không tìm thấy hồ sơ đăng ký sàng lọc.</p>
         <button
-          onClick={() => navigate(`/bc/campaigns/${campaignId}/registrations`)}
+          onClick={handleBackToList}
           className="mt-4 px-4 py-2 bg-[#93000b] text-white rounded-xl text-[13px] font-semibold"
         >
           Quay lại danh sách
@@ -318,7 +339,7 @@ export const RegistrationDetailPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-[#f1f3f5] p-4 sm:p-5 rounded-2xl shadow-2xs">
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate(`/bc/campaigns/${campaignId || 'all'}/registrations`)}
+            onClick={handleBackToList}
             className="h-10 w-10 rounded-xl bg-white border border-[#f1f3f5] text-[#6c757d] hover:text-[#271816] hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-center shrink-0 shadow-2xs"
             title="Quay lại danh sách đăng ký"
           >

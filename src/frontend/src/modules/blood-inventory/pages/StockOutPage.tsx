@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, CheckSquare, Square, ClipboardList, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { inventoryApi } from '../services/inventoryApi';
@@ -11,6 +11,12 @@ import { format, differenceInDays } from 'date-fns';
 
 export const StockOutPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBackToList = () => {
+    const invSearch = location.state?.fromInventorySearch || location.state?.fromSearch || '';
+    navigate(`/bc/inventory${invSearch}`);
+  };
 
   const [availableBags, setAvailableBags] = useState<BloodBagData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +81,7 @@ export const StockOutPage: React.FC = () => {
     try {
       await inventoryApi.stockOut(selectedBagIds, reason, notes);
       toast.success(`Đã xuất kho thành công ${selectedBagIds.length} túi máu!`);
-      navigate('/bc/inventory');
+      handleBackToList();
     } catch (err) {
       toast.error('Xuất kho thất bại.');
     } finally {
@@ -87,7 +93,7 @@ export const StockOutPage: React.FC = () => {
     if (selectedBagIds.length > 0) {
       setShowCancelDialog(true);
     } else {
-      navigate('/bc/inventory');
+      handleBackToList();
     }
   };
 
@@ -309,7 +315,7 @@ export const StockOutPage: React.FC = () => {
         isOpen={showCancelDialog}
         title="Hủy xuất kho?"
         message="Danh sách túi máu đã chọn sẽ không được xuất. Bạn có chắc muốn hủy không?"
-        onConfirm={() => navigate('/bc/inventory')}
+        onConfirm={handleBackToList}
         onCancel={() => setShowCancelDialog(false)}
       />
     </div>

@@ -200,10 +200,10 @@ Manual test execution can begin when the following conditions are satisfied:
 The testing phase will be considered complete when all of the following exit and acceptance criteria are satisfied:
 
 * **Test Execution Completeness**:
-  * 100% of planned functional test cases across the five selected features are executed (with a minimum of 50 test cases; 73 test cases executed in total).
+  * 100% of planned functional test cases across the five selected features are executed.
   * Each executed test case contains its Test Case ID, Execution Date, Pass/Fail/Warning status, and documented Actual Result.
 * **Defect Resolution & Re-testing Requirements**:
-  * **100% of Critical (Severity 1) and High (Severity 2) defects** must be resolved by the development team and **formally re-tested and verified** by the QA team (Zero open Critical or High defects allowed upon completion).
+  * 100% of Critical (Severity 1) and High (Severity 2) defects must be resolved by the development team and formally re-tested and verified by the QA team (Zero open Critical or High defects allowed upon completion).
   * All fixed defects must undergo regression testing on affected modules to ensure fixes do not introduce secondary issues.
   * Medium and Low severity defects must be resolved or have documented workarounds accepted by the team.
 * **Defect Traceability**:

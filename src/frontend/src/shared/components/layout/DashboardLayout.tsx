@@ -105,7 +105,13 @@ export const DashboardLayout: React.FC = () => {
     // Direct redirect to specific article page if notification is for an article
     const articleId = getArticleIdFromNotification(notif);
     if (articleId) {
-      navigate(getArticleRouteForRole(articleId, user?.role || location.pathname));
+      navigate(getArticleRouteForRole(articleId, user?.role || location.pathname), {
+        state: {
+          fromNotification: true,
+          returnUrl: location.pathname + location.search,
+          fromNotifSearch: location.search,
+        },
+      });
       return;
     }
 

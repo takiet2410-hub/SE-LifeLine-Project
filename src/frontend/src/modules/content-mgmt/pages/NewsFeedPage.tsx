@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Search, Activity, HeartPulse, Megaphone, Inbox } from 'lucide-react';
 import { articleApi } from '../services/articleApi';
 import { ArticleCard } from '../components/ArticleCard';
@@ -9,16 +9,59 @@ import type { Article, ArticleCategory } from '../types/article.types';
 import { toast } from 'sonner';
 import { getApiErrorMessage } from '../../../shared/api/apiError';
 
-
 export const NewsFeedPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | 'All'>('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState(1);
+  const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | 'All'>(
+    (searchParams.get('category') as ArticleCategory | 'All') || 'All'
+  );
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10) || 1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+
+  // Synchronize URL Search Params into State whenever location.search changes
+  useEffect(() => {
+    const urlCategory = (searchParams.get('category') as ArticleCategory | 'All') || 'All';
+    const urlSearch = searchParams.get('search') || '';
+    const urlPage = parseInt(searchParams.get('page') || '1', 10) || 1;
+
+    setCategoryFilter(urlCategory);
+    setSearchQuery(urlSearch);
+    setPage(urlPage);
+  }, [location.search]);
+
+  // Compute current search query string from active state
+  const currentSearchQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (categoryFilter && categoryFilter !== 'All') params.set('category', categoryFilter);
+    if (searchQuery) params.set('search', searchQuery);
+    if (page > 1) params.set('page', String(page));
+    const str = params.toString();
+    return str ? `?${str}` : '';
+  }, [categoryFilter, searchQuery, page]);
+
+  // Synchronize state changes to URL Search Params when query string differs
+  useEffect(() => {
+    if (location.search !== currentSearchQuery) {
+      const params = new URLSearchParams(currentSearchQuery.replace(/^\?/, ''));
+      setSearchParams(params, { replace: true });
+    }
+  }, [currentSearchQuery, location.search, setSearchParams]);
+
+  const navTo = (path: string) => {
+    const q = currentSearchQuery || location.search || '';
+    navigate(path, {
+      state: {
+        fromNewsSearch: q,
+        fromSearch: q,
+      },
+    });
+  };
 
   const fetchArticles = useCallback(async () => {
     setLoading(true);
@@ -162,7 +205,7 @@ export const NewsFeedPage: React.FC = () => {
                   <ArticleCard
                     key={article._id}
                     article={article}
-                    onClick={() => navigate(`/news/${article._id}`)}
+                    onClick={() => navTo(`/news/${article._id}`)}
                     variant="public"
                   />
                 ))}

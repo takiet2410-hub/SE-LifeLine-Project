@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Plus, Search, Filter, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { articleApi } from '../services/articleApi';
 import { ContentStatsCards } from '../components/ContentStatsCards';
@@ -11,6 +11,7 @@ import { getApiErrorMessage } from '../../../shared/api/apiError';
 export const ArticleListPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const basePath = location.pathname.startsWith('/admin') ? '/admin' : location.pathname.startsWith('/hospital') ? '/hospital' : '/bc';
 
   const [articles, setArticles] = useState<Article[]>([]);
@@ -19,15 +20,58 @@ export const ArticleListPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Filter state
-  const [categoryFilter, setCategoryFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState(1);
+  const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || 'All');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'All');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10) || 1);
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 10, totalPages: 1 });
 
   // Delete modal state
   const [selectedArticleToDelete, setSelectedArticleToDelete] = useState<Article | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Synchronize URL Search Params into State whenever location.search changes
+  useEffect(() => {
+    const urlCategory = searchParams.get('category') || 'All';
+    const urlStatus = searchParams.get('status') || 'All';
+    const urlSearch = searchParams.get('search') || '';
+    const urlPage = parseInt(searchParams.get('page') || '1', 10) || 1;
+
+    setCategoryFilter(urlCategory);
+    setStatusFilter(urlStatus);
+    setSearchQuery(urlSearch);
+    setPage(urlPage);
+  }, [location.search]);
+
+  // Compute current search query string from active state
+  const currentSearchQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (categoryFilter && categoryFilter !== 'All') params.set('category', categoryFilter);
+    if (statusFilter && statusFilter !== 'All') params.set('status', statusFilter);
+    if (searchQuery) params.set('search', searchQuery);
+    if (page > 1) params.set('page', String(page));
+    const str = params.toString();
+    return str ? `?${str}` : '';
+  }, [categoryFilter, statusFilter, searchQuery, page]);
+
+  // Synchronize state changes to URL Search Params when query string differs
+  useEffect(() => {
+    if (location.search !== currentSearchQuery) {
+      const params = new URLSearchParams(currentSearchQuery.replace(/^\?/, ''));
+      setSearchParams(params, { replace: true });
+    }
+  }, [currentSearchQuery, location.search, setSearchParams]);
+
+  // Navigation with preservation of filters in state
+  const navTo = (path: string) => {
+    const q = currentSearchQuery || location.search || '';
+    navigate(path, {
+      state: {
+        fromContentSearch: q,
+        fromSearch: q,
+      },
+    });
+  };
 
   const fetchArticles = async () => {
     setLoading(true);
@@ -150,7 +194,7 @@ export const ArticleListPage: React.FC = () => {
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
-            onClick={() => navigate(`${basePath}/content/create`)}
+            onClick={() => navTo(`${basePath}/content/create`)}
             className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-sm font-semibold rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 active:scale-98"
           >
             <Plus className="w-4 h-4" />
@@ -179,7 +223,7 @@ export const ArticleListPage: React.FC = () => {
             Không có bài viết nào phù hợp với bộ lọc hiện tại. Nhấn nút bên dưới để tạo bài viết mới!
           </p>
           <button
-            onClick={() => navigate(`${basePath}/content/create`)}
+            onClick={() => navTo(`${basePath}/content/create`)}
             className="px-4 py-2 bg-[#93000b] text-white text-xs font-semibold rounded-xl hover:bg-[#7a0009] cursor-pointer"
           >
             Tạo bài viết đầu tiên
@@ -192,8 +236,8 @@ export const ArticleListPage: React.FC = () => {
               <ArticleCard
                 key={art._id}
                 article={art}
-                onSelect={(id) => navigate(`${basePath}/content/${id}`)}
-                onEdit={(id) => navigate(`${basePath}/content/${id}?edit=true`)}
+                onSelect={(id) => navTo(`${basePath}/content/${id}`)}
+                onEdit={(id) => navTo(`${basePath}/content/${id}?edit=true`)}
                 onDelete={(article) => setSelectedArticleToDelete(article)}
               />
             ))}

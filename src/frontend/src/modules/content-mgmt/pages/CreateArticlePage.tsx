@@ -58,11 +58,16 @@ export const CreateArticlePage: React.FC = () => {
     enabled: !isSubmitting
   });
 
+  const handleBackToList = () => {
+    const contentSearch = location.state?.fromContentSearch || location.state?.fromSearch || '';
+    navigate(`${basePath}/content${contentSearch}`);
+  };
+
   const handleCancelClick = () => {
     if (hasUnsavedChanges) {
       setShowDiscardModal(true);
     } else {
-      navigate(`${basePath}/content`);
+      handleBackToList();
     }
   };
 
@@ -101,7 +106,7 @@ export const CreateArticlePage: React.FC = () => {
         markSaved();
         setToastMessage(res.message || (targetStatus === 'Published' ? 'Article published successfully' : 'Article saved successfully'));
         setTimeout(() => {
-          navigate(`${basePath}/content`);
+          handleBackToList();
         }, 1200);
       }
     } catch (err: any) {
@@ -278,7 +283,7 @@ export const CreateArticlePage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate(`${basePath}/content`)}
+                onClick={handleBackToList}
                 className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg"
               >
                 Discard Changes

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle, PieChart as PieChartIcon, BarChart2, TrendingDown, CheckCircle2, ShieldAlert } from 'lucide-react';
 import {
   BarChart,
@@ -22,6 +22,12 @@ const COLORS = ['#DC2626', '#EA580C', '#D97706', '#CA8A04', '#16A34A', '#2563EB'
 
 export const InventoryStatsPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBackToList = () => {
+    const invSearch = location.state?.fromInventorySearch || location.state?.fromSearch || '';
+    navigate(`/bc/inventory${invSearch}`);
+  };
 
   const [stats, setStats] = useState<InventoryStatisticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,7 +66,7 @@ export const InventoryStatsPage: React.FC = () => {
       {/* Top Action Bar */}
       <div className="flex items-center justify-between gap-4">
         <button
-          onClick={() => navigate('/bc/inventory')}
+          onClick={handleBackToList}
           className="h-10 px-3.5 rounded-xl bg-white border border-[#f1f3f5] hover:bg-slate-50 text-[#6c757d] hover:text-[#271816] transition-all cursor-pointer flex items-center gap-2 text-sm font-semibold shadow-2xs"
         >
           <ArrowLeft className="w-4 h-4" />

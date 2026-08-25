@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
   Users,
@@ -27,6 +27,12 @@ import { format } from 'date-fns';
 export const CampaignDetailPage: React.FC = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBackToList = () => {
+    const campaignSearch = location.state?.fromCampaignSearch || location.state?.fromSearch || '';
+    navigate(`/bc/campaigns${campaignSearch}`);
+  };
 
   const [campaign, setCampaign] = useState<CampaignData | any>(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +74,7 @@ export const CampaignDetailPage: React.FC = () => {
           Chiến dịch bạn đang tìm kiếm không tồn tại hoặc đã bị xóa khỏi hệ thống.
         </p>
         <button
-          onClick={() => navigate('/bc/campaigns')}
+          onClick={handleBackToList}
           className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors cursor-pointer inline-flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -126,7 +132,7 @@ export const CampaignDetailPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div className="flex items-start gap-3.5">
           <button
-            onClick={() => navigate('/bc/campaigns')}
+            onClick={handleBackToList}
             className="p-2.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer border border-slate-200"
             title="Quay lại danh sách"
           >
@@ -158,7 +164,12 @@ export const CampaignDetailPage: React.FC = () => {
             return (
               <button
                 disabled={isEnded}
-                onClick={() => !isEnded && navigate(`/bc/campaigns/${campaign._id}/edit`)}
+                onClick={() =>
+                  !isEnded &&
+                  navigate(`/bc/campaigns/${campaign._id}/edit`, {
+                    state: { fromCampaignSearch: location.state?.fromCampaignSearch || location.state?.fromSearch },
+                  })
+                }
                 className={`px-4 py-2.5 border text-sm font-bold rounded-xl flex items-center gap-2 shadow-2xs transition-colors ${
                   isEnded
                     ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
@@ -173,7 +184,11 @@ export const CampaignDetailPage: React.FC = () => {
           })()}
 
           <button
-            onClick={() => navigate(`/bc/campaigns/${campaign._id}/registrations`)}
+            onClick={() =>
+              navigate(`/bc/campaigns/${campaign._id}/registrations`, {
+                state: { fromCampaignSearch: location.state?.fromCampaignSearch || location.state?.fromSearch },
+              })
+            }
             className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl flex items-center gap-2 shadow-2xs transition-colors cursor-pointer"
           >
             <ListChecks className="w-4 h-4" />

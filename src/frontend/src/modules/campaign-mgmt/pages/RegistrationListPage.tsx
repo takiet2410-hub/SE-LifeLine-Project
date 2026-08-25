@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, QrCode, Search, Sparkles, Eye, HelpCircle, Calendar, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiService } from '../../../services/apiClient';
@@ -12,15 +12,19 @@ import { format } from 'date-fns';
 export const RegistrationListPage: React.FC = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [campaign, setCampaign] = useState<CampaignData | null>(null);
   const [registrations, setRegistrations] = useState<RegistrationData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [selectedDate, setSelectedDate] = useState<string>('All');
-  const [selectedSlot, setSelectedSlot] = useState<string>('All');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'All');
+  const [selectedDate, setSelectedDate] = useState<string>(searchParams.get('date') || 'All');
+  const [selectedSlot, setSelectedSlot] = useState<string>(searchParams.get('slot') || 'All');
+  const [currentPage, setCurrentPage] = useState(
+    parseInt(searchParams.get('page') || '1', 10) || 1
+  );
   const [editingBloodTypes, setEditingBloodTypes] = useState<Record<string, string>>({});
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const pageSize = 8;
@@ -54,8 +58,51 @@ export const RegistrationListPage: React.FC = () => {
 
   useEffect(() => {
     fetchRegistrations();
-    setCurrentPage(1);
   }, [campaignId, search, statusFilter]);
+
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setCurrentPage(1);
+  }, [search, statusFilter, selectedDate, selectedSlot]);
+
+  // Synchronize URL Search Params into State whenever location.search changes
+  useEffect(() => {
+    const urlSearch = searchParams.get('search') || '';
+    const urlStatus = searchParams.get('status') || 'All';
+    const urlDate = searchParams.get('date') || 'All';
+    const urlSlot = searchParams.get('slot') || 'All';
+    const urlPage = parseInt(searchParams.get('page') || '1', 10) || 1;
+
+    setSearch(urlSearch);
+    setStatusFilter(urlStatus);
+    setSelectedDate(urlDate);
+    setSelectedSlot(urlSlot);
+    setCurrentPage(urlPage);
+  }, [location.search]);
+
+  // Compute current registration search query string from active state
+  const currentRegSearchQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (statusFilter && statusFilter !== 'All') params.set('status', statusFilter);
+    if (selectedDate && selectedDate !== 'All') params.set('date', selectedDate);
+    if (selectedSlot && selectedSlot !== 'All') params.set('slot', selectedSlot);
+    if (currentPage > 1) params.set('page', String(currentPage));
+    const str = params.toString();
+    return str ? `?${str}` : '';
+  }, [search, statusFilter, selectedDate, selectedSlot, currentPage]);
+
+  // Synchronize state changes to URL Search Params when query string differs
+  useEffect(() => {
+    if (location.search !== currentRegSearchQuery) {
+      const params = new URLSearchParams(currentRegSearchQuery.replace(/^\?/, ''));
+      setSearchParams(params, { replace: true });
+    }
+  }, [currentRegSearchQuery, location.search, setSearchParams]);
 
   // Extract available operational dates
   const availableDates = React.useMemo(() => {
@@ -307,15 +354,23 @@ export const RegistrationListPage: React.FC = () => {
       header: 'Thao tác',
       accessor: (row: RegistrationData) => (
         <div className="flex items-center gap-2">
-          <button
-            onClick={() =>
-              navigate(`/bc/campaigns/${campaignId || 'all'}/registrations/${row._id}`)
-            }
-            className="px-3.5 py-1.5 text-[12px] font-semibold text-white bg-[#93000b] hover:bg-[#7a0009] rounded-xl flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer shrink-0"
-          >
-            <Eye className="w-3.5 h-3.5 text-white" />
-            <span>Chi tiết</span>
-          </button>
+            <button
+              onClick={() =>
+                navigate(`/bc/campaigns/${campaignId || 'all'}/registrations/${row._id}`, {
+                  state: {
+                    fromRegSearch: currentRegSearchQuery || location.search || '',
+                    fromCampaignSearch: location.state?.fromCampaignSearch || location.state?.fromSearch || '',
+                    fromSearch: location.state?.fromCampaignSearch || location.state?.fromSearch || '',
+                  },
+                })
+              }
+              className="px-3.5 py-1.5 text-[12px] font-bold !text-white bg-[#93000b] hover:bg-[#7a0009] rounded-xl flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer shrink-0"
+              style={{ color: '#ffffff' }}
+              title="Xem chi tiết hồ sơ & lịch sử hiến"
+            >
+              <Eye className="w-3.5 h-3.5 text-white" />
+              <span>Chi tiết</span>
+            </button>
         </div>
       ),
     },
@@ -328,10 +383,13 @@ export const RegistrationListPage: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
+              const campaignSearch = location.state?.fromCampaignSearch || location.state?.fromSearch || '';
               if (campaignId && campaignId !== 'all') {
-                navigate(`/bc/campaigns/${campaignId}`);
+                navigate(`/bc/campaigns/${campaignId}`, {
+                  state: { fromSearch: campaignSearch, fromCampaignSearch: campaignSearch },
+                });
               } else {
-                navigate('/bc/campaigns');
+                navigate(`/bc/campaigns${campaignSearch}`);
               }
             }}
             className="h-10 w-10 rounded-xl text-[#6c757d] hover:text-[#271816] hover:bg-slate-100 transition-colors cursor-pointer border border-[#f1f3f5] flex items-center justify-center shrink-0"
@@ -353,7 +411,15 @@ export const RegistrationListPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => navigate(`/bc/campaigns/${campaignId || 'all'}/qr-scan`)}
+          onClick={() =>
+            navigate(`/bc/campaigns/${campaignId || 'all'}/qr-scan`, {
+              state: {
+                fromRegSearch: currentRegSearchQuery || location.search || '',
+                fromCampaignSearch: location.state?.fromCampaignSearch || location.state?.fromSearch || '',
+                fromSearch: location.state?.fromCampaignSearch || location.state?.fromSearch || '',
+              },
+            })
+          }
           className="h-10 px-4 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[13px] font-semibold rounded-xl flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer shrink-0"
         >
           <QrCode className="w-4 h-4 text-red-400" />

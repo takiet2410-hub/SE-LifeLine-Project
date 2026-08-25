@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Edit3, Save, History, Package, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { inventoryApi } from '../services/inventoryApi';
@@ -12,6 +12,12 @@ import { format, differenceInDays } from 'date-fns';
 export const BloodBagDetailPage: React.FC = () => {
   const { bagId } = useParams<{ bagId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBackToList = () => {
+    const invSearch = location.state?.fromInventorySearch || location.state?.fromSearch || '';
+    navigate(`/bc/inventory${invSearch}`);
+  };
 
   const [bag, setBag] = useState<BloodBagData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +45,7 @@ export const BloodBagDetailPage: React.FC = () => {
       <div className="text-center py-12">
         <p className="text-slate-600">Không tìm thấy túi máu.</p>
         <button
-          onClick={() => navigate('/bc/inventory')}
+          onClick={handleBackToList}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm"
         >
           Quay lại danh sách kho
@@ -83,7 +89,7 @@ export const BloodBagDetailPage: React.FC = () => {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/bc/inventory')}
+            onClick={handleBackToList}
             className="h-10 px-3.5 rounded-xl bg-white border border-[#f1f3f5] hover:bg-slate-50 text-[#6c757d] hover:text-[#271816] transition-colors cursor-pointer flex items-center gap-2 text-sm font-semibold shadow-2xs"
           >
             <ArrowLeft className="w-4 h-4" />

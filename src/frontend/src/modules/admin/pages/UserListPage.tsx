@@ -1,22 +1,25 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { adminApi } from '../api/admin.api';
 import type { UserItem } from '../types/admin.types';
 import { DeleteUserModal } from '../components/DeleteUserModal';
 import { AccountLifecycleModal } from '../components/AccountLifecycleModal';
 import { Search, Plus, Download, Edit2, Trash2, UserCheck, ShieldAlert, UserX, Inbox, ChevronLeft, ChevronRight, RotateCcw, UserRoundX } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export const UserListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [searchField, setSearchField] = useState('all');
-  const [role, setRole] = useState('All');
-  const [status, setStatus] = useState('All');
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [searchField, setSearchField] = useState(searchParams.get('searchField') || 'all');
+  const [role, setRole] = useState(searchParams.get('role') || 'All');
+  const [status, setStatus] = useState(searchParams.get('status') || 'All');
+  const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10) || 1);
+  const [limit, setLimit] = useState(parseInt(searchParams.get('limit') || '10', 10) || 10);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
   const [selectedUserForDelete, setSelectedUserForDelete] = useState<UserItem | null>(null);
@@ -24,6 +27,55 @@ export const UserListPage: React.FC = () => {
     user: UserItem;
     mode: 'restore' | 'purge';
   } | null>(null);
+
+  // Synchronize URL Search Params into State whenever location.search changes
+  useEffect(() => {
+    const urlSearch = searchParams.get('search') || '';
+    const urlSearchField = searchParams.get('searchField') || 'all';
+    const urlRole = searchParams.get('role') || 'All';
+    const urlStatus = searchParams.get('status') || 'All';
+    const urlPage = parseInt(searchParams.get('page') || '1', 10) || 1;
+    const urlLimit = parseInt(searchParams.get('limit') || '10', 10) || 10;
+
+    setSearch(urlSearch);
+    setSearchField(urlSearchField);
+    setRole(urlRole);
+    setStatus(urlStatus);
+    setPage(urlPage);
+    setLimit(urlLimit);
+  }, [location.search]);
+
+  // Compute current search query string from active state
+  const currentSearchQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (searchField && searchField !== 'all') params.set('searchField', searchField);
+    if (role && role !== 'All') params.set('role', role);
+    if (status && status !== 'All') params.set('status', status);
+    if (page > 1) params.set('page', String(page));
+    if (limit !== 10) params.set('limit', String(limit));
+    const str = params.toString();
+    return str ? `?${str}` : '';
+  }, [search, searchField, role, status, page, limit]);
+
+  // Synchronize state changes to URL Search Params when query string differs
+  useEffect(() => {
+    if (location.search !== currentSearchQuery) {
+      const params = new URLSearchParams(currentSearchQuery.replace(/^\?/, ''));
+      setSearchParams(params, { replace: true });
+    }
+  }, [currentSearchQuery, location.search, setSearchParams]);
+
+  // Navigation with preservation of filters in state
+  const navTo = (path: string) => {
+    const q = currentSearchQuery || location.search || '';
+    navigate(path, {
+      state: {
+        fromUserSearch: q,
+        fromSearch: q,
+      },
+    });
+  };
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -160,7 +212,7 @@ export const UserListPage: React.FC = () => {
           Xuất CSV
         </button>
         <button
-          onClick={() => navigate('/admin/users/create')}
+          onClick={() => navTo('/admin/users/create')}
           className="flex items-center gap-2 px-4 py-2 bg-[#93000b] hover:bg-[#780009] text-white text-sm font-semibold rounded-xl shadow-md transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -340,7 +392,7 @@ export const UserListPage: React.FC = () => {
                           ) : !u.privacyPurgedAt ? (
                             <>
                               <button
-                                onClick={() => navigate(`/admin/users/${u.id}/edit`)}
+                                onClick={() => navTo(`/admin/users/${u.id}/edit`)}
                                 className="p-1.5 text-slate-600 hover:text-[#271816] hover:bg-slate-100 rounded-lg transition cursor-pointer"
                                 title="Chỉnh sửa tài khoản"
                               >

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Save, MapPin, Users, Plus, Trash2, Calendar, Copy, AlertTriangle, Building2, Lock } from 'lucide-react';
@@ -63,6 +63,7 @@ const getSlotDiffMinutes = (sTime: string, eTime: string) => {
 export const EditCampaignPage: React.FC = () => {
   useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { campaignId } = useParams<{ campaignId: string }>();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -489,7 +490,7 @@ export const EditCampaignPage: React.FC = () => {
       });
 
       toast.success('Cập nhật thông tin chiến dịch thành công!');
-      navigate(`/bc/campaigns/${campaignId}`);
+      navigate(`/bc/campaigns/${campaignId}`, { state: { fromSearch: location.state?.fromSearch } });
     } catch (err: any) {
       console.error(err);
       const errMsg =
@@ -500,12 +501,23 @@ export const EditCampaignPage: React.FC = () => {
     }
   };
 
+  const handleCancelBack = () => {
+    if (campaignId) {
+      navigate(`/bc/campaigns/${campaignId}`, { state: { fromSearch: location.state?.fromSearch } });
+    } else if (location.state?.fromSearch !== undefined) {
+      navigate(`/bc/campaigns${location.state.fromSearch}`);
+    } else if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/bc/campaigns');
+    }
+  };
+
   const handleCancel = () => {
-    const targetPath = campaignId ? `/bc/campaigns/${campaignId}` : '/bc/campaigns';
     if (isDirty) {
       setShowCancelDialog(true);
     } else {
-      navigate(targetPath);
+      handleCancelBack();
     }
   };
 
@@ -929,7 +941,7 @@ export const EditCampaignPage: React.FC = () => {
         message="Bạn có chắc chắn muốn hủy? Các thay đổi chưa lưu sẽ bị mất."
         confirmLabel="Đồng ý hủy"
         cancelLabel="Tiếp tục chỉnh sửa"
-        onConfirm={() => navigate(campaignId ? `/bc/campaigns/${campaignId}` : '/bc/campaigns')}
+        onConfirm={handleCancelBack}
         onCancel={() => setShowCancelDialog(false)}
       />
     </div>

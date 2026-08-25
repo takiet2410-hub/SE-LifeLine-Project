@@ -108,28 +108,8 @@ export const NewsFeedPage: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => navigate('/dashboard')}
-                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <div>
-                <h1 className="text-xl font-extrabold text-gray-900 uppercase tracking-tight">Tin tức & Thông tin</h1>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-4 py-6">
-        {/* Search & Filter */}
+    <div className="space-y-6">
+      {/* Search & Filter */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
@@ -262,7 +242,6 @@ export const NewsFeedPage: React.FC = () => {
             </>
           )}
         </div>
-      </main>
     </div>
   );
 };

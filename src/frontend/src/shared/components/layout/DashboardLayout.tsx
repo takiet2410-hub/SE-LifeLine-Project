@@ -308,7 +308,11 @@ export const DashboardLayout: React.FC = () => {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-[#fff8f7]">
+        <main className={`flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-[#fff8f7] ${
+          location.pathname.includes('/map') || location.pathname.includes('/my-appointments/schedule') || location.pathname.includes('/profile')
+            ? ''
+            : 'p-3 sm:p-4 md:p-6 max-w-7xl w-full mx-auto'
+        }`}>
           <Outlet />
         </main>
       </div>

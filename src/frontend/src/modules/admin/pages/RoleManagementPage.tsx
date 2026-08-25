@@ -100,7 +100,7 @@ export const RoleManagementPage: React.FC = () => {
   };
 
   return (
-    <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side: System Roles List */}
         <div className="bg-white p-5 rounded-2xl border border-[#f1f3f5] shadow-xs space-y-3">

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Clock, MapPin, Heart, HeartHandshake, ShieldAlert, Check, X, ArrowLeft, MapPin as MapPinIcon, Phone as PhoneIcon, ChevronRight } from 'lucide-react';
+import { AlertTriangle, Clock, MapPin, Heart, HeartHandshake, ShieldAlert, Check, X, MapPin as MapPinIcon, Phone as PhoneIcon, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { type SOSUrgency } from '../../sos-requests/services/sosApi';
@@ -39,7 +38,6 @@ const getTerminalResponseStatus = (alert: SOSAlert): ResponseStatus | null => {
 };
 
 export const SOSAlertsPage: React.FC = () => {
-  const navigate = useNavigate();
   const [alerts, setAlerts] = useState<SOSAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAlert, setSelectedAlert] = useState<SOSAlert | null>(null);
@@ -387,28 +385,7 @@ export const SOSAlertsPage: React.FC = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4">
-        <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 rounded-full cursor-pointer">
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 uppercase tracking-tight">Cảnh báo khẩn cấp SOS</h1>
-            </div>
-          </div>
-          {unreadCount > 0 && (
-            <span className="px-3 py-1 bg-red-600 text-white text-sm font-bold rounded-full">
-              {unreadCount} mới
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="space-y-6">
         {showDetail && selectedAlert && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
             <div className="bg-white rounded-t-2xl sm:rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-xl w-full max-w-lg max-h-[92dvh] overflow-y-auto animate-in fade-in zoom-in duration-200">
@@ -589,7 +566,6 @@ export const SOSAlertsPage: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
     <ConfirmDialog
       isOpen={Boolean(pendingResponse)}
       title={pendingResponse?.response === 'accepted' ? 'Xác nhận sẵn sàng hiến máu' : 'Xác nhận chưa thể tham gia'}

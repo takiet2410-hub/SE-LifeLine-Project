@@ -197,7 +197,7 @@ export const StockInPage: React.FC = () => {
           className="w-full h-11 border-2 border-dashed border-slate-300 hover:border-red-600 hover:text-red-600 text-slate-600 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors bg-white/50 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Thêm túi máu nữa</span>
+          <span>Thêm túi máu nữa</span>
         </button>
 
         {/* Action Controls */}

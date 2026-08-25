@@ -201,7 +201,7 @@ export const UserListPage: React.FC = () => {
   };
 
   return (
-    <div className="p-3 sm:p-5 md:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
+    <div className="space-y-6">
       {/* Top Action Controls */}
       <div className="flex items-center justify-end gap-2 sm:gap-3">
         <button

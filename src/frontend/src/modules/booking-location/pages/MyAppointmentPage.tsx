@@ -261,7 +261,7 @@ export const MyAppointmentPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-full flex-col relative p-3 sm:p-5 lg:p-6 xl:p-8 max-w-[1400px] mx-auto w-full">
+    <div className="flex min-h-full flex-col relative space-y-4 w-full">
       {/* Top Action & Subtitle Banner */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4 shrink-0">
         <div>

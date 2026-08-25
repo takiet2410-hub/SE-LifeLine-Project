@@ -9,6 +9,7 @@ import { apiService } from '../../../services/apiClient';
 import type { NotificationData } from '../../../services/mockData';
 import { format } from 'date-fns';
 import { getArticleIdFromNotification, getArticleRouteForRole } from '../../../utils/notificationHelpers';
+import { DonorDashboardBackground } from '../../../modules/dashboard/components/DonorDashboardBackground';
 
 
 export const DashboardLayout: React.FC = () => {
@@ -162,32 +163,36 @@ export const DashboardLayout: React.FC = () => {
   } else if (words.length === 1 && words[0].length > 0) {
     initials = words[0].substring(0, 2).toUpperCase();
   }
+  const isDashboard = location.pathname === '/dashboard' || location.pathname === '/dashboard/';
 
   return (
     <ScheduleProvider>
-      <div className="flex h-dvh w-full bg-[#fff8f7] overflow-hidden selection:bg-[#93000b]/20">
-      {/* Sidebar - Hidden on mobile, handled by media queries if needed later */}
-      <div className="hidden md:flex">
-        <SideNavBar />
-      </div>
+      <div className="relative flex h-dvh w-full bg-[#fff8f7] overflow-hidden selection:bg-[#93000b]/20">
+        {/* Full-screen Coded SVG Background for Donor Dashboard */}
+        {isDashboard && <DonorDashboardBackground />}
 
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          <button
-            type="button"
-            aria-label="Đóng menu"
-            className="absolute inset-0 bg-black/60 backdrop-blur-xs"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-          <div className="relative z-10 h-full w-[min(18rem,86vw)] shadow-2xl">
-            <SideNavBar />
-          </div>
+        {/* Sidebar - Hidden on mobile, handled by media queries if needed later */}
+        <div className="hidden md:flex relative z-20">
+          <SideNavBar />
         </div>
-      )}
 
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Top Header */}
-        <header className="h-16 sm:h-[72px] bg-white border-b border-[#f1f3f5] px-3 sm:px-4 lg:px-6 flex items-center justify-between shrink-0">
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 flex md:hidden">
+            <button
+              type="button"
+              aria-label="Đóng menu"
+              className="absolute inset-0 bg-black/60 backdrop-blur-xs"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <div className="relative z-10 h-full w-[min(18rem,86vw)] shadow-2xl">
+              <SideNavBar />
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative z-10">
+          {/* Top Header */}
+          <header className={`h-16 sm:h-[72px] ${isDashboard ? 'bg-white/90 backdrop-blur-md' : 'bg-white'} border-b border-[#f1f3f5] px-3 sm:px-4 lg:px-6 flex items-center justify-between shrink-0 relative z-20`}>
           <div className="flex min-w-0 items-center gap-2 sm:gap-4">
             <button
               type="button"
@@ -308,11 +313,15 @@ export const DashboardLayout: React.FC = () => {
         </header>
 
         {/* Main Content Area */}
-        <main className={`flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-[#fff8f7] ${
-          location.pathname.includes('/map') || location.pathname.includes('/my-appointments/schedule') || location.pathname.includes('/profile')
-            ? ''
-            : 'p-3 sm:p-4 md:p-6 max-w-7xl w-full mx-auto'
-        }`}>
+        <main
+          className={`flex-1 min-w-0 overflow-y-auto overflow-x-hidden relative z-10 ${
+            isDashboard ? 'bg-transparent' : 'bg-[#fff8f7]'
+          } ${
+            location.pathname.includes('/map') || location.pathname.includes('/my-appointments/schedule') || location.pathname.includes('/profile')
+              ? ''
+              : 'p-3 sm:p-4 md:p-6 max-w-7xl w-full mx-auto'
+          }`}
+        >
           <Outlet />
         </main>
       </div>

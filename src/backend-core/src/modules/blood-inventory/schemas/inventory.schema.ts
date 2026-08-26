@@ -5,7 +5,7 @@ export const bagStatusEnum = z.enum(['Available', 'Reserved', 'Used', 'Expired',
 
 export const updateStatusSchema = z.object({
   status: bagStatusEnum,
-  reason: z.string().min(1, 'Reason for status update is required')
+  reason: z.string().trim().min(1, 'Vui lòng nhập lý do chuyển trạng thái túi máu')
 });
 
 export const stockInEntrySchema = z.object({

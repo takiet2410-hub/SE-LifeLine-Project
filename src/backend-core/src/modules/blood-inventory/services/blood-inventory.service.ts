@@ -223,14 +223,29 @@ export class BloodInventoryService {
     return bag;
   }
   static async updateBagStatus(bagId: string, status: BagStatus, reason: string, staffName: string = 'Staff') {
-    const bag = await BloodBag.findById(bagId);
-    if (!bag) {
-      throw new Error('Blood bag not found');
+    if (!mongoose.Types.ObjectId.isValid(bagId)) {
+      throw new Error('Mã túi máu không hợp lệ');
     }
 
-    if (bag.status === 'Expired' || bag.status === 'Used' || bag.status === 'Discarded') {
+    const trimmedReason = reason ? reason.trim() : '';
+    if (!trimmedReason) {
+      throw new Error('Vui lòng nhập lý do chuyển trạng thái túi máu');
+    }
+
+    const bag = await BloodBag.findById(bagId);
+    if (!bag) {
+      throw new Error('Không tìm thấy túi máu trong hệ thống');
+    }
+
+    if (bag.status === 'Used' || bag.status === 'Discarded') {
       if (bag.status !== status) {
-        throw new Error(`Cannot change status from terminal state '${bag.status}'`);
+        throw new Error(`Không thể thay đổi trạng thái của túi máu đã kết thúc chu trình (${bag.status})`);
+      }
+    }
+
+    if (bag.status === 'Expired') {
+      if (status !== 'Expired' && status !== 'Discarded') {
+        throw new Error(`Túi máu đã hết hạn chỉ có thể chuyển sang trạng thái 'Đã hủy' (Discarded)`);
       }
     }
 
@@ -239,13 +254,14 @@ export class BloodInventoryService {
       newStatus: status,
       changedBy: staffName,
       changedAt: new Date(),
-      reason
+      reason: trimmedReason
     };
 
     bag.status = status;
     bag.statusHistory.unshift(historyEntry);
     await bag.save();
-    return bag;
+
+    return await this.getBloodBagById(bagId);
   }
 
   static async stockInBatch(entries: StockInEntryInput[], staffName: string = 'Staff', bloodCenterId?: any) {

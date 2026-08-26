@@ -25,6 +25,7 @@ export const BloodBagDetailPage: React.FC = () => {
 
   const [newStatus, setNewStatus] = useState<BloodBagData['status']>('Available');
   const [reason, setReason] = useState('');
+  const [reasonError, setReasonError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -56,28 +57,47 @@ export const BloodBagDetailPage: React.FC = () => {
 
   const isExpired = bag.status === 'Expired' || differenceInDays(new Date(bag.expiryDate), new Date()) < 0;
   const isUsed = bag.status === 'Used';
-  const isLocked = isExpired || isUsed || bag.status === 'Discarded';
+  const isDiscarded = bag.status === 'Discarded';
+  const isLocked = isUsed || isDiscarded;
 
   // Valid status transitions based on current status (BC-UC-14)
   const getValidTransitions = (current: BloodBagData['status']) => {
     if (current === 'Available') return ['Available', 'Reserved', 'Used', 'Expired', 'Discarded'];
     if (current === 'Reserved') return ['Reserved', 'Available', 'Used', 'Discarded'];
-    return [current]; // Terminal states: Used, Expired, Discarded
+    if (current === 'Expired' || isExpired) return ['Expired', 'Discarded'];
+    return [current]; // Terminal states: Used, Discarded
   };
 
   const validTransitions = getValidTransitions(bag.status);
 
   const handleSaveStatus = async () => {
     if (!bagId || isLocked) return;
+
+    if (!reason.trim()) {
+      setReasonError('Vui lòng nhập lý do thay đổi trạng thái túi máu.');
+      toast.error('Bắt buộc phải nhập lý do thay đổi trạng thái túi máu.');
+      return;
+    }
+
+    if (newStatus === bag.status) {
+      toast.warning('Trạng thái mới trùng với trạng thái hiện tại. Vui lòng chọn trạng thái mới.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const updated = await inventoryApi.updateStatus(bagId, newStatus, reason);
-      setBag(updated);
+      const updated = await inventoryApi.updateStatus(bagId, newStatus, reason.trim());
+      if (updated) {
+        setBag(updated);
+        setNewStatus(updated.status);
+      }
       setIsEditing(false);
       setReason('');
+      setReasonError(null);
       toast.success('Cập nhật trạng thái túi máu thành công!');
-    } catch (err) {
-      toast.error('Cập nhật thất bại.');
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || err?.message || 'Cập nhật thất bại.';
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -105,7 +125,10 @@ export const BloodBagDetailPage: React.FC = () => {
           <button
             disabled={isLocked}
             onClick={() => {
-              if (!isLocked) setIsEditing(true);
+              if (!isLocked) {
+                setReasonError(null);
+                setIsEditing(true);
+              }
             }}
             className={`h-10 px-4 text-sm font-semibold rounded-xl flex items-center gap-2 shadow-xs transition-colors ${
               isLocked
@@ -113,10 +136,10 @@ export const BloodBagDetailPage: React.FC = () => {
                 : 'bg-[#93000b] hover:bg-[#7a0009] text-white cursor-pointer'
             }`}
             title={
-              isExpired
-                ? 'Túi máu đã hết hạn sử dụng (không thể cập nhật)'
-                : isUsed
+              isUsed
                 ? 'Túi máu đã được xuất dùng (không thể cập nhật)'
+                : isDiscarded
+                ? 'Túi máu đã tiêu hủy (không thể cập nhật)'
                 : 'Cập nhật trạng thái túi máu'
             }
           >
@@ -127,20 +150,33 @@ export const BloodBagDetailPage: React.FC = () => {
       </div>
 
       {/* Expired Warning Banner (BC-UC-14 AF-02) */}
-      {isExpired && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 text-red-800 text-sm">
-          <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+      {isExpired && !isLocked && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3 text-amber-800 text-sm">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
           <div>
             <p className="font-bold">Túi máu đã hết hạn sử dụng!</p>
-            <p className="text-xs text-red-700 mt-0.5">
-              Theo quy định an toàn huyết học, trạng thái túi máu đã hết hạn không thể thay đổi thủ công.
+            <p className="text-xs text-amber-700 mt-0.5">
+              Theo quy định an toàn huyết học, túi máu đã hết hạn có thể cập nhật chuyển sang trạng thái "Đã hủy (Discarded)" để xử lý tiêu hủy.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Discarded Info Banner */}
+      {isDiscarded && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center gap-3 text-slate-800 text-sm">
+          <AlertCircle className="w-5 h-5 text-slate-500 shrink-0" />
+          <div>
+            <p className="font-bold">Túi máu đã được tiêu hủy (Discarded)!</p>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Túi máu đã hoàn tất biên bản hủy và được lưu trữ hồ sơ kiểm toán vĩnh viễn (không thể thay đổi trạng thái).
             </p>
           </div>
         </div>
       )}
 
       {/* Used Info Banner */}
-      {isUsed && !isExpired && (
+      {isUsed && (
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center gap-3 text-slate-800 text-sm">
           <AlertCircle className="w-5 h-5 text-slate-500 shrink-0" />
           <div>
@@ -285,13 +321,25 @@ export const BloodBagDetailPage: React.FC = () => {
                 </select>
               </FormField>
 
-              <FormField label="Lý do chuyển trạng thái">
+              <FormField
+                label="Lý do chuyển trạng thái"
+                required
+                error={reasonError || undefined}
+                hint="* Bắt buộc: Cán bộ y tế phải nhập rõ lý do để lưu hồ sơ kiểm toán (Audit Log)."
+              >
                 <textarea
                   rows={3}
                   value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Nhập ghi chú lý do thay đổi..."
-                  className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none"
+                  onChange={(e) => {
+                    setReason(e.target.value);
+                    if (reasonError && e.target.value.trim()) {
+                      setReasonError(null);
+                    }
+                  }}
+                  placeholder="Nhập lý do thay đổi trạng thái (bắt buộc)..."
+                  className={`w-full px-3.5 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-red-600/20 focus:border-red-600 outline-none ${
+                    reasonError ? 'border-red-500 bg-red-50/20' : 'border-slate-200 bg-white'
+                  }`}
                 />
               </FormField>
 

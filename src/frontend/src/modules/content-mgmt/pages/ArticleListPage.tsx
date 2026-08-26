@@ -248,11 +248,11 @@ export const ArticleListPage: React.FC = () => {
             className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"
           >
             <p className="text-sm text-gray-600" aria-live="polite">
-              Showing <span className="font-semibold text-gray-900">{(pagination.page - 1) * pagination.limit + 1}</span>
+              Hiển thị <span className="font-semibold text-gray-900">{(pagination.page - 1) * pagination.limit + 1}</span>
               {'–'}
               <span className="font-semibold text-gray-900">{Math.min(pagination.page * pagination.limit, pagination.total)}</span>
-              {' of '}
-              <span className="font-semibold text-gray-900">{pagination.total}</span> articles
+              {' trong tổng số '}
+              <span className="font-semibold text-gray-900">{pagination.total}</span> bài viết
             </p>
             <div className="flex items-center justify-between gap-2 sm:justify-end">
               <button
@@ -261,10 +261,10 @@ export const ArticleListPage: React.FC = () => {
                 disabled={pagination.page <= 1 || loading}
                 className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <ChevronLeft className="h-4 w-4" /> Previous
+                <ChevronLeft className="h-4 w-4" /> Trang trước
               </button>
               <span className="min-w-24 text-center text-sm font-semibold text-gray-800">
-                Page {pagination.page} / {pagination.totalPages}
+                Trang {pagination.page} / {pagination.totalPages}
               </span>
               <button
                 type="button"
@@ -272,7 +272,7 @@ export const ArticleListPage: React.FC = () => {
                 disabled={pagination.page >= pagination.totalPages || loading}
                 className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Next <ChevronRight className="h-4 w-4" />
+                Trang sau <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </nav>

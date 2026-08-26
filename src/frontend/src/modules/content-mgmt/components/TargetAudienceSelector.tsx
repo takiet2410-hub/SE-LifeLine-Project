@@ -7,9 +7,9 @@ interface TargetAudienceSelectorProps {
 }
 
 const AUDIENCE_OPTIONS: { id: TargetAudience; label: string; desc: string }[] = [
-  { id: 'Donors', label: 'Blood Donors', desc: 'Public donors & volunteers' },
-  { id: 'Staff', label: 'Blood Center Staff', desc: 'Internal medical & admin staff' },
-  { id: 'Hospitals', label: 'Hospitals & Clinics', desc: 'Partner health facilities' }
+  { id: 'Donors', label: 'Người hiến máu', desc: 'Người hiến máu & tình nguyện viên' },
+  { id: 'Staff', label: 'Nhân viên trung tâm', desc: 'Nhân viên y tế & quản trị nội bộ' },
+  { id: 'Hospitals', label: 'Bệnh viện & Phòng khám', desc: 'Các cơ sở y tế đối tác' }
 ];
 
 export const TargetAudienceSelector: React.FC<TargetAudienceSelectorProps> = ({ selected, onChange }) => {
@@ -25,7 +25,7 @@ export const TargetAudienceSelector: React.FC<TargetAudienceSelectorProps> = ({ 
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700">
-        Target Audience (Select all that apply)
+        Đối tượng mục tiêu (Chọn tất cả đối tượng phù hợp)
       </label>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {AUDIENCE_OPTIONS.map((opt) => {

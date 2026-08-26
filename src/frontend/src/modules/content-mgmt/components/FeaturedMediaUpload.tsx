@@ -15,11 +15,11 @@ export const FeaturedMediaUpload: React.FC<FeaturedMediaUploadProps> = ({ value,
   const handleFile = async (file: File) => {
     setError(null);
     if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(file.type)) {
-      setError('Format must be PNG or JPG');
+      setError('Định dạng ảnh phải là PNG, JPG hoặc WebP');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setError('File size must be ≤ 5MB');
+      setError('Dung lượng tệp tối đa 5MB');
       return;
     }
 
@@ -31,7 +31,7 @@ export const FeaturedMediaUpload: React.FC<FeaturedMediaUploadProps> = ({ value,
         onChange(res.url);
       }
     } catch (e: any) {
-      setError('Failed to upload image');
+      setError('Không thể tải ảnh lên');
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ export const FeaturedMediaUpload: React.FC<FeaturedMediaUploadProps> = ({ value,
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700">
-        Featured Media (Cover Image)
+        Ảnh bìa bài viết
       </label>
 
       {previewUrl ? (
@@ -61,8 +61,8 @@ export const FeaturedMediaUpload: React.FC<FeaturedMediaUploadProps> = ({ value,
           <button
             type="button"
             onClick={handleRemove}
-            className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full opacity-90 hover:opacity-100 shadow transition-opacity"
-            title="Remove cover image"
+            className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full opacity-90 hover:opacity-100 shadow transition-opacity cursor-pointer"
+            title="Xóa ảnh bìa"
           >
             <X className="w-4 h-4" />
           </button>
@@ -85,9 +85,9 @@ export const FeaturedMediaUpload: React.FC<FeaturedMediaUploadProps> = ({ value,
               {loading ? <Upload className="w-6 h-6 animate-bounce" /> : <ImageIcon className="w-6 h-6" />}
             </div>
             <p className="text-sm font-medium text-gray-900">
-              {loading ? 'Uploading...' : 'Click to upload or drag & drop'}
+              {loading ? 'Đang tải lên...' : 'Nhấn để tải lên hoặc kéo thả tệp vào đây'}
             </p>
-            <p className="text-xs text-gray-500 mt-1">Recommended size 1200×630px (PNG, JPG max 5MB)</p>
+            <p className="text-xs text-gray-500 mt-1">Kích thước khuyến nghị 1200×630px (PNG, JPG tối đa 5MB)</p>
           </label>
         </div>
       )}

@@ -34,14 +34,10 @@ export const PublishingSchedulePicker: React.FC<PublishingSchedulePickerProps> =
             onClick={() => onChange(null)}
             className="text-xs text-red-600 hover:text-red-800 font-medium cursor-pointer"
           >
-            Hủy lịch hẹn (Xuất bản ngay)
+            Xóa lịch đã chọn
           </button>
         )}
       </div>
-
-      <p className="text-xs text-gray-500">
-        Để trống để xuất bản ngay khi lưu, hoặc chọn ngày và giờ xuất bản trong tương lai.
-      </p>
 
       <div className="flex items-center space-x-3 pt-1">
         <div className="relative flex-1 max-w-xs">

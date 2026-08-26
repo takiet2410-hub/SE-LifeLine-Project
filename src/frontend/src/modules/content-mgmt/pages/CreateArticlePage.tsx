@@ -78,6 +78,11 @@ export const CreateArticlePage: React.FC = () => {
       return;
     }
 
+    if (targetStatus === 'Scheduled' && !scheduledAt) {
+      setErrors({ general: 'Vui lòng chọn ngày và giờ lên lịch xuất bản' });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {
@@ -86,7 +91,7 @@ export const CreateArticlePage: React.FC = () => {
         category,
         status: targetStatus,
         coverImageUrl,
-        scheduledAt,
+        scheduledAt: targetStatus === 'Scheduled' ? scheduledAt : null,
         targetAudience
       };
 
@@ -104,7 +109,14 @@ export const CreateArticlePage: React.FC = () => {
 
       if (res.success) {
         markSaved();
-        setToastMessage(res.message || (targetStatus === 'Published' ? 'Xuất bản bài viết thành công' : 'Lưu bài viết thành công'));
+        setToastMessage(
+          res.message ||
+            (targetStatus === 'Published'
+              ? 'Xuất bản bài viết thành công'
+              : targetStatus === 'Scheduled'
+              ? 'Lên lịch bài viết thành công'
+              : 'Lưu bài viết thành công')
+        );
         setTimeout(() => {
           handleBackToList();
         }, 1200);
@@ -168,12 +180,12 @@ export const CreateArticlePage: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => handleSave('Published')}
+            onClick={() => handleSave(status === 'Scheduled' ? 'Scheduled' : 'Published')}
             disabled={isSubmitting}
             className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 text-sm flex items-center space-x-1.5 shadow-sm cursor-pointer"
           >
             <Send className="w-4 h-4" />
-            <span>Xuất Bản Bài Viết</span>
+            <span>{status === 'Scheduled' ? 'Lên Lịch Bài Viết' : 'Xuất Bản Bài Viết'}</span>
           </button>
         </div>
       </div>
@@ -247,8 +259,10 @@ export const CreateArticlePage: React.FC = () => {
         {/* Target Audience */}
         <TargetAudienceSelector selected={targetAudience} onChange={setTargetAudience} />
 
-        {/* Publishing Schedule */}
-        <PublishingSchedulePicker value={scheduledAt} onChange={setScheduledAt} />
+        {/* Publishing Schedule - Only show when status is Scheduled */}
+        {status === 'Scheduled' && (
+          <PublishingSchedulePicker value={scheduledAt} onChange={setScheduledAt} />
+        )}
 
         {/* Body content rich text editor */}
         <div>

@@ -107,6 +107,10 @@ export const ArticleDetailPage: React.FC = () => {
 
   const handleSaveEdit = async () => {
     if (!articleId || !title.trim()) return;
+    if (status === 'Scheduled' && !scheduledAt) {
+      alert('Vui lòng chọn ngày và giờ lên lịch xuất bản');
+      return;
+    }
     try {
       const res = await articleApi.updateArticle(articleId, {
         title: title.trim(),
@@ -114,7 +118,7 @@ export const ArticleDetailPage: React.FC = () => {
         category,
         status,
         coverImageUrl,
-        scheduledAt,
+        scheduledAt: status === 'Scheduled' ? scheduledAt : null,
         targetAudience
       });
       if (res.success) {
@@ -300,15 +304,17 @@ export const ArticleDetailPage: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs cursor-pointer"
                   >
                     <option value="Draft">Bản nháp</option>
-                    <option value="Published">Đã xuất bản</option>
-                    <option value="Scheduled">Đã lên lịch</option>
+                    <option value="Published">Xuất bản</option>
+                    <option value="Scheduled">Lên lịch</option>
                   </select>
                 </div>
               </div>
 
               <FeaturedMediaUpload value={coverImageUrl} onChange={setCoverImageUrl} />
               <TargetAudienceSelector selected={targetAudience} onChange={setTargetAudience} />
-              <PublishingSchedulePicker value={scheduledAt} onChange={setScheduledAt} />
+              {status === 'Scheduled' && (
+                <PublishingSchedulePicker value={scheduledAt} onChange={setScheduledAt} />
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Nội dung chi tiết</label>

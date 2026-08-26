@@ -613,11 +613,11 @@ export class RegistrationService {
         (appointment as any).donationVolume = Number(payload.donationVolume) || 350;
       }
 
-      // Auto-set status to Completed if testResult (Pass) is submitted
+      // Auto-set status to Completed if testResult (Pass or Rejected) is submitted
       if (payload.testResult === 'Pass') {
         payload.status = 'Completed';
       } else if (payload.testResult === 'Rejected') {
-        payload.status = 'Rejected';
+        payload.status = 'Completed';
       } else if (payload.testResult && !payload.status) {
         payload.status = 'Completed';
       }

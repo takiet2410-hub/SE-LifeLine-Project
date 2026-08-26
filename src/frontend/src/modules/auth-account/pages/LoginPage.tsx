@@ -72,7 +72,7 @@ export const LoginPage: React.FC = () => {
           } else if (isUserStaffRole) {
             navigate('/bc/campaigns', { replace: true });
           } else {
-            navigate('/my-appointments', { replace: true });
+            navigate('/dashboard', { replace: true });
           }
         }, 800);
       } else {

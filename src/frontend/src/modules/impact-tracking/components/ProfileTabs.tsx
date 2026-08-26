@@ -13,7 +13,6 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, setActiveTa
     ...(gamificationEnabled
       ? [
           { id: 'achievements', label: 'Huy hiệu & Thành tích' },
-          { id: 'donor-level', label: 'Cấp bậc người hiến' },
         ]
       : []),
   ];

@@ -41,7 +41,7 @@
     - [Testcase 12: Reject appointment booking if user account is unverified](#testcase-12-reject-appointment-booking-if-user-account-is-unverified)
     - [Testcase 13: Successfully view details of an upcoming appointment](#testcase-13-successfully-view-details-of-an-upcoming-appointment)
     - [Testcase 14: Successfully view details of a completed appointment](#testcase-14-successfully-view-details-of-a-completed-appointment)
-    - [Testcase 16: Verify E-Ticket QR code contains correct appointment data](#testcase-16-verify-e-ticket-qr-code-contains-correct-appointment-data)
+    - [Testcase 15: Verify E-Ticket QR code contains correct appointment data](#testcase-15-verify-e-ticket-qr-code-contains-correct-appointment-data)
   - [3.3. Feature 3: Campaign Management](#33-feature-3-campaign-management)
     - [Testcase 1: Successful campaign creation with valid details](#testcase-1-successful-campaign-creation-with-valid-details)
     - [Testcase 2: Reject campaign creation with an invalid date range](#testcase-2-reject-campaign-creation-with-an-invalid-date-range)
@@ -136,7 +136,7 @@ Where applicable, existing Spec Kit-generated test cases were reviewed, refined 
 | TC-F2-012 | Booking & Location Services | LL-UC-07 – Schedule Appointment | Reject appointment booking if user account is unverified | Business Rule | New |
 | TC-F2-013 | Booking & Location Services | LL-UC-08 – View Appointment Details | Successfully view details of an upcoming appointment | Positive | Spec Kit - Reused |
 | TC-F2-014 | Booking & Location Services | LL-UC-08 – View Appointment Details | Successfully view details of a completed appointment | Positive | Spec Kit - Refined |
-| TC-F2-016 | Booking & Location Services | LL-UC-10 – Download E-Ticket | Verify E-Ticket QR code contains correct appointment data | Validation | Spec Kit - Refined |
+| TC-F2-015 | Booking & Location Services | LL-UC-10 – Download E-Ticket | Verify E-Ticket QR code contains correct appointment data | Validation | Spec Kit - Refined |
 | TC-F3-001 | Campaign Management | BC-UC-01 – Create Donation Campaign | Successful campaign creation with valid details | Positive | New |
 | TC-F3-002 | Campaign Management | BC-UC-01 – Create Donation Campaign | Reject campaign creation with an invalid date range | Negative | New |
 | TC-F3-003 | Campaign Management | BC-UC-01 – Create Donation Campaign | Reject campaign creation with zero or negative capacity | Validation | New |
@@ -527,12 +527,12 @@ Where applicable, existing Spec Kit-generated test cases were reviewed, refined 
 | **Expected Output** | The detail screen displays the past appointment details without modification options. |
 | **Test steps** | 1. Log in and navigate to 'My Appointments' or 'History'.<br>2. Select a past, completed appointment.<br>3. Verify that details are displayed accurately.<br>4. Verify that the 'Cancel Appointment' button is not present or disabled.<br>5. Verify that the status correctly reflects 'Completed' or 'Checked-in'. |
 
-#### Testcase 16: Verify E-Ticket QR code contains correct appointment data
+#### Testcase 15: Verify E-Ticket QR code contains correct appointment data
 
 <!-- METADATA: Type="Validation" Source="Spec Kit - Refined" -->
 | Field | Details |
 |---|---|
-| **Test case ID** | TC-F2-016 |
+| **Test case ID** | TC-F2-015 |
 | **Test case name** | Verify E-Ticket QR code contains correct appointment data |
 | **Description** | Verify that the generated QR code on the E-Ticket embeds the correct identifiers for fast check-in at the campaign. |
 | **Related Use case** | LL-UC-10 – Download E-Ticket |

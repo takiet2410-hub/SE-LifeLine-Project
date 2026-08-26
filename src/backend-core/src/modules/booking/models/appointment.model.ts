@@ -23,7 +23,7 @@ export interface IAppointment extends Document {
   eTicketId?: mongoose.Types.ObjectId;
   donationVolume?: number;
   testResult?: 'Pass' | 'Rejected';
-  xpRewardedForExamining?: boolean;
+  xpRewardedForCheckIn?: boolean;
   xpRewardedForCompletion?: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -39,7 +39,7 @@ const AppointmentSchema: Schema = new Schema({
   eTicketId: { type: Schema.Types.ObjectId, ref: 'ETicket' },
   donationVolume: { type: Number, default: 350 },
   testResult: { type: String, enum: ['Pass', 'Rejected'] },
-  xpRewardedForExamining: { type: Boolean, default: false },
+  xpRewardedForCheckIn: { type: Boolean, default: false },
   xpRewardedForCompletion: { type: Boolean, default: false }
 }, {
   timestamps: true

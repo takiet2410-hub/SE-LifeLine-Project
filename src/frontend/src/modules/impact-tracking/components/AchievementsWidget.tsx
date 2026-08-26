@@ -20,44 +20,44 @@ export const AchievementsWidget: React.FC<AchievementsWidgetProps> = ({ profileD
       active: unlockedTypes.has('FirstDonation') || donations >= 1
     },
     {
-      type: 'SilverDonor',
+      type: 'Silver',
       title: 'Hạng Bạc',
-      description: 'Đạt mốc 200 XP đóng góp cộng đồng',
-      bg: 'bg-[#F59E0B] text-white',
-      icon: '🏅',
-      active: unlockedTypes.has('SilverDonor') || xp >= 200
+      description: 'Đạt mốc 500 XP',
+      bg: 'bg-[#9CA3AF] text-white',
+      icon: '🥈',
+      active: xp >= 500
     },
     {
-      type: 'PromptDonor',
-      title: 'Đúng Lịch Hẹn',
-      description: 'Hoàn thành 3 lần hiến máu đúng lịch',
-      bg: 'bg-[#3B82F6] text-white',
-      icon: '🕒',
-      active: unlockedTypes.has('PromptDonor') || donations >= 3
+      type: 'Gold',
+      title: 'Hạng Vàng',
+      description: 'Đạt mốc 1000 XP',
+      bg: 'bg-[#FBBF24] text-white',
+      icon: '🥇',
+      active: xp >= 1000
     },
     {
-      type: 'FiveDonations',
-      title: 'Người Hiến Kiên Trì',
-      description: 'Hoàn thành 5 lần hiến máu tình nguyện',
+      type: 'Platinum',
+      title: 'Hạng Bạch Kim',
+      description: 'Đạt mốc 2000 XP',
+      bg: 'bg-[#38BDF8] text-white',
+      icon: '💎',
+      active: xp >= 2000
+    },
+    {
+      type: 'Diamond',
+      title: 'Hạng Kim Cương',
+      description: 'Đạt mốc 5000 XP',
       bg: 'bg-[#8B5CF6] text-white',
-      icon: '🎖️',
-      active: unlockedTypes.has('FiveDonations') || donations >= 5
+      icon: '👑',
+      active: xp >= 5000
     },
     {
-      type: 'GallonClub',
-      title: 'CLB Gallon',
-      description: 'Hoàn thành 8 lần hiến máu xuất sắc',
-      bg: 'bg-[#10B981] text-white',
-      icon: '🥛',
-      active: unlockedTypes.has('GallonClub') || donations >= 8
-    },
-    {
-      type: 'EmergencyResponder',
-      title: 'Hiệp Sĩ Cứu Hộ',
-      description: 'Tham gia ứng cứu khẩn cấp hoặc đạt 10 lần hiến máu',
+      type: 'Legendary',
+      title: 'Hạng Huyền Thoại',
+      description: 'Đạt mốc 10000 XP',
       bg: 'bg-[#EC4899] text-white',
-      icon: '🛡️',
-      active: unlockedTypes.has('EmergencyResponder') || unlockedTypes.has('SOS_HERO') || donations >= 10
+      icon: '🌟',
+      active: xp >= 10000
     }
   ];
 
@@ -66,7 +66,7 @@ export const AchievementsWidget: React.FC<AchievementsWidgetProps> = ({ profileD
   return (
     <div className="flex p-6 flex-col items-start gap-6 rounded-xl border border-[#F1F3F5] bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] w-full">
       <div className="flex justify-between items-center w-full">
-        <h3 className="text-[#271816] font-inter text-base font-bold leading-6">Huy Hiệu & Thành Tích</h3>
+        <h3 className="text-[#271816] font-inter text-base font-bold leading-6">Cấp Bậc & Huy Hiệu</h3>
         <span className="text-[#6C757D] font-inter text-[10px] font-bold tracking-widest uppercase">{unlockedCount} / {badges.length}</span>
       </div>
       
@@ -94,10 +94,6 @@ export const AchievementsWidget: React.FC<AchievementsWidgetProps> = ({ profileD
           </div>
         ))}
       </div>
-      
-      <button className="flex py-2 justify-center items-center rounded-lg border border-[#DEE2E6] w-full mt-2 hover:bg-gray-50 transition-colors">
-        <span className="text-[#6C757D] font-inter text-sm font-medium">Xem tất cả huy hiệu</span>
-      </button>
     </div>
   );
 };

@@ -139,7 +139,7 @@ The testing phase took place from **August 14, 2026** to **August 17, 2026**, en
 | Initial Run | `TC-F2-012` | Reject appointment booking if user account is unverified | 15/08/2026 | **Pass** | Unverified account cannot log in, thereby preventing unauthorized appointment booking. | - |
 | Initial Run | `TC-F2-013` | Successfully view details of an upcoming appointment | 15/08/2026 | **Pass** | Successfully displays comprehensive appointment details (location, timeslot, screening form status). | - |
 | Initial Run | `TC-F2-014` | Successfully view details of a completed appointment | 15/08/2026 | **Fail** | After viewing a completed appointment for a few seconds, the UI automatically resets and jumps to the top/latest appointment. | `BUG-017` |
-| Initial Run | `TC-F2-016` | Verify E-Ticket QR code contains correct appointment data | 15/08/2026 | **Pass** | Scanning the E-Ticket QR code retrieves the exact signed passcode and appointment data. | - |
+| Initial Run | `TC-F2-015` | Verify E-Ticket QR code contains correct appointment data | 15/08/2026 | **Pass** | Scanning the E-Ticket QR code retrieves the exact signed passcode and appointment data. | - |
 
 ---
 

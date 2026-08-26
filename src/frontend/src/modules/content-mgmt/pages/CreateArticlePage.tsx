@@ -235,8 +235,8 @@ export const CreateArticlePage: React.FC = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-red-500 focus:border-red-500 cursor-pointer"
             >
               <option value="Draft">Bản nháp (Chỉ nội bộ xem)</option>
-              <option value="Published">Đã xuất bản (Công khai)</option>
-              <option value="Scheduled">Đã lên lịch (Tự động đăng)</option>
+              <option value="Published">Xuất bản (Công khai)</option>
+              <option value="Scheduled">Lên lịch (Tự động đăng)</option>
             </select>
           </div>
         </div>

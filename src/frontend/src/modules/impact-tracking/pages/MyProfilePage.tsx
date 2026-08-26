@@ -20,7 +20,7 @@ export const MyProfilePage: React.FC = () => {
   const { user } = useAuth();
   const { isEnabled } = useFeatureFlags();
   const gamificationEnabled = isEnabled('gamification_badges');
-  const visibleActiveTab = !gamificationEnabled && (activeTab === 'achievements' || activeTab === 'donor-level' || activeTab === 'Achievements' || activeTab === 'Donor Level')
+  const visibleActiveTab = !gamificationEnabled && (activeTab === 'achievements' || activeTab === 'Achievements')
     ? 'profile'
     : activeTab;
 
@@ -132,12 +132,6 @@ export const MyProfilePage: React.FC = () => {
 
           {gamificationEnabled && (visibleActiveTab === 'profile' || visibleActiveTab === 'Profile Info' || visibleActiveTab === 'achievements' || visibleActiveTab === 'Achievements') && (
             <XPActivityLog userId={user?.id} profileData={profileData} />
-          )}
-          
-          {gamificationEnabled && (visibleActiveTab === 'donor-level' || visibleActiveTab === 'Donor Level') && (
-            <div className="p-6 bg-white rounded-xl border border-[#f1f3f5] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]">
-              <h2 className="text-lg font-semibold text-[#271816]">Chi tiết Cấp bậc Người hiến máu</h2>
-            </div>
           )}
         </div>
 

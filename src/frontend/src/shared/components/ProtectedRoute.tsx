@@ -66,7 +66,7 @@ export const ProtectedRoute: React.FC = () => {
     ? '/hospital/sos-requests'
     : portalRole === 'BloodCenterStaff'
     ? '/bc/campaigns'
-    : '/my-appointments';
+    : '/dashboard';
 
   // 1. System Admin Routes (/admin/*): Only Administrator allowed
   if (isAdminRoute && portalRole !== 'Administrator') {

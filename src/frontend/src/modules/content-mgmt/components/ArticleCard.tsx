@@ -106,9 +106,11 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getCategoryBadge(article.category)}`}>
             {getCategoryLabel(article.category)}
           </span>
-          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusBadge(article.status)}`}>
-            {getStatusLabel(article.status)}
-          </span>
+          {variant !== 'public' && (
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusBadge(article.status)}`}>
+              {getStatusLabel(article.status)}
+            </span>
+          )}
         </div>
 
         {/* 3-dot dropdown menu */}

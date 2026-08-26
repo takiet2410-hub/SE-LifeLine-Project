@@ -69,6 +69,16 @@ export const PublicArticleDetailPage: React.FC = () => {
     }
   };
 
+  const getCategoryLabel = (cat: ArticleCategory) => {
+    switch (cat) {
+      case 'Alert': return 'Cảnh báo';
+      case 'Educational': return 'Kiến thức';
+      case 'Campaign': return 'Chiến dịch';
+      case 'News':
+      default: return 'Tin tức';
+    }
+  };
+
   const shareFacebook = () => {
     const url = encodeURIComponent(window.location.href);
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
@@ -175,13 +185,10 @@ export const PublicArticleDetailPage: React.FC = () => {
           )}
 
           <div className="p-6 md:p-8 space-y-6">
-            {/* Category & Status Badges */}
+            {/* Category Badge */}
             <div className="flex flex-wrap items-center gap-2">
               <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getCategoryColor(article.category)}`}>
-                {article.category}
-              </span>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                {article.status}
+                {getCategoryLabel(article.category)}
               </span>
             </div>
 
@@ -214,7 +221,7 @@ export const PublicArticleDetailPage: React.FC = () => {
             <div className="flex flex-wrap gap-2">
               <span className={`px-2.5 py-0.5 rounded text-xs font-medium border ${getCategoryColor(article.category)}`}>
                 <Tag className="w-3 h-3 inline mr-1" />
-                {article.category}
+                {getCategoryLabel(article.category)}
               </span>
               {article.targetAudience?.map((audience) => (
                 <span key={audience} className="px-2.5 py-0.5 rounded text-xs font-medium bg-gray-50 text-gray-700 border border-gray-100">

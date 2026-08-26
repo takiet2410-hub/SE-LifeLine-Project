@@ -56,6 +56,7 @@
 | 14/06/2026 | 1.0     | FG 1.1 User Account Management, FG 1.2 Donation Booking & Location Services, Workflow Diagram: Donor Booking flow in Mermaid <br> Features: FG 1.3 Q&A AI, FG 1.4 News & Notifications, Workflow Diagram: AI Feature flow in Mermaid <br> Features: FG 3.1 SOS Hospital Emergency Request Management, Section 6: Non-Functional Requirements <br> Features: FG 2.1 Campaign & Donor Management, FG 2.2 Communication & Engagement Management, FG 2.3 Blood Inventory & Emergency Coordination <br> FG 4.1 User Automations, FG 4.2 BC Automations, Workflow Diagram: SOS Emergency flow in Mermaid <br> Section 1, 2, 3, 4; Features: FG 1.5 Donation Impact & Tracking, FG 1.6 Community  | Trần Anh Kiệt <br> Trần Đức Quý <br> Nguyễn Quốc Dương <br> Trần Minh Triết <br> Trần Minh Triết <br> Trịnh Khánh Linh|
 | 23/06/2026 | 1.1     | Refined Headings, Rewrote System Features, Added 5.4.3 Notification Service <br> Added 6.5 Applicable Standards | Trần Anh Kiệt <br> Nguyễn Quốc Dương|
 | 23/07/2026 | 1.2     | Addressed TA feedback (PA2-2026): Added new Section 4.3 Platform Requirements <br> Standardized all Section 5 functional descriptions to 5 sentences each | Trần Anh Kiệt|
+| 26/08/2026 | 1.3     | Updated Section 5.2 Blood Center Features (Campaign batch approval, QR check-in modes, inline biochemical decisions, FEFO inventory stock-out, multi-row batch stock-in, and inventory analytics) and expanded Section 6 Non-Functional Requirements to cover all platform subsystems based on completed codebase. | Trần Minh Triết & Nguyễn Quốc Dương |
 
 ## 1. Introduction
 *(Author: Trịnh Khánh Linh | Reviewer: Trần Anh Kiệt | Editor: Trịnh Khánh Linh)*
@@ -341,20 +342,20 @@ graph TD
 #### 5.2.1. Blood Donation Campaign and Management
 | No. | Feature | Description | Priority |
 | :--- | :--- | :--- | :--- |
-| **2.1-1** | **Event Creation and Configuration** | This feature enables blood center staff to create and manage blood donation campaigns through a centralized interface. Staff can configure important event details such as target blood groups, venue, schedule, and participant capacity to ensure that each campaign meets organizational requirements. The feature helps streamline campaign planning and prevents overbooking by enforcing registration limits. It benefits blood center administrators by reducing manual coordination efforts and improving event organization, while donors receive clearer and more reliable registration opportunities. Once published, campaign details are immediately reflected in the donor-facing interactive map and event listings, keeping information consistent across the platform. | High |
-| **2.1-2** | **QR Code Scanning and Verification** | The QR Code Scanning and Verification feature allows staff to quickly verify donor registrations by scanning the QR code contained in each donor's electronic ticket. Once scanned, the system instantly retrieves the donor's registration information and confirms eligibility for participation. This contactless process significantly reduces waiting time and minimizes human errors associated with manual check-in procedures. Both staff and donors benefit from a faster, more efficient, and more accurate verification experience during donation events. The feature supports both direct camera capture and image upload, accommodating staff working on either desktop or mobile devices at the venue. | High |
-| **2.1-3** | **Donor Registration Management** | This feature enables blood center staff to receive and manage donor registrations for each blood donation campaign. The system displays the current number of registrations, helps monitor event capacity, and automatically closes registration once the participant limit has been reached. Staff can view each donor's profile, including personal information, donation history, and screening results. In addition, the system allows staff to update donor statuses such as Eligible for Donation, Ineligible for Donation, or Donation Completed to reflect each donor's progress throughout the donation process. This feature helps blood centers control participant numbers, maintain centralized donor records, and improve coordination efficiency during blood donation campaigns. | High |
+| **2.1-1** | **Event Creation and Configuration** | This feature enables blood center staff to create and manage blood donation campaigns through a centralized interface. Staff can configure important event details including organizing venue, operational date range, target blood volume in milliliters, contact person info, priority blood groups, and daily timeslot donor capacities. The feature enforces schedule validation rules, locks the Start Date once appointments are booked to protect donor schedules, and calculates total registration capacity automatically. It benefits blood center staff by streamlining event organization and preventing overbooking, while donors receive reliable registration opportunities with real-time capacity tracking. Once published, campaign details immediately sync to the donor-facing interactive map and public event listings across the platform. | High |
+| **2.1-2** | **QR Code Scanning and Verification** | The QR Code Scanning and Verification feature allows blood center staff to quickly verify donor registrations at check-in counters using live camera scanning, image ticket uploads, or manual code entry. The system validates the scanned e-ticket QR code against the active campaign schedule, ensuring donors from other campaigns or invalid sessions cannot be checked in mistakenly. Upon successful verification, the system instantly marks the donor status as CheckedIn and displays the donor profile with preliminary survey responses. Staff can click directly to open the clinical screening file, eliminating manual roster searching and paperwork at the donation site. This contactless process minimizes check-in queue times and provides an efficient, error-proof verification workflow for high-attendance campaigns. | High |
+| **2.1-3** | **Donor Registration Management** | This feature provides blood center medical staff with a comprehensive dual-tab dashboard to manage donor registrations and execute clinical workflows. Staff can monitor campaign registration metrics, perform batch approvals with automated E-Ticket issuance, and conduct full pre-donation clinical screenings. During medical examination, staff records 4 mandatory physical vitals (blood pressure, weight, temperature, hemoglobin) and evaluates eligibility before proceeding with blood collection. For laboratory testing, staff can make fast inline biochemical decisions (Pass/Rejected) or resolve unknown blood types directly within the system. Approving a biochemical test as Passed automatically triggers the stock-in process to create a blood bag in the inventory, guaranteeing seamless clinical-to-inventory traceability. | High |
 
 #### 5.2.2. Communication and User Engagement Management
 | No. | Feature | Description | Priority |
 | :--- | :--- | :--- | :--- |
-| **2.2-1** | **Content Publishing** | This feature provides blood center staff with a built-in content management system for creating, editing, and publishing news articles, educational content, and campaign announcements. By centralizing communication within the application, donors can easily access the latest information regarding blood donation activities and organizational updates. The feature ensures that information remains consistent, up-to-date, and readily available to users. It benefits both blood centers, which can communicate more effectively, and donors, who stay informed about relevant opportunities and events. Published content also feeds directly into the donor-facing news feed, keeping the in-app experience and organizational messaging aligned. | Medium |
-| **2.2-2** | **Emergency Announcements** | The Emergency Announcements feature enables blood centers to rapidly distribute urgent notifications when blood shortages or emergency situations occur. Staff can target specific donor groups based on criteria such as blood type, location, or donation eligibility to maximize the effectiveness of outreach efforts. This capability helps organizations respond quickly to critical demands and improve the availability of essential blood supplies. As a result, hospitals, blood centers, and patients all benefit from faster emergency coordination and donor mobilization. These announcements are delivered through the same high-priority channel used for SOS alerts, ensuring urgent messages are not delayed behind routine notifications. | High |
+| **2.2-1** | **Content Publishing** | This feature provides blood center staff with a built-in Content Management System (CMS) for creating, editing, and publishing news articles, health education guides, and campaign alerts. The article editor features a real-time background autosave mechanism to prevent accidental data loss during drafting. Staff can configure publishing status (Draft or Published), set optional publishing schedules, and target specific audience segments. Published articles feed directly into the donor-facing News Feed and support inline view/edit mode as well as deletion with modal confirmation. This centralized publishing engine ensures accurate, timely, and consistent communication across the entire LifeLine donor community. | Medium |
+| **2.2-2** | **Emergency Announcements & Notifications** | The Emergency Announcements and Notification Management feature allows blood center staff to monitor incoming notifications, routine notices, and urgent SOS alerts in real time. Incoming emergency SOS requests from hospitals are visually prioritized with distinctive red borders and pulse indicators, ensuring urgent situations are never overlooked. The system provides deep-link URL navigation (`?id=...`), automatic mark-as-read tracking upon detail modal inspection, and 1-click routing to emergency coordination workflows. Staff can filter notices by type and read status, or perform one-click batch mark-as-read operations. This ensures blood centers can respond instantly to critical blood shortage broadcasts and coordinate emergency dispatches with hospitals. | High |
 
 #### 5.2.3. Blood Inventory and Emergency Coordination Management
 | No. | Feature | Description | Priority |
 | :--- | :--- | :--- | :--- |
-| **2.3-1** | **Blood Inventory and Emergency Coordination Management** | This feature enables blood center staff to comprehensively manage blood supplies stored in the inventory. The system allows staff to monitor detailed information for each blood bag, including blood type, quantity, collection date, expiration date, and storage location, while also providing statistical reports on available blood stock by blood group. In addition, staff can update inventory records whenever new blood units are added to the storage or existing units are dispatched for distribution. Through real-time inventory visibility and management, staff can effectively control blood supply levels and reduce shortages or waste caused by expired blood products. Blood centers, hospitals, and patients all benefit from more accurate, timely, and efficient blood inventory management and distribution. | High |
+| **2.3-1** | **Blood Inventory, Batch Stock-In, FEFO Stock-Out & Analytics** | This feature equips blood center staff with an end-to-end inventory management and analytical platform for whole blood units and components. Staff can monitor stock levels with FEFO (First-Expired, First-Out) warning badges, perform dynamic multi-row batch stock-in with auto-generated Blood Bag IDs (`BB-YYYYMMDD-XXXX`), and execute FEFO-prioritized stock-outs with 1-click selection of units expiring within 7 days. Blood bag status updates follow strict finite-state-machine rules, requiring staff to enter a mandatory reason for audit logging while permanently locking terminal states (Expired, Used, Discarded). Furthermore, the integrated statistical dashboard provides real-time unit count and milliliter volume distribution charts alongside critical low-stock alerts. This robust inventory pipeline minimizes blood wastage, guarantees complete donor-to-patient traceability, and supports data-driven emergency distribution. | High |
 
 ```mermaid
 flowchart TD
@@ -436,52 +437,56 @@ flowchart TD
 ## 6. Non-Functional Requirements
 *(Author: Nguyễn Quốc Dương | Reviewer: Trần Anh Kiệt | Editor: Nguyễn Quốc Dương)*
 
-The following non-functional requirements apply to all features within the SOS Hospital Emergency Request functional group.
+The following non-functional requirements apply across all functional groups and subsystems within the LifeLine platform.
 
 ### 6.1 Performance Requirements
 
 | ID | Requirement | Priority |
 | :--- | :--- | :--- |
 | **NFR-P-01** | The system shall process an emergency blood request submission within 5 seconds under normal operating conditions. | High |
-| **NFR-P-02** | The system shall identify potential blood centers and eligible donors within 30 seconds after a valid SOS request is submitted. | High |
-| **NFR-P-03** | Emergency notifications shall be delivered to recipients within 1 minute after request approval. | High |
-| **NFR-P-04** | The system shall support at least 10,000 registered users and 10 concurrent active users without significant performance degradation. | High |
-| **NFR-P-05** | User-facing pages shall load within 3 seconds for 95% of requests under normal network conditions. | Medium |
+| **NFR-P-02** | The system shall complete SOS matching and candidate ranking (blood centers and donors) within 30 seconds after request approval. | High |
+| **NFR-P-03** | Emergency notifications shall be dispatched to recipients across email and web push channels within 1 minute after SOS request submission. | High |
+| **NFR-P-04** | The system shall support at least 10,000 registered users and 10 concurrent active users without degradation in response quality on free-tier cloud infrastructure. | High |
+| **NFR-P-05** | User-facing pages and API responses shall load within 3 seconds for 95% of requests under standard 4G/Wi-Fi network conditions. | Medium |
+| **NFR-P-06** | The AI Chatbot shall begin streaming response tokens via Server-Sent Events (SSE) within 2.5 seconds of user query submission. | Medium |
 
 ### 6.2 Security Requirements
 
 | ID | Requirement | Priority |
 | :--- | :--- | :--- |
-| **NFR-S-01** | All user authentication data shall be encrypted during transmission using HTTPS/TLS. | High |
-| **NFR-S-02** | The system shall enforce role-based access control for Donors, Hospital Staff, Blood Center Staff, and Administrators. | High |
-| **NFR-S-03** | Personal information and medical-related records shall only be accessible to authorized users. | High |
-| **NFR-S-04** | All SOS request activities shall be logged for auditing and traceability purposes. | High |
-| **NFR-S-05** | User sessions shall automatically expire after 30 minutes of inactivity. | Medium |
+| **NFR-S-01** | All user authentication and API communications shall be encrypted in transit using HTTPS/TLS 1.3. | High |
+| **NFR-S-02** | The system shall enforce strict Role-Based Access Control (RBAC) across Donor, Blood Center Staff, Hospital Staff, and Administrator roles. | High |
+| **NFR-S-03** | Personal health information, CCCD national identity details, and screening records shall only be accessible to authorized users. | High |
+| **NFR-S-04** | All administrative actions, data modifications, and SOS broadcasts shall be recorded in immutable audit logs. | High |
+| **NFR-S-05** | User authentication sessions shall utilize secure, signed HTTP-only JWT cookies and expire automatically upon token invalidation or after 30 minutes of inactivity. | Medium |
+| **NFR-S-06** | Electronic appointment ticket QR codes shall be cryptographically signed using asymmetric HMAC signatures to prevent forgery and unauthorized reproduction. | High |
 
 ### 6.3 Reliability and Fault Tolerance Requirements
 
 | ID | Requirement | Priority |
 | :--- | :--- | :--- |
-| **NFR-R-01** | The system shall maintain at least 99.5% service availability excluding scheduled maintenance periods. | High |
-| **NFR-R-02** | Daily automated backups of critical system data shall be performed. | High |
-| **NFR-R-03** | The system shall recover critical services within 30 minutes following a server failure. | High |
-| **NFR-R-04** | Emergency request records shall not be lost due to application failures or unexpected interruptions. | High |
+| **NFR-R-01** | The system shall maintain at least 99.5% service availability excluding scheduled maintenance windows. | High |
+| **NFR-R-02** | MongoDB database instances shall perform automated daily backups with point-in-time recovery capabilities. | High |
+| **NFR-R-03** | The system shall recover critical services within 30 minutes following a container or server instance restart. | High |
+| **NFR-R-04** | Emergency SOS request records, inventory transactions, and donor bookings shall be durably persisted to prevent data loss during unexpected crashes. | High |
+| **NFR-R-05** | Background job queues (BullMQ) shall support automatic retries with exponential backoff for failed notification dispatches. | Medium |
 
 ### 6.4 Usability Requirements
 
 | ID | Requirement | Priority |
 | :--- | :--- | :--- |
-| **NFR-U-01** | The system shall provide a responsive user interface for desktop, tablet, and mobile devices. | High |
-| **NFR-U-02** | The user interface shall support both English and Vietnamese languages. | Medium |
-| **NFR-U-03** | Emergency alerts shall be visually distinguishable from standard notifications. | High |
-| **NFR-U-04** | The system shall be accessible through modern web browsers including Chrome, Edge, Firefox, and Safari. | High |
+| **NFR-U-01** | The system shall provide a fully responsive user interface that adapts seamlessly across desktop, tablet, and mobile screen sizes. | High |
+| **NFR-U-02** | The user interface shall provide full bilingual support for both Vietnamese and English with instant runtime language switching. | Medium |
+| **NFR-U-03** | Emergency SOS alerts and high-priority banners shall be visually distinct from standard routine notifications. | High |
+| **NFR-U-04** | The system shall be accessible and fully functional across modern web browsers including Google Chrome, Microsoft Edge, Mozilla Firefox, and Apple Safari. | High |
+| **NFR-U-05** | The pre-donation booking and screening flow shall be intuitive, allowing a donor to complete a booking within 3 minutes. | Medium |
 
 ### 6.5 Applicable Standards
 
 | ID | Requirement | Priority |
 | :--- | :--- | :--- |
-| **NFR-STD-01** | The system shall fully comply with the Vietnamese Personal Data Protection Decree regarding the collection, storage, and processing of donor Citizen ID (CCCD) and medical screening data. | High |
-| **NFR-STD-02** | All web communications shall conform to HTTPS/TLS security standards. | High |
-| **NFR-STD-03** | Date, time, and timestamp formats shall follow ISO 8601 standards. | Medium |
-| **NFR-STD-04** | System APIs shall follow RESTful API design principles and JSON data exchange standards. | Medium |
+| **NFR-STD-01** | The system shall comply with the Vietnamese Personal Data Protection Decree (Decree 13/2023/ND-CP) regarding the collection, storage, and processing of citizen identity (CCCD) and health screening data. | High |
+| **NFR-STD-02** | All web communications shall conform to HTTPS/TLS 1.3 security standards. | High |
+| **NFR-STD-03** | Date, time, and timestamp representations shall adhere strictly to ISO 8601 international standards. | Medium |
+| **NFR-STD-04** | System APIs shall follow RESTful architectural principles, standard HTTP response status codes, and JSON data exchange formats with Swagger OpenAPI specifications. | Medium |
 | **NFR-STD-05** | User interface components shall follow WCAG 2.1 Level AA accessibility guidelines where applicable. | Medium |

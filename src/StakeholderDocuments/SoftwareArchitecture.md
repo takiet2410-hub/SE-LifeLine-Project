@@ -3,7 +3,7 @@
 > **Document:** Software Architecture (PA4-2026, Section B & C & D)
 > **Course:** CSC13002 – Introduction to Software Engineering
 > **Team:** Sanguine (Group 05)
-> **Version:** 1.1
+> **Version:** 1.2
 
 ---
 
@@ -13,6 +13,7 @@
 | :--- | :--- | :--- | :--- |
 | 27/07/2026 | 1.0 | Initial Software Architecture document for PA4: tech stack, C4 Level 1–3 diagrams, deployment diagram. | Trần Anh Kiệt |
 | 07/08/2026 | 1.1 | Complete rewrite of architecture based on C4 Model standards, aligning strictly with `UseCaseSpec.md`, separating Subsystems from Core components, and refining the tech stack. | Trần Anh Kiệt |
+| 26/08/2026 | 1.2 | Refined C4 components based on feedback: isolated RAG AI Service (4.4), unified Google Gemini provider, corrected SOS/Notification worker mappings, standardized terminology, and appended detailed folder structure. | Trần Anh Kiệt |
 
 ---
 

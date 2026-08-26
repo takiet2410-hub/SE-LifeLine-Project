@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Plus, ArrowUpRight, BarChart2, Search, Eye, AlertCircle, Package, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { inventoryApi } from '../services/inventoryApi';
@@ -11,15 +11,19 @@ import { format, differenceInDays } from 'date-fns';
 
 export const InventoryListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [bags, setBags] = useState<BloodBagData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [bloodTypeFilter, setBloodTypeFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [bloodTypeFilter, setBloodTypeFilter] = useState(searchParams.get('bloodType') || 'All');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'All');
+  const [startDate, setStartDate] = useState(searchParams.get('startDate') || '');
+  const [endDate, setEndDate] = useState(searchParams.get('endDate') || '');
+  const [currentPage, setCurrentPage] = useState(
+    parseInt(searchParams.get('page') || '1', 10) || 1
+  );
   const [totalItems, setTotalItems] = useState(0);
   const [summary, setSummary] = useState<any>(null);
   const pageSize = 8;
@@ -63,10 +67,64 @@ export const InventoryListPage: React.FC = () => {
     }
   };
 
-  // Reset to page 1 when filters change
+  // Synchronize URL Search Params into State whenever location.search changes
   useEffect(() => {
+    const urlSearch = searchParams.get('search') || '';
+    const urlBloodType = searchParams.get('bloodType') || 'All';
+    const urlStatus = searchParams.get('status') || 'All';
+    const urlStartDate = searchParams.get('startDate') || '';
+    const urlEndDate = searchParams.get('endDate') || '';
+    const urlPage = parseInt(searchParams.get('page') || '1', 10) || 1;
+
+    setSearch(urlSearch);
+    setBloodTypeFilter(urlBloodType);
+    setStatusFilter(urlStatus);
+    setStartDate(urlStartDate);
+    setEndDate(urlEndDate);
+    setCurrentPage(urlPage);
+  }, [location.search]);
+
+  // Reset to page 1 when filters change
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     setCurrentPage(1);
   }, [search, bloodTypeFilter, statusFilter, startDate, endDate]);
+
+  // Compute current search query string from active state
+  const currentSearchQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (bloodTypeFilter && bloodTypeFilter !== 'All') params.set('bloodType', bloodTypeFilter);
+    if (statusFilter && statusFilter !== 'All') params.set('status', statusFilter);
+    if (startDate) params.set('startDate', startDate);
+    if (endDate) params.set('endDate', endDate);
+    if (currentPage > 1) params.set('page', String(currentPage));
+    const str = params.toString();
+    return str ? `?${str}` : '';
+  }, [search, bloodTypeFilter, statusFilter, startDate, endDate, currentPage]);
+
+  // Synchronize state changes to URL Search Params when query string differs
+  useEffect(() => {
+    if (location.search !== currentSearchQuery) {
+      const params = new URLSearchParams(currentSearchQuery.replace(/^\?/, ''));
+      setSearchParams(params, { replace: true });
+    }
+  }, [currentSearchQuery, location.search, setSearchParams]);
+
+  // Navigation with preservation of filters in state
+  const navTo = (path: string) => {
+    const q = currentSearchQuery || location.search || '';
+    navigate(path, {
+      state: {
+        fromInventorySearch: q,
+        fromSearch: q,
+      },
+    });
+  };
 
   // Fetch data when filters or page changes
   useEffect(() => {
@@ -169,7 +227,7 @@ export const InventoryListPage: React.FC = () => {
         const id = row._id || (row as any).id;
         return (
           <button
-            onClick={() => navigate(`/bc/inventory/${id}`)}
+            onClick={() => navTo(`/bc/inventory/${id}`)}
             className="px-3 py-1.5 bg-white border border-[#93000b] text-[#93000b] hover:bg-red-50 text-[12px] font-semibold rounded-lg flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
           >
             <Eye className="w-3.5 h-3.5 text-[#93000b]" />
@@ -327,21 +385,21 @@ export const InventoryListPage: React.FC = () => {
               <RefreshCw className="w-4 h-4" />
             </button>
             <button
-              onClick={() => navigate('/bc/inventory/stats')}
+              onClick={() => navTo('/bc/inventory/stats')}
               className="h-9 px-3 bg-[#1a1a2e] hover:bg-slate-900 text-white text-[12.5px] font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
             >
               <BarChart2 className="w-4 h-4" />
               <span>Thống Kê</span>
             </button>
             <button
-              onClick={() => navigate('/bc/inventory/stock-out')}
+              onClick={() => navTo('/bc/inventory/stock-out')}
               className="h-9 px-3.5 bg-white text-[#93000b] border border-[#93000b] hover:bg-red-50 text-[12.5px] font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer active:scale-98 shrink-0"
             >
               <ArrowUpRight className="w-4 h-4" />
               <span>Xuất Kho</span>
             </button>
             <button
-              onClick={() => navigate('/bc/inventory/stock-in')}
+              onClick={() => navTo('/bc/inventory/stock-in')}
               className="h-9 px-3.5 bg-[#93000b] hover:bg-[#7a0009] text-white text-[12.5px] font-semibold rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-98 shrink-0"
             >
               <Plus className="w-4 h-4" />

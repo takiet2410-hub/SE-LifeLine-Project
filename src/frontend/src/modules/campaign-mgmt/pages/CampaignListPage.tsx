@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -32,19 +32,24 @@ import { format } from 'date-fns';
 
 export const CampaignListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Active View Tab: 'campaigns' | 'pendingRegistrations'
-  const [activeTab, setActiveTab] = useState<'campaigns' | 'pendingRegistrations'>('campaigns');
+  const initialTab = (searchParams.get('tab') as 'campaigns' | 'pendingRegistrations') || 'campaigns';
+  const [activeTab, setActiveTab] = useState<'campaigns' | 'pendingRegistrations'>(initialTab);
 
   // Campaigns State
   const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
   const [allCampaignList, setAllCampaignList] = useState<CampaignData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [selectedDate, setSelectedDate] = useState<string>('All');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('search') || '');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'All');
+  const [selectedDate, setSelectedDate] = useState<string>(searchParams.get('date') || 'All');
+  const [currentPage, setCurrentPage] = useState(
+    parseInt(searchParams.get('page') || '1', 10) || 1
+  );
   const [stats, setStats] = useState({ totalCount: 0, activeCount: 0, totalRegistered: 0, totalCapacity: 0 });
   const [totalPages, setTotalPages] = useState(1);
   const pageSize = 6;
@@ -52,10 +57,12 @@ export const CampaignListPage: React.FC = () => {
   // Pending Registrations State
   const [pendingRegistrations, setPendingRegistrations] = useState<RegistrationData[]>([]);
   const [pendingLoading, setPendingLoading] = useState(false);
-  const [pendingSearch, setPendingSearch] = useState('');
-  const [pendingCampaignFilter, setPendingCampaignFilter] = useState('All');
-  const [pendingSelectedDate, setPendingSelectedDate] = useState<string>('All');
-  const [pendingCurrentPage, setPendingCurrentPage] = useState(1);
+  const [pendingSearch, setPendingSearch] = useState(searchParams.get('pSearch') || '');
+  const [pendingCampaignFilter, setPendingCampaignFilter] = useState(searchParams.get('pCampaign') || 'All');
+  const [pendingSelectedDate, setPendingSelectedDate] = useState<string>(searchParams.get('pDate') || 'All');
+  const [pendingCurrentPage, setPendingCurrentPage] = useState(
+    parseInt(searchParams.get('pPage') || '1', 10) || 1
+  );
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [batchProcessing, setBatchProcessing] = useState(false);
   const pendingPageSize = 8;
@@ -167,9 +174,86 @@ export const CampaignListPage: React.FC = () => {
     fetchPendingRegistrations();
   }, []);
 
+  const isFirstRender = useRef(true);
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     setCurrentPage(1);
   }, [debouncedSearch, statusFilter, selectedDate]);
+
+  // Synchronize URL Search Params into State whenever location.search changes
+  useEffect(() => {
+    const urlTab = (searchParams.get('tab') as 'campaigns' | 'pendingRegistrations') || 'campaigns';
+    const urlSearch = searchParams.get('search') || '';
+    const urlStatus = searchParams.get('status') || 'All';
+    const urlDate = searchParams.get('date') || 'All';
+    const urlPage = parseInt(searchParams.get('page') || '1', 10) || 1;
+
+    const urlPSearch = searchParams.get('pSearch') || '';
+    const urlPCampaign = searchParams.get('pCampaign') || 'All';
+    const urlPDate = searchParams.get('pDate') || 'All';
+    const urlPPage = parseInt(searchParams.get('pPage') || '1', 10) || 1;
+
+    setActiveTab(urlTab);
+    setSearch(urlSearch);
+    setDebouncedSearch(urlSearch);
+    setStatusFilter(urlStatus);
+    setSelectedDate(urlDate);
+    setCurrentPage(urlPage);
+
+    setPendingSearch(urlPSearch);
+    setPendingCampaignFilter(urlPCampaign);
+    setPendingSelectedDate(urlPDate);
+    setPendingCurrentPage(urlPPage);
+  }, [location.search]);
+
+  // Compute current search query string from active state
+  const currentSearchQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (activeTab && activeTab !== 'campaigns') params.set('tab', activeTab);
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    if (statusFilter && statusFilter !== 'All') params.set('status', statusFilter);
+    if (selectedDate && selectedDate !== 'All') params.set('date', selectedDate);
+    if (currentPage > 1) params.set('page', String(currentPage));
+
+    if (pendingSearch) params.set('pSearch', pendingSearch);
+    if (pendingCampaignFilter && pendingCampaignFilter !== 'All') params.set('pCampaign', pendingCampaignFilter);
+    if (pendingSelectedDate && pendingSelectedDate !== 'All') params.set('pDate', pendingSelectedDate);
+    if (pendingCurrentPage > 1) params.set('pPage', String(pendingCurrentPage));
+    const str = params.toString();
+    return str ? `?${str}` : '';
+  }, [
+    activeTab,
+    debouncedSearch,
+    statusFilter,
+    selectedDate,
+    currentPage,
+    pendingSearch,
+    pendingCampaignFilter,
+    pendingSelectedDate,
+    pendingCurrentPage,
+  ]);
+
+  // Synchronize state changes to URL Search Params when query string differs
+  useEffect(() => {
+    if (location.search !== currentSearchQuery) {
+      const params = new URLSearchParams(currentSearchQuery.replace(/^\?/, ''));
+      setSearchParams(params, { replace: true });
+    }
+  }, [currentSearchQuery, location.search, setSearchParams]);
+
+  // Navigation with preservation of filters in state
+  const navTo = (path: string) => {
+    const q = currentSearchQuery || location.search || '';
+    navigate(path, {
+      state: {
+        fromSearch: q,
+        fromCampaignSearch: q,
+      },
+    });
+  };
 
   // Handle Approve Single Registration
   const handleApproveRegistration = async (row: RegistrationData) => {
@@ -339,7 +423,7 @@ export const CampaignListPage: React.FC = () => {
             <p
               className="font-bold text-[#271816] text-[13px] sm:text-[14px] truncate hover:text-[#93000b] transition-colors cursor-pointer"
               title={row.name || 'Chiến dịch Hiến máu'}
-              onClick={() => navigate(`/bc/campaigns/${id}`)}
+              onClick={() => navTo(`/bc/campaigns/${id}`)}
             >
               {row.name || 'Chiến dịch Hiến máu'}
             </p>
@@ -428,7 +512,7 @@ export const CampaignListPage: React.FC = () => {
         return (
           <div className="flex items-center gap-1">
             <button
-              onClick={() => navigate(`/bc/campaigns/${id}`)}
+              onClick={() => navTo(`/bc/campaigns/${id}`)}
               className="p-1.5 bg-white border border-[#f1f3f5] hover:bg-slate-50 hover:border-slate-300 rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
               title="Xem chi tiết chiến dịch"
             >
@@ -436,7 +520,7 @@ export const CampaignListPage: React.FC = () => {
             </button>
             <button
               disabled={isEnded}
-              onClick={() => !isEnded && navigate(`/bc/campaigns/${id}/edit`)}
+              onClick={() => !isEnded && navTo(`/bc/campaigns/${id}/edit`)}
               className={`p-1.5 border rounded-lg flex items-center justify-center transition-all shadow-2xs ${
                 isEnded
                   ? 'bg-slate-100 border-[#f1f3f5] text-slate-300 cursor-not-allowed opacity-50'
@@ -447,7 +531,7 @@ export const CampaignListPage: React.FC = () => {
               <Edit className={`w-3.5 h-3.5 ${isEnded ? 'text-slate-400' : 'text-blue-600'}`} />
             </button>
             <button
-              onClick={() => navigate(`/bc/campaigns/${id}/registrations`)}
+              onClick={() => navTo(`/bc/campaigns/${id}/registrations`)}
               className="p-1.5 text-white bg-[#93000b] hover:bg-[#7a0009] rounded-lg flex items-center justify-center transition-all shadow-2xs cursor-pointer"
               title="Danh sách người đăng ký"
             >
@@ -517,7 +601,7 @@ export const CampaignListPage: React.FC = () => {
             <p
               className="font-semibold text-[#271816] text-[13px] truncate hover:text-[#93000b] transition-colors cursor-pointer"
               title={cName}
-              onClick={() => navigate(`/bc/campaigns/${row.campaignId}`)}
+              onClick={() => navTo(`/bc/campaigns/${row.campaignId}`)}
             >
               {cName}
             </p>
@@ -612,7 +696,7 @@ export const CampaignListPage: React.FC = () => {
             </button>
             <button
               onClick={() =>
-                navigate(`/bc/campaigns/${row.campaignId || 'all'}/registrations/${row._id}`)
+                navTo(`/bc/campaigns/${row.campaignId || 'all'}/registrations/${row._id}`)
               }
               className="p-1.5 bg-white hover:bg-slate-50 text-[#6c757d] hover:text-[#271816] border border-[#f1f3f5] rounded-xl transition-all shadow-2xs cursor-pointer"
               title="Xem phiếu khám sàng lọc chi tiết"
@@ -768,7 +852,7 @@ export const CampaignListPage: React.FC = () => {
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
-            onClick={() => navigate('/bc/campaigns/create')}
+            onClick={() => navTo('/bc/campaigns/create')}
             className="h-10 px-4 bg-[#93000b] hover:bg-[#7a0009] text-white text-[13px] font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-98 shrink-0"
           >
             <Plus className="w-4 h-4" />

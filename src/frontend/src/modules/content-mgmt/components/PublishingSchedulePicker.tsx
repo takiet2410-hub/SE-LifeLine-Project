@@ -26,22 +26,18 @@ export const PublishingSchedulePicker: React.FC<PublishingSchedulePickerProps> =
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Calendar className="w-5 h-5 text-gray-500" />
-          <span className="text-sm font-medium text-gray-900">Publishing Schedule</span>
+          <span className="text-sm font-medium text-gray-900">Lịch xuất bản</span>
         </div>
         {isScheduled && (
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="text-xs text-red-600 hover:text-red-800 font-medium"
+            className="text-xs text-red-600 hover:text-red-800 font-medium cursor-pointer"
           >
-            Clear Schedule (Publish Immediately)
+            Xóa lịch đã chọn
           </button>
         )}
       </div>
-
-      <p className="text-xs text-gray-500">
-        Leave empty to publish immediately upon saving, or pick a future publication date and time.
-      </p>
 
       <div className="flex items-center space-x-3 pt-1">
         <div className="relative flex-1 max-w-xs">
@@ -57,7 +53,7 @@ export const PublishingSchedulePicker: React.FC<PublishingSchedulePickerProps> =
 
         {value && (
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            Scheduled for {new Date(value).toLocaleString()}
+            Đã lên lịch vào {new Date(value).toLocaleString('vi-VN')}
           </span>
         )}
       </div>

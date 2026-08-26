@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Bell, Trash2, Clock, Hospital, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -14,7 +14,7 @@ import { useAuth } from '../../../shared/contexts/AuthContext';
 export const NotificationListPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
 
   const isHospitalPage = location.pathname.startsWith('/hospital') || user?.role === 'hospital' || user?.role === 'HospitalStaff';
@@ -24,12 +24,54 @@ export const NotificationListPage: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [selectedNotification, setSelectedNotification] = useState<NotificationData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [typeFilter, setTypeFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [typeFilter, setTypeFilter] = useState(searchParams.get('type') || 'All');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'All');
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10) || 1);
   const [totalPages, setTotalPages] = useState(1);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // Synchronize URL Search Params into State whenever location.search changes
+  useEffect(() => {
+    const urlType = searchParams.get('type') || 'All';
+    const urlStatus = searchParams.get('status') || 'All';
+    const urlPage = parseInt(searchParams.get('page') || '1', 10) || 1;
+
+    setTypeFilter(urlType);
+    setStatusFilter(urlStatus);
+    setPage(urlPage);
+  }, [location.search]);
+
+  // Compute current search query string from active state
+  const currentSearchQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (typeFilter && typeFilter !== 'All') params.set('type', typeFilter);
+    if (statusFilter && statusFilter !== 'All') params.set('status', statusFilter);
+    if (page > 1) params.set('page', String(page));
+    const notifId = searchParams.get('id');
+    if (notifId) params.set('id', notifId);
+    const str = params.toString();
+    return str ? `?${str}` : '';
+  }, [typeFilter, statusFilter, page, searchParams]);
+
+  // Synchronize state changes to URL Search Params when query string differs
+  useEffect(() => {
+    if (location.search !== currentSearchQuery) {
+      const params = new URLSearchParams(currentSearchQuery.replace(/^\?/, ''));
+      setSearchParams(params, { replace: true });
+    }
+  }, [currentSearchQuery, location.search, setSearchParams]);
+
+  // Navigation with preservation of filters in state
+  const navTo = (path: string) => {
+    const q = currentSearchQuery || location.search || '';
+    navigate(path, {
+      state: {
+        fromNotifSearch: q,
+        fromSearch: q,
+      },
+    });
+  };
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -358,7 +400,7 @@ export const NotificationListPage: React.FC = () => {
                           onClick={(e) => {
                             e.stopPropagation();
                             const sosId = extractSOSId(item);
-                            navigate(sosId ? `/bc/sos-requests/${sosId}` : `/bc/sos-requests`);
+                            navTo(sosId ? `/bc/sos-requests/${sosId}` : `/bc/sos-requests`);
                           }}
                           className="px-3 py-1.5 bg-[#93000b] text-white text-[12px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer whitespace-nowrap"
                         >
@@ -370,7 +412,7 @@ export const NotificationListPage: React.FC = () => {
                           onClick={(e) => {
                             e.stopPropagation();
                             const sosId = extractSOSId(item);
-                            navigate(sosId ? `/hospital/sos-requests/${sosId}` : `/hospital/sos-requests`);
+                            navTo(sosId ? `/hospital/sos-requests/${sosId}` : `/hospital/sos-requests`);
                           }}
                           className="px-3 py-1.5 bg-[#93000b] text-white text-[12px] font-bold rounded-lg shadow-sm hover:bg-red-800 transition-colors cursor-pointer whitespace-nowrap"
                         >

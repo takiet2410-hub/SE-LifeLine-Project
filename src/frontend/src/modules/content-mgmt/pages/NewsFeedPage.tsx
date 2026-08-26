@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Search, Activity, HeartPulse, Megaphone, Inbox } from 'lucide-react';
 import { articleApi } from '../services/articleApi';
 import { ArticleCard } from '../components/ArticleCard';
@@ -9,16 +9,59 @@ import type { Article, ArticleCategory } from '../types/article.types';
 import { toast } from 'sonner';
 import { getApiErrorMessage } from '../../../shared/api/apiError';
 
-
 export const NewsFeedPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | 'All'>('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState(1);
+  const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | 'All'>(
+    (searchParams.get('category') as ArticleCategory | 'All') || 'All'
+  );
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10) || 1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+
+  // Synchronize URL Search Params into State whenever location.search changes
+  useEffect(() => {
+    const urlCategory = (searchParams.get('category') as ArticleCategory | 'All') || 'All';
+    const urlSearch = searchParams.get('search') || '';
+    const urlPage = parseInt(searchParams.get('page') || '1', 10) || 1;
+
+    setCategoryFilter(urlCategory);
+    setSearchQuery(urlSearch);
+    setPage(urlPage);
+  }, [location.search]);
+
+  // Compute current search query string from active state
+  const currentSearchQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (categoryFilter && categoryFilter !== 'All') params.set('category', categoryFilter);
+    if (searchQuery) params.set('search', searchQuery);
+    if (page > 1) params.set('page', String(page));
+    const str = params.toString();
+    return str ? `?${str}` : '';
+  }, [categoryFilter, searchQuery, page]);
+
+  // Synchronize state changes to URL Search Params when query string differs
+  useEffect(() => {
+    if (location.search !== currentSearchQuery) {
+      const params = new URLSearchParams(currentSearchQuery.replace(/^\?/, ''));
+      setSearchParams(params, { replace: true });
+    }
+  }, [currentSearchQuery, location.search, setSearchParams]);
+
+  const navTo = (path: string) => {
+    const q = currentSearchQuery || location.search || '';
+    navigate(path, {
+      state: {
+        fromNewsSearch: q,
+        fromSearch: q,
+      },
+    });
+  };
 
   const fetchArticles = useCallback(async () => {
     setLoading(true);
@@ -65,28 +108,8 @@ export const NewsFeedPage: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => navigate('/dashboard')}
-                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <div>
-                <h1 className="text-xl font-extrabold text-gray-900 uppercase tracking-tight">Tin tức & Thông tin</h1>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-4 py-6">
-        {/* Search & Filter */}
+    <div className="space-y-6">
+      {/* Search & Filter */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
@@ -162,7 +185,7 @@ export const NewsFeedPage: React.FC = () => {
                   <ArticleCard
                     key={article._id}
                     article={article}
-                    onClick={() => navigate(`/news/${article._id}`)}
+                    onClick={() => navTo(`/news/${article._id}`)}
                     variant="public"
                   />
                 ))}
@@ -219,7 +242,6 @@ export const NewsFeedPage: React.FC = () => {
             </>
           )}
         </div>
-      </main>
     </div>
   );
 };

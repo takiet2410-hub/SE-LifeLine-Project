@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { inventoryApi } from '../services/inventoryApi';
@@ -17,6 +17,12 @@ interface StockInRow {
 
 export const StockInPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBackToList = () => {
+    const invSearch = location.state?.fromInventorySearch || location.state?.fromSearch || '';
+    navigate(`/bc/inventory${invSearch}`);
+  };
 
   const [rows, setRows] = useState<StockInRow[]>([
     {
@@ -85,7 +91,7 @@ export const StockInPage: React.FC = () => {
 
       await inventoryApi.stockIn(entries);
       toast.success(`Đã nhập thành công ${rows.length} túi máu mới vào kho!`);
-      navigate('/bc/inventory');
+      handleBackToList();
     } catch (err) {
       toast.error('Nhập kho thất bại. Vui lòng kiểm tra lại dữ liệu.');
     } finally {
@@ -191,7 +197,7 @@ export const StockInPage: React.FC = () => {
           className="w-full h-11 border-2 border-dashed border-slate-300 hover:border-red-600 hover:text-red-600 text-slate-600 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors bg-white/50 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Thêm túi máu nữa</span>
+          <span>Thêm túi máu nữa</span>
         </button>
 
         {/* Action Controls */}
@@ -219,7 +225,7 @@ export const StockInPage: React.FC = () => {
         isOpen={showCancelDialog}
         title="Hủy nhập kho?"
         message="Thông tin túi máu vừa điền sẽ không được lưu. Bạn có chắc muốn hủy không?"
-        onConfirm={() => navigate('/bc/inventory')}
+        onConfirm={handleBackToList}
         onCancel={() => setShowCancelDialog(false)}
       />
     </div>

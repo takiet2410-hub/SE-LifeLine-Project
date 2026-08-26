@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckSquare, Square, ClipboardList, Search, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, CheckSquare, Square, ClipboardList, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { inventoryApi } from '../services/inventoryApi';
 import type { BloodBagData } from '../../../services/mockData';
@@ -11,12 +11,24 @@ import { format, differenceInDays } from 'date-fns';
 
 export const StockOutPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBackToList = () => {
+    const invSearch = location.state?.fromInventorySearch || location.state?.fromSearch || '';
+    navigate(`/bc/inventory${invSearch}`);
+  };
 
   const [availableBags, setAvailableBags] = useState<BloodBagData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBagIds, setSelectedBagIds] = useState<string[]>([]);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [bloodTypeFilter, setBloodTypeFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const pageSize = 10;
+
   const searchParams = new URLSearchParams(window.location.search);
   const initialReason = searchParams.get('reason') as 'Dispatch' | 'Disposal' | 'Transfer' | 'Other' || 'Dispatch';
   const [reason, setReason] = useState<'Dispatch' | 'Disposal' | 'Transfer' | 'Other'>(initialReason);
@@ -24,30 +36,54 @@ export const StockOutPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
+  // Debounce search
   useEffect(() => {
-    // Fetch available bags sorted by FEFO (expiryDate ASC)
-    inventoryApi.getInventory({ status: 'Available' }).then((res) => {
-      const sortedByFefo = [...res.data].sort(
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset to page 1 when search or bloodType changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, bloodTypeFilter]);
+
+  const fetchAvailableBags = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await inventoryApi.getInventory({
+        status: 'Available',
+        page: currentPage,
+        limit: pageSize,
+        search: debouncedSearch.trim() || undefined,
+        bloodType: bloodTypeFilter !== 'All' ? bloodTypeFilter : undefined,
+      });
+      const items = Array.isArray(res.data) ? res.data : [];
+      const sortedByFefo = [...items].sort(
         (a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
       );
       setAvailableBags(sortedByFefo);
+      const total = res.pagination?.total || sortedByFefo.length;
+      setTotalItems(total);
+      setTotalPages(res.pagination?.totalPages || Math.ceil(total / pageSize) || 1);
+    } catch (err) {
+      console.error('Failed to fetch inventory for stock out:', err);
+      setAvailableBags([]);
+      setTotalItems(0);
+      setTotalPages(1);
+    } finally {
       setLoading(false);
-    });
-  }, []);
+    }
+  }, [currentPage, debouncedSearch, bloodTypeFilter]);
+
+  useEffect(() => {
+    fetchAvailableBags();
+  }, [fetchAvailableBags]);
 
   const nearExpiryBags = availableBags.filter((b) => {
     const diffDays = differenceInDays(new Date(b.expiryDate), new Date());
     return diffDays >= 0 && diffDays <= 7;
-  });
-
-  const filteredBags = availableBags.filter((b) => {
-    const q = search.toLowerCase().trim();
-    const matchesSearch = !q ||
-      (b.bagCode && b.bagCode.toLowerCase().includes(q)) ||
-      (b.storageLocation && b.storageLocation.toLowerCase().includes(q)) ||
-      (b._id && b._id.toLowerCase().includes(q));
-    const matchesBloodType = bloodTypeFilter === 'All' || b.bloodType === bloodTypeFilter;
-    return matchesSearch && matchesBloodType;
   });
 
   const toggleSelectBag = (id: string) => {
@@ -75,7 +111,7 @@ export const StockOutPage: React.FC = () => {
     try {
       await inventoryApi.stockOut(selectedBagIds, reason, notes);
       toast.success(`Đã xuất kho thành công ${selectedBagIds.length} túi máu!`);
-      navigate('/bc/inventory');
+      handleBackToList();
     } catch (err) {
       toast.error('Xuất kho thất bại.');
     } finally {
@@ -87,7 +123,7 @@ export const StockOutPage: React.FC = () => {
     if (selectedBagIds.length > 0) {
       setShowCancelDialog(true);
     } else {
-      navigate('/bc/inventory');
+      handleBackToList();
     }
   };
 
@@ -139,8 +175,13 @@ export const StockOutPage: React.FC = () => {
         <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs space-y-3.5 p-5">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-sm font-bold text-slate-900">
-              Danh sách túi máu sẵn có ({filteredBags.length}/{availableBags.length})
+              Danh sách túi máu sẵn có ({totalItems > 0 ? `${totalItems} túi` : '0 túi'})
             </h3>
+            {totalPages > 1 && (
+              <span className="text-xs text-slate-500 font-medium">
+                Trang {currentPage}/{totalPages}
+              </span>
+            )}
           </div>
 
           {/* Search & Blood Type Filter Bar */}
@@ -188,13 +229,13 @@ export const StockOutPage: React.FC = () => {
 
           {loading ? (
             <SkeletonLoader type="table" rows={4} />
-          ) : filteredBags.length === 0 ? (
+          ) : availableBags.length === 0 ? (
             <div className="text-center py-10 text-slate-400 text-xs">
               Không tìm thấy túi máu nào phù hợp với điều kiện tìm kiếm/lọc.
             </div>
           ) : (
             <div className="divide-y divide-slate-100 max-h-[380px] overflow-y-auto pr-1">
-              {filteredBags.map((bag) => {
+              {availableBags.map((bag) => {
                 const isSelected = selectedBagIds.includes(bag._id);
                 const diffDays = differenceInDays(new Date(bag.expiryDate), new Date());
                 const isNearExpiry = diffDays >= 0 && diffDays <= 7;
@@ -245,6 +286,40 @@ export const StockOutPage: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
+              <p className="text-slate-500 font-medium">
+                Hiển thị <span className="font-bold text-slate-800">{(currentPage - 1) * pageSize + 1}</span>
+                {'–'}
+                <span className="font-bold text-slate-800">{Math.min(currentPage * pageSize, totalItems)}</span>
+                {' trong tổng số '}
+                <span className="font-bold text-slate-800">{totalItems}</span> túi máu
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1 || loading}
+                  className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium transition-colors cursor-pointer shadow-2xs"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Trang trước
+                </button>
+                <span className="px-2 font-bold text-slate-700">
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages || loading}
+                  className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium transition-colors cursor-pointer shadow-2xs"
+                >
+                  Trang sau <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -309,7 +384,7 @@ export const StockOutPage: React.FC = () => {
         isOpen={showCancelDialog}
         title="Hủy xuất kho?"
         message="Danh sách túi máu đã chọn sẽ không được xuất. Bạn có chắc muốn hủy không?"
-        onConfirm={() => navigate('/bc/inventory')}
+        onConfirm={handleBackToList}
         onCancel={() => setShowCancelDialog(false)}
       />
     </div>

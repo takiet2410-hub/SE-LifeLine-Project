@@ -19,9 +19,10 @@ export const MissionSection: React.FC = () => {
             href="https://www.facebook.com/profile.php?id=61592481823429"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block bg-[#93000B] hover:bg-[#7F1D1D] text-white font-bold py-3.5 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer text-center"
+            className="inline-block bg-[#93000b] hover:bg-[#7a0009] !text-white text-white font-bold py-3.5 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer text-center active:scale-[0.98]"
+            style={{ color: '#ffffff' }}
           >
-            Tham Gia Mạng Lưới Cùng Chúng Tôi
+            <span className="text-white !text-white" style={{ color: '#ffffff' }}>Tham Gia Mạng Lưới Cùng Chúng Tôi</span>
           </a>
         </div>
         <div className="flex-1 w-full">

@@ -30,9 +30,10 @@ const FeaturedArticle: React.FC = () => {
           <div>
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+              className="bg-[#93000b] hover:bg-[#7a0009] text-white !text-white font-semibold py-2 px-6 rounded-lg transition-colors cursor-pointer"
+              style={{ color: '#ffffff' }}
             >
-              {t('healthTips.featured.readMore', 'Read More')}
+              <span className="text-white !text-white" style={{ color: '#ffffff' }}>{t('healthTips.featured.readMore', 'Read More')}</span>
             </button>
           </div>
         </div>
@@ -69,9 +70,10 @@ const FeaturedArticle: React.FC = () => {
             <div className="p-6 border-t border-gray-100 flex justify-end sticky bottom-0 bg-white rounded-b-2xl z-10">
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+                className="bg-[#93000b] hover:bg-[#7a0009] text-white !text-white font-medium py-2 px-6 rounded-lg transition-colors cursor-pointer"
+                style={{ color: '#ffffff' }}
               >
-                {t('common.close', 'Close')}
+                <span className="text-white !text-white" style={{ color: '#ffffff' }}>{t('common.close', 'Close')}</span>
               </button>
             </div>
           </div>

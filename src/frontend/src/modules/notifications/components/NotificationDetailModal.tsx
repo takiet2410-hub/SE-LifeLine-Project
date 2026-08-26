@@ -268,7 +268,13 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
   const handleActionClick = () => {
     onClose();
     if (action.route) {
-      navigate(action.route);
+      navigate(action.route, {
+        state: {
+          fromNotification: true,
+          returnUrl: location.pathname + location.search,
+          fromNotifSearch: location.search,
+        },
+      });
     }
   };
 

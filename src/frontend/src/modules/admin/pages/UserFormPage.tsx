@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { adminApi } from '../api/admin.api';
 import { ArrowLeft, Save, Shield, User, Building2, Hospital } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,8 +7,14 @@ import type { StaffOrganizationOption } from '../types/admin.types';
 
 export const UserFormPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { userId } = useParams<{ userId: string }>();
   const isEdit = !!userId;
+
+  const handleBackToList = () => {
+    const userSearch = location.state?.fromUserSearch || location.state?.fromSearch || '';
+    navigate(`/admin/users${userSearch}`);
+  };
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -45,7 +51,7 @@ export const UserFormPage: React.FC = () => {
         })
         .catch(() => {
           toast.error('Không thể tải thông tin tài khoản.');
-          navigate('/admin/users');
+          handleBackToList();
         })
         .finally(() => setLoadingUser(false));
     }
@@ -147,7 +153,7 @@ export const UserFormPage: React.FC = () => {
         });
         toast.success('User account created successfully.');
       }
-      navigate('/admin/users');
+      handleBackToList();
     } catch (error: unknown) {
       const apiError = error as { response?: { data?: { message?: string } }; message?: string };
       toast.error(apiError.response?.data?.message || apiError.message || 'Operation failed');
@@ -160,7 +166,7 @@ export const UserFormPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <button
-          onClick={() => navigate('/admin/users')}
+          onClick={handleBackToList}
           className="p-2 text-[#6c757d] hover:text-[#271816] rounded-xl hover:bg-slate-100 transition cursor-pointer"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -440,7 +446,7 @@ export const UserFormPage: React.FC = () => {
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#f1f3f5]">
           <button
             type="button"
-            onClick={() => navigate('/admin/users')}
+            onClick={handleBackToList}
             className="px-4 py-2 text-sm font-semibold text-[#6c757d] hover:bg-slate-100 rounded-xl transition cursor-pointer"
           >
             Hủy bỏ

@@ -20,6 +20,11 @@ export const NotificationDetailPage: React.FC = () => {
 
   const backPath = isAdminPage ? '/admin/notifications' : isHospitalPage ? '/hospital/notifications' : '/bc/notifications';
 
+  const handleBackToList = () => {
+    const notifSearch = location.state?.fromNotifSearch || location.state?.fromSearch || '';
+    navigate(`${backPath}${notifSearch}`);
+  };
+
   const [notification, setNotification] = useState<NotificationData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -44,7 +49,7 @@ export const NotificationDetailPage: React.FC = () => {
       <div className="text-center py-12">
         <p className="text-slate-600">Không tìm thấy thông báo.</p>
         <button
-          onClick={() => navigate(backPath)}
+          onClick={handleBackToList}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm"
         >
           Quay lại danh sách thông báo
@@ -72,7 +77,7 @@ export const NotificationDetailPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center gap-3">
         <button
-          onClick={() => navigate(backPath)}
+          onClick={handleBackToList}
           className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -96,7 +101,13 @@ export const NotificationDetailPage: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => navigate(getArticleRouteForRole(articleId, location.pathname))}
+            onClick={() => navigate(getArticleRouteForRole(articleId, location.pathname), {
+              state: {
+                fromNotification: true,
+                returnUrl: location.pathname + location.search,
+                fromNotifSearch: location.search,
+              },
+            })}
             className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shrink-0"
           >
             <span>Xem bài viết</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Calendar, User, Clock, Eye, Download, Tag, Share2 } from 'lucide-react';
 import { articleApi } from '../services/articleApi';
 import { SkeletonLoader } from '../../../components/common/SkeletonLoader';
@@ -10,6 +10,21 @@ import { getApiErrorMessage } from '../../../shared/api/apiError';
 export const PublicArticleDetailPage: React.FC = () => {
   const { articleId } = useParams<{ articleId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBackToNews = () => {
+    if (location.state?.returnUrl) {
+      navigate(location.state.returnUrl);
+      return;
+    }
+    if (location.state?.fromNotification) {
+      const notifSearch = location.state?.fromNotifSearch || '';
+      navigate(`/notifications${notifSearch}`);
+      return;
+    }
+    const newsSearch = location.state?.fromNewsSearch || location.state?.fromSearch || '';
+    navigate(`/news${newsSearch}`);
+  };
 
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,6 +69,16 @@ export const PublicArticleDetailPage: React.FC = () => {
     }
   };
 
+  const getCategoryLabel = (cat: ArticleCategory) => {
+    switch (cat) {
+      case 'Alert': return 'Cảnh báo';
+      case 'Educational': return 'Kiến thức';
+      case 'Campaign': return 'Chiến dịch';
+      case 'News':
+      default: return 'Tin tức';
+    }
+  };
+
   const shareFacebook = () => {
     const url = encodeURIComponent(window.location.href);
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
@@ -76,7 +101,7 @@ export const PublicArticleDetailPage: React.FC = () => {
         <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
           <div className="max-w-3xl mx-auto px-4 py-4">
             <div className="flex items-center gap-3">
-              <button onClick={() => navigate('/news')} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100">
+              <button onClick={handleBackToNews} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100">
                 <ArrowLeft className="w-5 h-5" />
               </button>
             </div>
@@ -118,7 +143,7 @@ export const PublicArticleDetailPage: React.FC = () => {
               This article has been removed or is no longer published.
             </p>
             <button
-              onClick={() => navigate('/news')}
+              onClick={handleBackToNews}
               className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-sm"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -137,7 +162,7 @@ export const PublicArticleDetailPage: React.FC = () => {
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <button 
-              onClick={() => navigate('/news')}
+              onClick={handleBackToNews}
               className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -160,13 +185,10 @@ export const PublicArticleDetailPage: React.FC = () => {
           )}
 
           <div className="p-6 md:p-8 space-y-6">
-            {/* Category & Status Badges */}
+            {/* Category Badge */}
             <div className="flex flex-wrap items-center gap-2">
               <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getCategoryColor(article.category)}`}>
-                {article.category}
-              </span>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                {article.status}
+                {getCategoryLabel(article.category)}
               </span>
             </div>
 
@@ -199,7 +221,7 @@ export const PublicArticleDetailPage: React.FC = () => {
             <div className="flex flex-wrap gap-2">
               <span className={`px-2.5 py-0.5 rounded text-xs font-medium border ${getCategoryColor(article.category)}`}>
                 <Tag className="w-3 h-3 inline mr-1" />
-                {article.category}
+                {getCategoryLabel(article.category)}
               </span>
               {article.targetAudience?.map((audience) => (
                 <span key={audience} className="px-2.5 py-0.5 rounded text-xs font-medium bg-gray-50 text-gray-700 border border-gray-100">

@@ -17,10 +17,10 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ performance 
     <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-xl p-5 shadow-lg space-y-4">
       <div className="flex items-center justify-between border-b border-gray-700 pb-3">
         <h4 className="text-sm font-semibold tracking-wide uppercase text-gray-300">
-          Performance & Analytics
+          Hiệu suất & Thống kê
         </h4>
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
-          Live Tracking
+          Theo dõi trực tiếp
         </span>
       </div>
 
@@ -28,7 +28,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ performance 
         <div className="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
           <div className="flex items-center space-x-1.5 text-gray-400 text-xs mb-1">
             <Eye className="w-3.5 h-3.5" />
-            <span>Total Views</span>
+            <span>Tổng lượt xem</span>
           </div>
           <p className="text-xl font-bold">{viewsCount.toLocaleString()}</p>
         </div>
@@ -36,7 +36,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ performance 
         <div className="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
           <div className="flex items-center space-x-1.5 text-gray-400 text-xs mb-1">
             <Users className="w-3.5 h-3.5" />
-            <span>Public Reach</span>
+            <span>Lượt tiếp cận</span>
           </div>
           <p className="text-xl font-bold">{publicReachCount.toLocaleString()}</p>
         </div>
@@ -44,7 +44,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ performance 
         <div className="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
           <div className="flex items-center space-x-1.5 text-gray-400 text-xs mb-1">
             <Share2 className="w-3.5 h-3.5" />
-            <span>Shares</span>
+            <span>Lượt chia sẻ</span>
           </div>
           <p className="text-xl font-bold">{sharesCount.toLocaleString()}</p>
         </div>

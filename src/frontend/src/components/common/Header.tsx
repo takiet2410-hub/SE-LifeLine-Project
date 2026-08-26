@@ -98,7 +98,13 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
     }
     const articleId = getArticleIdFromNotification(notif);
     if (articleId) {
-      navigate(getArticleRouteForRole(articleId, location.pathname));
+      navigate(getArticleRouteForRole(articleId, location.pathname), {
+        state: {
+          fromNotification: true,
+          returnUrl: location.pathname + location.search,
+          fromNotifSearch: location.search,
+        },
+      });
       return;
     }
 

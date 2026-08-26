@@ -25,10 +25,14 @@ export const HeroSection: React.FC = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
-            <Link to="/register" className="w-full sm:w-auto bg-[#93000B] hover:bg-[#7F1D1D] text-white font-bold text-lg px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2">
-              Đăng Ký Hiến Máu
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12.175 9H0V7H12.175L6.575 1.4L8 0L16 8L8 16L6.575 14.6L12.175 9V9" fill="currentColor"/>
+            <Link 
+              to="/register" 
+              className="w-full sm:w-auto bg-[#93000b] hover:bg-[#7a0009] !text-white text-white font-bold text-lg px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer"
+              style={{ color: '#ffffff' }}
+            >
+              <span className="text-white !text-white" style={{ color: '#ffffff' }}>Đăng Ký Hiến Máu</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white" style={{ color: '#ffffff' }}>
+                <path d="M12.175 9H0V7H12.175L6.575 1.4L8 0L16 8L8 16L6.575 14.6L12.175 9V9" fill="#ffffff"/>
               </svg>
             </Link>
             <Link to="/about" className="w-full sm:w-auto border-2 border-[#455F87] text-[#455F87] hover:bg-gray-50 font-bold text-lg px-8 py-4 rounded-xl transition flex items-center justify-center">

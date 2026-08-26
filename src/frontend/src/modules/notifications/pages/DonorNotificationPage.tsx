@@ -93,7 +93,7 @@ export const DonorNotificationPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full max-w-7xl mx-auto w-full p-4 gap-6">
+    <div className="flex flex-col lg:flex-row gap-6 w-full">
       {/* Left Panel: Notification List */}
       <div className="flex-1 flex flex-col bg-white rounded-2xl border border-[#f1f3f5] shadow-xs overflow-hidden min-h-[600px]">
         <div className="p-4 border-b border-[#f1f3f5]">

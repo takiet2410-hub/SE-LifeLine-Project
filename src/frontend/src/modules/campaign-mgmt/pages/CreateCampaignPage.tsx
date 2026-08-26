@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Save, MapPin, Users, Plus, Trash2, Calendar, Copy, AlertTriangle, Building2 } from 'lucide-react';
@@ -30,6 +30,7 @@ const getSlotDiffMinutes = (sTime: string, eTime: string) => {
 export const CreateCampaignPage: React.FC = () => {
   useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Today string for date constraint (today or future allowed)
@@ -312,10 +313,20 @@ export const CreateCampaignPage: React.FC = () => {
       });
 
       toast.success(data.isDraft ? 'Đã lưu bản nháp chiến dịch thành công!' : 'Tạo chiến dịch hiến máu thành công!');
-      navigate('/bc/campaigns');
+      navigate(`/bc/campaigns${location.state?.fromSearch || ''}`);
     } catch (err) {
       console.error('Error creating campaign:', err);
       toast.error('Tạo chiến dịch thất bại. Vui lòng kiểm tra lại.');
+    }
+  };
+
+  const handleCancelBack = () => {
+    if (location.state?.fromSearch !== undefined) {
+      navigate(`/bc/campaigns${location.state.fromSearch}`);
+    } else if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/bc/campaigns');
     }
   };
 
@@ -323,7 +334,7 @@ export const CreateCampaignPage: React.FC = () => {
     if (isDirty) {
       setShowCancelDialog(true);
     } else {
-      navigate('/bc/campaigns');
+      handleCancelBack();
     }
   };
 
@@ -670,7 +681,7 @@ export const CreateCampaignPage: React.FC = () => {
         message="Thông tin bạn đã nhập sẽ không được lưu lại. Bạn có chắc chắn muốn hủy không?"
         confirmLabel="Hủy bỏ"
         cancelLabel="Tiếp tục chỉnh sửa"
-        onConfirm={() => navigate('/bc/campaigns')}
+        onConfirm={handleCancelBack}
         onCancel={() => setShowCancelDialog(false)}
       />
     </div>

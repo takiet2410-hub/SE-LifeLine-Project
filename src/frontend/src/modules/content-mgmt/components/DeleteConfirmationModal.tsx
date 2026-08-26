@@ -34,10 +34,10 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
           </button>
         </div>
 
-        <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Article?</h3>
+        <h3 className="text-lg font-bold text-gray-900 mb-2">Xóa bài viết?</h3>
         <p className="text-sm text-gray-600 mb-4">
-          Are you sure you want to delete <span className="font-semibold text-gray-900">"{articleTitle || 'this article'}"</span>?
-          This action cannot be undone and will immediately remove it from all public donor/staff channels.
+          Bạn có chắc chắn muốn xóa bài viết <span className="font-semibold text-gray-900">"{articleTitle || 'này'}"</span>?
+          Hành động này không thể hoàn tác và bài viết sẽ lập tức bị gỡ khỏi toàn bộ các kênh công khai.
         </p>
 
         <div className="flex space-x-3 justify-end pt-2">
@@ -45,18 +45,18 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
             type="button"
             onClick={onCancel}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
           >
-            Cancel
+            Hủy
           </button>
           <button
             type="button"
             onClick={onConfirm}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg flex items-center space-x-2 shadow-sm transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg flex items-center space-x-2 shadow-sm transition-colors cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
-            <span>{isDeleting ? 'Deleting...' : 'Confirm Delete'}</span>
+            <span>{isDeleting ? 'Đang xóa...' : 'Xác nhận xóa'}</span>
           </button>
         </div>
       </div>

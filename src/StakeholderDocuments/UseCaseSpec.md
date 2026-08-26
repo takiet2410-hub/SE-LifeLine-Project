@@ -176,7 +176,7 @@
 | 23/06/2026 | 1.0     | Compiled Use Case Diagrams and Use Case Specifications (Pending UI prototypes insertion). | Trần Anh Kiệt |
 | 23/07/2026 | 1.1     | Refactored Use-Case models: removed invalid UI-navigation `<<extend>>` relationships across diagrams per instructor feedback. | Trần Anh Kiệt & Trần Minh Triết |
 | 07/08/2026 | 1.2     | Fixed typos, corrected Alternative Flow step references, added missing UI prototype notes, removed invalid System actor, and reversed <<extend>> relationship direction per instructor feedback. | Trịnh Khánh Linh |
-| 26/08/2026 | 1.3     | Full synchronization and alignment across all 5 Diagrams and 42 Use Cases (LL-UC-01 to LL-UC-10, CB-UC-01, NF-UC-01..02, NT-UC-01..02, SOS-UC-01..02, DN-UC-01..03, CM-UC-01, BC-UC-01 to BC-UC-17, HS-UC-01 to HS-UC-03, SYS-UC-01 to SYS-UC-05, AD-UC-01 to AD-UC-06) with the completed full-stack codebase, covering React 19 SPA, Node.js Core modular monolith, Python FastAPI companion AI service, BullMQ queues, and MongoDB Atlas. | Trần Anh Kiệt, Nguyễn Quốc Dương, Trần Đức Quý, Trần Minh Triết, Trịnh Khánh Linh |
+| 26/08/2026 | 1.3     | Full synchronization and alignment across all 5 Diagrams and 52 Use Cases (LL-UC-01 to LL-UC-10, CB-UC-01, NF-UC-01..02, NT-UC-01..02, SOS-UC-01..02, DN-UC-01..03, CM-UC-01, BC-UC-01 to BC-UC-17, HS-UC-01 to HS-UC-03, SYS-UC-01 to SYS-UC-05, AD-UC-01 to AD-UC-06) with the completed full-stack codebase, covering React 19 SPA, Node.js Core modular monolith, Python FastAPI companion AI service, BullMQ queues, and MongoDB Atlas. | Trần Anh Kiệt, Nguyễn Quốc Dương, Trần Đức Quý, Trần Minh Triết, Trịnh Khánh Linh |
 # 1. Use-case Model
 ---
 ## Diagram 1 — User Features

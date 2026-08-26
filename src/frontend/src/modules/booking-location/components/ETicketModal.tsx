@@ -29,6 +29,21 @@ export const ETicketModal: React.FC<ETicketModalProps> = ({
       ticketCode
     )}`;
 
+  const isKnownBloodType =
+    appointment.bloodType &&
+    appointment.bloodType !== 'Unknown' &&
+    appointment.bloodType !== 'Chưa rõ' &&
+    appointment.bloodType !== 'Chưa cập nhật';
+
+  const rawBloodType = (appointment as any)._raw?.bloodType || (appointment as any)._raw?.donorBloodType;
+  const isRawKnown = rawBloodType && rawBloodType !== 'Unknown' && rawBloodType !== 'Chưa rõ' && rawBloodType !== 'Chưa cập nhật';
+
+  const displayBloodType = isKnownBloodType
+    ? appointment.bloodType
+    : isRawKnown
+    ? rawBloodType
+    : 'Chưa cập nhật';
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -97,7 +112,7 @@ export const ETicketModal: React.FC<ETicketModalProps> = ({
             <div className="text-left">
               <p className="text-[11px] font-bold text-[#6c757d] uppercase tracking-wider">NHÓM MÁU</p>
               <p className="text-[15px] font-bold text-[#93000b]">
-                {appointment.bloodType || 'Chưa cập nhật'}
+                {displayBloodType}
               </p>
             </div>
             <div className="text-right">

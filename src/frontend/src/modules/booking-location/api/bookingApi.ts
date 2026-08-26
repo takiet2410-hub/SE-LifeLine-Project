@@ -158,6 +158,10 @@ export const mapBackendAppointment = (raw: BackendAppointment): Appointment => {
 
   const notes = rawAny.screeningNotes || screeningForm?.screeningNotes || rawAny.rejectionReason || rawAny.reason;
 
+  const rawBloodType = rawAny.bloodType || rawAny.donorBloodType || (rawAny.donorProfile?.bloodType);
+  const isValidBloodType = rawBloodType && rawBloodType !== 'Unknown' && rawBloodType !== 'Chưa rõ' && rawBloodType !== 'Chưa cập nhật';
+  const bloodType = isValidBloodType ? rawBloodType : undefined;
+
   return {
     id: raw._id,
     date: formatDateToDDMMYYYY(raw.appointmentDate),
@@ -167,7 +171,7 @@ export const mapBackendAppointment = (raw: BackendAppointment): Appointment => {
       name: campaign?.name || 'Chiến dịch Hiến máu LifeLine',
       address: rawAny.address || (campaign as any)?.fullAddress || (campaign as any)?.venue || 'TP. Hồ Chí Minh',
     },
-    bloodType: rawAny.bloodType || rawAny.donorBloodType,
+    bloodType,
     donationVolume: raw.donationVolume || rawAny.donationVolume || (rawAny.screeningFormId?.donationVolume),
     status: mapStatus(raw.status),
     qrCodeUrl,

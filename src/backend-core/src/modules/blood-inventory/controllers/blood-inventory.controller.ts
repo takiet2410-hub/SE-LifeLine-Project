@@ -50,12 +50,15 @@ export class BloodInventoryController {
     try {
       const bagId = req.params.bagId as string;
       const parsed = updateStatusSchema.parse(req.body);
-      const staffName = (req as any).user?.fullName || 'BS. Nguyễn Văn A';
+      const user = (req as any).user;
+      const staffName = user?.fullName || user?.username || 'BS. Nguyễn Văn A';
 
       const updated = await BloodInventoryService.updateBagStatus(bagId, parsed.status, parsed.reason, staffName);
-      return res.status(200).json({ success: true, message: 'Status updated successfully', data: updated });
+      return res.status(200).json({ success: true, message: 'Cập nhật trạng thái túi máu thành công', data: updated });
     } catch (error: any) {
-      return res.status(400).json({ success: false, message: error.message || 'Bad Request' });
+      console.error('[BloodInventoryController.updateBagStatus Error]', error);
+      const message = error.errors?.[0]?.message || error.message || 'Yêu cầu không hợp lệ';
+      return res.status(400).json({ success: false, message });
     }
   }
 

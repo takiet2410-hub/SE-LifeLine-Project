@@ -115,7 +115,7 @@ router.get('/:bagId', ...inventoryRead, BloodInventoryController.getBloodBagById
  *       200:
  *         description: Success
  */
-router.put('/:bagId/status', ...staffAuth, authorizePermissions('inventory:stock_out'), BloodInventoryController.updateBagStatus);
+router.put('/:bagId/status', ...staffAuth, BloodInventoryController.updateBagStatus);
 
 /**
  * @openapi

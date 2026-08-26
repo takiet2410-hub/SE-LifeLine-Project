@@ -861,12 +861,13 @@ export class RegistrationService {
           }
         }
 
-        // Process Gamification (+50 XP bonus) when donor starts Examining phase (changed from CheckedIn)
-        if (targetAppointmentStatus === AppointmentStatus.Examining && !appointment.xpRewardedForExamining) {
+        // Process Gamification (+50 XP bonus) when donor starts CheckedIn phase
+        if (targetAppointmentStatus === AppointmentStatus.CheckedIn && !(appointment as any).xpRewardedForCheckIn) {
           try {
             await GamificationService.processCheckInBonus(appointment.donorId);
+            (appointment as any).xpRewardedForCheckIn = true;
           } catch (gErr) {
-            console.error('Error processing examining gamification logic:', gErr);
+            console.error('Error processing check-in gamification logic:', gErr);
           }
         }
       }

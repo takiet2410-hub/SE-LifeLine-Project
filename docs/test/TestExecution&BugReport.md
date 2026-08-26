@@ -36,7 +36,6 @@
     - [BUG-008: Chatbot displays incorrect campaign start and end times](#bug-008-chatbot-displays-incorrect-campaign-start-and-end-times)
     - [BUG-009: White screen crash when editing phone number or address on Profile page](#bug-009-white-screen-crash-when-editing-phone-number-or-address-on-profile-page)
     - [BUG-010: Fulfilled SOS request displays 0 ml received instead of actual fulfilled quantity](#bug-010-fulfilled-sos-request-displays-0-ml-received-instead-of-actual-fulfilled-quantity)
-    - [BUG-011: System allows appointment cancellation within 24 hours of scheduled time](#bug-011-system-allows-appointment-cancellation-within-24-hours-of-scheduled-time)
     - [BUG-012: Appointment booking checks overall campaign target instead of timeslot capacity](#bug-012-appointment-booking-checks-overall-campaign-target-instead-of-timeslot-capacity)
     - [BUG-013: Donor registration record disappears after quick approval in Pending tab](#bug-013-donor-registration-record-disappears-after-quick-approval-in-pending-tab)
     - [BUG-014: Clicking thank-you notifications redirects incorrectly to /content route](#bug-014-clicking-thank-you-notifications-redirects-incorrectly-to-content-route)
@@ -64,13 +63,13 @@ The testing phase took place from **August 14, 2026** to **August 17, 2026**, en
 
 | Metric | Count | Percentage (%) | Notes |
 | :--- | :---: | :---: | :--- |
-| **Total Test Cases Executed** | **73** | 100% | All 73 TCs in scope |
-| **Initial Run - Pass** | **63** | 86.3% | Passed on initial execution |
-| **Initial Run - Fail** | **8** | 11.0% | Failed and required remediation |
-| **Initial Run - Warning** | **2** | 2.7% | Functional with minor non-blocking defects |
-| **Retests Executed** | **7** | - | Verified resolved defects |
-| **Retest - Pass** | **6** | 85.7% | 6 out of 7 retest attempts passed successfully |
-| **Final Passed / Verified Test Cases** | **69** | **94.5%** | Overall pass rate after critical bug fixes |
+| **Total Test Cases Executed** | **72** | 100% | All 72 TCs in scope |
+| **Initial Run - Pass** | **63** | 87.5% | Passed on initial execution |
+| **Initial Run - Fail** | **7** | 9.7% | Failed and required remediation |
+| **Initial Run - Warning** | **2** | 2.8% | Functional with minor non-blocking defects |
+| **Retests Executed** | **6** | - | Verified resolved defects |
+| **Retest - Pass** | **5** | 83.3% | 5 out of 6 retest attempts passed successfully |
+| **Final Passed / Verified Test Cases** | **68** | **94.4%** | Overall pass rate after critical bug fixes |
 
 ---
 
@@ -79,11 +78,11 @@ The testing phase took place from **August 14, 2026** to **August 17, 2026**, en
 | No. | Functional Feature | TC Prefix | Total TCs | Initial Pass | Initial Fail | Warning | Retest Pass | Final Pass Rate |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | 1 | User Account Management | `TC-F1` | 12 | 11 | 1 | 0 | - | 91.7% |
-| 2 | Booking & Location Services | `TC-F2` | 16 | 13 | 3 | 0 | 2 | 93.8% |
+| 2 | Booking & Location Services | `TC-F2` | 15 | 13 | 2 | 0 | 1 | 93.3% |
 | 3 | Campaign Management | `TC-F3` | 19 | 15 | 2 | 2 | 2 | 89.5% |
 | 4 | SOS Request Management | `TC-F4` | 13 | 12 | 1 | 0 | - | 92.3% |
 | 5 | AI Conversational Support | `TC-F5` | 13 | 10 | 3 | 0 | 2 | 92.3% |
-| **Total** | **Entire System** | | **73** | **61** | **10** | **2** | **6** | **94.5%** |
+| **Total** | **Entire System** | | **72** | **61** | **9** | **2** | **5** | **94.4%** |
 
 ---
 
@@ -92,10 +91,10 @@ The testing phase took place from **August 14, 2026** to **August 17, 2026**, en
 ```
   Defect Severity Breakdown                Defect Resolution Status
   ┌──────────────────────────────┐         ┌──────────────────────────────┐
-  │  Critical :  1 ( 5.6%)       │         │  Finished : 18 (100.0%)      │
-  │  High     :  7 (38.9%)       │         │  Open     :  0 (  0.0%)      │
-  │  Medium   :  7 (38.9%)       │         └──────────────────────────────┘
-  │  Low      :  3 (16.7%)       │
+  │  Critical :  1 ( 5.9%)       │         │  Finished : 17 (100.0%)      │
+  │  High     :  7 (41.2%)       │         │  Open     :  0 (  0.0%)      │
+  │  Medium   :  7 (41.2%)       │         └──────────────────────────────┘
+  │  Low      :  2 (11.8%)       │
   └──────────────────────────────┘
 ```
 
@@ -134,13 +133,12 @@ The testing phase took place from **August 14, 2026** to **August 17, 2026**, en
 | Initial Run | `TC-F2-006` | Reject appointment booking when last donation was less than 84 days ago | 15/08/2026 | **Pass** | Booking is blocked with message: "Insufficient interval between donations: Minimum 84-day spacing from last donation required." No appointment is created. | - |
 | Initial Run | `TC-F2-007` | Reject appointment booking when a duplicate active appointment exists | 15/08/2026 | **Pass** | Booking is blocked with error message: "Duplicate appointment detected." | - |
 | Initial Run | `TC-F2-008` | Reject appointment booking for a fully booked campaign timeslot | 15/08/2026 | **Fail** | System allows registration even though the selected timeslot has already reached full capacity. | `BUG-012`, `BUG-015` |
-| Initial Run | `TC-F2-009` | Successfully cancel an appointment more than 24 hours in advance | 15/08/2026 | **Pass** | Appointment is successfully cancelled prior to the 24-hour deadline. | - |
+| Initial Run | `TC-F2-009` | Successfully cancel an appointment | 15/08/2026 | **Pass** | Appointment is successfully cancelled. | - |
 | Initial Run | `TC-F2-010` | Successfully download E-Ticket as PDF for a confirmed appointment | 15/08/2026 | **Pass** | Successfully downloads the E-Ticket PDF file for a confirmed appointment. | - |
 | Initial Run | `TC-F2-011` | Display empty state when no campaigns match the applied filter | 15/08/2026 | **Pass** | Displays empty state friendly message: "No donation points found. No campaigns match the current filter. Try expanding search radius or changing blood type. Reset filters." | - |
 | Initial Run | `TC-F2-012` | Reject appointment booking if user account is unverified | 15/08/2026 | **Pass** | Unverified account cannot log in, thereby preventing unauthorized appointment booking. | - |
 | Initial Run | `TC-F2-013` | Successfully view details of an upcoming appointment | 15/08/2026 | **Pass** | Successfully displays comprehensive appointment details (location, timeslot, screening form status). | - |
 | Initial Run | `TC-F2-014` | Successfully view details of a completed appointment | 15/08/2026 | **Fail** | After viewing a completed appointment for a few seconds, the UI automatically resets and jumps to the top/latest appointment. | `BUG-017` |
-| Initial Run | `TC-F2-015` | Reject appointment cancellation less than 24 hours before scheduled time | 15/08/2026 | **Fail** | System allows cancelling the appointment less than 24 hours before the scheduled time. | `BUG-011` |
 | Initial Run | `TC-F2-016` | Verify E-Ticket QR code contains correct appointment data | 15/08/2026 | **Pass** | Scanning the E-Ticket QR code retrieves the exact signed passcode and appointment data. | - |
 
 ---
@@ -222,7 +220,6 @@ The table below records all verification retest attempts executed after the deve
 | Retest | `TC-F5-003` | Successfully receive location guidance from chatbot | 16/08/2026 | **Pass** | Chatbot provides comprehensive and accurate campaign details matching user location criteria. | `BUG-003`, `BUG-008` (Resolved) |
 | Retest | `TC-F5-005` | Successfully maintain conversational context across multiple turns | 17/08/2026 | **Pass** | Chatbot successfully synthesizes context from prior turns (e.g., body weight and recent tattoo) to provide accurate multi-turn guidance. | `BUG-004` (Resolved) |
 | Retest | `TC-F3-010` | Reject donor check-in with an expired or invalid E-Ticket QR code | 15/08/2026 | **Pass** | Successfully rejects QR codes from other campaigns and invalid QR payloads with clear error messages. | `BUG-005` (Resolved) |
-| Retest | `TC-F2-015` | Reject appointment cancellation less than 24 hours before scheduled time | 15/08/2026 | **Pass** | Displays message: "Cannot cancel appointment. The cancellation deadline has passed. Cancellations within 24 hours of scheduled time are prohibited." | `BUG-011` (Resolved) |
 | Retest | `TC-F2-008` | Reject appointment booking for a fully booked campaign timeslot | 15/08/2026 | **Pass** | Disables fully booked timeslots; prevents proceeding to next step if no slots remain for the chosen date. | `BUG-012` (Resolved) |
 | Retest | `TC-F3-020` | Successfully update donor registration status to Fail after failing the blood test after the campaign | 16/08/2026 | **Pass** | Updating blood test status to Fail keeps the registration count intact without decrementing the roster total. | `BUG-006` (Resolved) |
 | Retest | `TC-F3-019` | Successfully update donor registration status to Pass after passing the blood test after the campaign | 17/08/2026 | **Pass** | Automatically stocked-in blood bag details display full donor information, correct collection date, and matching campaign name. | `BUG-018` (Resolved) |
@@ -245,7 +242,6 @@ The table below records all verification retest attempts executed after the deve
 | `BUG-008` | Feature 5: AI Chatbot | `TC-F5-003` | Chatbot displays inaccurate campaign start and end times | **Medium** | Finished |
 | `BUG-009` | Feature 1: User Account Management | `TC-F1-015` | White screen crash when clicking Edit Profile on user profile page | **Medium** | Finished |
 | `BUG-010` | Feature 4: SOS Request Management | `TC-F4-005` | Fulfilled SOS request displays 0 ml received instead of actual fulfilled quantity | **Medium** | Finished |
-| `BUG-011` | Feature 2: Booking & Location Services | `TC-F2-015` | System permits appointment cancellation within 24 hours of scheduled time | **Low** | Finished |
 | `BUG-012` | Feature 2: Booking & Location Services | `TC-F2-008` | Appointment booking validates against total campaign target rather than individual timeslot capacity | **Low** | Finished |
 | `BUG-013` | Feature 3: Campaign Management | `TC-F3-006` | Donor registration record disappears from campaign roster after quick approval in Pending tab | **High** | Finished |
 | `BUG-014` | Notification System | `Notification` | Clicking thank-you notifications incorrectly routes user to `/content` route | **Medium** | Finished |
@@ -415,22 +411,6 @@ The table below records all verification retest attempts executed after the deve
 | **Steps to Reproduce** | 1. Log in as Hospital Administrator.<br>2. Navigate to SOS Request history.<br>3. Inspect a fulfilled SOS request. |
 | **Expected Result** | Fulfilled SOS request displays status as Fulfilled along with the full required blood volume received. |
 | **Actual Result** | Status displays Fulfilled, but collected volume shows 0 ml received. |
-
----
-
-#### `BUG-011`: System allows appointment cancellation within 24 hours of scheduled time
-
-| Field | Details |
-| :--- | :--- |
-| **Bug ID** | `BUG-011` |
-| **Feature** | Feature 2: Booking & Location Services |
-| **Related Test Case** | `TC-F2-015` |
-| **Severity** | **Low** |
-| **Status** | **Finished** |
-| **Description** | System permits donors to cancel scheduled appointments less than 24 hours prior to the timeslot, violating the cancellation deadline business rule. |
-| **Steps to Reproduce** | 1. Log in as a Donor with an appointment scheduled within 24 hours.<br>2. Navigate to 'My Appointments' page.<br>3. Click 'Cancel Appointment' and confirm. |
-| **Expected Result** | Cancellation is rejected with message: "Cannot cancel appointment. The cancellation deadline has passed. Cancellations within 24 hours of scheduled time are prohibited." |
-| **Actual Result** | Appointment cancellation succeeds and status changes to Cancelled. |
 
 ---
 

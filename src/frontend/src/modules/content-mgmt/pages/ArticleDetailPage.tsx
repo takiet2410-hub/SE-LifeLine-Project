@@ -310,11 +310,15 @@ export const ArticleDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              <FeaturedMediaUpload value={coverImageUrl} onChange={setCoverImageUrl} />
-              <TargetAudienceSelector selected={targetAudience} onChange={setTargetAudience} />
+              {/* Publishing Schedule - Directly below status selection when status is Scheduled */}
               {status === 'Scheduled' && (
                 <PublishingSchedulePicker value={scheduledAt} onChange={setScheduledAt} />
               )}
+
+              <TargetAudienceSelector selected={targetAudience} onChange={setTargetAudience} />
+
+              {/* Featured Media - Above Body Content */}
+              <FeaturedMediaUpload value={coverImageUrl} onChange={setCoverImageUrl} />
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Nội dung chi tiết</label>

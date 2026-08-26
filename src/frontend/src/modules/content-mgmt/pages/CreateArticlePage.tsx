@@ -170,22 +170,20 @@ export const CreateArticlePage: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => handleSave('Draft')}
+            onClick={() => handleSave(status)}
             disabled={isSubmitting}
-            className="px-4 py-2 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 text-sm flex items-center space-x-1.5 cursor-pointer"
+            className={`px-4 py-2 text-white font-medium rounded-lg text-sm flex items-center space-x-1.5 shadow-sm cursor-pointer ${
+              status === 'Draft' ? 'bg-gray-900 hover:bg-gray-800' : 'bg-red-600 hover:bg-red-700'
+            }`}
           >
-            <Save className="w-4 h-4" />
-            <span>Lưu Bản Nháp</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleSave(status === 'Scheduled' ? 'Scheduled' : 'Published')}
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 text-sm flex items-center space-x-1.5 shadow-sm cursor-pointer"
-          >
-            <Send className="w-4 h-4" />
-            <span>{status === 'Scheduled' ? 'Lên Lịch Bài Viết' : 'Xuất Bản Bài Viết'}</span>
+            {status === 'Draft' ? <Save className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+            <span>
+              {status === 'Scheduled'
+                ? 'Lên Lịch Bài Viết'
+                : status === 'Draft'
+                ? 'Lưu Bài Viết'
+                : 'Xuất Bản Bài Viết'}
+            </span>
           </button>
         </div>
       </div>
@@ -253,16 +251,16 @@ export const CreateArticlePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Featured Media */}
-        <FeaturedMediaUpload value={coverImageUrl} onChange={setCoverImageUrl} />
+        {/* Publishing Schedule - Directly below status selection when status is Scheduled */}
+        {status === 'Scheduled' && (
+          <PublishingSchedulePicker value={scheduledAt} onChange={setScheduledAt} />
+        )}
 
         {/* Target Audience */}
         <TargetAudienceSelector selected={targetAudience} onChange={setTargetAudience} />
 
-        {/* Publishing Schedule - Only show when status is Scheduled */}
-        {status === 'Scheduled' && (
-          <PublishingSchedulePicker value={scheduledAt} onChange={setScheduledAt} />
-        )}
+        {/* Featured Media - Above Body Content */}
+        <FeaturedMediaUpload value={coverImageUrl} onChange={setCoverImageUrl} />
 
         {/* Body content rich text editor */}
         <div>

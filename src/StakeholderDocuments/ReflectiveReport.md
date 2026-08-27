@@ -108,4 +108,8 @@ Throughout this project, I was responsible for implementing the Auth module, mon
 ### 5.4 [Student 4 Name - Student ID - Role: e.g., Full-stack Developer]
 > [Write 3–5 sentences: Detail contributions, technical growth, and individual takeaways].
 
+### 5.5 Trịnh Khánh Linh - 24127437 - Role: BA, QA, Frontend Developer
+
+During the project, I was mainly responsible for the roles of Business Analyst, Quality Assurance, and Frontend Developer. My main contributions included analyzing system requirements, developing frontend user interfaces, and spearheading the QA process by authoring the Test Plan and Test Execution & Bug Reports. One contribution that I consider particularly significant was the comprehensive testing and defect management process, where I identified, tracked, and verified the resolution of 18 critical and high-severity defects. This was vital to the project because it elevated our final test pass rate to 98.6% and guaranteed the stability of core workflows like Donor Booking, Campaign Management, and the AI Chatbot before final deployment.
+
 *(Add additional members if applicable)*

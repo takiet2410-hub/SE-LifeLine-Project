@@ -64,12 +64,12 @@ The testing phase took place from **August 14, 2026** to **August 17, 2026**, en
 | Metric | Count | Percentage (%) | Notes |
 | :--- | :---: | :---: | :--- |
 | **Total Test Cases Executed** | **72** | 100% | All 72 TCs in scope |
-| **Initial Run - Pass** | **63** | 87.5% | Passed on initial execution |
-| **Initial Run - Fail** | **7** | 9.7% | Failed and required remediation |
+| **Initial Run - Pass** | **60** | 83.3% | Passed on initial execution |
+| **Initial Run - Fail** | **10** | 13.9% | Failed and required remediation |
 | **Initial Run - Warning** | **2** | 2.8% | Functional with minor non-blocking defects |
-| **Retests Executed** | **6** | - | Verified resolved defects |
-| **Retest - Pass** | **5** | 83.3% | 5 out of 6 retest attempts passed successfully |
-| **Final Passed / Verified Test Cases** | **68** | **94.4%** | Overall pass rate after critical bug fixes |
+| **Retests Executed** | **12** | - | Verified resolved defects |
+| **Retest - Pass** | **11** | 91.7% | 11 out of 12 retest attempts passed successfully |
+| **Final Passed / Verified Test Cases** | **71** | **98.6%** | Overall pass rate after critical bug fixes |
 
 ---
 
@@ -77,12 +77,12 @@ The testing phase took place from **August 14, 2026** to **August 17, 2026**, en
 
 | No. | Functional Feature | TC Prefix | Total TCs | Initial Pass | Initial Fail | Warning | Retest Pass | Final Pass Rate |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 1 | User Account Management | `TC-F1` | 12 | 11 | 1 | 0 | - | 91.7% |
-| 2 | Booking & Location Services | `TC-F2` | 15 | 13 | 2 | 0 | 1 | 93.3% |
-| 3 | Campaign Management | `TC-F3` | 19 | 15 | 2 | 2 | 2 | 89.5% |
-| 4 | SOS Request Management | `TC-F4` | 13 | 12 | 1 | 0 | - | 92.3% |
+| 1 | User Account Management | `TC-F1` | 12 | 11 | 1 | 0 | 1 | 100.0% |
+| 2 | Booking & Location Services | `TC-F2` | 15 | 13 | 2 | 0 | 2 | 100.0% |
+| 3 | Campaign Management | `TC-F3` | 19 | 14 | 3 | 2 | 5 | 100.0% |
+| 4 | SOS Request Management | `TC-F4` | 13 | 12 | 1 | 0 | 1 | 100.0% |
 | 5 | AI Conversational Support | `TC-F5` | 13 | 10 | 3 | 0 | 2 | 92.3% |
-| **Total** | **Entire System** | | **72** | **61** | **9** | **2** | **5** | **94.4%** |
+| **Total** | **Entire System** | | **72** | **60** | **10** | **2** | **11** | **98.6%** |
 
 ---
 
@@ -164,7 +164,7 @@ The testing phase took place from **August 14, 2026** to **August 17, 2026**, en
 | Initial Run | `TC-F3-016` | Display empty state when searching for non-existent Citizen ID | 15/08/2026 | **Pass** | Displays message: "No screening records match the filter." | - |
 | Initial Run | `TC-F3-017` | Successfully update donor registration status to Eligible after passing Clinical Vitals Exam at the Campaign | 15/08/2026 | **Pass** | Status is successfully updated to Eligible following vitals examination. | - |
 | Initial Run | `TC-F3-018` | Successfully update donor registration status to Ineligible after failing Clinical Vitals Exam at the Campaign | 15/08/2026 | **Pass** | Status is successfully updated to Ineligible with rejection reason. | - |
-| Initial Run | `TC-F3-019` | Successfully update donor registration status to Pass after passing the blood test after the campaign | 15/08/2026 | **Pass** | Status is successfully updated to Pass after post-campaign laboratory testing. | `BUG-018` |
+| Initial Run | `TC-F3-019` | Successfully update donor registration status to Pass after passing the blood test after the campaign | 15/08/2026 | **Fail** | Blood unit is not linked to donor record and displays incorrect collection date. | `BUG-018` |
 | Initial Run | `TC-F3-020` | Successfully update donor registration status to Fail after failing the blood test after the campaign | 15/08/2026 | **Warning** | Status updates to Fail, but the registration list count erroneously decrements by 1 instead of keeping the record count intact. | `BUG-006` |
 
 ---
@@ -221,6 +221,10 @@ The table below records all verification retest attempts executed after the deve
 | Retest | `TC-F5-005` | Successfully maintain conversational context across multiple turns | 17/08/2026 | **Pass** | Chatbot successfully synthesizes context from prior turns (e.g., body weight and recent tattoo) to provide accurate multi-turn guidance. | `BUG-004` (Resolved) |
 | Retest | `TC-F3-010` | Reject donor check-in with an expired or invalid E-Ticket QR code | 15/08/2026 | **Pass** | Successfully rejects QR codes from other campaigns and invalid QR payloads with clear error messages. | `BUG-005` (Resolved) |
 | Retest | `TC-F2-008` | Reject appointment booking for a fully booked campaign timeslot | 15/08/2026 | **Pass** | Disables fully booked timeslots; prevents proceeding to next step if no slots remain for the chosen date. | `BUG-012` (Resolved) |
+| Retest | `TC-F1-015` | Successfully update user profile phone number or address | 16/08/2026 | **Pass** | Profile updates successfully without blank screen crash. | `BUG-009` (Resolved) |
+| Retest | `TC-F2-014` | Successfully view details of a completed appointment | 16/08/2026 | **Pass** | Appointment details view remains stable without jumping back to latest record. | `BUG-017` (Resolved) |
+| Retest | `TC-F3-013` | Reject editing a campaign that has already ended | 16/08/2026 | **Pass** | Completed campaigns no longer allow modifying priority blood types. | `BUG-007` (Resolved) |
+| Retest | `TC-F4-005` | Successfully mark an active SOS request as resolved | 16/08/2026 | **Pass** | Fulfilled SOS request accurately displays the total required volume received. | `BUG-010` (Resolved) |
 | Retest | `TC-F3-020` | Successfully update donor registration status to Fail after failing the blood test after the campaign | 16/08/2026 | **Pass** | Updating blood test status to Fail keeps the registration count intact without decrementing the roster total. | `BUG-006` (Resolved) |
 | Retest | `TC-F3-019` | Successfully update donor registration status to Pass after passing the blood test after the campaign | 17/08/2026 | **Pass** | Automatically stocked-in blood bag details display full donor information, correct collection date, and matching campaign name. | `BUG-018` (Resolved) |
 

@@ -99,8 +99,10 @@ The team successfully adopted Spec Kit starting from Sprint 3 to drive developme
 
 Throughout this project, I was responsible for implementing the Auth module, monitoring and debugging the Donor blood donation registration flow, and handling Campaign Bookings. Additionally, I built the frontend for the Landing Page, updated the Donor Dashboard UI, brainstormed and guided the implementation of the AI Chatbot, managed the project, assigned tasks, and planned each sprint. The challenges I faced included balancing coding responsibilities with managing documentation and tracking the team's coding progress. Assigning tasks and brainstorming the project from scratch was very difficult and required extensive use of AI for planning, creating project schedules, and distributing tasks. I also had to pre-determine the framework, models, and development direction to establish a stable base for coding. The key takeaway from this project is the necessity of speeding up the documentation process and deeply analyzing the feasibility of the project and individual features before crafting the Use Case Specifications.
 
-### 5.2 [Student 2 Name - Student ID - Role: e.g., Frontend Lead / UI-UX Designer]
-> [Write 3–5 sentences: Detail specific modules implemented (e.g., Booking workflow, Donor Dashboard), UI/UX improvements, and lessons learned about building responsive and accessible interfaces].
+### 5.2 Nguyễn Quốc Dương - 24127349 - Role: AI Engineer & Fullstack Developer
+> [Write 3–5 sentences: Detail specific modules implemented (e.g., Booking, Interactive Map, Blood Center - Donor integration, AI Chatbot), technical challenges overcome, and key takeaways].
+
+During this project, I worked as an AI Engineer and Fullstack Developer on our team. My primary responsibilities included building the Donation Booking module, developing the Interactive Map with location search and blood-type filtering, managing the connection and data flow between Blood Center and Donor features, and implementing the AI Chatbot service using Python FastAPI and FAISS. One contribution I found especially significant was synchronizing the Blood Center registration flow with Donor appointments and automating the blood inventory stock-in, which kept donor records and blood bags consistent across both actors without data conflicts. The biggest challenges I faced were connecting our Python AI service with the main Node.js backend, debugging map geospatial queries, and handling certificate print styles and timezone bugs across environments. Through this project, I learned a great deal about full-stack web development, building RAG-based AI applications, and the importance of having clear API contracts when collaborating in a team.
 
 ### 5.3 [Student 3 Name - Student ID - Role: e.g., QA / Test Engineer / Full-stack Developer]
 > [Write 3–5 sentences: Detail specific work on test planning, use case execution, bug tracking, Spec Kit refinement, and lessons learned on software quality assurance].
@@ -108,4 +110,6 @@ Throughout this project, I was responsible for implementing the Auth module, mon
 ### 5.4 [Student 4 Name - Student ID - Role: e.g., Full-stack Developer]
 > [Write 3–5 sentences: Detail contributions, technical growth, and individual takeaways].
 
-*(Add additional members if applicable)*
+### 5.5 [Student 5 Name - Student ID - Role: e.g., Frontend Lead / UI-UX Designer]
+> [Write 3–5 sentences: Detail contributions, technical growth, and individual takeaways].
+

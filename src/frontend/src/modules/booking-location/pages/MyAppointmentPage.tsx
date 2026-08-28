@@ -199,13 +199,14 @@ export const MyAppointmentPage: React.FC = () => {
 
         const ticketCode = res.data?.ticketCode || `TK-${id.slice(-6).toUpperCase()}`;
         const qrCodeUrl = res.data?.fileUrl || apt?.qrCodeUrl;
+        const resolvedBloodType = res.data?.bloodType || res.data?.donorBloodType || apt?.bloodType;
 
         try {
           const { generateETicketPassImage } = await import('../utils/eTicketGenerator');
           const passBlob = await generateETicketPassImage({
             ticketCode,
             donorName,
-            bloodType: apt?.bloodType,
+            bloodType: resolvedBloodType,
             campaignName: apt?.location.name || 'Chiến Dịch Hiến Máu Nhân Đạo LifeLine',
             locationAddress: apt?.location.address,
             date: apt?.date || new Date().toLocaleDateString('vi-VN'),

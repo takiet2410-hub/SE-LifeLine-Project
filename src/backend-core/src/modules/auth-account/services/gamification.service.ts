@@ -5,11 +5,12 @@ import { Appointment, AppointmentStatus } from '../../booking/models/appointment
 import { isFeatureEnabled } from '../../admin/services/admin-toggle.service';
 
 export function calculateDonorLevel(xp: number): number {
-  if (xp >= 2000) return 5;
-  if (xp >= 1000) return 4;
-  if (xp >= 500) return 3;
-  if (xp >= 200) return 2;
-  return 1;
+  if (xp >= 10000) return 6; // Huyền Thoại
+  if (xp >= 5000) return 5; // Kim Cương
+  if (xp >= 2000) return 4; // Bạch Kim
+  if (xp >= 1000) return 3;  // Vàng
+  if (xp >= 500) return 2;  // Bạc
+  return 1;                 // Đồng
 }
 
 export class GamificationService {
@@ -58,45 +59,45 @@ export class GamificationService {
     const badgeDefinitions = [
       {
         badgeType: 'FirstDonation',
-        title: 'First Drop',
+        title: 'Giọt Đầu Tiên',
         description: 'Hoàn thành lần hiến máu đầu tiên',
         icon: '🩸',
         condition: updatedTotalDonations >= 1
       },
       {
-        badgeType: 'SilverDonor',
-        title: 'Silver Donor',
-        description: 'Đạt mốc 200 XP đóng góp',
-        icon: '🏅',
-        condition: newXp >= 200
+        badgeType: 'Silver',
+        title: 'Hạng Bạc',
+        description: 'Đạt mốc 500 XP',
+        icon: '🥈',
+        condition: newXp >= 500
       },
       {
-        badgeType: 'PromptDonor',
-        title: 'Prompt Donor',
-        description: 'Hoàn thành 3 lần hiến máu',
-        icon: '🕒',
-        condition: updatedTotalDonations >= 3
+        badgeType: 'Gold',
+        title: 'Hạng Vàng',
+        description: 'Đạt mốc 1000 XP',
+        icon: '🥇',
+        condition: newXp >= 1000
       },
       {
-        badgeType: 'FiveDonations',
-        title: 'Loyal Donor',
-        description: 'Hoàn thành 5 lần hiến máu',
-        icon: '🎖️',
-        condition: updatedTotalDonations >= 5
+        badgeType: 'Platinum',
+        title: 'Hạng Bạch Kim',
+        description: 'Đạt mốc 2000 XP',
+        icon: '💎',
+        condition: newXp >= 2000
       },
       {
-        badgeType: 'GallonClub',
-        title: 'Gallon Club',
-        description: 'Hoàn thành 8 lần hiến máu',
-        icon: '🥛',
-        condition: updatedTotalDonations >= 8
+        badgeType: 'Diamond',
+        title: 'Hạng Kim Cương',
+        description: 'Đạt mốc 5000 XP',
+        icon: '👑',
+        condition: newXp >= 5000
       },
       {
-        badgeType: 'EmergencyResponder',
-        title: 'Emergency Responder',
-        description: 'Hoàn thành 10 lần hiến máu hoặc tham gia ứng cứu khẩn cấp',
-        icon: '⭐',
-        condition: updatedTotalDonations >= 10
+        badgeType: 'Legendary',
+        title: 'Hạng Huyền Thoại',
+        description: 'Đạt mốc 10000 XP',
+        icon: '🌟',
+        condition: newXp >= 10000
       }
     ];
 

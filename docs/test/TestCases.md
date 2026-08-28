@@ -35,14 +35,13 @@
     - [Testcase 6: Reject appointment booking when last donation was less than 84 days ago](#testcase-6-reject-appointment-booking-when-last-donation-was-less-than-84-days-ago)
     - [Testcase 7: Reject appointment booking when a duplicate active appointment exists](#testcase-7-reject-appointment-booking-when-a-duplicate-active-appointment-exists)
     - [Testcase 8: Reject appointment booking for a fully booked campaign timeslot](#testcase-8-reject-appointment-booking-for-a-fully-booked-campaign-timeslot)
-    - [Testcase 9: Successfully cancel an appointment more than 24 hours in advance](#testcase-9-successfully-cancel-an-appointment-more-than-24-hours-in-advance)
+    - [Testcase 9: Successfully cancel an appointment](#testcase-9-successfully-cancel-an-appointment)
     - [Testcase 10: Successfully download E-Ticket as PDF for a confirmed appointment](#testcase-10-successfully-download-e-ticket-as-pdf-for-a-confirmed-appointment)
     - [Testcase 11: Display empty state when no campaigns match the applied filter](#testcase-11-display-empty-state-when-no-campaigns-match-the-applied-filter)
     - [Testcase 12: Reject appointment booking if user account is unverified](#testcase-12-reject-appointment-booking-if-user-account-is-unverified)
     - [Testcase 13: Successfully view details of an upcoming appointment](#testcase-13-successfully-view-details-of-an-upcoming-appointment)
     - [Testcase 14: Successfully view details of a completed appointment](#testcase-14-successfully-view-details-of-a-completed-appointment)
-    - [Testcase 15: Reject appointment cancellation less than 24 hours before scheduled time](#testcase-15-reject-appointment-cancellation-less-than-24-hours-before-scheduled-time)
-    - [Testcase 16: Verify E-Ticket QR code contains correct appointment data](#testcase-16-verify-e-ticket-qr-code-contains-correct-appointment-data)
+    - [Testcase 15: Verify E-Ticket QR code contains correct appointment data](#testcase-15-verify-e-ticket-qr-code-contains-correct-appointment-data)
   - [3.3. Feature 3: Campaign Management](#33-feature-3-campaign-management)
     - [Testcase 1: Successful campaign creation with valid details](#testcase-1-successful-campaign-creation-with-valid-details)
     - [Testcase 2: Reject campaign creation with an invalid date range](#testcase-2-reject-campaign-creation-with-an-invalid-date-range)
@@ -131,14 +130,13 @@ Where applicable, existing Spec Kit-generated test cases were reviewed, refined 
 | TC-F2-006 | Booking & Location Services | LL-UC-07 – Book Appointment | Reject appointment booking when last donation was less than 84 days ago | Business Rule | Spec Kit - Reused |
 | TC-F2-007 | Booking & Location Services | LL-UC-07 – Book Appointment | Reject appointment booking when a duplicate active appointment exists | Business Rule | Spec Kit - Reused |
 | TC-F2-008 | Booking & Location Services | LL-UC-07 – Book Appointment | Reject appointment booking for a fully booked campaign timeslot | Validation | Spec Kit - Reused |
-| TC-F2-009 | Booking & Location Services | LL-UC-09 – Cancel Appointment | Successfully cancel an appointment more than 24 hours in advance | Positive | Spec Kit - Reused |
+| TC-F2-009 | Booking & Location Services | LL-UC-09 – Cancel Appointment | Successfully cancel an appointment | Positive | Spec Kit - Reused |
 | TC-F2-010 | Booking & Location Services | LL-UC-10 – Download E-Ticket | Successfully download E-Ticket as PDF for a confirmed appointment | Positive | Spec Kit - Reused |
 | TC-F2-011 | Booking & Location Services | LL-UC-06 – Browse Interactive Map | Display empty state when no campaigns match the applied filter | Negative | Spec Kit - Refined |
 | TC-F2-012 | Booking & Location Services | LL-UC-07 – Schedule Appointment | Reject appointment booking if user account is unverified | Business Rule | New |
 | TC-F2-013 | Booking & Location Services | LL-UC-08 – View Appointment Details | Successfully view details of an upcoming appointment | Positive | Spec Kit - Reused |
 | TC-F2-014 | Booking & Location Services | LL-UC-08 – View Appointment Details | Successfully view details of a completed appointment | Positive | Spec Kit - Refined |
-| TC-F2-015 | Booking & Location Services | LL-UC-09 – Cancel Appointment | Reject appointment cancellation less than 24 hours before scheduled time | Business Rule | Spec Kit - Reused |
-| TC-F2-016 | Booking & Location Services | LL-UC-10 – Download E-Ticket | Verify E-Ticket QR code contains correct appointment data | Validation | Spec Kit - Refined |
+| TC-F2-015 | Booking & Location Services | LL-UC-10 – Download E-Ticket | Verify E-Ticket QR code contains correct appointment data | Validation | Spec Kit - Refined |
 | TC-F3-001 | Campaign Management | BC-UC-01 – Create Donation Campaign | Successful campaign creation with valid details | Positive | New |
 | TC-F3-002 | Campaign Management | BC-UC-01 – Create Donation Campaign | Reject campaign creation with an invalid date range | Negative | New |
 | TC-F3-003 | Campaign Management | BC-UC-01 – Create Donation Campaign | Reject campaign creation with zero or negative capacity | Validation | New |
@@ -457,12 +455,12 @@ Where applicable, existing Spec Kit-generated test cases were reviewed, refined 
 | Field | Details |
 |---|---|
 | **Test case ID** | TC-F2-009 |
-| **Test case name** | Successfully cancel an appointment more than 24 hours in advance |
-| **Description** | Verify that a donor can cancel their appointment if it is far enough in the future. |
+| **Test case name** | Successfully cancel an appointment |
+| **Description** | Verify that a donor can cancel their appointment. |
 | **Related Use case** | LL-UC-09 – Cancel Appointment |
-| **Input Data** | Role: Authenticated Donor. Appointment: Pending/Confirmed, scheduled > 24 hours from now. Reason: 'Busy'. |
+| **Input Data** | Role: Authenticated Donor. Appointment: Pending/Confirmed. Reason: 'Busy'. |
 | **Expected Output** | The appointment status is updated to 'Cancelled'. A success message is displayed. |
-| **Test steps** | 1. Log in and navigate to 'My Appointments'.<br>2. Select an upcoming appointment that is more than 24 hours away.<br>3. Open the appointment details.<br>4. Click the 'Cancel Appointment' button.<br>5. Select a cancellation reason in the modal (e.g., 'Busy').<br>6. Click 'Confirm Cancellation'.<br>7. Verify that a success message is displayed.<br>8. Verify that the appointment status in the list changes to 'Cancelled'. |
+| **Test steps** | 1. Log in and navigate to 'My Appointments'.<br>2. Select an upcoming appointment.<br>3. Open the appointment details.<br>4. Click the 'Cancel Appointment' button.<br>5. Select a cancellation reason in the modal (e.g., 'Busy').<br>6. Click 'Confirm Cancellation'.<br>7. Verify that a success message is displayed.<br>8. Verify that the appointment status in the list changes to 'Cancelled'. |
 
 #### Testcase 10: Successfully download E-Ticket as PDF for a confirmed appointment
 
@@ -529,25 +527,12 @@ Where applicable, existing Spec Kit-generated test cases were reviewed, refined 
 | **Expected Output** | The detail screen displays the past appointment details without modification options. |
 | **Test steps** | 1. Log in and navigate to 'My Appointments' or 'History'.<br>2. Select a past, completed appointment.<br>3. Verify that details are displayed accurately.<br>4. Verify that the 'Cancel Appointment' button is not present or disabled.<br>5. Verify that the status correctly reflects 'Completed' or 'Checked-in'. |
 
-#### Testcase 15: Reject appointment cancellation less than 24 hours before scheduled time
-
-<!-- METADATA: Type="Business Rule" Source="Spec Kit - Reused" -->
-| Field | Details |
-|---|---|
-| **Test case ID** | TC-F2-015 |
-| **Test case name** | Reject appointment cancellation less than 24 hours before scheduled time |
-| **Description** | Verify that the system enforces the 24-hour cancellation rule to prevent last-minute drop-offs. |
-| **Related Use case** | LL-UC-09 – Cancel Appointment |
-| **Input Data** | Role: Authenticated Donor. Appointment: Scheduled within the next 24 hours. |
-| **Expected Output** | The system prevents cancellation and displays a policy notice. |
-| **Test steps** | 1. Log in and navigate to 'My Appointments'.<br>2. Select an appointment that is scheduled within the next 24 hours.<br>3. Open the appointment details.<br>4. Verify that the 'Cancel Appointment' button is either disabled or displays a warning when clicked.<br>5. Attempt to proceed with cancellation.<br>6. Verify that an error message indicating the 24-hour policy is displayed, and the appointment remains active. |
-
-#### Testcase 16: Verify E-Ticket QR code contains correct appointment data
+#### Testcase 15: Verify E-Ticket QR code contains correct appointment data
 
 <!-- METADATA: Type="Validation" Source="Spec Kit - Refined" -->
 | Field | Details |
 |---|---|
-| **Test case ID** | TC-F2-016 |
+| **Test case ID** | TC-F2-015 |
 | **Test case name** | Verify E-Ticket QR code contains correct appointment data |
 | **Description** | Verify that the generated QR code on the E-Ticket embeds the correct identifiers for fast check-in at the campaign. |
 | **Related Use case** | LL-UC-10 – Download E-Ticket |

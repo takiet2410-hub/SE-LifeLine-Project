@@ -466,7 +466,17 @@ export class BookingService {
       await session.commitTransaction();
       session.endSession();
 
-      return await Appointment.findById(newAppointmentId).populate('screeningFormId').lean();
+      const createdApp: any = await Appointment.findById(newAppointmentId).populate('screeningFormId').populate('campaignId').lean();
+      const profile = await DonorProfile.findOne({
+        $or: [{ userId: donorId }, { _id: donorId }]
+      }).lean();
+      const bloodType = (profile?.bloodType && profile.bloodType !== 'Unknown') ? profile.bloodType : undefined;
+      return {
+        ...createdApp,
+        bloodType: createdApp?.bloodType || bloodType,
+        donorBloodType: createdApp?.donorBloodType || bloodType,
+        donorName: profile?.fullName,
+      };
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
@@ -588,7 +598,20 @@ export class BookingService {
         console.error('Error fetching details for confirmation email:', emailErr);
       }
 
-      return fullAppointment;
+      const donorProfile = await DonorProfile.findOne({
+        $or: [
+          { userId: fullAppointment.donorId },
+          { _id: fullAppointment.donorId }
+        ]
+      }).lean();
+      const bloodType = (donorProfile?.bloodType && donorProfile.bloodType !== 'Unknown') ? donorProfile.bloodType : undefined;
+
+      return {
+        ...fullAppointment,
+        bloodType: fullAppointment.bloodType || bloodType,
+        donorBloodType: fullAppointment.donorBloodType || bloodType,
+        donorName: donorProfile?.fullName,
+      };
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
@@ -749,27 +772,53 @@ export class BookingService {
   }
 
   public static async getAppointmentById(id: string, donorId: string) {
-    const appointment = await Appointment.findOne({ _id: id, donorId })
-      .populate('screeningFormId')
-      .populate('eTicketId')
-      .populate('campaignId')
-      .lean();
+    const [appointment, donorProfile] = await Promise.all([
+      Appointment.findOne({ _id: id, donorId })
+        .populate('screeningFormId')
+        .populate('eTicketId')
+        .populate('campaignId')
+        .lean(),
+      DonorProfile.findOne({
+        $or: [{ userId: donorId }, { _id: donorId }]
+      }).lean()
+    ]);
     if (!appointment) {
       throw new Error('APPOINTMENT_NOT_FOUND');
     }
     await this.checkAndMarkExpiredAppointments([appointment]);
-    return appointment;
+
+    const bloodType = (donorProfile?.bloodType && donorProfile.bloodType !== 'Unknown') ? donorProfile.bloodType : undefined;
+
+    return {
+      ...appointment,
+      bloodType: (appointment as any).bloodType || bloodType,
+      donorBloodType: (appointment as any).donorBloodType || bloodType,
+      donorName: donorProfile?.fullName,
+    };
   }
 
   public static async listAppointments(donorId: string) {
-    const appointments = await Appointment.find({ donorId })
-      .populate('campaignId')
-      .populate('eTicketId')
-      .populate('screeningFormId')
-      .sort({ appointmentDate: -1 })
-      .lean();
-    await this.checkAndMarkExpiredAppointments(appointments);
-    return appointments;
+    const [donorProfile, rawAppointments] = await Promise.all([
+      DonorProfile.findOne({
+        $or: [{ userId: donorId }, { _id: donorId }]
+      }).lean(),
+      Appointment.find({ donorId })
+        .populate('campaignId')
+        .populate('eTicketId')
+        .populate('screeningFormId')
+        .sort({ appointmentDate: -1 })
+        .lean()
+    ]);
+    await this.checkAndMarkExpiredAppointments(rawAppointments);
+
+    const bloodType = (donorProfile?.bloodType && donorProfile.bloodType !== 'Unknown') ? donorProfile.bloodType : undefined;
+
+    return rawAppointments.map(app => ({
+      ...app,
+      bloodType: (app as any).bloodType || bloodType,
+      donorBloodType: (app as any).donorBloodType || bloodType,
+      donorName: donorProfile?.fullName,
+    }));
   }
 
   public static async cancelAppointment(id: string, donorId: string) {
@@ -882,17 +931,29 @@ export class BookingService {
       throw new Error('ETICKET_NOT_READY');
     }
 
-    const eTicket = await ETicket.findById(appointment.eTicketId)
-      .populate({
-        path: 'appointmentId',
-        populate: { path: 'campaignId' }
-      })
-      .lean();
+    const [eTicket, donorProfile] = await Promise.all([
+      ETicket.findById(appointment.eTicketId)
+        .populate({
+          path: 'appointmentId',
+          populate: { path: 'campaignId' }
+        })
+        .lean(),
+      DonorProfile.findOne({
+        $or: [{ userId: donorId }, { _id: donorId }]
+      }).lean()
+    ]);
     if (!eTicket) {
       throw new Error('ETICKET_NOT_FOUND');
     }
 
-    return eTicket;
+    const bloodType = (donorProfile?.bloodType && donorProfile.bloodType !== 'Unknown') ? donorProfile.bloodType : undefined;
+
+    return {
+      ...eTicket,
+      bloodType,
+      donorBloodType: bloodType,
+      donorName: donorProfile?.fullName,
+    };
   }
 
   public static async syncToBloodCenter(id: string, donorId: string) {

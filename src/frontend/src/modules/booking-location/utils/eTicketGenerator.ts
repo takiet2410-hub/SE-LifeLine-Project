@@ -100,7 +100,14 @@ export const generateETicketPassImage = async (data: ETicketPassData): Promise<B
   ctx.fillText('NHÓM MÁU / BLOOD TYPE', 340, 325);
   ctx.fillStyle = '#be123c';
   ctx.font = 'bold 22px sans-serif';
-  ctx.fillText(data.bloodType || 'Chưa cập nhật', 340, 355);
+  const bloodTypeText =
+    data.bloodType &&
+    data.bloodType !== 'Unknown' &&
+    data.bloodType !== 'Chưa rõ' &&
+    data.bloodType !== 'Chưa cập nhật'
+      ? data.bloodType
+      : 'Chưa cập nhật';
+  ctx.fillText(bloodTypeText, 340, 355);
 
   // 5. Ticket Code Box
   ctx.fillStyle = '#f8fafc';

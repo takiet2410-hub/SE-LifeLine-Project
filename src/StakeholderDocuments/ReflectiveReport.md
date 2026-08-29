@@ -58,7 +58,7 @@ The team successfully adopted Spec Kit starting from Sprint 3 to drive developme
 > **Performed by:** Trần Anh Kiệt | **Reviewed by:** Trịnh Khánh Linh | **Edited by:** Trần Anh Kiệt
 
 ### 3.1 Tools Employed
-- **Tools:** Google Gemini Pro, Claude, Google AI Stitch.
+- **Tools:** Antigravity, Google Gemini Pro, Claude, Google AI Stitch.
 
 ### 3.2 Effective Aspects & Productivity Gains
 - **Boilerplate & CRUD Generation:** Utilizing AI tools massively accelerated the setup of our Node.js API endpoints, Mongoose schema definitions, and React component scaffolding. Gemini generated repetitive CRUD boilerplate almost instantly.
